@@ -44,16 +44,57 @@
                 </p>
 
                 <!-- Format Indicator Tabs -->
-                <div class="arcgym-format-pills slds-m-bottom_large slds-grid slds-grid_align-center">
-                    <span class="format-pill format-pill-active">Rapid Fire (6 Decisions)</span>
-                    <span class="format-pill">Lesson</span>
-                    <span class="format-pill">Currency</span>
-                    <span class="format-pill">Scenario</span>
+                <div class="arcgym-format-pills slds-m-bottom_large slds-grid slds-grid_align-center slds-wrap">
+                    <button
+                        type="button"
+                        class={rapidFirePillClass}
+                        data-format="Rapid_Fire"
+                        onclick={handleSelectFormat}>
+                        ⚡ Rapid Fire (6 Decisions)
+                    </button>
+                    <button
+                        type="button"
+                        class={currencyPillClass}
+                        data-format="Currency"
+                        onclick={handleSelectFormat}>
+                        💰 Currency (Resource Budget)
+                    </button>
+                    <button
+                        type="button"
+                        class={scenarioPillClass}
+                        data-format="Scenario"
+                        onclick={handleSelectFormat}>
+                        🎭 Scenario (Dual-Meter Dialogue)
+                    </button>
+                    <button
+                        type="button"
+                        class={lessonPillClass}
+                        data-format="Lesson"
+                        onclick={handleSelectFormat}>
+                        📖 Lesson (4-Stage Refactor)
+                    </button>
                 </div>
 
                 <!-- Active Drill Runner -->
                 <div class="arcgym-runner-wrapper slds-m-top_medium">
-                    <c-rapid-fire-runner ondrillcomplete={handleDrillComplete}></c-rapid-fire-runner>
+                    <template if:true={isRapidFire}>
+                        <c-rapid-fire-runner ondrillcomplete={handleDrillComplete}></c-rapid-fire-runner>
+                    </template>
+                    <template if:true={isCurrency}>
+                        <c-currency-runner ondrillcomplete={handleDrillComplete}></c-currency-runner>
+                    </template>
+                    <template if:true={isScenario}>
+                        <c-dual-meter-scenario ondrillcomplete={handleDrillComplete}></c-dual-meter-scenario>
+                    </template>
+                    <template if:true={isLesson}>
+                        <div class="slds-box slds-box_small slds-theme_shade slds-text-align_center slds-p-around_large">
+                            <h3 class="slds-text-heading_medium font-weight-bold slds-m-bottom_x-small">Lesson Drill Format</h3>
+                            <p class="slds-text-color_weak slds-m-bottom_medium">
+                                4-Stage Architectural Refactor: Forensic Diagnosis ➔ Target Pattern ➔ Migration Sequence ➔ Telemetry Verification.
+                            </p>
+                            <span class="slds-badge slds-theme_inverse">Upcoming in Vertical Slice #3</span>
+                        </div>
+                    </template>
                 </div>
             </div>
 

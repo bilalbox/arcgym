@@ -1,0 +1,8 @@
+function stylesheet(token, useActualHostSelector, useNativeDirPseudoclass) {
+  var shadowSelector = token ? ("[" + token + "]") : "";
+  var hostSelector = token ? ("[" + token + "-host]") : "";
+  var suffixToken = token ? ("-" + token) : "";
+  return ((useActualHostSelector ? ":host {" : hostSelector + " {")) + "display: block;width: 100%;}.budget-meter-container" + shadowSelector + " {border-radius: 8px;background-color: #f8f9fb;border: 1px solid #d8dde6;padding: 0.85rem 1.15rem;}.meter-title" + shadowSelector + " {font-size: 0.95rem;color: #080707;}.meter-used-number" + shadowSelector + " {font-size: 1.1rem;color: #080707;}.meter-total-number" + shadowSelector + " {font-size: 0.85rem;color: #706e6b;}.meter-track" + shadowSelector + " {width: 100%;height: 12px;background-color: #e5e5e5;border-radius: 6px;overflow: hidden;position: relative;box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);}.meter-fill" + shadowSelector + " {height: 100%;transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;}.meter-fill_normal" + shadowSelector + " {background-color: #2e844a;}.meter-fill_warning" + shadowSelector + " {background-color: #fe9339;}.meter-fill_exceeded" + shadowSelector + " {background-color: #ea001e;animation: pulse" + suffixToken + " 1s infinite alternate;}@keyframes pulse" + suffixToken + " {0% {opacity: 0.85;}100% {opacity: 1;}}.meter-subtext" + shadowSelector + " {font-size: 0.8rem;line-height: 1.4;}.remaining-text" + shadowSelector + " {color: #444;}.exceeded-text" + shadowSelector + " {color: #ba0517;}.percent-text" + shadowSelector + " {color: #706e6b;}.font-weight-bold" + shadowSelector + " {font-weight: 700;}";
+  /*LWC compiler v8.28.2*/
+}
+export default [stylesheet];
