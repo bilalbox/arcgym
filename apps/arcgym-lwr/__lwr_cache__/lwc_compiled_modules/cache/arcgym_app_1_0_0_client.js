@@ -1,54 +1,52 @@
 import { registerDecorators as _registerDecorators, LightningElement, registerComponent as _registerComponent } from "lwc";
 import _tmpl from "./app.html";
-import { ArcGymScoringEngine } from '@arcgym/drill-core';
 class App extends LightningElement {
   constructor(...args) {
     super(...args);
     this.streakDays = 1;
     this.isAuthenticated = false;
-    this.selectedConfidence = null;
-    this.selectedOption = 'A';
     this.todayDrill = {
       id: 'AGD-00101',
-      title: 'Core Platform & Integration: Scale vs. Coupling in Order Processing',
+      title: 'Core Platform & Agentic Architecture Trade-Offs',
       format: 'Rapid Fire',
-      domain: 'Enterprise Integration & Scalability',
+      domain: 'Core Platform & Agentforce',
       prompt: 'AI generates functional Apex in seconds. You are responsible for blast radius, governor limit resilience, and transaction boundary integrity.',
-      pillars: ['Reliability', 'Operational_Excellence', 'Cost_Optimization']
+      pillars: ['Reliability', 'Trust', 'Operational_Excellence']
     };
+  }
+  connectedCallback() {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = window.localStorage.getItem('arcgym_streak');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && data.streakDays) {
+            this.streakDays = data.streakDays;
+          }
+        }
+      }
+    } catch (e) {
+      // Fallback
+    }
   }
   get authButtonLabel() {
     return this.isAuthenticated ? 'Connected to Trailblazer' : 'Connect Trailblazer';
   }
-  get isSubmitDisabled() {
-    return this.selectedConfidence === null;
-  }
   handleAuthClick() {
     this.isAuthenticated = !this.isAuthenticated;
   }
-  handleConfidenceSelected(event) {
-    this.selectedConfidence = event.detail.confidence;
-  }
-  handleSubmitDecision() {
-    if (!this.selectedConfidence) return;
-
-    // Calculate score using ArcGymScoringEngine
-    const isCorrect = this.selectedOption === 'A';
-    const scoreResult = ArcGymScoringEngine.calculateDecisionScore(this.selectedConfidence, isCorrect);
-    console.log('ArcGym Decision Committed:', {
-      option: this.selectedOption,
-      confidence: this.selectedConfidence,
-      scoreResult
-    });
-
-    // Trigger streak increment / completion alert
-    alert(`Decision Committed!\n\nPoints Awarded: ${scoreResult.pointsAwarded}\nQuadrant: ${scoreResult.quadrant}\nStreak: ${this.streakDays + 1} Days 🔥`);
-    this.streakDays += 1;
+  handleDrillComplete(event) {
+    if (event.detail && event.detail.streakDays) {
+      this.streakDays = event.detail.streakDays;
+    }
   }
   /*LWC compiler v8.28.2*/
 }
 _registerDecorators(App, {
-  fields: ["streakDays", "isAuthenticated", "selectedConfidence", "selectedOption", "todayDrill"]
+  track: {
+    streakDays: 1
+  },
+  fields: ["isAuthenticated", "todayDrill"]
 });
 const __lwc_component_class_internal = _registerComponent(App, {
   tmpl: _tmpl,

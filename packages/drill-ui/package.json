@@ -9,5 +9,11 @@
     "lwc": "^8.28.2",
     "@lwc/engine-dom": "^8.28.2",
     "@lwc/synthetic-shadow": "^8.28.2"
+  },
+  "devDependencies": {
+    "@lwrjs/client-modules": "^0.24.1",
+    "@lwrjs/loader": "^0.24.1",
+    "@lwrjs/o11y": "^0.24.1",
+    "@lwrjs/router": "^0.24.1"
   }
 }

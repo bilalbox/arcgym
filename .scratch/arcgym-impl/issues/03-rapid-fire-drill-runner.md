@@ -5,13 +5,13 @@ A complete, playable Rapid Fire drill in the web application: 6–8 high-velocit
 
 **Blocked by:** 02: Core Calibration Scoring Engine & Universal Pre-Submit Gate
 
-**Status:** ready-for-agent
+**Status:** completed
 
 ## Acceptance criteria
 
-- [ ] `c-rapid-fire-card` and `c-rapid-fire-runner` LWCs authored in `packages/drill-ui`.
-- [ ] Renders sequential 6–8 decision prompts with constraint context and 2–3 options.
-- [ ] Enforces confidence selection on each call prior to submission.
-- [ ] Displays immediate visual feedback (correct/incorrect) with concise Well-Architected explanation.
-- [ ] Post-drill summary card reveals Brier points earned, accuracy %, calibration quadrant, and increments daily streak.
-- [ ] Local state persistence in browser `localStorage`/`IndexedDB` for streak tracking.
+- [x] `c-rapid-fire-card` and `c-rapid-fire-runner` LWCs authored in `packages/drill-ui`.
+- [x] Renders sequential 6–8 decision prompts with constraint context and 2–3 options.
+- [x] Enforces confidence selection on each call prior to submission.
+- [x] Displays immediate visual feedback (correct/incorrect) with concise Well-Architected explanation.
+- [x] Post-drill summary card reveals Brier points earned, accuracy %, calibration quadrant, and increments daily streak.
+- [x] Local state persistence in browser `localStorage`/`IndexedDB` for streak tracking.

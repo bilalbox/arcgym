@@ -51,47 +51,9 @@
                     <span class="format-pill">Scenario</span>
                 </div>
 
-                <!-- Interactive Practice Box Placeholder -->
-                <div class="arcgym-practice-box slds-box slds-box_small slds-theme_shade slds-m-bottom_large">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread">
-                        <div>
-                            <span class="slds-text-heading_small">Decision 1 of 6: Decoupled Asynchronous Ingestion</span>
-                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
-                                Incoming order volume peaks at 120k records/hour. External ERP expects immediate acknowledgment with correlation ID. Which pattern adheres to Well-Architected Reliability?
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Options -->
-                    <div class="slds-m-top_medium">
-                        <div class="arcgym-option-card">
-                            <span class="font-weight-bold">A.</span> High-Volume Platform Event + CometD/Pub-Sub Replay bus with immediate 202 Accepted
-                        </div>
-                        <div class="arcgym-option-card">
-                            <span class="font-weight-bold">B.</span> Synchronous REST Apex Webhook with direct insert and rollback on error
-                        </div>
-                        <div class="arcgym-option-card">
-                            <span class="font-weight-bold">C.</span> Inbound Zero Copy Query Federation polling external ERP every 15 seconds
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Universal Pre-Submit Gate Banner -->
-                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-top_small slds-border_top">
-                    <div class="slds-size_2-of-3">
-                        <c-confidence-gate
-                            selected-confidence={selectedConfidence}
-                            onconfidenceselected={handleConfidenceSelected}>
-                        </c-confidence-gate>
-                    </div>
-                    <div class="slds-size_1-of-3 slds-text-align_right">
-                        <button
-                            class="slds-button slds-button_brand slds-m-top_small arcgym-submit-btn"
-                            disabled={isSubmitDisabled}
-                            onclick={handleSubmitDecision}>
-                            Commit Decision
-                        </button>
-                    </div>
+                <!-- Active Drill Runner -->
+                <div class="arcgym-runner-wrapper slds-m-top_medium">
+                    <c-rapid-fire-runner ondrillcomplete={handleDrillComplete}></c-rapid-fire-runner>
                 </div>
             </div>
 
