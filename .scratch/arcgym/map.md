@@ -16,6 +16,10 @@ A complete, build-ready Technical & Experience Architecture Specification in `.s
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
+- [01 - Research Salesforce Well-Architected Framework and Agentic Enterprise patterns](issues/01-research-salesforce-architect-taxonomy.md): Codified 19-domain curriculum taxonomy across Core Platform, Data 360, and Agentforce mapped to Well-Architected tension matrix, antipatterns, and 4-dimensional judgment rubric.
+- [02 - Research Confidence Calibration scoring models](issues/02-research-confidence-calibration-metrics.md): Established Asymmetric Brier Skill Score ($BSS_{asym}$) with 2.5x overconfidence penalty, discrete 4-chip SLDS confidence anchors, rolling 30-drill ECE tracking, and decoupled streak habit loop.
+- [03 - Research Open-Source LWR deployment and Dual-Surface packaging](issues/03-research-lwr-open-source-and-dual-surface-packaging.md): Blueprint for `@lwrjs/core` static edge deployment on Cloudflare Pages ($0 cost, sub-50ms TTFB) with shared presentational LWCs, dual-surface abstraction, and installable in-org Utility Bar package.
+
 ## Not yet specified
 
 <!-- see "Fog of war": in-scope fog you can't ticket yet; graduates as the frontier advances -->
