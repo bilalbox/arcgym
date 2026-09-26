@@ -40,3 +40,12 @@ _Avoid_: Feedback prompt, post-quiz survey
 A Scenario drill visualization tracking Stakeholder Trust and Well-Architected Integrity simultaneously to surface technical debt trade-offs.
 _Avoid_: Win/loss meter, single score
 
+**Hybrid Document Pattern**:
+An architectural storage design combining indexed relational metadata fields on a custom object with a single compressed JSON document payload for complex sub-structures to avoid governor limits and record sprawl.
+_Avoid_: Monolithic custom object, unstructured text
+
+**Event-Driven Static Ingestion**:
+An architectural pattern where content lifecycle events in Salesforce trigger outbound webhooks to push serialized payloads to an edge key-value store, enabling zero-API runtime delivery.
+_Avoid_: Live API polling, direct runtime proxy
+
+

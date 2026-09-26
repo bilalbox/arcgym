@@ -20,6 +20,7 @@ A complete, build-ready Technical & Experience Architecture Specification in `.s
 - [02 - Research Confidence Calibration scoring models](issues/02-research-confidence-calibration-metrics.md): Established Asymmetric Brier Skill Score ($BSS_{asym}$) with 2.5x overconfidence penalty, discrete 4-chip SLDS confidence anchors, rolling 30-drill ECE tracking, and decoupled streak habit loop.
 - [03 - Research Open-Source LWR deployment and Dual-Surface packaging](issues/03-research-lwr-open-source-and-dual-surface-packaging.md): Blueprint for `@lwrjs/core` static edge deployment on Cloudflare Pages ($0 cost, sub-50ms TTFB) with shared presentational LWCs, dual-surface abstraction, and installable in-org Utility Bar package.
 - [04 - Define interactive state machine and mechanics for the 4 drill formats](issues/04-grilling-drill-interaction-mechanics-and-state-models.md): Locked mechanics for Rapid Fire (6-8 calls), Currency (domain-adaptive budgets), Scenario (Dual-Meter: Trust + Integrity), Lesson (4-stage progressive reveal with in-flight coaching), and a Universal Pre-Submit Gate across all formats.
+- [05 - Design Headless Salesforce Data Model and API Contract](issues/05-grilling-headless-salesforce-data-model-and-api.md): Designed Hybrid Document Pattern for `ArcGym_Drill__c` with `Definition_JSON__c` to stay within 5MB Dev Org limit, partitioned edge telemetry, event-driven outbound webhook sync to Cloudflare KV (0 runtime API calls), and optional Trailblazer OAuth.
 
 ## Not yet specified
 
