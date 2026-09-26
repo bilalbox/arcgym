@@ -48,4 +48,13 @@ _Avoid_: Monolithic custom object, unstructured text
 An architectural pattern where content lifecycle events in Salesforce trigger outbound webhooks to push serialized payloads to an edge key-value store, enabling zero-API runtime delivery.
 _Avoid_: Live API polling, direct runtime proxy
 
+**Architect Linter**:
+The 3-tier automated validation pipeline (Schema, Deterministic Platform Rule Linter, Adversarial CTA Red-Team LLM) that verifies generated drills prior to human editorial review.
+_Avoid_: Code checker, syntax validator
+
+**Antipattern Distractor**:
+An incorrect drill choice deliberately modeled after a documented, real-world architectural antipattern to test an architect's discernment of technical debt and scalability boundaries.
+_Avoid_: Wrong answer, trick option
+
+
 
