@@ -1,0 +1,13 @@
+{
+  "name": "@arcgym/drill-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared presentational Lightning Web Components for ArcGym",
+  "type": "module",
+  "dependencies": {
+    "@arcgym/drill-core": "workspace:*"
+  },
+  "devDependencies": {
+    "lwc": "^8.20.0"
+  }
+}

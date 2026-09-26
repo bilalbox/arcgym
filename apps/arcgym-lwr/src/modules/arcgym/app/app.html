@@ -1,0 +1,110 @@
+<template>
+    <div class="arcgym-container">
+        <!-- Top Navigation -->
+        <header class="slds-global-header_container">
+            <div class="slds-global-header slds-grid slds-grid_align-spread slds-p-horizontal_medium slds-p-vertical_x-small arcgym-nav">
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="arcgym-logo slds-m-right_small">AG</span>
+                    <div>
+                        <span class="slds-text-heading_small slds-text-color_inverse font-weight-bold">Arc<span class="arcgym-logo-accent">Gym</span></span>
+                        <span class="slds-badge slds-badge_lightest slds-m-left_small">Salesforce Architect Edition</span>
+                    </div>
+                </div>
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="arcgym-streak-pill slds-m-right_small">
+                        🔥 <span class="font-weight-bold">{streakDays}</span> Day Streak
+                    </span>
+                    <button class="slds-button slds-button_neutral slds-button_stateful slds-not-selected" onclick={handleAuthClick}>
+                        {authButtonLabel}
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Hero -->
+        <main class="arcgym-main slds-p-around_medium">
+            <div class="arcgym-card slds-card slds-p-around_large slds-shadow_medium">
+                <!-- Header Status -->
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_medium">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <span class="slds-badge slds-theme_success slds-m-right_x-small">TODAY'S DRILL</span>
+                        <span class="slds-text-title_caps slds-text-color_weak">{todayDrill.format} • {todayDrill.domain}</span>
+                    </div>
+                    <div>
+                        <template for:each={todayDrill.pillars} for:item="pillar">
+                            <span key={pillar} class="slds-badge slds-badge_inverse slds-m-left_xx-small">{pillar}</span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Drill Title & Prompt -->
+                <h1 class="slds-text-heading_medium slds-m-bottom_small">{todayDrill.title}</h1>
+                <p class="slds-text-body_regular slds-text-color_weak slds-m-bottom_large arcgym-prompt">
+                    {todayDrill.prompt}
+                </p>
+
+                <!-- Format Indicator Tabs -->
+                <div class="arcgym-format-pills slds-m-bottom_large slds-grid slds-grid_align-center">
+                    <span class="format-pill format-pill-active">Rapid Fire (6 Decisions)</span>
+                    <span class="format-pill">Lesson</span>
+                    <span class="format-pill">Currency</span>
+                    <span class="format-pill">Scenario</span>
+                </div>
+
+                <!-- Interactive Practice Box Placeholder -->
+                <div class="arcgym-practice-box slds-box slds-box_small slds-theme_shade slds-m-bottom_large">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread">
+                        <div>
+                            <span class="slds-text-heading_small">Decision 1 of 6: Decoupled Asynchronous Ingestion</span>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                                Incoming order volume peaks at 120k records/hour. External ERP expects immediate acknowledgment with correlation ID. Which pattern adheres to Well-Architected Reliability?
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="slds-m-top_medium">
+                        <div class="arcgym-option-card">
+                            <span class="font-weight-bold">A.</span> High-Volume Platform Event + CometD/Pub-Sub Replay bus with immediate 202 Accepted
+                        </div>
+                        <div class="arcgym-option-card">
+                            <span class="font-weight-bold">B.</span> Synchronous REST Apex Webhook with direct insert and rollback on error
+                        </div>
+                        <div class="arcgym-option-card">
+                            <span class="font-weight-bold">C.</span> Inbound Zero Copy Query Federation polling external ERP every 15 seconds
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Universal Pre-Submit Gate Banner -->
+                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-top_small slds-border_top">
+                    <div>
+                        <span class="slds-text-title_caps slds-text-color_weak">Say how sure you are (Confidence Calibration):</span>
+                        <div class="slds-m-top_xx-small">
+                            <button class="confidence-chip">50% Speculative</button>
+                            <button class="confidence-chip">70% Plausible</button>
+                            <button class="confidence-chip confidence-chip-active">85% High Conviction</button>
+                            <button class="confidence-chip">95% Architectural Axiom</button>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="slds-button slds-button_brand slds-m-top_small arcgym-submit-btn">
+                            Commit Decision
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grounding Footer -->
+            <footer class="arcgym-footer slds-text-align_center slds-m-top_large">
+                <p class="slds-text-body_small slds-text-color_weak">
+                    ArcGym practice is strictly grounded in official patterns from 
+                    <a href="https://architect.salesforce.com" target="_blank" rel="noopener noreferrer" class="slds-text-link">architect.salesforce.com</a>.
+                </p>
+                <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                    © ArcGym. Built with open-source Lightning Web Components & LWR.
+                </p>
+            </footer>
+        </main>
+    </div>
+</template>

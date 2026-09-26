@@ -1,0 +1,21 @@
+{
+  "name": "arcgym-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ArcGym: Daily judgment practice for Salesforce Architects",
+  "scripts": {
+    "dev": "pnpm --filter @arcgym/lwr dev",
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "preview": "pnpm --filter @arcgym/lwr preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7",
+    "wrangler": "^3.114.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

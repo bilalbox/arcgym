@@ -1,0 +1,29 @@
+{
+  "lwc": {
+    "modules": [
+      { "dir": "$rootDir/src/modules" },
+      { "dir": "$rootDir/../../packages/drill-ui/src/modules" }
+    ]
+  },
+  "bundleConfig": {
+    "minify": true
+  },
+  "routes": [
+    {
+      "id": "home",
+      "path": "/",
+      "rootComponent": "arcgym/app",
+      "layoutTemplate": "$rootDir/src/index.html",
+      "bootstrap": {
+        "syntheticShadow": true
+      }
+    }
+  ],
+  "assets": [
+    {
+      "alias": "slds",
+      "dir": "$rootDir/node_modules/@salesforce-ux/design-system/assets",
+      "urlPath": "/assets/slds"
+    }
+  ]
+}

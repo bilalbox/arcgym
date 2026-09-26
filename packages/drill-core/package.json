@@ -1,0 +1,24 @@
+{
+  "name": "@arcgym/drill-core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pure TypeScript scoring, calibration algorithms, and domain types for ArcGym",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7"
+  }
+}

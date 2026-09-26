@@ -1,0 +1,10 @@
+node_modules/
+.pnpm-store/
+dist/
+site/
+.lwr/
+.wrangler/
+.sf/
+.sfdx/
+*.log
+.DS_Store
