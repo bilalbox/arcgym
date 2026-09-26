@@ -78,17 +78,17 @@
 
                 <!-- Universal Pre-Submit Gate Banner -->
                 <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-p-top_small slds-border_top">
-                    <div>
-                        <span class="slds-text-title_caps slds-text-color_weak">Say how sure you are (Confidence Calibration):</span>
-                        <div class="slds-m-top_xx-small">
-                            <button class="confidence-chip">50% Speculative</button>
-                            <button class="confidence-chip">70% Plausible</button>
-                            <button class="confidence-chip confidence-chip-active">85% High Conviction</button>
-                            <button class="confidence-chip">95% Architectural Axiom</button>
-                        </div>
+                    <div class="slds-size_2-of-3">
+                        <c-confidence-gate
+                            selected-confidence={selectedConfidence}
+                            onconfidenceselected={handleConfidenceSelected}>
+                        </c-confidence-gate>
                     </div>
-                    <div>
-                        <button class="slds-button slds-button_brand slds-m-top_small arcgym-submit-btn">
+                    <div class="slds-size_1-of-3 slds-text-align_right">
+                        <button
+                            class="slds-button slds-button_brand slds-m-top_small arcgym-submit-btn"
+                            disabled={isSubmitDisabled}
+                            onclick={handleSubmitDecision}>
                             Commit Decision
                         </button>
                     </div>

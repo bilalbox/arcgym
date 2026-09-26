@@ -5,9 +5,9 @@
   "description": "Shared presentational Lightning Web Components for ArcGym",
   "type": "module",
   "dependencies": {
-    "@arcgym/drill-core": "workspace:*"
-  },
-  "devDependencies": {
-    "lwc": "^8.20.0"
+    "@arcgym/drill-core": "workspace:*",
+    "lwc": "^8.28.2",
+    "@lwc/engine-dom": "^8.28.2",
+    "@lwc/synthetic-shadow": "^8.28.2"
   }
 }

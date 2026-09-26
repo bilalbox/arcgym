@@ -71,9 +71,14 @@ importers:
       '@arcgym/drill-core':
         specifier: workspace:*
         version: link:../drill-core
-    devDependencies:
+      '@lwc/engine-dom':
+        specifier: ^8.28.2
+        version: 8.28.2
+      '@lwc/synthetic-shadow':
+        specifier: ^8.28.2
+        version: 8.28.2
       lwc:
-        specifier: ^8.20.0
+        specifier: ^8.28.2
         version: 8.28.2(@babel/core@7.29.7(supports-color@8.1.1))(rollup@4.63.5)(supports-color@8.1.1)
 
 packages:

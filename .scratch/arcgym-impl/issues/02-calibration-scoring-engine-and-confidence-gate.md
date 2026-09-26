@@ -5,12 +5,12 @@ A pure TypeScript scoring engine in `packages/drill-core` implementing the Asymm
 
 **Blocked by:** 01: Monorepo Scaffold & Open-Source LWR Shell on Cloudflare
 
-**Status:** ready-for-agent
+**Status:** completed
 
 ## Acceptance criteria
 
-- [ ] `packages/drill-core` exports `ArcGymScoringEngine` implementing $BSS_{asym}$ with $\alpha = 2.5$ overconfidence multiplier.
-- [ ] Longitudinal metric functions implemented: $ECE_{30}$, $JCI_{30}$ ($0$–$1,000$ index), and metacognitive quadrant mapping.
-- [ ] 100% test coverage on calibration calculations using Vitest.
-- [ ] `c-confidence-gate` LWC authored in `packages/drill-ui` without `@salesforce/*` dependencies.
-- [ ] Gate enforces selection before dispatching `confidenceselected` event; visually highlights selected chip using SLDS tokens.
+- [x] `packages/drill-core` exports `ArcGymScoringEngine` implementing $BSS_{asym}$ with $\alpha = 2.5$ overconfidence multiplier.
+- [x] Longitudinal metric functions implemented: $ECE_{30}$, $JCI_{30}$ ($0$–$1,000$ index), and metacognitive quadrant mapping.
+- [x] 100% test coverage on calibration calculations using Vitest.
+- [x] `c-confidence-gate` LWC authored in `packages/drill-ui` without `@salesforce/*` dependencies.
+- [x] Gate enforces selection before dispatching `confidenceselected` event; visually highlights selected chip using SLDS tokens.

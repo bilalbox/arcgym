@@ -1,0 +1,8 @@
+function stylesheet(token, useActualHostSelector, useNativeDirPseudoclass) {
+  var shadowSelector = token ? ("[" + token + "]") : "";
+  var hostSelector = token ? ("[" + token + "-host]") : "";
+  var suffixToken = token ? ("-" + token) : "";
+  return ((useActualHostSelector ? ":host {" : hostSelector + " {")) + "display: block;}.confidence-gate" + shadowSelector + " {width: 100%;}.gate-label" + shadowSelector + " {display: block;font-size: 11px;letter-spacing: 0.06em;color: #706e6b;font-weight: 700;}.chip-container" + shadowSelector + " {gap: 8px;}.confidence-chip" + shadowSelector + " {flex: 1 1 calc(25% - 8px);min-width: 120px;padding: 8px 12px;background-color: #ffffff;border: 1px solid #c9c7c5;border-radius: 6px;cursor: pointer;display: flex;flex-direction: column;align-items: center;justify-content: center;transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);text-align: center;}.confidence-chip:hover:not(:disabled)" + shadowSelector + " {border-color: #0176d3;background-color: #f8fbfe;}.confidence-chip:disabled" + shadowSelector + " {opacity: 0.5;cursor: not-allowed;}.confidence-chip_active" + shadowSelector + " {background-color: #0176d3 !important;border-color: #0176d3 !important;color: #ffffff !important;box-shadow: 0 0 0 2px rgba(1, 118, 211, 0.2);}.chip-percent" + shadowSelector + " {font-weight: 800;font-size: 13px;line-height: 1.2;}.chip-title" + shadowSelector + " {font-size: 11px;opacity: 0.85;margin-top: 2px;}.confidence-chip_active" + shadowSelector + " .chip-title" + shadowSelector + " {color: #e0f2fe;}";
+  /*LWC compiler v8.28.2*/
+}
+export default [stylesheet];
