@@ -31,3 +31,12 @@ _Avoid_: Sentiment, user score
 **Well-Architected Grounding**:
 The architectural rationale, citations, and decision trees anchored directly in official documentation from architect.salesforce.com.
 _Avoid_: Opinion, editorializing
+
+**Universal Pre-Submit Gate**:
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across all drill formats.
+_Avoid_: Feedback prompt, post-quiz survey
+
+**Dual-Meter Tracking**:
+A Scenario drill visualization tracking Stakeholder Trust and Well-Architected Integrity simultaneously to surface technical debt trade-offs.
+_Avoid_: Win/loss meter, single score
+
