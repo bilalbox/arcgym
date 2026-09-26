@@ -10,11 +10,11 @@ Features in-flight coaching guidance explaining trade-offs immediately if a sub-
 
 **Blocked by:** 03: Rapid Fire Drill Runner (Tracer Bullet Vertical Slice #1)
 
-**Status:** ready-for-agent
+**Status:** completed
 
 ## Acceptance criteria
 
-- [ ] `c-lesson-stepper` renders sequential progress across the 4 stages.
-- [ ] Universal Pre-Submit Gate enforced on each stage prior to advancing.
-- [ ] If a sub-optimal choice is selected, inline coaching callout explains why before letting the user retry.
-- [ ] Successful completion awards points, updates calibration profile, and logs completion.
+- [x] `c-lesson-stepper` renders sequential progress across the 4 stages.
+- [x] Universal Pre-Submit Gate enforced on each stage prior to advancing.
+- [x] If a sub-optimal choice is selected, inline coaching callout explains why before letting the user retry.
+- [x] Successful completion awards points, updates calibration profile, and logs completion.
