@@ -1,0 +1,73 @@
+<template>
+    <div class="utility-container">
+        <!-- Compact Header -->
+        <header class="utility-header slds-p-horizontal_small slds-p-vertical_x-small slds-theme_inverse">
+            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="utility-logo">AG</span>
+                    <span class="utility-title font-weight-bold slds-m-left_x-small">ArcGym</span>
+                    <span class="slds-badge slds-badge_lightest slds-m-left_x-small utility-badge">In-Org</span>
+                </div>
+                <div class="slds-grid slds-grid_vertical-align-center">
+                    <span class="utility-streak">🔥 {currentStreak} Days</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Format Selector Pills -->
+        <div class="format-pills-bar slds-p-horizontal_small slds-p-vertical_xx-small slds-border_bottom slds-grid slds-grid_align-center slds-wrap">
+            <button
+                type="button"
+                class={rapidFirePillClass}
+                data-format="Rapid_Fire"
+                onclick={handleSelectFormat}>
+                ⚡ Rapid Fire
+            </button>
+            <button
+                type="button"
+                class={currencyPillClass}
+                data-format="Currency"
+                onclick={handleSelectFormat}>
+                💰 Currency
+            </button>
+            <button
+                type="button"
+                class={scenarioPillClass}
+                data-format="Scenario"
+                onclick={handleSelectFormat}>
+                🎭 Scenario
+            </button>
+            <button
+                type="button"
+                class={lessonPillClass}
+                data-format="Lesson"
+                onclick={handleSelectFormat}>
+                📖 Lesson
+            </button>
+        </div>
+
+        <!-- Body Area: Active Runner -->
+        <main class="utility-body slds-p-around_small">
+            <template if:true={isLoading}>
+                <div class="slds-p-around_large slds-text-align_center">
+                    <lightning-spinner alternative-text="Loading daily architectural drill..." size="medium"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:false={isLoading}>
+                <template if:true={isRapidFire}>
+                    <c-rapid-fire-runner drill={drillData} ondrillcomplete={handleDrillComplete}></c-rapid-fire-runner>
+                </template>
+                <template if:true={isCurrency}>
+                    <c-currency-runner drill={drillData} ondrillcomplete={handleDrillComplete}></c-currency-runner>
+                </template>
+                <template if:true={isScenario}>
+                    <c-dual-meter-scenario drill={drillData} ondrillcomplete={handleDrillComplete}></c-dual-meter-scenario>
+                </template>
+                <template if:true={isLesson}>
+                    <c-lesson-stepper drill={drillData} ondrillcomplete={handleDrillComplete}></c-lesson-stepper>
+                </template>
+            </template>
+        </main>
+    </div>
+</template>
