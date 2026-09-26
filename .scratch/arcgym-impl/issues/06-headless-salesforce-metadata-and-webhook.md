@@ -5,11 +5,11 @@ The Salesforce DX project (`apps/arcgym-sfdx`) defining `ArcGym_Drill__c` (Hybri
 
 **Blocked by:** 01: Monorepo Scaffold & Open-Source LWR Shell on Cloudflare, 03: Rapid Fire Drill Runner (Tracer Bullet Vertical Slice #1)
 
-**Status:** ready-for-agent
+**Status:** completed
 
 ## Acceptance criteria
 
-- [ ] SFDX package directory created with custom object metadata for `ArcGym_Drill__c` and `ArcGym_Daily_Aggregate__c`.
-- [ ] Record-Triggered Flow and Apex Invocable action `ArcGym_WebhookPublisher.cls` implemented to serialize drill payload and compute HMAC-SHA256 signature.
-- [ ] Cloudflare Pages Function `/api/webhooks/publish-drill.ts` implemented to verify signature and persist drill payload into `DRILL_KV`.
-- [ ] `/api/drills/today.ts` endpoint serves today's drill from KV cache with sub-10ms response time and zero live Salesforce API calls.
+- [x] SFDX package directory created with custom object metadata for `ArcGym_Drill__c` and `ArcGym_Daily_Aggregate__c`.
+- [x] Record-Triggered Flow and Apex Invocable action `ArcGym_WebhookPublisher.cls` implemented to serialize drill payload and compute HMAC-SHA256 signature.
+- [x] Cloudflare Pages Function `/api/webhooks/publish-drill.ts` implemented to verify signature and persist drill payload into `DRILL_KV`.
+- [x] `/api/drills/today.ts` endpoint serves today's drill from KV cache with sub-10ms response time and zero live Salesforce API calls.

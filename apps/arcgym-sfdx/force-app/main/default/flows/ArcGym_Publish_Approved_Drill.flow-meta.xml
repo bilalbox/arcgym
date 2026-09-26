@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <actionCalls>
+        <name>Publish_Drill_To_Edge</name>
+        <label>Publish Drill to Edge</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <actionName>ArcGym_WebhookPublisher</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>drillId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>ArcGym_WebhookPublisher</nameSegment>
+    </actionCalls>
+    <description>Publishes approved ArcGym drills to Cloudflare Pages edge cache via signed outbound webhook</description>
+    <environments>Default</environments>
+    <interviewLabel>ArcGym: Publish Approved Drill {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>ArcGym: Publish Approved Drill</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Trigger_Record</name>
+        <label>Trigger Record</label>
+        <locationX>176</locationX>
+        <locationY>215</locationY>
+        <connector>
+            <targetReference>Publish_Drill_To_Edge</targetReference>
+        </connector>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Publish_Drill_To_Edge</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Approved</stringValue>
+            </value>
+        </filters>
+        <object>ArcGym_Drill__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
