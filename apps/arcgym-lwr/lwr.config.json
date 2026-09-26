@@ -24,6 +24,11 @@
       "alias": "slds",
       "dir": "$rootDir/node_modules/@salesforce-ux/design-system/assets",
       "urlPath": "/assets/slds"
+    },
+    {
+      "alias": "publicApi",
+      "dir": "$rootDir/public/api",
+      "urlPath": "/api"
     }
   ]
 }
