@@ -1,6 +1,6 @@
 {
   "id": "AGD-00602",
-  "title": "B2B ABM Go-Live: Activation Membership Without SFMC Duplication",
+  "title": "B2B ABM Go-Live: Relationship-Grain Activation Under a Deadline",
   "format": "Scenario",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 & Data Cloud Zero Copy",
@@ -9,7 +9,7 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 3,
+  "version": 4,
   "status": "published",
   "sourceCardIds": [
     "FC-0D54V00007bLMAFSA4",
@@ -28,22 +28,22 @@
     {
       "moveNumber": 1,
       "stakeholderPersona": "CRM Data Architect",
-      "dialogueText": "\"ABM is in two weeks. Buying committees mean one Contact on several Accounts. Mapping a real Account Contact relationship adds a day of harmonization we do not have—can we just project Contact onto Account Contact and keep moving?\"",
+      "dialogueText": "\"ABM goes live in two weeks, and buying committees put one Contact on several Accounts. Mapping a real Account Contact relationship costs a day of harmonization we do not have. Can we map Account Contact straight from Contact and keep moving?\"",
       "options": [
         {
           "id": "m1_b",
-          "text": "Spend the modeling day: Account Contact as the account–person relationship (e.g. AccountContactRelation), related to Account and Individual/Contact.",
+          "text": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
           "trustDelta": -12,
           "reliabilityDelta": 16,
-          "techDebtImpact": "Burns schedule on DMO harmonization, but leaves a Customer 360 relationship grain that activation can membership on later.",
+          "techDebtImpact": "Costs a day of harmonization now, but each Contact–Account pair gets its own row, which later activations can use as their membership grain.",
           "isOptimal": true
         },
         {
           "id": "m1_a",
-          "text": "Map Account Contact 1:1 from Contact so modeling finishes today and activation planning can start tomorrow.",
+          "text": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
           "trustDelta": 10,
           "reliabilityDelta": -26,
-          "techDebtImpact": "Saves ~1 day now, but collapses many-to-many Account–person roles. Later membership work cannot express “this Contact in this Account” without duplication.",
+          "techDebtImpact": "Saves a day now, but one row per Contact cannot represent a Contact on several Accounts, so later activations lose which Account each row belongs to.",
           "isOptimal": false
         }
       ]
@@ -51,22 +51,22 @@
     {
       "moveNumber": 2,
       "stakeholderPersona": "Data 360 Admin",
-      "dialogueText": "\"The junction DMO is still category Other. Flipping it to Profile means recreate-or-transform work and re-testing relationships—half a sprint—before it shows under Activation Membership. Ship Other and hope the UI lists related DMOs?\"",
+      "dialogueText": "\"The junction DMO is still in the Other category. Moving it to Profile means recreating or transforming it and re-testing its relationships, about half a sprint. Can we leave it as Other and still use it for Activation Membership?\"",
       "options": [
         {
           "id": "m2_a",
-          "text": "Leave category Other and protect the sprint; Activation Membership should accept any DMO related to Account or Contact.",
+          "text": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
           "trustDelta": 12,
           "reliabilityDelta": -24,
-          "techDebtImpact": "Keeps the calendar intact, but Other-category junctions never appear under Activation Membership—marketing will fall back to Contact grain.",
+          "techDebtImpact": "Saves half a sprint now, but only Profile-category DMOs can define activation members, so marketing falls back to Contact membership.",
           "isOptimal": false
         },
         {
           "id": "m2_b",
-          "text": "Pay the recreate/transform cost: set the junction to Profile, re-relate Account and Contact, then expose it under Activation Membership.",
+          "text": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
           "trustDelta": -14,
           "reliabilityDelta": 18,
-          "techDebtImpact": "Consumes schedule on category change and remap, but Profile is what Activation Membership filtering expects for relationship-grain export.",
+          "techDebtImpact": "Costs half a sprint now, but Profile is the category Activation Membership requires, so the junction becomes selectable.",
           "isOptimal": true
         }
       ]
@@ -74,22 +74,22 @@
     {
       "moveNumber": 3,
       "stakeholderPersona": "Marketing Operations Lead",
-      "dialogueText": "\"Dry run: one Contact on two Accounts → two Contact rows in the Shared DE. Re-segmenting on the junction and rewiring membership is another build day. Leadership says activate on Contact and let SFMC dedupe—do we take that shortcut?\"",
+      "dialogueText": "\"In the dry run, a Contact on two Accounts came out as one Data Extension row, and the second Account's attributes were missing. Re-segmenting on the junction and changing membership takes another build day. Leadership says keep Contact membership and let Marketing Cloud sort it out. Do we?\"",
       "options": [
         {
           "id": "m3_a",
-          "text": "Keep membership on Contact/Individual and lean on SFMC subscriber keys / journey dedupe so we do not rebuild the activation.",
+          "text": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
           "trustDelta": 11,
           "reliabilityDelta": -30,
-          "techDebtImpact": "Avoids a rebuild day, but person-grain membership multiplies Shared DE rows per related Account; journeys inherit the duplication.",
+          "techDebtImpact": "Saves a build day now, but Contact membership outputs one row per Contact, so every journey must rebuild the Account context the activation dropped.",
           "isOptimal": false
         },
         {
           "id": "m3_b",
-          "text": "Rebuild: segment on Profile junction rows, set Activation Membership to the junction, traverse attributes to Contact/Individual as needed.",
+          "text": "Segment on the junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
           "trustDelta": -12,
           "reliabilityDelta": 20,
-          "techDebtImpact": "Costs a rebuild cycle, but membership matches the B2B relationship grain so Account sharing stops exploding Contact rows.",
+          "techDebtImpact": "Costs a build day now, but membership on the junction outputs one row per Account–Contact pair, each carrying its own Account attributes.",
           "isOptimal": true
         }
       ]
@@ -97,22 +97,22 @@
     {
       "moveNumber": 4,
       "stakeholderPersona": "SFMC Admin",
-      "dialogueText": "\"Compliance wants every Contact Point Email in the DE. Max # of Attribute Values is stuck at 1. A fan-out transform plus new segment/activation is another multi-day track—can we just raise the attribute limit instead?\"",
+      "dialogueText": "\"Compliance wants every Contact Point Email in the Data Extension, but Max # of Attribute Values is locked at 1. A fan-out transform plus a new segment and activation is a multi-day track. Can we raise the attribute limit instead?\"",
       "options": [
         {
           "id": "m4_b",
-          "text": "Schedule the transform track: fan-out DLO/DMO (one row per Individual–email), segment on it, activate with membership on that grain.",
+          "text": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
           "trustDelta": -15,
           "reliabilityDelta": 17,
-          "techDebtImpact": "Burns multi-day scope on transform + re-activation, but payload can choose a contact identifier per email row for compliance.",
+          "techDebtImpact": "Costs several days of transform and activation work, but each email becomes its own Data Extension row that Marketing Cloud can address.",
           "isOptimal": true
         },
         {
           "id": "m4_a",
-          "text": "Raise Max # of Attribute Values on Contact Point Email (or a file-based activation DMO) and keep the existing membership object.",
+          "text": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
           "trustDelta": 13,
           "reliabilityDelta": -26,
-          "techDebtImpact": "Looks like a same-day config win, but native activation will not fan out multiple emails per Individual via that limit—secondary addresses never become addressable rows.",
+          "techDebtImpact": "Saves several days now, but a higher limit packs the extra emails onto the same Individual row, which Marketing Cloud cannot send to.",
           "isOptimal": false
         }
       ]
