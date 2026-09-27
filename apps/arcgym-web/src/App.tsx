@@ -202,7 +202,7 @@ export const App: React.FC = () => {
             Daily architectural judgment practice
           </h1>
           <p className="text-sm sm:text-base text-slate-500 max-w-2xl leading-relaxed">
-            AI can write Apex and Flow. You are still the architect. 2-minute daily trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
+            Daily trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
           </p>
         </div>
 

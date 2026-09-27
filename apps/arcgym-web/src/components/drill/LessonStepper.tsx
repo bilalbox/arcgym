@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
 import { DrillFormat, LessonDrillDefinition } from '@arcgym/drill-core';
 import { CheckCircle2, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export const LessonStepper: React.FC<{
   drill: LessonDrillDefinition;
@@ -61,7 +60,6 @@ export const LessonStepper: React.FC<{
       const correct = outcomes.filter(Boolean).length;
       const accuracy = correct / drill.stages.length;
       setIsCompleted(true);
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
       onDrillComplete?.({
         drillId: drill.id,
         format: 'Lesson',

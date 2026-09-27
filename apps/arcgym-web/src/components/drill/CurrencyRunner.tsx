@@ -13,7 +13,6 @@ import {
   isArchitectBudgetOptimal,
 } from '@arcgym/drill-core';
 import { Gauge, AlertTriangle, CheckCircle2, RotateCcw, ExternalLink } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export const CurrencyRunner: React.FC<{
   drill: CurrencyDrillDefinition;
@@ -62,10 +61,6 @@ export const CurrencyRunner: React.FC<{
     setWasOptimal(optimal);
     setScore(brierResult.pointsAwarded);
     setIsSubmitted(true);
-
-    if (optimal) {
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-    }
 
     onDrillComplete?.({
       drillId: drill.id,

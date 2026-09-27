@@ -1,26 +1,28 @@
 #!/usr/bin/env node
 /**
  * ArcGym RAG Drill Generator CLI
- * 
- * Retrieves official Salesforce Well-Architected chunks from ChromaDB and
- * generates high-fidelity judgment drills with distractor antipatterns and citations.
- * 
+ *
+ * Builds a grounded drill-authoring prompt from official Salesforce Well-Architected chunks
+ * (ChromaDB) and, optionally, a reviewed Friction Card. The coding agent answers the prompt;
+ * `ingest` validates the agent's drill JSON and saves it as a draft.
+ *
  * Usage:
- *   npx tsx scripts/generator/generate-drill.ts --topic "Agentforce Guardrails and PII Masking"
- *   npx tsx scripts/generator/generate-drill.ts --topic "Data Cloud Zero Copy Snowflake" --prompt-only
- *   npx tsx scripts/generator/generate-drill.ts --topic "Large Data Volumes Skinny Tables" --auto-build
- *   npx tsx scripts/generator/generate-drill.ts --from-card FC-0D5KX00000jAOVQ0A4 --prompt-only
+ *   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-0D5KX00000jATZ10AO > /tmp/drill-prompt.md
+ *   npx tsx scripts/generator/generate-drill.ts prompt --topic "Large Data Volumes Skinny Tables" --format Lesson
+ *   npx tsx scripts/generator/generate-drill.ts ingest /tmp/AGD-00402.json [--force]
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { execFileSync, execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const CHROMA_SEARCH_SCRIPT = path.join(ROOT_DIR, 'scripts/crawler/search_chroma.py');
 const FRICTION_CARDS_PATH = path.join(ROOT_DIR, 'data/friction_cards.json');
 const WELL_ARCHITECTED_PILLARS = ['Trust', 'Reliability', 'Operational_Excellence', 'Cost_Optimization', 'Fairness'];
+const SUPPORTED_FORMATS = ['Rapid_Fire', 'Lesson'] as const;
+const DIFFICULTIES = ['Associate_Domain_Architect', 'Lead_CTA'] as const;
 
 interface ChromaChunk {
   content: string;
@@ -52,195 +54,151 @@ interface FrictionCard {
   official_doc_query: string;
 }
 
-interface CliArgs {
+interface PromptArgs {
   topic: string;
   domain?: string;
   pillar?: string;
-  format: 'Rapid_Fire' | 'Currency' | 'Scenario' | 'Lesson';
-  difficulty: 'Associate_Domain_Architect' | 'Lead_CTA';
+  format: (typeof SUPPORTED_FORMATS)[number];
+  difficulty: (typeof DIFFICULTIES)[number];
   steps: number;
   id?: string;
   topK: number;
-  promptOnly: boolean;
-  autoBuild: boolean;
-  outFile?: string;
   fromCard?: string;
   /** Overrides the ChromaDB search phrase (defaults to the card's official_doc_query, then the topic). */
   query?: string;
 }
 
-function parseArgs(): CliArgs {
-  const args = process.argv.slice(2);
-  const result: CliArgs = {
+function fail(message: string): never {
+  console.error(`[ERROR] ${message}`);
+  process.exit(1);
+}
+
+function parsePromptArgs(args: string[]): PromptArgs {
+  const result: PromptArgs = {
     topic: '',
     format: 'Rapid_Fire',
     difficulty: 'Lead_CTA',
     steps: 3,
     topK: 5,
-    promptOnly: false,
-    autoBuild: false,
   };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--topic' && args[i + 1]) {
+    const value = args[i + 1];
+    if (arg === '--topic' && value) {
       result.topic = args[++i];
-    } else if (arg === '--domain' && args[i + 1]) {
+    } else if (arg === '--domain' && value) {
       result.domain = args[++i];
-    } else if (arg === '--pillar' && args[i + 1]) {
+    } else if (arg === '--pillar' && value) {
       result.pillar = args[++i];
-    } else if (arg === '--format' && args[i + 1]) {
-      result.format = args[++i] as any;
-    } else if (arg === '--difficulty' && args[i + 1]) {
-      result.difficulty = args[++i] as any;
-    } else if (arg === '--steps' && args[i + 1]) {
+    } else if (arg === '--format' && value) {
+      if (!SUPPORTED_FORMATS.includes(value as any)) {
+        fail(`--format must be one of ${SUPPORTED_FORMATS.join('|')} (Currency and Scenario drills are authored by hand)`);
+      }
+      result.format = args[++i] as PromptArgs['format'];
+    } else if (arg === '--difficulty' && value) {
+      if (!DIFFICULTIES.includes(value as any)) {
+        fail(`--difficulty must be one of ${DIFFICULTIES.join('|')}`);
+      }
+      result.difficulty = args[++i] as PromptArgs['difficulty'];
+    } else if (arg === '--steps' && value) {
       result.steps = parseInt(args[++i], 10);
-    } else if (arg === '--id' && args[i + 1]) {
+    } else if (arg === '--id' && value) {
       result.id = args[++i];
-    } else if (arg === '--top-k' && args[i + 1]) {
+    } else if (arg === '--top-k' && value) {
       result.topK = parseInt(args[++i], 10);
-    } else if (arg === '--prompt-only') {
-      result.promptOnly = true;
-    } else if (arg === '--auto-build') {
-      result.autoBuild = true;
-    } else if (arg === '--out' && args[i + 1]) {
-      result.outFile = args[++i];
-    } else if (arg === '--from-card' && args[i + 1]) {
+    } else if (arg === '--from-card' && value) {
       result.fromCard = args[++i];
-    } else if (arg === '--query' && args[i + 1]) {
+    } else if (arg === '--query' && value) {
       result.query = args[++i];
+    } else {
+      fail(`Unknown or incomplete argument: ${arg}`);
     }
   }
 
   return result;
 }
 
-function loadFrictionCard(cardId: string): FrictionCard {
+function loadFrictionCards(): FrictionCard[] {
   if (!fs.existsSync(FRICTION_CARDS_PATH)) {
-    throw new Error(`${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`);
+    fail(`${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`);
   }
-  const catalog = JSON.parse(fs.readFileSync(FRICTION_CARDS_PATH, 'utf-8'));
-  const card = (catalog.cards as FrictionCard[]).find((c) => c.card_id === cardId);
+  return JSON.parse(fs.readFileSync(FRICTION_CARDS_PATH, 'utf-8')).cards as FrictionCard[];
+}
+
+function loadFrictionCard(cardId: string): FrictionCard {
+  const card = loadFrictionCards().find((c) => c.card_id === cardId);
   if (!card) {
-    throw new Error(`Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`);
+    fail(`Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`);
   }
   return card;
 }
 
-function getNextDrillId(format: string = 'Rapid_Fire'): string {
-  if (!fs.existsSync(DRILLS_DIR)) {
-    if (format === 'Lesson') return 'AGD-00701';
-    if (format === 'Currency') return 'AGD-00501';
-    if (format === 'Scenario') return 'AGD-00601';
-    return 'AGD-00401';
-  }
-  const files = fs.readdirSync(DRILLS_DIR).filter((f) => f.endsWith('.json'));
-
-  if (format === 'Lesson') {
-    let maxNum = 700;
-    for (const f of files) {
-      const match = f.match(/AGD-00(7\d\d)\.json/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
-  }
-
-  if (format === 'Currency') {
-    let maxNum = 500;
-    for (const f of files) {
-      const match = f.match(/AGD-00(5\d\d)\.json/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
-  }
-
-  if (format === 'Scenario') {
-    let maxNum = 600;
-    for (const f of files) {
-      const match = f.match(/AGD-00(6\d\d)\.json/);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
-      }
-    }
-    return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
-  }
-
-  let maxNum = 0;
+/** Generated Rapid_Fire drills use AGD-00401..00499; Lessons use AGD-00701..00799. */
+function getNextDrillId(format: PromptArgs['format']): string {
+  const [floor, ceiling] = format === 'Lesson' ? [700, 800] : [400, 500];
+  const files = fs.existsSync(DRILLS_DIR) ? fs.readdirSync(DRILLS_DIR) : [];
+  let maxNum = floor;
   for (const f of files) {
-    const match = f.match(/AGD-(\d+)\.json/);
-    if (match) {
-      const num = parseInt(match[1], 10);
-      if (num < 500 && num > maxNum) maxNum = num;
-    }
+    const match = f.match(/^AGD-(\d{5})\.json$/);
+    const num = match ? parseInt(match[1], 10) : 0;
+    if (num > maxNum && num < ceiling) maxNum = num;
   }
-  const nextNum = Math.max(401, maxNum + 1);
-  return `AGD-${String(nextNum).padStart(5, '0')}`;
+  return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
 }
 
 function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[] {
-  console.log(`[RAG] Searching ChromaDB for: "${query}" (top ${topK})...`);
+  console.error(`[RAG] Searching ChromaDB for: "${query}" (top ${topK})...`);
   try {
     const cmdArgs = ['run', '--with', 'chromadb', 'python', CHROMA_SEARCH_SCRIPT, query, '--top-k', String(topK), '--json'];
     if (pillar) {
       cmdArgs.push('--pillar', pillar);
     }
     const output = execFileSync('uv', cmdArgs, { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
-    const parsed = JSON.parse(output.trim());
-    return parsed as ChromaChunk[];
+    return JSON.parse(output.trim()) as ChromaChunk[];
   } catch (err: any) {
-    console.warn(`[WARN] Chroma search failed (${err.message}). Falling back to flat JSON data if available.`);
+    console.error(`[WARN] Chroma search failed (${err.message}). Falling back to flat JSON data if available.`);
     const fallbackPath = path.join(ROOT_DIR, 'data/architect_chunks.json');
-    if (fs.existsSync(fallbackPath)) {
-      const raw = fs.readFileSync(fallbackPath, 'utf-8');
-      const allChunks = JSON.parse(raw);
-      const queryLower = query.toLowerCase();
-      const matched = allChunks
-        .filter((c: any) => c.text.toLowerCase().includes(queryLower) || c.section_title.toLowerCase().includes(queryLower))
-        .slice(0, topK)
-        .map((c: any) => ({
-          content: c.text,
-          metadata: {
-            doc_title: c.doc_title,
-            section_title: c.section_title,
-            breadcrumb: c.breadcrumb,
-            pillar: c.pillar,
-            category: c.category,
-            url: c.url,
-            crawled_at: c.crawled_at,
-            char_count: c.text.length,
-          },
-          cosine_similarity: 0.8,
-        }));
-      return matched;
-    }
-    return [];
+    if (!fs.existsSync(fallbackPath)) return [];
+    const allChunks = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+    const queryLower = query.toLowerCase();
+    return allChunks
+      .filter((c: any) => c.text.toLowerCase().includes(queryLower) || c.section_title.toLowerCase().includes(queryLower))
+      .slice(0, topK)
+      .map((c: any) => ({
+        content: c.text,
+        metadata: {
+          doc_title: c.doc_title,
+          section_title: c.section_title,
+          breadcrumb: c.breadcrumb,
+          pillar: c.pillar,
+          category: c.category,
+          url: c.url,
+          crawled_at: c.crawled_at,
+          char_count: c.text.length,
+        },
+        cosine_similarity: 0.8,
+      }));
   }
 }
 
-function resolveCanonicalDomain(category?: string, pillar?: string): { domain: string; domainLabel: string } {
-  if (pillar === 'Agentforce' || category?.includes('agent')) {
-    return { domain: 'Ai_And_Automation', domainLabel: 'Agentic AI & Automation' };
-  }
-  if (pillar === 'Data_360' || category?.includes('data')) {
-    return { domain: 'Data_Architecture', domainLabel: 'Data Architecture & Virtualization' };
-  }
-  if (category === 'decision-guides' || category?.includes('integration')) {
-    return { domain: 'Integration_Apis', domainLabel: 'Integration APIs & Events' };
-  }
-  if (pillar === 'Trust' || category?.includes('security')) {
-    return { domain: 'Security_And_Access', domainLabel: 'Security & Access' };
-  }
-  if (category === 'devops' || category?.includes('devops')) {
-    return { domain: 'Devops_Lifecycle', domainLabel: 'DevOps & Governance' };
-  }
-  return { domain: 'Platform_Core', domainLabel: 'Platform Core & Scalability' };
+const DOMAIN_LABELS: Record<string, string> = {
+  Ai_And_Automation: 'Agentic AI & Automation',
+  Data_Architecture: 'Data Architecture & Virtualization',
+  Integration_Apis: 'Integration APIs & Events',
+  Security_And_Access: 'Security & Access',
+  Devops_Lifecycle: 'DevOps & Governance',
+  Infrastructure: 'Infrastructure',
+  Platform_Core: 'Platform Core & Scalability',
+};
+
+function inferDomain(category?: string, pillar?: string): string {
+  if (pillar === 'Agentforce' || category?.includes('agent')) return 'Ai_And_Automation';
+  if (pillar === 'Data_360' || category?.includes('data')) return 'Data_Architecture';
+  if (category === 'decision-guides' || category?.includes('integration')) return 'Integration_Apis';
+  if (pillar === 'Trust' || category?.includes('security')) return 'Security_And_Access';
+  if (category === 'devops' || category?.includes('devops')) return 'Devops_Lifecycle';
+  return 'Platform_Core';
 }
 
 /** Chunk `pillar` metadata mixes product areas (Core_Platform, Data_360) with Well-Architected pillars. */
@@ -264,12 +222,12 @@ ${approaches}
 
 ### Rules for Using Practitioner Friction:
 1. Build the scenario from the problem and constraints above, restated in enterprise terms. Do not name the community, the thread, or any person.
-2. Every incorrect option MUST be modeled on one of the naive approaches above, not a generic strawman. Explain why it fails in the antipattern field.
-3. The community resolution is NOT grounding. The correct option must be supported and cited by the official documentation chunks below. If the chunks do not support any correct answer for this problem, output only {"error": "<what official guidance is missing>"} instead of a drill.
+2. Model each incorrect option on one of the naive approaches above, spreading distractors across them. A naive approach whose fix the chunks do not govern still makes a good distractor.
+3. The community resolution is context, not grounding: the correct option rests on the official chunks alone.
 `;
 }
 
-function buildPrompt(chunks: ChromaChunk[], args: CliArgs, drillId: string, card?: FrictionCard): string {
+function buildPrompt(chunks: ChromaChunk[], args: PromptArgs, drillId: string, card?: FrictionCard): string {
   const frictionSection = buildFrictionSection(card);
   const contextText = chunks
     .map(
@@ -284,14 +242,14 @@ ${c.content}
     )
     .join('\n');
 
-  const resolved = resolveCanonicalDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
-  const domain = args.domain || resolved.domain;
-  const domainLabel = resolved.domainLabel;
+  const domain = args.domain || inferDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
+  const domainLabel = DOMAIN_LABELS[domain] ?? domain;
   const pillars = resolvePillars(chunks, card);
   const pillarSpec = pillars.length
     ? JSON.stringify(pillars)
     : `choose 1-3 from ${WELL_ARCHITECTED_PILLARS.join(' | ')}`;
   const pillarExample = JSON.stringify(pillars.length ? pillars : ['Reliability']);
+  const sourceCardLine = card ? `\n  "sourceCardIds": ["${card.card_id}"],` : '';
 
   if (args.format === 'Lesson') {
     return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
@@ -304,8 +262,9 @@ Generate a high-stakes, realistic 4-stage architectural Lesson drill formatted a
    - Stage 3: Migration & Cutover Strategy (zero-downtime cutover, backward compatibility, feature toggles, or canary rollout)
    - Stage 4: Telemetry & Observability (transaction monitoring, health thresholds, drift alerts, or Event Monitoring)
 2. Authoritative Coaching Feedback: Every option MUST include detailed 'coachingFeedback' explaining precisely why it is correct (grounded in official Salesforce architecture) or why it is an architectural antipattern.
-3. Grounding & Citations: Ground decisions directly in the provided official documentation chunks from architect.salesforce.com.
-4. Language & Tone: Professional, authoritative CTA-level precision. Sentence-case typography. No filler phrases.
+3. Grounding: Every correct option is grounded: its coachingFeedback restates guidance from one of the official chunks below. If the chunks cannot ground all 4 stages, output only {"error": "<what official guidance is missing>"}.
+4. Option Balance: Place the correct option in varied positions across stages, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
+5. Language & Tone: Professional, authoritative CTA-level precision. Sentence-case typography. No filler phrases.
 
 ### Target Drill Specifications:
 - Drill ID: "${drillId}"
@@ -330,7 +289,7 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "difficulty": "${args.difficulty}",
   "pillars": ${pillarExample},
   "version": 1,
-  "status": "draft",
+  "status": "draft",${sourceCardLine}
   "stages": [
     {
       "stageNumber": 1,
@@ -418,9 +377,10 @@ Generate a high-stakes, realistic architectural judgment drill formatted as vali
 
 ### Core Authoring Principles:
 1. Dilemma Under Constraint: Do NOT write simple trivia or recall questions. Pose a realistic enterprise scenario with competing priorities (e.g. scale vs cost, real-time vs governor limits, speed vs trust).
-2. Explicit Antipatterns: Every distractor option MUST have a named, real-world architectural antipattern in 'distractorAntipattern' (e.g. "Direct trigger callout blocks threads and risks uncommitted work exception", "CDC does not allow business payload enrichment prior to external egress").
-3. Grounding & Citations: The correct choice MUST cite the official Salesforce Well-Architected documentation URL provided in the context chunks below.
-4. Language & Tone: Professional, authoritative, CTA-level precision. Sentence-case typography. No casual jargon or LLM filler phrases.
+2. Explicit Antipatterns: Every distractor option MUST name a real-world architectural antipattern in 'distractorAntipattern' as a short name (e.g. "ETL Data Hoarding", "Synchronous Callout Coupling"), and explain why it fails in 'rationale'. Use 3 options per step.
+3. Grounding: Every correct option is grounded: its rationale restates guidance from one chunk below, and its citationUrl is that chunk's Citation URL, copied exactly. Write only steps the chunks govern; fewer steps than requested is right when they govern fewer decisions. If they govern none, output only {"error": "<what official guidance is missing>"}.
+4. Option Balance: Place the correct option in varied positions across steps, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
+5. Language & Tone: Professional, authoritative, CTA-level precision. Sentence-case typography. No casual jargon or LLM filler phrases.
 
 ### Target Drill Specifications:
 - Drill ID: "${drillId}"
@@ -430,7 +390,7 @@ Generate a high-stakes, realistic architectural judgment drill formatted as vali
 - Pillars: ${pillarSpec}
 - Format: "${args.format}"
 - Difficulty: "${args.difficulty}"
-- Number of Steps: ${args.steps}
+- Number of Steps: up to ${args.steps}
 ${frictionSection}
 ### Grounding Documentation Chunks from architect.salesforce.com:
 ${contextText}
@@ -446,7 +406,7 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "difficulty": "${args.difficulty}",
   "pillars": ${pillarExample},
   "version": 1,
-  "status": "draft",
+  "status": "draft",${sourceCardLine}
   "steps": [
     {
       "id": "s1",
@@ -456,8 +416,8 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
           "id": "s1_a",
           "label": "Option A description...",
           "isCorrect": false,
-          "distractorAntipattern": "Concise architectural explanation of why this fails or violates platform principles",
-          "rationale": "Why this option is suboptimal",
+          "distractorAntipattern": "Short Antipattern Name",
+          "rationale": "Why this option fails or violates platform principles",
           "citationUrl": "${chunks[0]?.metadata?.url || 'https://architect.salesforce.com'}"
         },
         {
@@ -474,269 +434,90 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
 `;
 }
 
-async function callLlmIfAvailable(prompt: string): Promise<string | null> {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-
-  if (geminiKey) {
-    try {
-      console.log('[LLM] Calling Google Gemini API...');
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: 'application/json' },
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.candidates[0].content.parts[0].text;
-      }
-    } catch (e: any) {
-      console.warn(`[WARN] Gemini call failed: ${e.message}`);
-    }
-  }
-
-  if (openaiKey) {
-    try {
-      console.log('[LLM] Calling OpenAI API...');
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          response_format: { type: 'json_object' },
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return data.choices[0].message.content;
-      }
-    } catch (e: any) {
-      console.warn(`[WARN] OpenAI call failed: ${e.message}`);
-    }
-  }
-
-  return null;
-}
-
-function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: string, card?: FrictionCard): any {
-  const topChunk = chunks[0] || {
-    content: 'Salesforce Well-Architected guidance',
-    metadata: {
-      doc_title: 'Well-Architected Framework',
-      section_title: 'Core Principles',
-      pillar: 'Reliability',
-      url: 'https://architect.salesforce.com',
-      breadcrumb: 'Well-Architected > Reliability',
-    },
-  };
-
-  const resolved = resolveCanonicalDomain(topChunk.metadata?.category, topChunk.metadata?.pillar);
-  const domain = args.domain || resolved.domain;
-  const domainLabel = resolved.domainLabel;
-  const resolvedPillars = resolvePillars(chunks, card);
-  const scaffoldPillars = resolvedPillars.length ? resolvedPillars : ['Reliability'];
-
-  if (args.format === 'Lesson') {
-    const stageDefs = [
-      {
-        stageNumber: 1,
-        stageName: 'Stage 1: Forensic Diagnosis',
-        scenario: `In an enterprise production org implementing ${args.topic}, users experience latency spikes and transaction failures under peak concurrency. Based on official platform guidance, what is the root architectural bottleneck?`,
-        correctText: `The current architecture violates platform boundaries: ${topChunk.metadata.section_title || 'uncontrolled synchronous processing'} introduces unmonitored thread consumption and lock contention.`,
-        correctFeedback: `Correct! Grounded in ${topChunk.metadata.doc_title} (${topChunk.metadata.url}), uncoordinated synchronous processing risks governor exhaustion and unhandled exceptions.`,
-        distractorText: `The issue is an unavoidable platform infrastructure limit that must be resolved by requesting a temporary governor limit increase from Salesforce Support.`,
-        distractorFeedback: `Antipattern: Requesting limit increases masks structural design antipatterns and violates Well-Architected Operational Excellence standards.`,
-      },
-      {
-        stageNumber: 2,
-        stageName: 'Stage 2: Target Architecture Pattern',
-        scenario: `To resolve this bottleneck while adhering to Well-Architected ${topChunk.metadata.pillar || 'Reliability'}, what is the recommended target architecture pattern?`,
-        correctText: `Implement a decoupled, stateful pattern aligning with ${topChunk.metadata.section_title || 'standard platform patterns'}: isolate transactions and enforce deterministic governor limits.`,
-        correctFeedback: `Correct! ${topChunk.metadata.doc_title} recommends decoupling workload boundaries to guarantee operational isolation and transaction boundaries.`,
-        distractorText: `Deploy additional point-and-click automations without governance frameworks or compensating controls.`,
-        distractorFeedback: `Antipattern: Layering ungoverned automations multiplies transaction depth, recursion, and unpredictability.`,
-      },
-      {
-        stageNumber: 3,
-        stageName: 'Stage 3: Migration & Cutover Strategy',
-        scenario: `How should you safely cut over from the legacy architecture to the new pattern in a live enterprise production environment without downtime?`,
-        correctText: `Deploy an org-wide feature toggle (Custom Metadata or Custom Permission) allowing phased canary tenant routing and instant zero-downtime rollback.`,
-        correctFeedback: `Correct! Well-Architected Operational Excellence mandates feature toggles and canary cutovers for high-risk architectural migrations.`,
-        distractorText: `Perform an immediate hard cutover during active business hours and monitor the exception log queue for user failure reports.`,
-        distractorFeedback: `Antipattern: Direct cutovers without circuit breakers cause live user data loss and uncoordinated transaction rollback.`,
-      },
-      {
-        stageNumber: 4,
-        stageName: 'Stage 4: Telemetry & Observability',
-        scenario: `What observability and telemetry mechanism must be implemented to continuously verify platform health and prevent architectural drift?`,
-        correctText: `Configure real-time event streams (Event Monitoring) and proactive platform metrics to monitor execution latency, limit headroom, and failure alerts.`,
-        correctFeedback: `Correct! Proactive telemetry provides sub-second visibility into execution ceilings and operational health.`,
-        distractorText: `Rely on weekly apex batch error digest emails sent to system administrators to identify transaction failures.`,
-        distractorFeedback: `Antipattern: Batch digest emails are reactive and fail to provide the granularity needed for high-stakes enterprise systems.`,
-      },
-    ];
-
-    return {
-      id: drillId,
-      title: `${args.topic}: 4-stage Well-Architected refactor`,
-      format: 'Lesson',
-      domain,
-      domainLabel,
-      difficulty: args.difficulty,
-      pillars: scaffoldPillars,
-      version: 1,
-      status: 'draft',
-      stages: stageDefs.map((st) => ({
-        stageNumber: st.stageNumber,
-        stageName: st.stageName,
-        scenario: st.scenario,
-        options: [
-          {
-            id: `st${st.stageNumber}_a`,
-            text: st.correctText,
-            isCorrect: true,
-            coachingFeedback: st.correctFeedback,
-          },
-          {
-            id: `st${st.stageNumber}_b`,
-            text: st.distractorText,
-            isCorrect: false,
-            coachingFeedback: st.distractorFeedback,
-          },
-        ],
-      })),
-    };
-  }
-
-  const steps = [];
-  for (let i = 0; i < args.steps; i++) {
-    const chunk = chunks[i] || topChunk;
-    const naive = card?.naive_approaches[i % card.naive_approaches.length];
-    steps.push({
-      id: `s${i + 1}`,
-      prompt: card
-        ? `${card.problem} How should you address it?`
-        : `In an enterprise implementation concerning ${args.topic}, how should you address: ${chunk.metadata.section_title || chunk.metadata.doc_title}?`,
-      options: [
-        {
-          id: `s${i + 1}_a`,
-          label: naive?.approach ?? `Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.`,
-          isCorrect: false,
-          distractorAntipattern: naive?.why_it_fails ?? `Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.`,
-          rationale: naive?.why_it_fails ?? `Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.`,
-          citationUrl: chunk.metadata.url,
-        },
-        {
-          id: `s${i + 1}_b`,
-          label: `Architect a Well-Architected solution complying with ${chunk.metadata.pillar || 'Reliability'}: Decouple asynchronous processing and enforce deterministic governor limits.`,
-          isCorrect: true,
-          rationale: `According to ${chunk.metadata.doc_title} (${chunk.metadata.breadcrumb || ''}), this pattern ensures transactional integrity and system resilience.`,
-          citationUrl: chunk.metadata.url,
-        },
-      ],
-    });
-  }
-
-  return {
-    id: drillId,
-    title: `${args.topic}: ${topChunk.metadata.section_title || 'Architectural Trade-offs'}`,
-    format: args.format,
-    domain,
-    domainLabel,
-    difficulty: args.difficulty,
-    pillars: scaffoldPillars,
-    version: 1,
-    status: 'draft',
-    steps,
-  };
-}
-
-async function main() {
-  const args = parseArgs();
+function runPrompt(argv: string[]) {
+  const args = parsePromptArgs(argv);
   const card = args.fromCard ? loadFrictionCard(args.fromCard) : undefined;
   if (card) {
     args.topic ||= card.title;
     args.domain ||= card.domain;
   }
-  args.topic ||= 'Salesforce Well-Architected Decisions';
+  if (!args.topic) {
+    fail('Pass --topic or --from-card.');
+  }
   const drillId = args.id || getNextDrillId(args.format);
 
-  console.log('\n======================================================');
-  console.log(`   ArcGym RAG Drill Generator (${drillId})`);
-  console.log('======================================================\n');
-  console.log(`Topic:      ${args.topic}`);
-  console.log(`Format:     ${args.format}`);
-  console.log(`Difficulty: ${args.difficulty}`);
-  console.log(`Steps:      ${args.steps}`);
-  if (card) console.log(`Card:       ${card.card_id} (${card.naive_approaches.length} naive approaches)`);
+  console.error(`[Generator] ${drillId} | ${args.format} | ${args.difficulty} | topic: ${args.topic}`);
+  if (card) console.error(`[Generator] Card ${card.card_id} (${card.naive_approaches.length} naive approaches)`);
 
-  // Step 1: Retrieve context from ChromaDB
   const chunks = queryChroma(args.query ?? card?.official_doc_query ?? args.topic, args.topK, args.pillar);
-  console.log(`[RAG] Retrieved ${chunks.length} matching architectural chunks from ChromaDB.\n`);
-
-  // Step 2: Build prompt
-  const prompt = buildPrompt(chunks, args, drillId, card);
-
-  if (args.promptOnly) {
-    console.log('------------------------------------------------------');
-    console.log('COMPILED RAG PROMPT FOR EXTERNAL LLM:');
-    console.log('------------------------------------------------------\n');
-    console.log(prompt);
-    return;
+  if (chunks.length === 0) {
+    fail('No official chunks retrieved. Retry with --query "<better doc search>".');
+  }
+  for (const c of chunks) {
+    console.error(`  ${c.cosine_similarity.toFixed(2)}  ${c.metadata.doc_title} > ${c.metadata.section_title}`);
   }
 
-  // Step 3: Try LLM generation if API key exists
-  let drillJson: any = null;
-  const llmResponse = await callLlmIfAvailable(prompt);
+  process.stdout.write(buildPrompt(chunks, args, drillId, card));
+}
 
-  if (llmResponse) {
-    try {
-      drillJson = JSON.parse(llmResponse);
-      console.log('✓ Successfully generated drill via LLM API!');
-    } catch (e) {
-      console.warn('Could not parse LLM output as JSON directly. Falling back to scaffold.');
-    }
-  }
-
-  if (drillJson?.error) {
-    console.error(`[ABORT] LLM declined: ${drillJson.error}`);
-    console.error('Retry with --query "<better doc search>", or fix the card\'s doc query in `friction_cards.py review` and re-export.');
-    process.exit(1);
-  }
-
-  // Step 4: Fallback to scaffold if no LLM API available
-  if (!drillJson) {
-    console.log('[INFO] No LLM API key detected or call skipped. Generating grounded CTA drill scaffold from retrieved chunks...');
-    drillJson = generateScaffoldDrill(chunks, args, drillId, card);
-  }
-  if (card) {
-    drillJson.sourceCardIds = [card.card_id];
-  }
-
-  // Step 5: Save output file
-  const outPath = args.outFile || path.join(DRILLS_DIR, `${drillId}.json`);
-  fs.writeFileSync(outPath, JSON.stringify(drillJson, null, 2), 'utf-8');
-  console.log(`\n✓ Saved new drill to: ${outPath}`);
-
-  // Step 6: Optionally run validation & build
-  if (args.autoBuild) {
-    console.log('\n[BUILD] Running build-drills.ts to validate and compile...');
-    execSync('npx tsx scripts/build-drills.ts', { stdio: 'inherit', cwd: ROOT_DIR });
-  } else {
-    console.log('\nTip: Run `pnpm build` or `npx tsx scripts/build-drills.ts` to validate and compile this drill into the app.');
+function parseDrillResponse(raw: string): any {
+  const fenced = raw.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  try {
+    return JSON.parse(fenced ? fenced[1] : raw);
+  } catch (e: any) {
+    fail(`Response is not valid JSON: ${e.message}`);
   }
 }
 
-main().catch((err) => {
-  console.error('[FATAL]', err);
-  process.exit(1);
-});
+function runIngest(argv: string[]) {
+  const file = argv.find((a) => !a.startsWith('--'));
+  const force = argv.includes('--force');
+  if (!file) {
+    fail('Usage: generate-drill.ts ingest <drill.json> [--force]');
+  }
+
+  const drill = parseDrillResponse(fs.readFileSync(file, 'utf-8'));
+  if (drill.error) {
+    fail(`The drill author declined: ${drill.error}\nRetry the prompt with --query "<better doc search>", or fix the card's doc query in \`friction_cards.py review\` and re-export.`);
+  }
+  if (typeof drill.id !== 'string' || !/^AGD-\d{5}$/.test(drill.id)) {
+    fail(`id must look like AGD-00000 (got ${drill.id})`);
+  }
+  if (drill.sourceCardIds !== undefined) {
+    const known = new Set(loadFrictionCards().map((c) => c.card_id));
+    const unknown = (drill.sourceCardIds as string[]).filter((id) => !known.has(id));
+    if (unknown.length) {
+      fail(`sourceCardIds not in the approved catalog: ${unknown.join(', ')}`);
+    }
+  }
+
+  const outPath = path.join(DRILLS_DIR, `${drill.id}.json`);
+  const previous = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf-8') : null;
+  if (previous !== null && !force) {
+    fail(`${outPath} already exists. Pass --force to overwrite, or regenerate the prompt for a fresh id.`);
+  }
+
+  drill.status = 'draft';
+  fs.writeFileSync(outPath, JSON.stringify(drill, null, 2) + '\n', 'utf-8');
+
+  try {
+    execFileSync('npx', ['tsx', 'scripts/build-drills.ts'], { stdio: 'inherit', cwd: ROOT_DIR });
+  } catch {
+    if (previous === null) {
+      fs.unlinkSync(outPath);
+    } else {
+      fs.writeFileSync(outPath, previous, 'utf-8');
+    }
+    fail(`Validation failed; ${outPath} was rolled back. Fix ${file} and rerun ingest.`);
+  }
+  console.error(`\n✓ Saved draft drill: ${outPath}`);
+}
+
+const [command, ...rest] = process.argv.slice(2);
+if (command === 'prompt') {
+  runPrompt(rest);
+} else if (command === 'ingest') {
+  runIngest(rest);
+} else {
+  fail('Usage: generate-drill.ts prompt [--from-card FC-… | --topic "…"] [options] | ingest <drill.json> [--force]');
+}

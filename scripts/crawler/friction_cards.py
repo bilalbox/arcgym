@@ -3,13 +3,14 @@
 Friction Card Extraction & Review
 Turns crawled Trailhead Community threads into Friction Cards: paraphrased records of
 the architectural problem, the naive approaches practitioners tried, and the resolution.
-Cards are staged in SQLite (data/trailhead.db), reviewed by a human, and only approved
-cards are exported to data/friction_cards.json (local only, git-ignored) for the drill generator.
+The coding agent answers the extraction prompts; cards are staged in SQLite (data/trailhead.db),
+reviewed by a human, and only approved cards are exported to data/friction_cards.json
+(local only, git-ignored) for the drill generator.
 
 Usage:
-  python scripts/crawler/friction_cards.py extract --limit 10          # needs GEMINI_API_KEY or OPENAI_API_KEY
-  python scripts/crawler/friction_cards.py extract --prompt-only --thread 0D5KX00000jAOVQ0A4
-  python scripts/crawler/friction_cards.py import responses.json      # cards produced from --prompt-only output
+  python scripts/crawler/friction_cards.py prompt --limit 10 > /tmp/card-prompts.md
+  python scripts/crawler/friction_cards.py prompt --thread 0D5KX00000jAOVQ0A4
+  python scripts/crawler/friction_cards.py import /tmp/cards.json     # the agent's answers, as a JSON array
   python scripts/crawler/friction_cards.py review
   python scripts/crawler/friction_cards.py list --status approved
   python scripts/crawler/friction_cards.py export
@@ -22,8 +23,6 @@ import json
 import sqlite3
 import argparse
 import subprocess
-import urllib.request
-import urllib.error
 from datetime import datetime, timezone
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
@@ -48,11 +47,11 @@ EXTRACTION_PROMPT = """You are reviewing a Salesforce Trailblazer Community thre
 Extract a Friction Card: the architectural problem, the approaches practitioners tried or proposed that do not work, and the resolution.
 
 Rules:
-- Paraphrase everything. Do not quote posts. Do not include any person's name or @mention.
+- Paraphrase everything in your own words, and refer to people by role (practitioner, replier) rather than name.
 - Set "relevant" to false (and leave other fields empty) if the thread has no architectural decision in it, for example a learning-path request, a UI glitch, or a licensing question.
-- naive_approaches: only approaches the thread itself attempts, proposes, or warns against. Do not invent any. An empty list is acceptable.
+- naive_approaches: each one faithful, meaning the thread itself attempts, proposes, or warns against it. Fewer faithful approaches beat more; an empty list is fine.
 - resolution_source: "best_answer" if the accepted answer resolves the problem, "thread_consensus" if replies agree without an accepted answer, otherwise "unresolved".
-- official_doc_query: a short search phrase for finding the matching official Salesforce architecture guidance on architect.salesforce.com.
+- official_doc_query: the phrase you would type into architect.salesforce.com search to find the guidance that governs this problem.
 
 Thread title: {title}
 Thread URL: {url}
@@ -68,6 +67,7 @@ Replies:
 
 Output only JSON in this shape:
 {{
+  "discussion_id": "{discussion_id}",
   "relevant": true,
   "title": "Short sentence-case title for the problem",
   "domain": "one of {domains}",
@@ -132,6 +132,7 @@ def thread_replies(raw_payload: str) -> list:
 def build_prompt(row: sqlite3.Row) -> str:
     replies = thread_replies(row["raw_payload"])
     return EXTRACTION_PROMPT.format(
+        discussion_id=row["id"],
         title=truncate(row["headline"], 300),
         url=row["url"],
         question=truncate(row["body_text"]) or "(empty)",
@@ -178,42 +179,6 @@ def normalize_card(raw: dict) -> tuple:
     return "pending", card
 
 
-def call_llm(prompt: str, model: str = None) -> tuple:
-    """Returns (response_text, model_name). Uses the same providers as generate-drill.ts."""
-    gemini_key = os.environ.get("GEMINI_API_KEY")
-    openai_key = os.environ.get("OPENAI_API_KEY")
-
-    if gemini_key:
-        model = model or "gemini-1.5-pro"
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={gemini_key}"
-        body = {"contents": [{"parts": [{"text": prompt}]}], "generationConfig": {"responseMimeType": "application/json"}}
-        data = post_json(url, body, {})
-        return data["candidates"][0]["content"]["parts"][0]["text"], model
-
-    if openai_key:
-        model = model or "gpt-4o"
-        body = {"model": model, "response_format": {"type": "json_object"}, "messages": [{"role": "user", "content": prompt}]}
-        data = post_json("https://api.openai.com/v1/chat/completions", body, {"Authorization": f"Bearer {openai_key}"})
-        return data["choices"][0]["message"]["content"], model
-
-    print("[ERROR] No GEMINI_API_KEY or OPENAI_API_KEY set. Use --prompt-only and then `import` the responses.")
-    sys.exit(1)
-
-
-def post_json(url: str, body: dict, headers: dict) -> dict:
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(body).encode("utf-8"),
-        headers={"Content-Type": "application/json", **headers},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"HTTP {e.code}: {e.read().decode('utf-8')[:500]}")
-
-
 def save_card(conn: sqlite3.Connection, discussion_id: str, status: str, card: dict, model: str):
     conn.execute("""
     INSERT INTO friction_cards (card_id, discussion_id, status, card, model, extracted_at)
@@ -229,7 +194,7 @@ def save_card(conn: sqlite3.Connection, discussion_id: str, status: str, card: d
     conn.commit()
 
 
-def cmd_extract(args):
+def cmd_prompt(args):
     conn = connect(args.db_path)
     if args.thread:
         rows = conn.execute("SELECT * FROM discussions WHERE id = ?", (args.thread,)).fetchall()
@@ -246,31 +211,14 @@ def cmd_extract(args):
         """, (args.min_comments, args.limit if args.limit > 0 else -1)).fetchall()
 
     print(f"[Friction Cards] {len(rows)} thread(s) selected.", file=sys.stderr)
-    counts = {"pending": 0, "irrelevant": 0, "failed": 0}
     for row in rows:
-        prompt = build_prompt(row)
-        if args.prompt_only:
-            print(f"===== discussion_id: {row['id']} =====")
-            print(prompt)
-            continue
-        try:
-            text, model = call_llm(prompt, args.model)
-            status, card = normalize_card(json.loads(text))
-        except (RuntimeError, ValueError, KeyError, json.JSONDecodeError) as e:
-            counts["failed"] += 1
-            print(f"  [SKIP] {row['id']}: {e}", file=sys.stderr)
-            continue
-        save_card(conn, row["id"], status, card, model)
-        counts[status] += 1
-        print(f"  [{status.upper()}] {card_id_for(row['id'])}: {card.get('title', row['headline'][:60])}", file=sys.stderr)
-
-    if not args.prompt_only:
-        print(f"[Friction Cards] pending: {counts['pending']}, irrelevant: {counts['irrelevant']}, failed: {counts['failed']}", file=sys.stderr)
+        print(f"===== discussion_id: {row['id']} =====")
+        print(build_prompt(row))
     conn.close()
 
 
 def cmd_import(args):
-    """Import cards produced externally from --prompt-only output. Each entry needs discussion_id plus card fields."""
+    """Import the agent's answers to `prompt`: a JSON object or array, each entry carrying discussion_id."""
     conn = connect(args.db_path)
     with open(args.file, encoding="utf-8") as f:
         entries = json.load(f)
@@ -439,18 +387,16 @@ def main():
     parser.add_argument("--db-path", default=DEFAULT_DB_PATH, help="Path to SQLite database")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser("extract", help="Extract cards from threads that do not have one yet")
-    p.add_argument("--limit", type=int, default=10, help="Max threads to process (0 for all)")
-    p.add_argument("--thread", help="Extract a single discussion ID (re-extracts if a card exists)")
+    p = sub.add_parser("prompt", help="Print extraction prompts for threads that do not have a card yet")
+    p.add_argument("--limit", type=int, default=10, help="Max threads to include (0 for all)")
+    p.add_argument("--thread", help="Prompt for a single discussion ID, even if it already has a card")
     p.add_argument("--min-comments", type=int, default=1, help="Skip threads with fewer replies")
-    p.add_argument("--force", action="store_true", help="Re-extract threads that already have a card")
-    p.add_argument("--model", help="Override the provider's default model")
-    p.add_argument("--prompt-only", action="store_true", help="Print extraction prompts instead of calling an LLM")
-    p.set_defaults(func=cmd_extract)
+    p.add_argument("--force", action="store_true", help="Include threads that already have a card")
+    p.set_defaults(func=cmd_prompt)
 
-    p = sub.add_parser("import", help="Import cards (JSON object or array with discussion_id) produced externally")
+    p = sub.add_parser("import", help="Import the agent's answers (JSON object or array with discussion_id)")
     p.add_argument("file")
-    p.add_argument("--model", default="external", help="Model name to record for provenance")
+    p.add_argument("--model", default="coding-agent", help="Model name to record for provenance")
     p.set_defaults(func=cmd_import)
 
     p = sub.add_parser("list", help="List staged cards")
@@ -467,7 +413,7 @@ def main():
     p.add_argument("--note")
     p.set_defaults(func=cmd_set_status)
 
-    p = sub.add_parser("export", help="Write approved cards to the tracked catalog")
+    p = sub.add_parser("export", help="Write approved cards to the local catalog used by the drill generator")
     p.add_argument("--out", default=DEFAULT_EXPORT_PATH)
     p.set_defaults(func=cmd_export)
 

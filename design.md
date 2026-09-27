@@ -128,5 +128,5 @@ The Pre-Submit Gate enforces discrete confidence calibration before any commit:
 
 To eliminate "AI-generated" visual tells:
 * **Micro-Transitions:** Strictly capped at `150ms ease-out`. Never use bouncy spring physics or delayed stagger fades.
-* **No Confetti on Individual Questions:** Confetti is reserved exclusively for completing the entire daily drill (all reps finished).
+* **Zero Confetti:** Confetti is completely removed across all drills and completions to maintain professional architectural restraint.
 * **Hover Effects:** Subtle border color shift (`border-slate-200` -> `border-slate-400`), zero hover translateY or scale zooms.

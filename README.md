@@ -75,16 +75,16 @@ python scripts/crawler/crawl_architect.py
 # Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
 python scripts/crawler/crawl_trailhead.py --limit 100
 
-# Turn threads into Friction Cards, review them, and export approved cards to data/friction_cards.json (gitignored)
-python scripts/crawler/friction_cards.py extract --limit 10   # GEMINI_API_KEY or OPENAI_API_KEY; or --prompt-only, then `import`
+# Friction Cards and drills are written by your coding agent (no LLM API keys). Project skills:
+#   .cursor/skills/extracting-friction-cards  — agent answers `friction_cards.py prompt`, then `import`s
+#   .cursor/skills/generating-drills          — agent answers `generate-drill.ts prompt`, then `ingest`s
+# Human steps: review staged cards, then export approved ones to data/friction_cards.json (gitignored)
 python scripts/crawler/friction_cards.py review               # [p] previews official docs for the card's query, [e] edits it
 python scripts/crawler/friction_cards.py export
 
-# Generate a draft drill from Chroma context (status defaults to draft)
-npx tsx scripts/generator/generate-drill.ts --topic "Your topic"
-
-# Model distractors on a reviewed Friction Card; the correct answer is still grounded in official docs
-npx tsx scripts/generator/generate-drill.ts --from-card FC-<discussion_id> [--query "override doc search"]
+# Manual drill flow: build the grounded prompt, answer it, then validate and save as a draft
+npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<discussion_id> [--format Lesson] [--query "…"] > prompt.md
+npx tsx scripts/generator/generate-drill.ts ingest drill.json
 
 # Legacy keyword clustering (superseded by Friction Cards; writes data/curated_community_patterns.json)
 python scripts/crawler/analyze_trailhead_patterns.py

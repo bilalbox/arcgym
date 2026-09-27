@@ -12,7 +12,6 @@ import {
   DrillAttemptRecord,
 } from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 interface StepResult {
   stepId: string;
@@ -85,7 +84,6 @@ export const RapidFireRunner: React.FC<{
 
     setStepResults((prev) => [...prev, newResult]);
     setIsSubmitted(true);
-    // Notice: Purged single-question confetti here! Confetti is only fired upon drill completion.
   };
 
   const handleNext = () => {
@@ -96,11 +94,6 @@ export const RapidFireRunner: React.FC<{
       setIsSubmitted(false);
     } else {
       setIsCompleted(true);
-      confetti({
-        particleCount: 80,
-        spread: 60,
-        origin: { y: 0.6 },
-      });
 
       let nextStreak = 1;
       try {

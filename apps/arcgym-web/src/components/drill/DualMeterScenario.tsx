@@ -6,7 +6,6 @@ import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
 import { DrillFormat, ScenarioDrillDefinition } from '@arcgym/drill-core';
 import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 
 export const DualMeterScenario: React.FC<{
   drill: ScenarioDrillDefinition;
@@ -65,7 +64,6 @@ export const DualMeterScenario: React.FC<{
       setIsSubmitted(false);
     } else {
       setIsCompleted(true);
-      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       const finalScore = Math.round((trustScore + reliabilityScore) / 2);
       onDrillComplete?.({
         drillId: drill.id,
