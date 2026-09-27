@@ -1,6 +1,6 @@
 {
   "id": "AGD-00210",
-  "title": "Credit Economics: Stop Streaming Static Catalog Feeds",
+  "title": "Credit Economics: Ingestion Mode for Slow-Changing Catalog Data",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 Credit Governance",
@@ -9,33 +9,33 @@
     "Cost_Optimization",
     "Operational_Excellence"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Data 360 credits are burning down early each month. An audit finds 50 streaming connectors on product catalog tables that change about once a week, while scarce credit headroom is needed for real-time behavioral streams. What refactor is required?",
+      "prompt": "Data 360 credits run out before month end. An audit finds 50 product catalog tables ingested in streaming mode, though catalog rows change about once a week and merchandisers read them once a day. What should the architect change?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Transition slow-changing catalog data streams from continuous streaming to daily batch ingestion",
+          "label": "Move the catalog tables to scheduled batch ingestion that runs once a day",
           "isCorrect": true,
-          "rationale": "Streaming connectors consume continuous compute credits for micro-batch polling; switching weekly/daily reference data to scheduled batch drastically reduces credit burn.",
+          "rationale": "Batch ingestion is the cost-efficient mode for periodic loads, while streaming's 1–3 minute increments are meant for near-live engagement. Rows that change weekly and are read daily need only a daily batch, which stops paying for freshness nobody uses.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
         },
         {
           "id": "s1_b",
-          "label": "Increase the streaming buffer flush interval to 60 minutes while keeping continuous connectors",
+          "label": "Switch the catalog tables to real-time CDC ingestion so only changed rows move",
           "isCorrect": false,
-          "distractorAntipattern": "Adjusting flush intervals does not eliminate the fixed infrastructure credit cost of 50 active streaming listener connections.",
-          "rationale": "Increasing flush intervals reduces message write frequency but still maintains 50 continuous streaming compute workers, yielding minimal credit savings."
+          "distractorAntipattern": "Over-Fresh Reference Ingestion",
+          "rationale": "Real-time ingestion is designed for sub-second, time-sensitive workflows; buying sub-second freshness for data read once a day moves spend the wrong way."
         },
         {
           "id": "s1_c",
-          "label": "Consolidate all 50 product catalog tables into a single high-frequency Ingestion API endpoint",
+          "label": "Consolidate the 50 catalog streams into one Ingestion API streaming connector",
           "isCorrect": false,
-          "distractorAntipattern": "Directing 50 tables through a continuous Ingestion API endpoint still incurs streaming ingestion credit tariffs.",
-          "rationale": "Streaming static reference data via the Ingestion API still bills at continuous streaming rates rather than lower-cost batch processing tiers."
+          "distractorAntipattern": "Connector Consolidation Fallacy",
+          "rationale": "Fewer connectors do not change the mode: the rows still arrive by streaming, paying for 1–3 minute freshness that once-a-day readers never use."
         }
       ]
     }
