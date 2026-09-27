@@ -20,23 +20,9 @@ function hitCounts(drills: DrillDefinitionDTO[]): Partial<Record<WordingRuleId, 
   return counts;
 }
 
-/** Update as the draft rewrite lands; build-drills enforces zero findings on published drills. */
+/** Ingest rejects drafts with findings and build-drills rejects published ones, so the corpus stays clean. */
 describe('wording findings on content/drills', () => {
-  const corpus = loadCorpus();
-
-  it('matches the recorded hit counts across all drills', () => {
-    expect(hitCounts(corpus)).toEqual({
-      'lesson-min-options': 12,
-      'length-tell': 18,
-      'verdict-prefix': 42,
-      'antipattern-name': 46,
-      'label-echo': 2,
-      'self-refuting-distractor': 5,
-      'long-stem': 1,
-    });
-  });
-
-  it('has no findings on published drills', () => {
-    expect(hitCounts(corpus.filter((d) => d.status === 'published'))).toEqual({});
+  it('has no findings on any drill', () => {
+    expect(hitCounts(loadCorpus())).toEqual({});
   });
 });
