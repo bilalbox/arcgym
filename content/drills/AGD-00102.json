@@ -1,6 +1,6 @@
 {
   "id": "AGD-00102",
-  "title": "Large Data Volumes: Eliminating Reporting Timeouts Across 18M Rows",
+  "title": "Large Data Volumes: Report Timeouts on an 18M-Row Object",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
   "difficulty": "Associate_Domain_Architect",
@@ -8,33 +8,33 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A custom object Transaction__c contains 18 million records. Standard reports filtering on Region__c and Fiscal_Quarter__c while sorting by CreatedDate are timing out. How should the architect optimize query performance?",
+      "prompt": "Transaction__c holds 18 million rows split evenly across 6 values of Region__c. Analysts review only the current quarter, about 600,000 rows, but their reports filter on Region__c and time out. The Query Plan Tool shows a table scan. What should the architect change?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Request a Skinny Table from Salesforce Support containing the filtered and sorted fields",
+          "label": "Add a current-quarter CreatedDate range to the report filters",
           "isCorrect": true,
-          "rationale": "Skinny tables combine standard and custom fields into a flat, unjoined database table, eliminating table join overhead for LDV reporting and queries.",
+          "rationale": "Selective queries filter first on an indexed field so the optimizer can use the index instead of scanning. CreatedDate carries a standard index, and a 600,000-row quarter stays under the 1 million row ceiling for standard indexes, while each region matches 3 million rows.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/resource-and-cost-optimization.html#query-selectivity"
         },
         {
           "id": "s1_b",
-          "label": "Create custom indexes on Region__c and Fiscal_Quarter__c and sort by standard CreatedDate",
+          "label": "Request a custom index on Region__c from Salesforce Support",
           "isCorrect": false,
-          "distractorAntipattern": "Independent single-column b-tree indexes cannot eliminate composite sort overhead on standard CreatedDate across 18M rows.",
-          "rationale": "Independent single-column indexes force the query optimizer to perform index union/merges and an expensive in-memory sort on CreatedDate across millions of rows, still timing out standard reports."
+          "distractorAntipattern": "Low-Cardinality Custom Index",
+          "rationale": "On an 18 million row object a custom index is used only when the filter matches fewer than 333,333 rows, and each region matches 3 million, so the optimizer still scans."
         },
         {
           "id": "s1_c",
-          "label": "Create a deterministic formula field combining Region and Quarter with a custom index",
+          "label": "Request a skinny table that holds Region__c and the report columns",
           "isCorrect": false,
-          "distractorAntipattern": "A custom index on a concatenated formula does not optimize composite sorting on standard CreatedDate during report aggregation.",
-          "rationale": "While deterministic formula fields can be indexed, filtering on concatenated text does not eliminate the full table sort on standard CreatedDate for 18 million records."
+          "distractorAntipattern": "Skinny Table Scan Shortcut",
+          "rationale": "A skinny table removes the join between standard and custom field storage, but a Region__c filter matching 3 million rows stays non-selective, so the report still scans 18 million rows."
         }
       ]
     }
