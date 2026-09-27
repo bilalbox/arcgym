@@ -1,0 +1,76 @@
+{
+  "id": "AGD-00401",
+  "title": "Agentforce Atlas Reasoning and Guardrails: The LLM boundary: where judgment ends and code begins (Part 1)",
+  "format": "Rapid_Fire",
+  "domain": "Agentic Enterprise & Governance",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Agentforce"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "In an enterprise implementation concerning Agentforce Atlas Reasoning and Guardrails, how should you address: The LLM boundary: where judgment ends and code begins (Part 1)?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.",
+          "isCorrect": false,
+          "distractorAntipattern": "Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.",
+          "rationale": "Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#the-llm-boundary-where-judgment-ends-and-code-begins"
+        },
+        {
+          "id": "s1_b",
+          "label": "Architect a Well-Architected solution complying with Agentforce: Decouple asynchronous processing and enforce deterministic governor limits.",
+          "isCorrect": true,
+          "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > The LLM boundary: where judgment ends and code begins), this pattern ensures transactional integrity and system resilience.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#the-llm-boundary-where-judgment-ends-and-code-begins"
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "prompt": "In an enterprise implementation concerning Agentforce Atlas Reasoning and Guardrails, how should you address: How the new Agentforce architecture works (Part 5)?",
+      "options": [
+        {
+          "id": "s2_a",
+          "label": "Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.",
+          "isCorrect": false,
+          "distractorAntipattern": "Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.",
+          "rationale": "Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#how-the-new-agentforce-architecture-works"
+        },
+        {
+          "id": "s2_b",
+          "label": "Architect a Well-Architected solution complying with Agentforce: Decouple asynchronous processing and enforce deterministic governor limits.",
+          "isCorrect": true,
+          "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > How the new Agentforce architecture works), this pattern ensures transactional integrity and system resilience.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#how-the-new-agentforce-architecture-works"
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "prompt": "In an enterprise implementation concerning Agentforce Atlas Reasoning and Guardrails, how should you address: When to use deterministic logic (Part 3)?",
+      "options": [
+        {
+          "id": "s3_a",
+          "label": "Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.",
+          "isCorrect": false,
+          "distractorAntipattern": "Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.",
+          "rationale": "Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#when-to-use-deterministic-logic"
+        },
+        {
+          "id": "s3_b",
+          "label": "Architect a Well-Architected solution complying with Agentforce: Decouple asynchronous processing and enforce deterministic governor limits.",
+          "isCorrect": true,
+          "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > When to use deterministic logic), this pattern ensures transactional integrity and system resilience.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#when-to-use-deterministic-logic"
+        }
+      ]
+    }
+  ]
+}

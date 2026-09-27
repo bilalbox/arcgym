@@ -20,6 +20,8 @@ def main():
     parser.add_argument("--pillar", type=str, default=None, help="Filter by pillar (e.g. Trust, Reliability, Agentforce, Data_360)")
     parser.add_argument("--category", type=str, default=None, help="Filter by category (e.g. decision-guides, well-architected)")
     
+    parser.add_argument("--json", action="store_true", help="Output results in JSON format")
+    
     args = parser.parse_args()
     
     if not os.path.exists(CHROMA_DIR):
@@ -49,6 +51,21 @@ def main():
         
     results = collection.query(**query_kwargs)
     
+    if args.json:
+        import json
+        output_items = []
+        docs = results["documents"][0]
+        metas = results["metadatas"][0]
+        distances = results["distances"][0]
+        for doc, meta, dist in zip(docs, metas, distances):
+            output_items.append({
+                "content": doc,
+                "metadata": meta,
+                "cosine_similarity": max(0.0, 1.0 - dist)
+            })
+        print(json.dumps(output_items, indent=2))
+        return
+
     print("\n===========================================================")
     print(f"  ArcGym Chroma Search: \"{args.query}\"")
     print(f"  Total Indexed Chunks in Collection: {collection.count()}")

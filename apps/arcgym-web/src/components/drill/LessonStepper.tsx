@@ -142,26 +142,26 @@ export const LessonStepper: React.FC<{
 
   if (isCompleted) {
     return (
-      <Card className="border-slate-200/90 shadow-md">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <CheckCircle2 className="h-8 w-8" />
+      <Card className="border-miro-hairline bg-white shadow-xs">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-900">4-Stage Refactor Complete!</h3>
-          <p className="text-sm text-slate-500">
+          <h3 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">4-stage refactor complete</h3>
+          <p className="text-sm text-slate-500 mt-1 leading-relaxed">
             You successfully refactored a failing legacy automation monolith into a production-grade Well-Architected solution.
           </p>
         </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs text-slate-700">
-            <p className="font-semibold text-slate-900">Refactoring Milestones Achieved:</p>
+        <CardContent className="space-y-4 pt-0">
+          <div className="p-5 bg-miro-surface rounded-2xl border border-miro-hairlineSoft space-y-2 text-xs text-slate-700">
+            <p className="font-medium text-miro-primary">Refactoring milestones achieved:</p>
             <p>✓ Stage 1: Identified SOQL-in-loop CPU bottleneck</p>
             <p>✓ Stage 2: Mapped to bulkified Apex Trigger Handler pattern</p>
             <p>✓ Stage 3: Engineered zero-downtime feature toggle cutover</p>
             <p>✓ Stage 4: Deployed Real-Time Event Monitoring observability</p>
           </div>
-          <Button onClick={handleReset} variant="outline" className="w-full gap-2">
-            <RotateCcw className="h-4 w-4" /> Practice Another Refactor
+          <Button onClick={handleReset} variant="secondary" className="w-full gap-2">
+            <RotateCcw className="h-4 w-4" /> Practice another refactor
           </Button>
         </CardContent>
       </Card>
@@ -169,15 +169,15 @@ export const LessonStepper: React.FC<{
   }
 
   return (
-    <Card className="border-slate-200/90 shadow-sm">
-      <CardHeader className="pb-4 border-b border-slate-100">
+    <Card className="border-miro-hairline bg-white shadow-xs">
+      <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="domain">Automation Governance</Badge>
             <Badge variant="pillar">Operational_Excellence</Badge>
             <Badge variant="pillar">Reliability</Badge>
           </div>
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs text-slate-500 font-medium">
             {currentStage.stageName}
           </span>
         </div>
@@ -189,10 +189,10 @@ export const LessonStepper: React.FC<{
               key={s.stageNumber}
               className={`h-1.5 rounded-full transition-all ${
                 idx < currentStageIdx
-                  ? 'bg-emerald-500'
+                  ? 'bg-emerald-600'
                   : idx === currentStageIdx
-                  ? 'bg-blue-600'
-                  : 'bg-slate-200'
+                  ? 'bg-miro-primary'
+                  : 'bg-miro-hairlineSoft'
               }`}
             />
           ))}
@@ -201,7 +201,7 @@ export const LessonStepper: React.FC<{
 
       <CardContent className="pt-6 space-y-6">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900 leading-snug">
+          <h3 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">
             {currentStage.scenario}
           </h3>
         </div>
@@ -209,25 +209,25 @@ export const LessonStepper: React.FC<{
         <div className="space-y-3">
           {currentStage.options.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
-            let borderStyle = 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60 bg-white';
+            let borderStyle = 'border-miro-hairline hover:border-slate-400 bg-white text-slate-800';
 
             if (isSubmitted) {
               if (opt.isCorrect) {
-                borderStyle = 'border-2 border-emerald-500 bg-emerald-50/70 font-medium text-emerald-950';
+                borderStyle = 'border-2 border-emerald-600 bg-emerald-50/50 text-slate-900 font-medium';
               } else if (isSelected && !opt.isCorrect) {
-                borderStyle = 'border-2 border-rose-500 bg-rose-50/70 text-rose-950';
+                borderStyle = 'border-2 border-rose-500 bg-rose-50/60 text-slate-900';
               } else {
-                borderStyle = 'border-slate-200 opacity-50 bg-white';
+                borderStyle = 'border-miro-hairline opacity-45 bg-white';
               }
             } else if (isSelected) {
-              borderStyle = 'border-2 border-blue-600 bg-blue-50/60 font-medium text-blue-950 shadow-xs';
+              borderStyle = 'border-2 border-miro-primary bg-slate-50/80 font-medium text-miro-primary';
             }
 
             return (
               <div
                 key={opt.id}
                 onClick={() => !isSubmitted && setSelectedOptionId(opt.id)}
-                className={`p-4 rounded-xl border text-sm transition-all duration-150 cursor-pointer ${borderStyle}`}
+                className={`p-4 rounded-xl border text-sm transition-all duration-150 cursor-pointer leading-normal ${borderStyle}`}
               >
                 <p>{opt.text}</p>
               </div>
@@ -241,26 +241,26 @@ export const LessonStepper: React.FC<{
             onSelectConfidence={setSelectedConfidence}
             onSubmit={handleSubmit}
             hasSelectedAnswer={!!selectedOptionId}
-            submitLabel="Commit Stage Refactor"
+            submitLabel="Commit stage refactor"
           />
         ) : (
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3 animate-in fade-in-50 duration-200">
+          <div className="mt-6 rounded-2xl border border-miro-hairline bg-miro-surface p-6 space-y-3">
             <div className="flex items-center gap-2">
               {chosenOption?.isCorrect ? (
-                <Badge variant="success" className="gap-1 px-3 py-1">
-                  <CheckCircle2 className="h-4 w-4" /> Well-Architected Choice
+                <Badge variant="success" className="gap-1.5 px-3 py-1">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Well-Architected choice
                 </Badge>
               ) : (
-                <Badge variant="destructive" className="gap-1 px-3 py-1">
-                  <AlertTriangle className="h-4 w-4" /> Antipattern Risk
+                <Badge variant="destructive" className="gap-1.5 px-3 py-1">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Antipattern risk
                 </Badge>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
               {chosenOption?.coachingFeedback}
             </p>
             <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
-              Advance to Next Stage <ArrowRight className="h-4 w-4" />
+              Advance to next stage <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         )}

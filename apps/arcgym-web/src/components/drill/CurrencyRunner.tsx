@@ -61,46 +61,46 @@ export const CurrencyRunner: React.FC<{
   };
 
   return (
-    <Card className="border-slate-200/90 shadow-sm">
-      <CardHeader className="pb-4 border-b border-slate-100">
+    <Card className="border-miro-hairline bg-white shadow-xs">
+      <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="domain">Core Platform Governor Capacity</Badge>
             <Badge variant="pillar">Reliability</Badge>
             <Badge variant="pillar">Cost_Optimization</Badge>
           </div>
           <div className="flex items-center gap-2 font-mono text-xs">
-            <Gauge className="h-4 w-4 text-blue-600" />
-            <span className={isOverBudget ? 'text-rose-600 font-bold' : 'text-slate-700 font-semibold'}>
+            <Gauge className="h-4 w-4 text-miro-blue" />
+            <span className={isOverBudget ? 'text-miro-dangerText font-medium' : 'text-slate-700 font-medium'}>
               Allocated: {allocatedTotal} / {TOTAL_BUDGET} pts
             </span>
           </div>
         </div>
         <Progress
           value={Math.min(100, allocatedTotal)}
-          className={`mt-3 h-2 ${isOverBudget ? 'bg-rose-100' : 'bg-slate-100'}`}
-          indicatorClassName={isOverBudget ? 'bg-rose-600' : allocatedTotal > 85 ? 'bg-amber-500' : 'bg-blue-600'}
+          className="mt-3"
+          indicatorClassName={isOverBudget ? 'bg-rose-500' : allocatedTotal > 85 ? 'bg-amber-500' : 'bg-miro-primary'}
         />
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-slate-900 leading-snug">
-            Order Spike Pipeline: Allocate 100-Point Governor Capacity Budget
+          <h3 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">
+            Order spike pipeline: allocate 100-point governor capacity budget
           </h3>
-          <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-            During a Black Friday spike (10,000 orders/sec into Salesforce), allocate your 100-point transaction
+          <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+            During a peak volume spike (10,000 orders/sec into Salesforce), allocate your 100-point transaction
             envelope across four critical architectural resources to prevent transaction rollback under high concurrency.
           </p>
         </div>
 
         {/* Sliders */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-4 bg-slate-50/80 rounded-xl border border-slate-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
           {/* SOQL Queries */}
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-semibold text-slate-700">
-              <span>Database SOQL & Locking Budget</span>
-              <span className="font-mono text-blue-700">{soqlPoints} pts</span>
+            <div className="flex justify-between text-xs font-medium text-slate-700">
+              <span>Database SOQL & locking budget</span>
+              <span className="font-mono text-miro-primary font-semibold">{soqlPoints} pts</span>
             </div>
             <Slider
               disabled={isSubmitted}
@@ -109,16 +109,16 @@ export const CurrencyRunner: React.FC<{
               max={50}
               step={5}
             />
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[12px] text-slate-500 leading-normal">
               Controls indexed SOQL selectivity and FOR UPDATE parent-child lock contention.
             </p>
           </div>
 
           {/* Apex CPU Time */}
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-semibold text-slate-700">
-              <span>Apex CPU Execution Budget</span>
-              <span className="font-mono text-blue-700">{cpuPoints} pts</span>
+            <div className="flex justify-between text-xs font-medium text-slate-700">
+              <span>Apex CPU execution budget</span>
+              <span className="font-mono text-miro-primary font-semibold">{cpuPoints} pts</span>
             </div>
             <Slider
               disabled={isSubmitted}
@@ -127,16 +127,16 @@ export const CurrencyRunner: React.FC<{
               max={60}
               step={5}
             />
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[12px] text-slate-500 leading-normal">
               Allocated to high-density bulkified triggers and JSON business validation.
             </p>
           </div>
 
           {/* Heap Size */}
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-semibold text-slate-700">
-              <span>Platform Cache & Heap Memory</span>
-              <span className="font-mono text-blue-700">{heapPoints} pts</span>
+            <div className="flex justify-between text-xs font-medium text-slate-700">
+              <span>Platform cache & heap memory</span>
+              <span className="font-mono text-miro-primary font-semibold">{heapPoints} pts</span>
             </div>
             <Slider
               disabled={isSubmitted}
@@ -145,16 +145,16 @@ export const CurrencyRunner: React.FC<{
               max={40}
               step={5}
             />
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[12px] text-slate-500 leading-normal">
               In-memory state and Platform Cache session partition sizing.
             </p>
           </div>
 
           {/* Callout Limits */}
           <div className="space-y-2">
-            <div className="flex justify-between text-xs font-semibold text-slate-700">
-              <span>Outbound Event Egress Budget</span>
-              <span className="font-mono text-blue-700">{calloutPoints} pts</span>
+            <div className="flex justify-between text-xs font-medium text-slate-700">
+              <span>Outbound event egress budget</span>
+              <span className="font-mono text-miro-primary font-semibold">{calloutPoints} pts</span>
             </div>
             <Slider
               disabled={isSubmitted}
@@ -163,18 +163,18 @@ export const CurrencyRunner: React.FC<{
               max={40}
               step={5}
             />
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[12px] text-slate-500 leading-normal">
               High-volume Platform Event publishing and asynchronous queue handoffs.
             </p>
           </div>
         </div>
 
         {isOverBudget && (
-          <div className="flex items-center gap-2 p-3 rounded-lg border border-rose-200 bg-rose-50 text-xs text-rose-800 font-medium">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+          <div className="flex items-center gap-2.5 p-3.5 rounded-xl border border-rose-200 bg-miro-dangerLight text-xs text-miro-dangerText font-medium">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>
-              Governor Limit Breach! You exceeded the 100-point total capacity by {allocatedTotal - TOTAL_BUDGET} pts.
-              Reduce allocation before submitting.
+              Governor limit exceeded. You exceeded the 100-point total capacity by {allocatedTotal - TOTAL_BUDGET} pts.
+              Reduce allocation before committing.
             </span>
           </div>
         )}
@@ -186,32 +186,32 @@ export const CurrencyRunner: React.FC<{
             onSubmit={handleSubmit}
             disabled={isOverBudget}
             hasSelectedAnswer={!isOverBudget && allocatedTotal > 0}
-            submitLabel="Commit Governor Allocation"
+            submitLabel="Commit governor allocation"
           />
         ) : (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4 animate-in fade-in-50 duration-200">
+          <div className="mt-6 rounded-2xl border border-miro-hairline bg-miro-surface p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {score && score > 0 ? (
-                  <Badge variant="success" className="gap-1 px-3 py-1">
-                    <CheckCircle2 className="h-4 w-4" /> Optimal Architecture Envelope
+                  <Badge variant="success" className="gap-1.5 px-3 py-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Optimal architecture envelope
                   </Badge>
                 ) : (
-                  <Badge variant="destructive" className="gap-1 px-3 py-1">
-                    <AlertTriangle className="h-4 w-4" /> Suboptimal Governor Distribution
+                  <Badge variant="destructive" className="gap-1.5 px-3 py-1">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Suboptimal governor distribution
                   </Badge>
                 )}
-                <span className="text-xs text-slate-600 font-medium">
+                <span className="text-xs text-slate-500">
                   Conviction: {selectedConfidence}%
                 </span>
               </div>
-              <span className="text-sm font-bold text-slate-800">
+              <span className="text-sm font-mono font-semibold text-miro-primary">
                 Score: {score && score > 0 ? `+${score}` : score} pts
               </span>
             </div>
 
-            <div className="text-xs sm:text-sm text-slate-700 space-y-2">
-              <p className="font-semibold text-slate-900">Well-Architected Governor Analysis:</p>
+            <div className="text-xs sm:text-sm text-slate-700 space-y-1.5">
+              <p className="font-medium text-miro-primary">Well-Architected governor analysis:</p>
               <p className="leading-relaxed">
                 During 10,000 orders/sec spikes, prioritizing CPU budget (&ge;30 pts) ensures complex business
                 validation completes without hitting 10,000ms CPU timeouts. Keeping SOQL budget (&le;25 pts) forces the
@@ -219,18 +219,18 @@ export const CurrencyRunner: React.FC<{
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <a
                 href="https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1.5 underline"
+                className="text-xs text-miro-blue hover:text-miro-blueDeep font-medium flex items-center gap-1.5 underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Review Scalability Guide on architect.salesforce.com
+                Review scalability guide on architect.salesforce.com
               </a>
-              <Button onClick={handleReset} variant="outline" className="gap-2">
-                <RotateCcw className="h-4 w-4" /> Reset Envelope
+              <Button onClick={handleReset} variant="secondary" className="gap-2">
+                <RotateCcw className="h-4 w-4" /> Reset allocation
               </Button>
             </div>
           </div>

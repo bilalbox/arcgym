@@ -3,25 +3,32 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors select-none",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+          "border border-transparent bg-miro-primary text-white",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
+          "border border-miro-hairline bg-miro-surface text-slate-700",
+        outline:
+          "border border-miro-hairline bg-white text-slate-700",
         pillar:
-          "border-blue-200 bg-blue-50 text-blue-800 font-medium",
+          "border border-blue-200/80 bg-blue-50/70 text-blue-900 font-medium",
         domain:
-          "border-slate-200 bg-slate-100 text-slate-700 font-medium",
+          "border border-miro-hairline bg-white text-slate-700 font-medium",
+        teal:
+          "border border-teal-200/80 bg-miro-tealLight text-miro-tealText font-medium",
+        rose:
+          "border border-rose-200/80 bg-miro-roseLight text-miro-roseText font-medium",
+        yellow:
+          "border border-amber-200/80 bg-miro-yellowLight text-miro-yellowText font-medium",
+        lavender:
+          "border border-indigo-200/80 bg-miro-lavenderLight text-miro-lavenderText font-medium",
         success:
-          "border-emerald-200 bg-emerald-50 text-emerald-800 font-medium",
-        warning:
-          "border-amber-200 bg-amber-50 text-amber-800 font-medium",
+          "border border-emerald-200/80 bg-miro-successLight text-miro-successText font-medium",
+        destructive:
+          "border border-rose-200/80 bg-miro-dangerLight text-miro-dangerText font-medium",
       },
     },
     defaultVariants: {

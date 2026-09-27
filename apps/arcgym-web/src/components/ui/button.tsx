@@ -4,31 +4,30 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 select-none",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40 select-none",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-miro-primary text-white shadow-2xs hover:bg-miro-charcoal active:bg-black",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-rose-600 text-white shadow-2xs hover:bg-rose-700",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border border-miro-hairlineStrong bg-transparent text-miro-primary hover:bg-miro-surfaceSoft hover:border-slate-400",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        confidence:
-          "border border-slate-200 bg-white text-slate-800 shadow-sm hover:border-blue-400 hover:bg-blue-50/50",
-        confidenceSelected:
-          "border-2 border-blue-600 bg-blue-50/80 text-blue-900 font-semibold shadow-sm ring-1 ring-blue-600",
+          "border border-miro-hairline bg-white text-miro-primary hover:bg-miro-surface hover:border-slate-300",
+        ghost:
+          "hover:bg-miro-surface text-miro-primary",
+        link:
+          "text-miro-blue underline-offset-4 hover:underline hover:text-miro-blueDeep p-0 h-auto",
+        confidencePill:
+          "border border-miro-hairline bg-white text-miro-primary hover:border-slate-400 data-[selected=true]:border-miro-primary data-[selected=true]:bg-miro-primary data-[selected=true]:text-white",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        xl: "h-12 rounded-lg px-6 text-base font-semibold",
-        icon: "h-9 w-9",
+        default: "h-11 px-6 py-2.5",
+        sm: "h-8 px-4 text-xs",
+        lg: "h-12 px-8 text-base",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {

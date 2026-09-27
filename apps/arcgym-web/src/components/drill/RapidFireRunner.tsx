@@ -152,7 +152,6 @@ export const RapidFireRunner: React.FC<{
     const chosenOption = currentStep.options.find((o) => o.id === selectedOptionId);
     const isCorrect = !!chosenOption?.isCorrect;
 
-    // ArcGym Asymmetric Brier scoring engine
     const confidenceAnchor = (selectedConfidence / 100) as ConfidenceAnchor;
     const brierResult = ArcGymScoringEngine.calculateDecisionScore(confidenceAnchor, isCorrect);
     const score = brierResult.pointsAwarded;
@@ -167,14 +166,7 @@ export const RapidFireRunner: React.FC<{
 
     setStepResults((prev) => [...prev, newResult]);
     setIsSubmitted(true);
-
-    if (isCorrect && selectedConfidence >= 85) {
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.8 },
-      });
-    }
+    // Notice: Purged single-question confetti here! Confetti is only fired upon drill completion.
   };
 
   const handleNext = () => {
@@ -186,12 +178,11 @@ export const RapidFireRunner: React.FC<{
     } else {
       setIsCompleted(true);
       confetti({
-        particleCount: 100,
-        spread: 70,
+        particleCount: 80,
+        spread: 60,
         origin: { y: 0.6 },
       });
 
-      // Update streak
       let nextStreak = 1;
       try {
         const raw = localStorage.getItem('arcgym_streak');
@@ -227,44 +218,44 @@ export const RapidFireRunner: React.FC<{
 
   if (isCompleted) {
     return (
-      <Card className="border-blue-100 shadow-md">
+      <Card className="border-miro-hairline bg-white shadow-xs">
         <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <CheckCircle2 className="h-8 w-8" />
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
+            <CheckCircle2 className="h-6 w-6" />
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-900">Drill Completed!</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-medium text-miro-primary">Drill completed</CardTitle>
           <CardDescription>
-            You executed all {drill.steps.length} architectural trade-off reps for today.
+            You committed all {drill.steps.length} architectural decision reps for today.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
-          <div className="grid grid-cols-3 gap-4 text-center p-4 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
             <div>
-              <span className="text-xs text-slate-500 uppercase font-semibold">Total Points</span>
-              <p className="text-2xl font-bold text-blue-700">{totalScore}</p>
+              <span className="text-xs text-slate-500 font-medium">Total points</span>
+              <p className="text-2xl font-medium text-miro-primary mt-0.5">{totalScore}</p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 uppercase font-semibold">Decisions Correct</span>
-              <p className="text-2xl font-bold text-emerald-600">
+              <span className="text-xs text-slate-500 font-medium">Decisions correct</span>
+              <p className="text-2xl font-medium text-emerald-700 mt-0.5">
                 {stepResults.filter((r) => r.isCorrect).length} / {drill.steps.length}
               </p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 uppercase font-semibold">Avg Conviction</span>
-              <p className="text-2xl font-bold text-slate-800">
+              <span className="text-xs text-slate-500 font-medium">Avg conviction</span>
+              <p className="text-2xl font-medium text-slate-800 mt-0.5">
                 {Math.round(stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length)}%
               </p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-slate-700">Decision Summary:</h4>
+          <div className="space-y-2.5">
+            <h4 className="text-xs font-semibold text-slate-700">Decision breakdown</h4>
             {stepResults.map((r, i) => (
               <div
                 key={r.stepId}
-                className="flex items-center justify-between p-3 rounded-lg border text-sm bg-white"
+                className="flex items-center justify-between p-3 rounded-xl border border-miro-hairline bg-white text-sm"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   {r.isCorrect ? (
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                   ) : (
@@ -274,9 +265,9 @@ export const RapidFireRunner: React.FC<{
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant={r.isCorrect ? 'success' : 'destructive'}>
-                    {r.confidence}% Conviction
+                    {r.confidence}% conviction
                   </Badge>
-                  <span className={`font-semibold ${r.score >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                  <span className={`font-mono text-xs font-semibold ${r.score >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                     {r.score >= 0 ? `+${r.score}` : r.score} pts
                   </span>
                 </div>
@@ -284,8 +275,8 @@ export const RapidFireRunner: React.FC<{
             ))}
           </div>
 
-          <Button onClick={handleRestart} variant="outline" className="w-full gap-2">
-            <RotateCcw className="h-4 w-4" /> Practice Again
+          <Button onClick={handleRestart} variant="secondary" className="w-full gap-2">
+            <RotateCcw className="h-4 w-4" /> Practice again
           </Button>
         </CardContent>
       </Card>
@@ -293,53 +284,51 @@ export const RapidFireRunner: React.FC<{
   }
 
   return (
-    <Card className="border-slate-200/90 shadow-sm">
-      <CardHeader className="pb-3 border-b border-slate-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
+    <Card className="border-miro-hairline bg-white shadow-xs">
+      <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant="domain">{drill.domain}</Badge>
-            <div className="flex gap-1">
-              {drill.pillars.map((p) => (
-                <Badge key={p} variant="pillar">
-                  {p}
-                </Badge>
-              ))}
-            </div>
+            {drill.pillars.map((p) => (
+              <Badge key={p} variant="pillar">
+                {p}
+              </Badge>
+            ))}
           </div>
-          <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+          <span className="text-xs text-slate-500 font-medium">
             Rep {currentStepIndex + 1} of {drill.steps.length}
           </span>
         </div>
-        <Progress value={progressPercent} className="mt-3 h-1.5" />
+        <Progress value={progressPercent} className="mt-3 h-1 bg-miro-hairlineSoft" indicatorClassName="bg-miro-primary" />
       </CardHeader>
 
       <CardContent className="pt-6">
-        <h3 className="text-base sm:text-lg font-semibold text-slate-900 leading-relaxed mb-6">
+        <h3 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed mb-6">
           {currentStep.prompt}
         </h3>
 
         <div className="space-y-3 mb-6">
           {currentStep.options.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
-            let containerStyle = 'border-slate-200 hover:border-blue-300 hover:bg-slate-50/50 bg-white';
+            let containerStyle = 'border-miro-hairline hover:border-slate-400 bg-white';
 
             if (isSubmitted) {
               if (opt.isCorrect) {
-                containerStyle = 'border-2 border-emerald-500 bg-emerald-50/70 text-emerald-950 font-medium';
+                containerStyle = 'border-2 border-emerald-600 bg-emerald-50/50 text-slate-900';
               } else if (isSelected && !opt.isCorrect) {
-                containerStyle = 'border-2 border-rose-500 bg-rose-50/70 text-rose-950';
+                containerStyle = 'border-2 border-rose-500 bg-rose-50/60 text-slate-900';
               } else {
-                containerStyle = 'border-slate-200 opacity-50 bg-white';
+                containerStyle = 'border-miro-hairline opacity-45 bg-white';
               }
             } else if (isSelected) {
-              containerStyle = 'border-2 border-blue-600 bg-blue-50/50 text-blue-950 shadow-xs';
+              containerStyle = 'border-2 border-miro-primary bg-slate-50/80 text-miro-primary';
             }
 
             return (
               <div
                 key={opt.id}
                 onClick={() => handleSelectOption(opt.id)}
-                className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3 ${containerStyle}`}
+                className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 ${containerStyle}`}
               >
                 <div className="mt-0.5 shrink-0">
                   {isSubmitted && opt.isCorrect ? (
@@ -349,7 +338,7 @@ export const RapidFireRunner: React.FC<{
                   ) : (
                     <div
                       className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs font-semibold ${
-                        isSelected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 text-slate-600'
+                        isSelected ? 'border-miro-primary bg-miro-primary text-white' : 'border-miro-hairlineStrong text-slate-500'
                       }`}
                     >
                       {opt.id.slice(-1).toUpperCase()}
@@ -357,10 +346,10 @@ export const RapidFireRunner: React.FC<{
                   )}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">{opt.label}</p>
+                  <p className="font-normal text-slate-800">{opt.label}</p>
                   {isSubmitted && opt.distractorAntipattern && (
-                    <p className="mt-2 text-xs text-rose-800 bg-rose-100/70 p-2 rounded-md font-normal">
-                      ⚠️ <span className="font-semibold">Antipattern Risk:</span> {opt.distractorAntipattern}
+                    <p className="mt-2.5 text-xs text-rose-900 bg-rose-50 border border-rose-200 p-2.5 rounded-lg">
+                      <span className="font-semibold">Antipattern risk:</span> {opt.distractorAntipattern}
                     </p>
                   )}
                 </div>
@@ -376,52 +365,52 @@ export const RapidFireRunner: React.FC<{
             onSelectConfidence={setSelectedConfidence}
             onSubmit={handleSubmit}
             hasSelectedAnswer={!!selectedOptionId}
-            submitLabel="Commit Decision Rep"
+            submitLabel="Commit decision"
           />
         ) : (
-          <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4 animate-in fade-in-50 duration-200">
+          <div className="mt-6 rounded-2xl border border-miro-hairline bg-miro-surface p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {currentStep.options.find((o) => o.id === selectedOptionId)?.isCorrect ? (
-                  <Badge variant="success" className="gap-1 px-3 py-1">
-                    <CheckCircle2 className="h-4 w-4" /> Correct Rep
+                  <Badge variant="success" className="gap-1.5 px-3 py-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Well-Architected Choice
                   </Badge>
                 ) : (
-                  <Badge variant="destructive" className="gap-1 px-3 py-1">
-                    <XCircle className="h-4 w-4" /> Antipattern Detected
+                  <Badge variant="destructive" className="gap-1.5 px-3 py-1">
+                    <XCircle className="h-3.5 w-3.5" /> Antipattern Detected
                   </Badge>
                 )}
-                <span className="text-xs text-slate-600 font-medium">
-                  Conviction committed: {selectedConfidence}%
+                <span className="text-xs text-slate-500">
+                  Conviction: {selectedConfidence}%
                 </span>
               </div>
-              <span className="text-sm font-bold text-slate-800">
+              <span className="text-sm font-mono font-semibold text-miro-primary">
                 Score: {stepResults[stepResults.length - 1]?.score > 0 ? '+' : ''}
                 {stepResults[stepResults.length - 1]?.score} pts
               </span>
             </div>
 
-            <div className="text-xs sm:text-sm text-slate-700 space-y-2">
-              <p className="font-semibold text-slate-900">Architectural Rationale:</p>
+            <div className="text-xs sm:text-sm text-slate-700 space-y-1.5">
+              <p className="font-medium text-miro-primary">Architectural rationale:</p>
               <p className="leading-relaxed">
                 {currentStep.options.find((o) => o.isCorrect)?.rationale}
               </p>
             </div>
 
-            <div className="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               {currentStep.options.find((o) => o.isCorrect)?.citationUrl && (
                 <a
                   href={currentStep.options.find((o) => o.isCorrect)?.citationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1.5 underline"
+                  className="text-xs text-miro-blue hover:text-miro-blueDeep font-medium flex items-center gap-1.5 underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  View Guidance on architect.salesforce.com
+                  View guidance on architect.salesforce.com
                 </a>
               )}
               <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
-                Next Rep <ArrowRight className="h-4 w-4" />
+                Next rep <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
           </div>
