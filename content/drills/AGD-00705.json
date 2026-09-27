@@ -1,6 +1,6 @@
 {
   "id": "AGD-00705",
-  "title": "ETL storage hoarding to Zero-Copy: 4-stage Data Virtualization refactor",
+  "title": "ERP invoice replication under storage and API pressure: 4-stage refactor",
   "format": "Lesson",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 & Data Virtualization",
@@ -9,88 +9,106 @@
     "Cost_Optimization",
     "Reliability"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "stages": [
     {
       "stageNumber": 1,
       "stageName": "Stage 1: Forensic Diagnosis",
-      "scenario": "An enterprise replicates 50 million legacy ERP billing and invoice line records into custom sObjects via hourly scheduled ETL batch pipelines. The org has exceeded its licensed Salesforce data storage by 140%, resulting in heavy monthly storage overage penalties. Furthermore, batch API jobs frequently fail during peak hours due to 24-hour API limit exhaustion, leaving sales reps with out-of-sync invoice records. What is the fundamental architectural antipattern?",
+      "scenario": "An enterprise copies 50 million ERP invoice lines into custom objects with hourly ETL jobs. Data storage exceeds its allocation by 140%, and the jobs fail at peak hours when the daily API limit runs out, leaving reps with stale invoices. What is the root cause?",
       "options": [
         {
-          "id": "st1_a",
-          "text": "The architecture commits 'ETL Data Hoarding': replicating cold, read-mostly reference data into transactional Salesforce storage instead of querying it at source on demand via Data Virtualization.",
-          "isCorrect": true,
-          "coachingFeedback": "Correct! The Salesforce Data Virtualization guide emphasizes that high-volume, read-mostly operational data should not be physically replicated into transactional relational storage, which wastes storage credits and consumes API limits."
-        },
-        {
           "id": "st1_b",
-          "text": "The custom sObject should be converted into Big Objects to completely eliminate all API usage.",
+          "text": "The invoice lines sit in standard storage when Big Objects would absorb the volume",
           "isCorrect": false,
-          "coachingFeedback": "Misconception: Ingesting data into Big Objects still requires API calls and Async SOQL for complex querying; it does not eliminate ETL pipeline maintenance."
+          "coachingFeedback": "Big Objects would relocate the copies but keep the hourly ETL, so the API exhaustion and stale invoices remain."
         },
         {
           "id": "st1_c",
-          "text": "Hourly ETL pipelines are required by Salesforce for any external system containing more than 1 million records.",
+          "text": "The hourly jobs use the REST API when Bulk API 2.0 would need far fewer calls",
           "isCorrect": false,
-          "coachingFeedback": "False: Salesforce encourages Zero Copy patterns and Data Virtualization via Salesforce Connect and Data 360 to eliminate unnecessary ETL pipelines."
+          "coachingFeedback": "Bulk API would reduce calls, but the org would still store 50 million copied rows over its allocation, and reps would still see data as old as the last run."
+        },
+        {
+          "id": "st1_a",
+          "text": "Read-mostly reference data is replicated into transactional storage instead of queried at the source",
+          "isCorrect": true,
+          "coachingFeedback": "Replicating high-volume, read-mostly data costs storage for every copied row and API calls for every sync, and the copy is only as fresh as its last run. All three symptoms trace to the copy itself."
         }
       ]
     },
     {
       "stageNumber": 2,
       "stageName": "Stage 2: Target Architecture Pattern",
-      "scenario": "To eliminate physical storage overhead while providing seamless real-time access to ERP invoices directly on Account page layouts, what target pattern does the Data Virtualization fundamentals guide recommend?",
+      "scenario": "Reps need ERP invoices on Account pages, in reports, and in list views, current to the minute. Which pattern should replace the hourly copy?",
       "options": [
         {
           "id": "st2_a",
-          "text": "Deploy Salesforce Connect with External Objects mapped to the data source (OData or Snowflake), configuring Query Pushdown, Indirect Lookups to Account, and dual governance through Named/Per-User Principals.",
-          "isCorrect": true,
-          "coachingFeedback": "Correct! According to the Data Virtualization guide, Salesforce Connect with External Objects leverages Query Pushdown to execute filtering at source, renders external data seamlessly in standard UI components, and consumes zero Salesforce relational storage."
+          "text": "A Lightning web component on Account that calls the ERP REST API through Apex",
+          "isCorrect": false,
+          "coachingFeedback": "A custom component shows invoices on one page, but reports and list views cannot use data that exists only inside an Apex callout; request-reply is the suboptimal fit for this need."
         },
         {
           "id": "st2_b",
-          "text": "Build a custom Lightning Web Component that executes synchronous Apex HTTP REST callouts to the ERP system on every page load.",
+          "text": "Keep the ETL but narrow it to invoices from the last 90 days",
           "isCorrect": false,
-          "coachingFeedback": "Antipattern: Ad-hoc Apex callouts in UI components lack native declarative integration (reports, Flow lookups, list views), risk thread exhaustion, and fail to leverage platform query pushdown optimizations."
+          "coachingFeedback": "A narrower copy reduces storage but keeps the hourly sync, so invoices stay up to an hour old and the jobs still compete for the daily API limit."
+        },
+        {
+          "id": "st2_c",
+          "text": "Salesforce Connect external objects, with an indirect lookup relating invoices to Account",
+          "isCorrect": true,
+          "coachingFeedback": "External objects fetch ERP data live when a page or report uses them and store nothing in Salesforce. They work in page layouts, list views, and reports, and an indirect lookup relates them to Account through a unique External ID field."
         }
       ]
     },
     {
       "stageNumber": 3,
       "stageName": "Stage 3: Migration & Cutover Strategy",
-      "scenario": "How should the enterprise safely transition users from the legacy custom sObject to External Objects without disrupting daily sales operations?",
+      "scenario": "The external objects are built. Reps open invoices about 30,000 times a day, and the legacy custom objects hold the only Salesforce-side copy of the data. How should the team cut over?",
       "options": [
         {
           "id": "st3_a",
-          "text": "Deploy External Objects side-by-side on a dedicated Lightning page tab for a pilot user group, validate source query latency and Indirect Lookup indexing, and then decommission the hourly ETL jobs followed by staged truncation of the legacy custom object records.",
-          "isCorrect": true,
-          "coachingFeedback": "Correct! Well-Architected migration prescribes side-by-side pilot validation to verify source query pushdown responsiveness before shutting down ETL replication and reclaiming physical storage."
+          "text": "Switch all users to external objects over a weekend after a full sandbox regression pass",
+          "isCorrect": false,
+          "coachingFeedback": "A sandbox pass cannot reproduce production ERP load at 30,000 invoice views a day, and a single weekend switch leaves no tested fallback if the source struggles."
         },
         {
           "id": "st3_b",
-          "text": "Immediately delete all 50 million custom object records with Bulk API Hard Delete before setting up the External Data Source.",
+          "text": "Pilot external objects with one team, then stop the ETL and purge legacy records in stages",
+          "isCorrect": true,
+          "coachingFeedback": "A pilot checks source latency and lookup behavior under real use while the legacy copy still exists as a fallback. Only then should the ETL stop and the legacy records go in stages to reclaim storage."
+        },
+        {
+          "id": "st3_c",
+          "text": "Run external objects and the hourly ETL side by side so reps can use either",
           "isCorrect": false,
-          "coachingFeedback": "Catastrophic risk: Deleting legacy data before external connectivity and lookups are validated creates severe business downtime if the external connection fails."
+          "coachingFeedback": "Running both keeps paying for the storage overage and API use the refactor exists to remove, and reps see two versions of each invoice with no exit point."
         }
       ]
     },
     {
       "stageNumber": 4,
       "stageName": "Stage 4: Telemetry & Observability",
-      "scenario": "What observability mechanism should be implemented to ensure the virtualized data layer maintains high availability and stays within external callout constraints?",
+      "scenario": "After cutover, invoice views depend on the ERP's OData endpoint, which throttles above 50 requests per second and uses a credential that rotates every 90 days. What should the team monitor?",
       "options": [
         {
           "id": "st4_a",
-          "text": "Monitor External Data Callout metrics via Event Monitoring, track OData response times and HTTP 429/500 status codes, and set automated alerts on named credential authentication expiration.",
-          "isCorrect": true,
-          "coachingFeedback": "Correct! Real-time telemetry on External Data Callouts ensures architects can monitor source query latencies, detect external rate limits, and proactively refresh credentials before user sessions fail."
+          "text": "Salesforce data storage and daily API usage on the org's System Overview page",
+          "isCorrect": false,
+          "coachingFeedback": "Those were the old ETL's failure signals; external object reads use neither Salesforce storage nor the daily API allocation, so both stay green while the ERP throttles."
         },
         {
           "id": "st4_b",
-          "text": "Assume the external system is always healthy since External Objects do not consume standard SOQL query rows.",
+          "text": "An hourly synthetic query of one external invoice, alerting if it fails",
           "isCorrect": false,
-          "coachingFeedback": "Antipattern: External systems can suffer outages, latency degradation, or credential rotations that break the virtualized UI if unmonitored."
+          "coachingFeedback": "An hourly probe catches a full outage, but not throttling at peak between probes or a credential about to expire."
+        },
+        {
+          "id": "st4_c",
+          "text": "OData callout latency, 429 and 500 responses, and upcoming credential expiry",
+          "isCorrect": true,
+          "coachingFeedback": "Once reads depend on the ERP endpoint, its latency, throttling responses, and credential validity are what fail users. Event Monitoring's External OData Callout events expose callout timing, and an expiry alert catches the 90-day rotation first."
         }
       ]
     }
