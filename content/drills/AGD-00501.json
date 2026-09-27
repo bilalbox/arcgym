@@ -1,6 +1,6 @@
 {
   "id": "AGD-00501",
-  "title": "Order spike pipeline: allocate 100-point governor capacity budget",
+  "title": "Order spike: splitting governor headroom across four resources",
   "format": "Currency",
   "domain": "Platform_Core",
   "domainLabel": "Core Platform Governor Capacity",
@@ -9,40 +9,40 @@
     "Reliability",
     "Cost_Optimization"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
-  "prompt": "Order spike pipeline: allocate 100-point governor capacity budget",
-  "detail": "During a peak volume spike (10,000 orders/sec into Salesforce), allocate your 100-point transaction envelope across four critical architectural resources to prevent transaction rollback under high concurrency.",
+  "prompt": "A flash sale multiplies order inserts. The order trigger parses a JSON payload and runs pricing validation for each record, loads account and price-book data with one relationship query per batch, and hands fulfillment to subscribers through Platform Events. How should the architect split the 100-point capacity budget across the four resources?",
+  "detail": "Each point reserves a share of per-transaction governor headroom for the spike. A resource that runs out of headroom throws a limit exception and rolls back the whole order batch.",
   "totalPoints": 100,
   "categories": [
     {
       "id": "soql",
-      "label": "Database SOQL & locking budget",
-      "description": "Controls indexed SOQL selectivity and FOR UPDATE parent-child lock contention.",
+      "label": "SOQL queries and row locks",
+      "description": "Headroom for SOQL queries per transaction and FOR UPDATE locks on parent records.",
       "defaultPoints": 25,
       "maxPoints": 50,
       "step": 5
     },
     {
       "id": "cpu",
-      "label": "Apex CPU execution budget",
-      "description": "Allocated to high-density bulkified triggers and JSON business validation.",
+      "label": "Apex CPU time",
+      "description": "Headroom for trigger logic, JSON parsing, and pricing validation in each transaction.",
       "defaultPoints": 30,
       "maxPoints": 60,
       "step": 5
     },
     {
       "id": "heap",
-      "label": "Platform cache & heap memory",
-      "description": "In-memory state and Platform Cache session partition sizing.",
+      "label": "Heap and Platform Cache",
+      "description": "Headroom for in-memory collections and the Platform Cache partition that holds reference data.",
       "defaultPoints": 25,
       "maxPoints": 40,
       "step": 5
     },
     {
       "id": "callout",
-      "label": "Outbound event egress budget",
-      "description": "High-volume Platform Event publishing and asynchronous queue handoffs.",
+      "label": "Platform Event publishing",
+      "description": "Headroom for publishing the fulfillment events that hand work to asynchronous subscribers.",
       "defaultPoints": 20,
       "maxPoints": 40,
       "step": 5
@@ -70,6 +70,6 @@
       "value": 20
     }
   ],
-  "analysis": "During 10,000 orders/sec spikes, prioritizing CPU budget (\u226530 pts) ensures complex business validation completes without hitting 10,000ms CPU timeouts. Keeping SOQL budget (\u226425 pts) forces the use of Platform Cache and Skinny Tables, eliminating unindexed database row lock contention.",
+  "analysis": "JSON parsing and pricing validation run once per order, so Apex CPU time (10,000 ms per synchronous transaction) grows with every record in the batch and is the limit the spike reaches first; it needs the extra headroom. One relationship query per batch keeps the SOQL count flat as volume grows, and Platform Event subscribers run fulfillment in their own asynchronous transactions, so neither needs more than its baseline. Extra heap or cache shortens none of the per-record validation, so it buys no margin against the CPU limit.",
   "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html#governor-limits-as-architectural-constraints"
 }
