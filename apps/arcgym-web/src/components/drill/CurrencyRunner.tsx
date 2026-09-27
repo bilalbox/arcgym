@@ -5,13 +5,20 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { ArcGymScoringEngine, ConfidenceAnchor } from '@arcgym/drill-core';
+import { ArcGymScoringEngine, ConfidenceAnchor, DrillFormat } from '@arcgym/drill-core';
 import { Gauge, AlertTriangle, CheckCircle2, RotateCcw, ExternalLink } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export const CurrencyRunner: React.FC<{
-  onDrillComplete?: (result: { streakDays: number; brierScore: number }) => void;
-}> = ({ onDrillComplete }) => {
+  isReviewMode?: boolean;
+  onDrillComplete?: (result: {
+    drillId: string;
+    format: DrillFormat;
+    score: number;
+    accuracy: number;
+    streakDays: number;
+  }) => void;
+}> = ({ isReviewMode, onDrillComplete }) => {
   const TOTAL_BUDGET = 100;
 
   // 4 Resource allocation knobs
@@ -46,7 +53,13 @@ export const CurrencyRunner: React.FC<{
         spread: 60,
         origin: { y: 0.7 },
       });
-      onDrillComplete?.({ streakDays: 1, brierScore: calcScore });
+      onDrillComplete?.({
+        drillId: 'AGD-00201',
+        format: 'Currency',
+        score: calcScore,
+        accuracy: 1.0,
+        streakDays: 1,
+      });
     }
   };
 
@@ -68,6 +81,11 @@ export const CurrencyRunner: React.FC<{
             <Badge variant="domain">Core Platform Governor Capacity</Badge>
             <Badge variant="pillar">Reliability</Badge>
             <Badge variant="pillar">Cost_Optimization</Badge>
+            {isReviewMode && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+                Review Mode
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 font-mono text-xs">
             <Gauge className="h-4 w-4 text-miro-blue" />

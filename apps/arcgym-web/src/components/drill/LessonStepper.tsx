@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
+import { DrillFormat } from '@arcgym/drill-core';
 import { CheckCircle2, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -102,8 +103,15 @@ const LESSON_STAGES: LessonStage[] = [
 ];
 
 export const LessonStepper: React.FC<{
-  onDrillComplete?: (result: { streakDays: number; brierScore: number }) => void;
-}> = ({ onDrillComplete }) => {
+  isReviewMode?: boolean;
+  onDrillComplete?: (result: {
+    drillId: string;
+    format: DrillFormat;
+    score: number;
+    accuracy: number;
+    streakDays: number;
+  }) => void;
+}> = ({ isReviewMode, onDrillComplete }) => {
   const [currentStageIdx, setCurrentStageIdx] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
@@ -126,7 +134,13 @@ export const LessonStepper: React.FC<{
     } else {
       setIsCompleted(true);
       confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
-      onDrillComplete?.({ streakDays: 1, brierScore: 95 });
+      onDrillComplete?.({
+        drillId: 'AGD-00401',
+        format: 'Lesson',
+        score: 95,
+        accuracy: 1.0,
+        streakDays: 1,
+      });
     }
   };
 
@@ -176,6 +190,11 @@ export const LessonStepper: React.FC<{
             <Badge variant="domain">Automation Governance</Badge>
             <Badge variant="pillar">Operational_Excellence</Badge>
             <Badge variant="pillar">Reliability</Badge>
+            {isReviewMode && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+                Review Mode
+              </Badge>
+            )}
           </div>
           <span className="text-xs text-slate-500 font-medium">
             {currentStage.stageName}

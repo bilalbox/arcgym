@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
 import { CurrencyRunner } from '@/components/drill/CurrencyRunner';
 import { DualMeterScenario } from '@/components/drill/DualMeterScenario';
 import { LessonStepper } from '@/components/drill/LessonStepper';
+import { ProgressDialog } from '@/components/progress/ProgressDialog';
 import { Badge } from '@/components/ui/badge';
-import { Flame, Compass, Zap, Coins, Users2, GraduationCap, ExternalLink } from 'lucide-react';
+import { useVisitorProgress } from '@/hooks/useVisitorProgress';
+import { useDrillRecommendation } from '@/hooks/useDrillRecommendation';
+import { DrillDefinitionDTO, DrillFormat } from '@arcgym/drill-core';
+import rawCanonicalDrills from '@/data/canonicalDrills.json';
+import { Flame, Compass, Zap, Coins, Users2, GraduationCap, ExternalLink, Target, CheckCircle } from 'lucide-react';
 
-export type DrillFormat = 'Rapid_Fire' | 'Currency' | 'Scenario' | 'Lesson';
+const ALL_DRILLS = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
 
 interface FormatConfig {
   id: DrillFormat;
@@ -49,26 +54,44 @@ const FORMATS: FormatConfig[] = [
 
 export const App: React.FC = () => {
   const [activeFormat, setActiveFormat] = useState<DrillFormat>('Rapid_Fire');
-  const [streakDays, setStreakDays] = useState<number>(1);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('arcgym_streak');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.streakDays) {
-          setStreakDays(parsed.streakDays);
-        }
-      }
-    } catch (e) {
-      // Fallback
-    }
-  }, []);
+  const {
+    streakDays,
+    completedDrills,
+    totalCompleted,
+    recordDrillCompletion,
+    resetProgress,
+  } = useVisitorProgress();
 
-  const handleDrillComplete = (result: { streakDays: number }) => {
-    if (result.streakDays) {
-      setStreakDays(result.streakDays);
-    }
+  const {
+    currentDrill,
+    reason,
+    isReviewMode,
+    previousAttempt,
+    uncompletedCount,
+    advanceToNextDrill,
+    resetSessionSkip,
+  } = useDrillRecommendation(activeFormat, completedDrills);
+
+  const handleFormatChange = (fmt: DrillFormat) => {
+    setActiveFormat(fmt);
+    resetSessionSkip();
+  };
+
+  const handleDrillComplete = (result: {
+    drillId: string;
+    format: DrillFormat;
+    score: number;
+    accuracy: number;
+    streakDays: number;
+  }) => {
+    recordDrillCompletion({
+      drillId: result.drillId,
+      format: result.format,
+      score: result.score,
+      accuracy: result.accuracy,
+    });
   };
 
   return (
@@ -92,16 +115,31 @@ export const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Progress Pill / History Modal Trigger */}
+            <button
+              onClick={() => setIsProgressModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200/90 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+              title="Click to view practice history and completed drills"
+            >
+              <Target className="h-3.5 w-3.5 text-miro-blue" />
+              <span>
+                {totalCompleted} / {ALL_DRILLS.length} mastered
+              </span>
+            </button>
+
+            {/* Streak Badge */}
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-miro-yellowLight border border-amber-200/80 text-miro-yellowText text-xs font-medium">
               <Flame className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />
               <span>{streakDays} day streak</span>
             </div>
+
+            {/* External Docs Link */}
             <a
               href="https://architect.salesforce.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-miro-blue font-medium hidden md:flex items-center gap-1.5 transition-colors"
+              className="text-xs text-slate-500 hover:text-miro-blue font-medium hidden md:flex items-center gap-1.5 transition-colors ml-1"
             >
               <Compass className="h-3.5 w-3.5 text-miro-blue" />
               architect.salesforce.com
@@ -112,12 +150,27 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {/* Hero Banner */}
+        {/* Hero Banner with Dynamic Context */}
         <div className="text-center sm:text-left space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-miro-blue text-xs font-medium mb-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-miro-blue" />
-            Today's architectural practice
-          </div>
+          {reason === 'daily' && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-miro-blue text-xs font-medium mb-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-miro-blue" />
+              Today's architectural practice
+            </div>
+          )}
+          {reason === 'next_uncompleted' && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-medium mb-1">
+              <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+              Daily drill completed • Next uncompleted practice ({uncompletedCount} remaining)
+            </div>
+          )}
+          {reason === 'review' && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-medium mb-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+              Mastery Review Mode • Spaced repetition practice
+            </div>
+          )}
+
           <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
             Daily architectural judgment practice
           </h1>
@@ -133,7 +186,7 @@ export const App: React.FC = () => {
             return (
               <button
                 key={fmt.id}
-                onClick={() => setActiveFormat(fmt.id)}
+                onClick={() => handleFormatChange(fmt.id)}
                 className={`flex flex-col text-left p-4 rounded-2xl border transition-all duration-150 cursor-pointer ${
                   isActive
                     ? 'border-miro-primary bg-white shadow-xs text-miro-primary'
@@ -161,10 +214,33 @@ export const App: React.FC = () => {
 
         {/* Active Drill Runner */}
         <div className="pt-2">
-          {activeFormat === 'Rapid_Fire' && <RapidFireRunner onDrillComplete={handleDrillComplete} />}
-          {activeFormat === 'Currency' && <CurrencyRunner onDrillComplete={handleDrillComplete} />}
-          {activeFormat === 'Scenario' && <DualMeterScenario onDrillComplete={handleDrillComplete} />}
-          {activeFormat === 'Lesson' && <LessonStepper onDrillComplete={handleDrillComplete} />}
+          {activeFormat === 'Rapid_Fire' && (
+            <RapidFireRunner
+              drill={currentDrill || undefined}
+              isReviewMode={isReviewMode}
+              previousAttempt={previousAttempt}
+              onDrillComplete={handleDrillComplete}
+              onNextDrill={advanceToNextDrill}
+            />
+          )}
+          {activeFormat === 'Currency' && (
+            <CurrencyRunner
+              isReviewMode={isReviewMode}
+              onDrillComplete={handleDrillComplete}
+            />
+          )}
+          {activeFormat === 'Scenario' && (
+            <DualMeterScenario
+              isReviewMode={isReviewMode}
+              onDrillComplete={handleDrillComplete}
+            />
+          )}
+          {activeFormat === 'Lesson' && (
+            <LessonStepper
+              isReviewMode={isReviewMode}
+              onDrillComplete={handleDrillComplete}
+            />
+          )}
         </div>
 
         {/* Grounding & Methodology Footer */}
@@ -186,7 +262,18 @@ export const App: React.FC = () => {
           </p>
         </footer>
       </main>
+
+      {/* Progress & History Modal */}
+      <ProgressDialog
+        open={isProgressModalOpen}
+        onOpenChange={setIsProgressModalOpen}
+        completedDrills={completedDrills}
+        totalDrillsCount={ALL_DRILLS.length}
+        allDrills={ALL_DRILLS}
+        onResetProgress={resetProgress}
+      />
     </div>
   );
 };
+
 export default App;

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { ArcGymScoringEngine, ConfidenceAnchor } from '@arcgym/drill-core';
+import { ArcGymScoringEngine, ConfidenceAnchor, DrillDefinitionDTO, DrillFormat, DrillAttemptRecord } from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -128,15 +128,39 @@ interface StepResult {
 }
 
 export const RapidFireRunner: React.FC<{
-  drill?: RapidFireDrill;
-  onDrillComplete?: (result: { streakDays: number; brierScore: number }) => void;
-}> = ({ drill = DEFAULT_DRILL, onDrillComplete }) => {
+  drill?: RapidFireDrill | DrillDefinitionDTO;
+  isReviewMode?: boolean;
+  previousAttempt?: DrillAttemptRecord;
+  onDrillComplete?: (result: {
+    drillId: string;
+    format: DrillFormat;
+    score: number;
+    accuracy: number;
+    streakDays: number;
+  }) => void;
+  onNextDrill?: () => void;
+}> = ({
+  drill = DEFAULT_DRILL,
+  isReviewMode = false,
+  previousAttempt,
+  onDrillComplete,
+  onNextDrill,
+}) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [stepResults, setStepResults] = useState<StepResult[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  useEffect(() => {
+    setCurrentStepIndex(0);
+    setSelectedOptionId(null);
+    setSelectedConfidence(null);
+    setIsSubmitted(false);
+    setStepResults([]);
+    setIsCompleted(false);
+  }, [drill.id]);
 
   const currentStep = drill.steps[currentStepIndex];
   const progressPercent = Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / drill.steps.length) * 100);
@@ -190,17 +214,20 @@ export const RapidFireRunner: React.FC<{
           const parsed = JSON.parse(raw);
           nextStreak = (parsed.streakDays || 0) + 1;
         }
-        localStorage.setItem(
-          'arcgym_streak',
-          JSON.stringify({ streakDays: nextStreak, lastCompletedAt: new Date().toISOString() })
-        );
       } catch (e) {
         // Fallback
       }
 
+      const totalPts = stepResults.reduce((acc, r) => acc + r.score, 0);
+      const correctCount = stepResults.filter((r) => r.isCorrect).length;
+      const accuracy = stepResults.length > 0 ? correctCount / stepResults.length : 0;
+
       onDrillComplete?.({
+        drillId: drill.id,
+        format: 'Rapid_Fire',
+        score: totalPts,
+        accuracy,
         streakDays: nextStreak,
-        brierScore: 100,
       });
     }
   };
@@ -275,9 +302,29 @@ export const RapidFireRunner: React.FC<{
             ))}
           </div>
 
-          <Button onClick={handleRestart} variant="secondary" className="w-full gap-2">
-            <RotateCcw className="h-4 w-4" /> Practice again
-          </Button>
+          {isReviewMode && previousAttempt && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center justify-between">
+              <span>Review Practice: Previously mastered on {new Date(previousAttempt.completedAt).toLocaleDateString()}</span>
+              <span className="font-semibold">Prior score: +{previousAttempt.score} pts</span>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2.5 pt-1">
+            {onNextDrill && (
+              <Button
+                onClick={() => {
+                  handleRestart();
+                  onNextDrill();
+                }}
+                className="w-full gap-2 bg-miro-primary hover:bg-slate-800 text-white font-medium"
+              >
+                Practice next suggested drill <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+            <Button onClick={handleRestart} variant="secondary" className="w-full gap-2">
+              <RotateCcw className="h-4 w-4" /> Practice this drill again
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -289,11 +336,16 @@ export const RapidFireRunner: React.FC<{
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="domain">{drill.domain}</Badge>
-            {drill.pillars.map((p) => (
+            {(drill.pillars || []).map((p) => (
               <Badge key={p} variant="pillar">
                 {p}
               </Badge>
             ))}
+            {isReviewMode && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+                Review Mode
+              </Badge>
+            )}
           </div>
           <span className="text-xs text-slate-500 font-medium">
             Rep {currentStepIndex + 1} of {drill.steps.length}

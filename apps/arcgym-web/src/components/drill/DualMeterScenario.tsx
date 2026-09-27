@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
+import { DrillFormat } from '@arcgym/drill-core';
 import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -22,6 +23,7 @@ interface ScenarioMove {
 }
 
 const SCENARIO_MOVES: ScenarioMove[] = [
+
   {
     moveNumber: 1,
     stakeholderPersona: 'Chief Technology Officer (CTO)',
@@ -97,8 +99,15 @@ const SCENARIO_MOVES: ScenarioMove[] = [
 ];
 
 export const DualMeterScenario: React.FC<{
-  onDrillComplete?: (result: { streakDays: number; brierScore: number }) => void;
-}> = ({ onDrillComplete }) => {
+  isReviewMode?: boolean;
+  onDrillComplete?: (result: {
+    drillId: string;
+    format: DrillFormat;
+    score: number;
+    accuracy: number;
+    streakDays: number;
+  }) => void;
+}> = ({ isReviewMode, onDrillComplete }) => {
   const [currentMoveIdx, setCurrentMoveIdx] = useState(0);
   const [trustScore, setTrustScore] = useState(65);
   const [reliabilityScore, setReliabilityScore] = useState(70);
@@ -132,7 +141,14 @@ export const DualMeterScenario: React.FC<{
     } else {
       setIsCompleted(true);
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
-      onDrillComplete?.({ streakDays: 1, brierScore: 90 });
+      const finalScore = Math.round((trustScore + reliabilityScore) / 2);
+      onDrillComplete?.({
+        drillId: 'AGD-00302',
+        format: 'Scenario',
+        score: finalScore,
+        accuracy: trustScore >= 50 && reliabilityScore >= 50 ? 1.0 : 0.5,
+        streakDays: 1,
+      });
     }
   };
 
@@ -209,6 +225,11 @@ export const DualMeterScenario: React.FC<{
             <Badge variant="domain">Agentic Enterprise Governance</Badge>
             <Badge variant="pillar">Trust</Badge>
             <Badge variant="pillar">Reliability</Badge>
+            {isReviewMode && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+                Review Mode
+              </Badge>
+            )}
           </div>
           <span className="text-xs text-slate-500 font-medium">
             Move {currentMove.moveNumber} of {SCENARIO_MOVES.length}

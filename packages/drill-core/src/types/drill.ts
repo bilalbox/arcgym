@@ -49,3 +49,20 @@ export interface AttemptSubmissionDTO {
   isCorrect: boolean;
   timeToCommitMs: number;
 }
+
+export interface DrillAttemptRecord {
+  drillId: string;
+  format: DrillFormat;
+  completedAt: string; // ISO 8601 string
+  score: number;
+  accuracy: number; // 0 to 1
+  attemptsCount: number;
+}
+
+export interface VisitorProgressState {
+  version: 1;
+  streakDays: number;
+  lastActiveDate: string; // YYYY-MM-DD
+  completedDrills: Record<string, DrillAttemptRecord>;
+}
+
