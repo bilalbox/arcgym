@@ -9,7 +9,7 @@
     "Reliability",
     "Cost_Optimization"
   ],
-  "version": 3,
+  "version": 4,
   "status": "published",
   "steps": [
     {
@@ -20,7 +20,7 @@
           "id": "s1_a",
           "label": "Streaming Insights counting product-view events over a 5-minute time window",
           "isCorrect": true,
-          "rationale": "Streaming Insights compute metrics from real-time event data on Spark Structured Streaming, built for immediate, low-latency engagement. Only a streaming computation can fire inside an 8-minute session; batch insights and segments run on schedules.",
+          "rationale": "Streaming Insights compute metrics from real-time event data on Spark Structured Streaming, built for immediate, low-latency engagement. A streaming window fires inside the 8-minute session, while batch insights and standard segments refresh only on their schedules.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
         },
         {
