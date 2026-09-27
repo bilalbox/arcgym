@@ -9,33 +9,33 @@
     "Cost_Optimization",
     "Reliability"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A company keeps 100TB of telemetry in Databricks as Apache Iceberg tables (Parquet). Product wants Data 360 insights on that telemetry without paying to duplicate the lake into Salesforce storage. Which approach is Well-Architected?",
+      "prompt": "A company keeps 100TB of product telemetry in Databricks as Apache Iceberg tables, growing by 2TB a day. Analysts want Data 360 insights on telemetry that is minutes old. Which approach should the architect use?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Zero Copy federation via Iceberg REST Catalog metadata, querying Databricks Parquet tables in place",
+          "label": "Federate Data 360 to the Databricks Iceberg tables with file-based Zero Copy",
           "isCorrect": true,
-          "rationale": "File-based Zero Copy queries Parquet/Iceberg data in place using open catalog metadata, avoiding storage duplication and compute double-billing.",
+          "rationale": "Data 360 federates with lakehouses such as Databricks and queries external data directly without duplication, which cuts ingestion time and storage cost and keeps results current. With 2TB of new telemetry a day and a minutes-old target, reading the tables in place beats any copy.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-federation"
         },
         {
           "id": "s1_b",
-          "label": "Scheduled JDBC pipeline extracting 100TB into native Data 360 Data Lake Objects for local processing",
+          "label": "Extract the telemetry into Data 360 Data Lake Objects with a scheduled JDBC pipeline",
           "isCorrect": false,
-          "distractorAntipattern": "Extracting lakehouse data into Data 360 duplicates storage costs and introduces heavy batch ingestion latency.",
-          "rationale": "Ingesting 100TB via JDBC duplicates storage, incurs massive credit consumption, and creates substantial data synchronization lag."
+          "distractorAntipattern": "ETL Data Hoarding",
+          "rationale": "A scheduled extract copies 2TB a day into a second store, and insights are only as fresh as the last run."
         },
         {
           "id": "s1_c",
-          "label": "Micro-batch Ingestion API jobs streaming partitioned Parquet chunks into custom CRM staging tables",
+          "label": "Stream partitioned telemetry batches through the Ingestion API into Data 360 every few minutes",
           "isCorrect": false,
-          "distractorAntipattern": "Streaming big data telemetry into core CRM objects violates platform storage limits and triggers API throttling.",
-          "rationale": "The Ingestion API is meant for lightweight JSON/CSV records, not multi-terabyte Parquet dumps, and staging in CRM objects exhausts database quotas."
+          "distractorAntipattern": "Streaming Bulk Replication",
+          "rationale": "The Ingestion API's streaming mode is built for small record payloads, so this copies the whole 2TB a day in fragments while federation could read the same tables in place."
         }
       ]
     }
