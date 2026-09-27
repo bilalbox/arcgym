@@ -2,21 +2,25 @@
   "name": "arcgym-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "ArcGym: Daily judgment practice for Salesforce Architects",
+  "description": "ArcGym: Daily judgment practice for Salesforce Architects (Cloudflare Pages + React)",
   "scripts": {
     "dev": "pnpm --filter @arcgym/web dev",
     "build": "npx tsx scripts/build-drills.ts && pnpm --recursive run build",
+    "build:drills": "npx tsx scripts/build-drills.ts",
+    "seed": "npx tsx scripts/seed-drills.ts",
     "test": "pnpm --recursive run test",
     "lint": "pnpm --recursive run lint",
     "preview": "pnpm --filter @arcgym/web preview",
     "deploy": "pnpm --filter @arcgym/web run deploy"
   },
   "devDependencies": {
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.7",
-    "wrangler": "^3.114.0"
+    "@types/node": "^24.19.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
   },
   "engines": {
-    "node": ">=20.0.0"
-  }
+    "node": ">=24.0.0"
+  },
+  "packageManager": "pnpm@12.7.0+sha512.9c56477e360068d6e9dca6a92efb4e46b3dc5a52fcebf3d84d78b9736c0ded589a561621a52f68219a7a39facc63cdc079c3226ef9c9d5f02b79f74e69a807b6"
 }

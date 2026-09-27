@@ -1,13 +1,43 @@
+# Dependencies
 node_modules/
 .pnpm-store/
+
+# Build outputs
 dist/
-site/
-.lwr/
+*.tsbuildinfo
+
+# Vite / Wrangler
+.vite/
 .wrangler/
-.sf/
-.sfdx/
+.dev.vars
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs & OS
 *.log
 .DS_Store
+Thumbs.db
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Python crawler / Chroma index (local RAG corpus)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
 data/chroma/
+
+# Local scratch & archived stacks (LWR / SFDX)
 .scratch/
 .archive/
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo

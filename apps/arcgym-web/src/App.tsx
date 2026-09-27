@@ -258,7 +258,7 @@ export const App: React.FC = () => {
             . Built for Salesforce Technical Architects (CTAs), Enterprise Architects, and Trailblazers.
           </p>
           <p className="text-[11px] text-slate-400">
-            Powered by Cloudflare Pages & React + shadcn/ui. Zero Salesforce runtime dependency.
+            Powered by Cloudflare Pages & React. Miro-inspired UI. Zero Salesforce runtime dependency.
           </p>
         </footer>
       </main>
