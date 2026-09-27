@@ -1,6 +1,6 @@
 {
   "id": "AGD-00309",
-  "title": "Multi-Agent Decomposition: Specialized Sub-Agents vs Monolithic Architectures",
+  "title": "Multi-Agent Decomposition: Splitting by Domain vs by Platform Limit",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
@@ -8,33 +8,40 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An enterprise wants an agent to handle Billing Disputes, Technical Support, and Sales Quoting across 15 business units. Why does Well-Architected advise decomposing into specialized domain agents rather than one monolithic agent?",
+      "prompt": "An enterprise is building Agentforce support for Billing Disputes, Technical Support, and Sales Quoting. The three domains need 20 topics in total, averaging 12 actions each, and each request belongs to one domain. How should the architect structure the agents?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Specialized agents isolate context and action schemas to specific domains, reducing tool confusion and blast radius",
+          "label": "Three domain agents under an orchestrator limited to classifying intent and routing",
           "isCorrect": true,
-          "rationale": "Decomposing into focused domain agents keeps action definitions lean, prevents LLM tool hallucination, allows independent release cycles, and minimizes context token consumption.",
+          "rationale": "Orchestration should stay narrow: the orchestrator picks the specialist, and the task reasoning happens in the agent that holds that domain's context and actions. Splitting by domain also keeps each agent under the 15-topic limit that 20 topics would exceed in a single agent.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-resource-and-cost-optimization.html#multi-agent-architecture-patterns"
         },
         {
           "id": "s1_b",
-          "label": "Platform architecture restricts individual agent definitions to a maximum limit of fifteen total active actions",
+          "label": "Three domain agents under an orchestrator that plans each full resolution before delegating",
           "isCorrect": false,
-          "distractorAntipattern": "There is no hard platform licensing limit of 15 actions per agent; decomposition is an architectural best practice.",
-          "rationale": "Salesforce does not enforce an arbitrary hard limit of 15 actions; decomposition is driven by cognitive reasoning fidelity and blast-radius management."
+          "distractorAntipattern": "Overloaded Orchestrator Prompt",
+          "rationale": "Planning in the orchestrator duplicates reasoning that belongs in the specialist with the domain context, so every request is reasoned about twice and pays for it in tokens."
         },
         {
           "id": "s1_c",
-          "label": "Monolithic agents require shared system permissions that prevent per-topic role-based access control policies",
+          "label": "One agent with the 20 topics merged into 15 broader, cross-domain topics",
           "isCorrect": false,
-          "distractorAntipattern": "Permission sets can be assigned per action, but monolithic reasoning still fails due to prompt bloat and tool confusion.",
-          "rationale": "While permissions are important, the primary architectural driver is preventing LLM reasoning degradation and tool confusion caused by overloaded action context."
+          "distractorAntipattern": "Monolithic Topic Consolidation",
+          "rationale": "An agent holds at most 15 topics of up to 15 actions each, so 15 topics cannot carry about 240 actions; broader topics would also blend domains and blur classification."
+        },
+        {
+          "id": "s1_d",
+          "label": "Enough agents that none holds more than 15 actions, all under one orchestrator",
+          "isCorrect": false,
+          "distractorAntipattern": "Per-Agent Action Cap Split",
+          "rationale": "The 15-action limit applies per topic, not per agent, so splitting by action count creates about 16 agents where three fit, and each agent draws its own governor limits."
         }
       ]
     }
