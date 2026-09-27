@@ -9,33 +9,33 @@
     "Cost_Optimization",
     "Reliability"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Marketing activates a 20-million-profile segment to Amazon S3 every morning for ad platforms. The design must avoid CRM API ceilings and keep egress operationally simple. Which activation pattern fits?",
+      "prompt": "Marketing sends a 20-million-profile Data 360 segment to Amazon S3 every morning for ad platforms. Existing integrations already use 85% of the org's daily API allocation. Which activation pattern should the architect use?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Data 360 Cloud Storage Activation Target exporting compressed Parquet files directly to S3",
+          "label": "Activate the segment to an Amazon S3 cloud storage target as scheduled CSV or Parquet files",
           "isCorrect": true,
-          "rationale": "Cloud Storage activation targets push bulk compressed datasets (Parquet/CSV) directly to external buckets without touching CRM API limits or consuming transactional worker threads.",
+          "rationale": "Data 360 cloud storage export is the governed pattern for delivering segments to Amazon S3 as CSV or Parquet files on a schedule. It moves the 20 million profiles without routing rows through an API allocation that is already at 85%.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#data-export-to-cloud-storage"
         },
         {
           "id": "s1_b",
-          "label": "Bulk API 2.0 query job exporting segment member IDs to an intermediate on-premise staging server",
+          "label": "Export segment member IDs with a Bulk API 2.0 query job to a staging server",
           "isCorrect": false,
-          "distractorAntipattern": "Querying 20M rows through core CRM APIs creates significant extraction lag and consumes daily API allocations.",
-          "rationale": "Extracting 20 million profiles via CRM Bulk API incurs heavy export processing time, staging infrastructure overhead, and API quota consumption."
+          "distractorAntipattern": "CRM API Bulk Extraction",
+          "rationale": "A daily 20-million-row export through Bulk API draws on an allocation already at 85% and adds a staging server the cloud storage pattern does not need."
         },
         {
           "id": "s1_c",
-          "label": "Apex Batch job querying Unified Individual DMOs and streaming records to Amazon S3 via REST",
+          "label": "Run a Batch Apex job that queries unified profiles and posts them to S3 via REST",
           "isCorrect": false,
-          "distractorAntipattern": "Querying DMOs from Apex batch is subject to SOQL limits, callout timeouts, and transaction heap ceilings.",
-          "rationale": "Apex batch jobs cannot stream 20 million profiles to external endpoints without encountering transaction limits, heap errors, and callout timeouts."
+          "distractorAntipattern": "Apex Bulk Egress",
+          "rationale": "Moving 20 million profiles through Batch Apex callouts runs into per-transaction callout and heap limits and turns a governed export into custom code."
         }
       ]
     }
