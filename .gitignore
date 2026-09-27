@@ -8,3 +8,5 @@ site/
 .sfdx/
 *.log
 .DS_Store
+data/chroma/
+.scratch/
