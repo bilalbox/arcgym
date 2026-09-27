@@ -151,8 +151,8 @@ export const RapidFireRunner: React.FC<{
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h3 className="text-xl sm:text-2xl font-medium text-miro-primary">Drill completed</h3>
-          <p className="text-sm text-slate-500 mt-1">
+          <h2 className="text-xl sm:text-2xl font-medium text-miro-primary">Drill completed</h2>
+          <p className="text-sm text-slate-600 mt-1">
             You committed all {drill.steps.length} architectural decision reps for today.
           </p>
           <div className="flex items-center justify-center mt-3">
@@ -162,17 +162,17 @@ export const RapidFireRunner: React.FC<{
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
             <div>
-              <span className="text-xs text-slate-500 font-medium">Total points</span>
+              <span className="text-xs text-slate-600 font-medium">Total points</span>
               <p className="text-2xl font-medium text-miro-primary mt-0.5">{totalScore}</p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 font-medium">Decisions correct</span>
+              <span className="text-xs text-slate-600 font-medium">Decisions correct</span>
               <p className="text-2xl font-medium text-emerald-700 mt-0.5">
                 {stepResults.filter((r) => r.isCorrect).length} / {drill.steps.length}
               </p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 font-medium">Avg confidence</span>
+              <span className="text-xs text-slate-600 font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-slate-800 mt-0.5">
                 {Math.round(stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length)}%
               </p>
@@ -253,7 +253,7 @@ export const RapidFireRunner: React.FC<{
           </div>
           <div className="flex items-center gap-3">
             <DrillFeedbackWidget drillId={drill.id} />
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-slate-600 font-medium">
               Rep {currentStepIndex + 1} of {drill.steps.length}
             </span>
           </div>
@@ -262,9 +262,9 @@ export const RapidFireRunner: React.FC<{
       </CardHeader>
 
       <CardContent className="pt-6">
-        <h3 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed mb-6">
+        <h2 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed mb-6">
           {currentStep.prompt}
-        </h3>
+        </h2>
 
         <div className="space-y-3 mb-6">
           {currentStep.options.map((opt) => {
@@ -339,7 +339,7 @@ export const RapidFireRunner: React.FC<{
                     <XCircle className="h-3.5 w-3.5" /> Antipattern Detected
                   </Badge>
                 )}
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-600">
                   Confidence: {selectedConfidence}%
                 </span>
               </div>

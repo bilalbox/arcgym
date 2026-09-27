@@ -62,7 +62,7 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
         <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
           Your architectural skill profile
         </h1>
-        <p className="text-sm sm:text-base text-slate-500 max-w-2xl leading-relaxed">
+        <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
           We score drill questions across 7 Architectural Domains and 5 Well-Architected Pillars. Each decision rep counts toward your proficiency. Here's where you stand.
         </p>
       </div>

@@ -417,7 +417,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
         </svg>
       </div>
 
-      <p className="text-[12.5px] text-slate-500 mt-2 px-1 text-center sm:text-left">
+      <p className="text-[12.5px] text-slate-600 mt-2 px-1 text-center sm:text-left">
         <span className="font-medium text-slate-700">How to read this. </span>
         Hover or tap any vertex to see your score. Domains and pillars require 4+ answered questions before appearing on the radar polygon.
       </p>

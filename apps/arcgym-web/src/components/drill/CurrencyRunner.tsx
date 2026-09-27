@@ -120,9 +120,9 @@ export const CurrencyRunner: React.FC<{
 
       <CardContent className="pt-6 space-y-6">
         <div>
-          <h3 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">{drill.prompt}</h3>
+          <h2 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">{drill.prompt}</h2>
           {drill.detail && (
-            <p className="text-sm text-slate-500 mt-2 leading-relaxed">{drill.detail}</p>
+            <p className="text-sm text-slate-600 mt-2 leading-relaxed">{drill.detail}</p>
           )}
         </div>
 
@@ -143,7 +143,7 @@ export const CurrencyRunner: React.FC<{
                 step={cat.step ?? 5}
               />
               {cat.description && (
-                <p className="text-[12px] text-slate-500 leading-normal">{cat.description}</p>
+                <p className="text-[12px] text-slate-600 leading-normal">{cat.description}</p>
               )}
             </div>
           ))}
@@ -181,7 +181,7 @@ export const CurrencyRunner: React.FC<{
                     <AlertTriangle className="h-3.5 w-3.5" /> Suboptimal governor distribution
                   </Badge>
                 )}
-                <span className="text-xs text-slate-500">Confidence: {selectedConfidence}%</span>
+                <span className="text-xs text-slate-600">Confidence: {selectedConfidence}%</span>
               </div>
               <span className="text-sm font-mono font-semibold text-miro-primary">
                 Score: {score !== null && score > 0 ? `+${score}` : score} pts

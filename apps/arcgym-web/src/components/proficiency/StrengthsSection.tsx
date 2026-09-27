@@ -28,7 +28,7 @@ export const StrengthsSection: React.FC<StrengthsSectionProps> = ({
       </summary>
 
       <div className="pb-5 pl-7">
-        <p className="text-[12.5px] text-slate-500 mb-3">
+        <p className="text-[12.5px] text-slate-600 mb-3">
           80% or better across at least four questions.
         </p>
 

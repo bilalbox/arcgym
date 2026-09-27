@@ -26,8 +26,12 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             <button
               onClick={() => navigate('/')}
               className="flex items-center gap-3 group text-left cursor-pointer"
+              aria-label="ArcGym home"
             >
-              <div className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight group-hover:bg-miro-charcoal transition-colors">
+              <div
+                aria-hidden="true"
+                className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight group-hover:bg-miro-charcoal transition-colors"
+              >
                 AG
               </div>
               <div className="flex items-center gap-2">
@@ -86,7 +90,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             <h3 className="font-semibold text-sm text-miro-primary mb-1">
               No Accounts or Identity
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               No user accounts, passwords, email collection, or cross-site advertising profiles. We do not ask you to identify yourself.
             </p>
           </Card>
@@ -98,7 +102,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             <h3 className="font-semibold text-sm text-miro-primary mb-1">
               Client-Side Sovereignty
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Your practice streaks and drill scores reside strictly in your browser’s local storage. They never leave your device.
             </p>
           </Card>
@@ -110,7 +114,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             <h3 className="font-semibold text-sm text-miro-primary mb-1">
               Cookieless Web Analytics
             </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Powered by Cloudflare Web Analytics. No tracking cookies, no cross-site profiling, and no IP address storage.
             </p>
           </Card>
@@ -127,7 +131,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
           <p className="text-sm text-slate-600 leading-relaxed">
             Learners can rate drills with enum pills (e.g. <em>Realistic</em>, <em>Useful</em>, <em>Good challenge</em>, <em>Unrealistic</em>, <em>Unclear</em>, <em>Too easy</em>, or <em>Too hard</em>). Designed to avoid collecting corporate or personal free-text:
           </p>
-          <ul className="text-xs text-slate-500 space-y-2 list-disc list-inside leading-relaxed pl-1">
+          <ul className="text-xs text-slate-600 space-y-2 list-disc list-inside leading-relaxed pl-1">
             <li><strong>No free-text input</strong>: Submissions are limited to pre-defined enum pills. We do not collect comments or open text fields, which reduces accidental transmission of emails, credentials, or Salesforce Org IDs.</li>
             <li><strong>Ephemeral anti-sybil deduplication</strong>: To limit ballot-stuffing, the Cloudflare edge briefly uses your connection IP (via <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11px]">CF-Connecting-IP</code>) as an input to <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11px]">HMAC-SHA256(Secret, Date + DrillId + IP)</code>. The raw IP is not written to feedback records. Only the opaque HMAC marker is stored in KV and expires after 24 hours.</li>
             <li><strong>What we store</strong>: Each accepted vote stores drill id, up/down rating, selected pill tags, and a timestamp. Aggregates (counts and percentages) are public. Feedback is decoupled from your local practice scores and streaks.</li>
@@ -140,7 +144,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
           <h2 className="text-xl sm:text-2xl font-semibold text-miro-primary">
             Ready to practice your architectural judgment?
           </h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
+          <p className="text-sm text-slate-600 max-w-md mx-auto">
             Test your trade-off analysis across Integration, Data Cloud, Security, and Agentforce — practice history stays on your device.
           </p>
           <Button

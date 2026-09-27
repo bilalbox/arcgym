@@ -31,7 +31,7 @@ export const WhereToStartSection: React.FC<WhereToStartSectionProps> = ({
       </summary>
 
       <div className="pb-5 pl-7">
-        <p className="text-[12.5px] text-slate-500 mb-3">
+        <p className="text-[12.5px] text-slate-600 mb-3">
           Your lowest results so far. A few more drills in these will move your radar the most.
         </p>
 

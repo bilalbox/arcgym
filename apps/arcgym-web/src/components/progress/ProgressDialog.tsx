@@ -61,7 +61,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               Architect Practice Mastery
             </DialogTitle>
           </div>
-          <DialogDescription className="text-sm text-slate-500">
+          <DialogDescription className="text-sm text-slate-600">
             Track your completed Well-Architected drills across all domains.
           </DialogDescription>
         </DialogHeader>

@@ -30,7 +30,7 @@ export const CollectingDataSection: React.FC<CollectingDataSectionProps> = ({
       </summary>
 
       <div className="pb-5 pl-7">
-        <p className="text-[12.5px] text-slate-500 mb-3">
+        <p className="text-[12.5px] text-slate-600 mb-3">
           You've answered fewer than four questions, so no scores are showing yet. Complete drills in these areas to activate on your radar.
         </p>
 

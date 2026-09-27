@@ -31,7 +31,10 @@ export const Header: React.FC<HeaderProps> = ({
             className="flex items-center gap-3 group text-left cursor-pointer"
             aria-label="ArcGym home"
           >
-            <div className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight group-hover:bg-miro-charcoal transition-colors">
+            <div
+              aria-hidden="true"
+              className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight group-hover:bg-miro-charcoal transition-colors"
+            >
               AG
             </div>
             <div className="flex items-center gap-2">

@@ -87,10 +87,10 @@ export const LessonStepper: React.FC<{
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h3 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">
+          <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">
             {drill.stages.length}-stage refactor complete
-          </h3>
-          <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+          </h2>
+          <p className="text-sm text-slate-600 mt-1 leading-relaxed">
             You worked through a Well-Architected coaching path grounded in official platform guidance.
           </p>
         </CardHeader>
@@ -135,7 +135,7 @@ export const LessonStepper: React.FC<{
           </div>
           <div className="flex items-center gap-3">
             <DrillFeedbackWidget drillId={drill.id} />
-            <span className="text-xs text-slate-500 font-medium">{currentStage.stageName}</span>
+            <span className="text-xs text-slate-600 font-medium">{currentStage.stageName}</span>
           </div>
         </div>
 
@@ -157,9 +157,9 @@ export const LessonStepper: React.FC<{
 
       <CardContent className="pt-6 space-y-6">
         <div>
-          <h3 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">
+          <h2 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">
             {currentStage.scenario}
-          </h3>
+          </h2>
         </div>
 
         <div className="space-y-3">

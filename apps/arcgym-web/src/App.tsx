@@ -1,13 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
-import { CurrencyRunner } from '@/components/drill/CurrencyRunner';
-import { DualMeterScenario } from '@/components/drill/DualMeterScenario';
-import { LessonStepper } from '@/components/drill/LessonStepper';
-import { ProgressDialog } from '@/components/progress/ProgressDialog';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { PrivacyPage } from '@/pages/PrivacyPage';
-import { SkillProfilePage } from '@/pages/SkillProfilePage';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
 import { useRouter } from '@/hooks/useRouter';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
@@ -23,6 +17,25 @@ import {
   StepAttemptTelemetry,
 } from '@arcgym/drill-core';
 import { Zap, Coins, Users2, GraduationCap, CheckCircle } from 'lucide-react';
+
+const CurrencyRunner = lazy(() =>
+  import('@/components/drill/CurrencyRunner').then((m) => ({ default: m.CurrencyRunner }))
+);
+const DualMeterScenario = lazy(() =>
+  import('@/components/drill/DualMeterScenario').then((m) => ({ default: m.DualMeterScenario }))
+);
+const LessonStepper = lazy(() =>
+  import('@/components/drill/LessonStepper').then((m) => ({ default: m.LessonStepper }))
+);
+const ProgressDialog = lazy(() =>
+  import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog }))
+);
+const PrivacyPage = lazy(() =>
+  import('@/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage }))
+);
+const SkillProfilePage = lazy(() =>
+  import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage }))
+);
 
 interface FormatConfig {
   id: DrillFormat;
@@ -58,11 +71,24 @@ const FORMATS: FormatConfig[] = [
   },
 ];
 
+const RouteFallback: React.FC = () => (
+  <div className="min-h-screen bg-miro-surface flex items-center justify-center">
+    <p className="text-sm text-slate-600">Loading…</p>
+  </div>
+);
+
+const PanelFallback: React.FC = () => (
+  <div className="rounded-2xl border border-miro-hairline bg-white p-8 text-center">
+    <p className="text-sm text-slate-600">Loading drill…</p>
+  </div>
+);
+
 export const App: React.FC = () => {
   const { pathname, search, navigate } = useRouter();
   const [activeFormat, setActiveFormat] = useState<DrillFormat>('Rapid_Fire');
   const [activeDomain, setActiveDomain] = useState<ArchitecturalDomain | undefined>(undefined);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [progressDialogLoaded, setProgressDialogLoaded] = useState(false);
 
   const {
     streakDays,
@@ -136,9 +162,31 @@ export const App: React.FC = () => {
     });
   };
 
+  const openProgressModal = () => {
+    setProgressDialogLoaded(true);
+    setIsProgressModalOpen(true);
+  };
+
+  const progressDialog = progressDialogLoaded ? (
+    <Suspense fallback={null}>
+      <ProgressDialog
+        open={isProgressModalOpen}
+        onOpenChange={setIsProgressModalOpen}
+        completedDrills={completedDrills}
+        totalDrillsCount={ALL_DRILLS.length}
+        allDrills={ALL_DRILLS}
+        onResetProgress={resetProgress}
+      />
+    </Suspense>
+  ) : null;
+
   // Route: Privacy policy
   if (pathname === '/privacy') {
-    return <PrivacyPage navigate={navigate} />;
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <PrivacyPage navigate={navigate} />
+      </Suspense>
+    );
   }
 
   // Route: Skill Profile
@@ -151,22 +199,17 @@ export const App: React.FC = () => {
           totalCompleted={totalCompleted}
           totalDrillsCount={ALL_DRILLS.length}
           streakDays={streakDays}
-          onOpenProgressModal={() => setIsProgressModalOpen(true)}
+          onOpenProgressModal={openProgressModal}
         />
-        <SkillProfilePage
-          completedDrills={completedDrills}
-          allDrills={ALL_DRILLS}
-          navigate={navigate}
-          pathname={pathname}
-        />
-        <ProgressDialog
-          open={isProgressModalOpen}
-          onOpenChange={setIsProgressModalOpen}
-          completedDrills={completedDrills}
-          totalDrillsCount={ALL_DRILLS.length}
-          allDrills={ALL_DRILLS}
-          onResetProgress={resetProgress}
-        />
+        <Suspense fallback={<RouteFallback />}>
+          <SkillProfilePage
+            completedDrills={completedDrills}
+            allDrills={ALL_DRILLS}
+            navigate={navigate}
+            pathname={pathname}
+          />
+        </Suspense>
+        {progressDialog}
       </div>
     );
   }
@@ -180,7 +223,7 @@ export const App: React.FC = () => {
         totalCompleted={totalCompleted}
         totalDrillsCount={ALL_DRILLS.length}
         streakDays={streakDays}
-        onOpenProgressModal={() => setIsProgressModalOpen(true)}
+        onOpenProgressModal={openProgressModal}
       />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -207,7 +250,7 @@ export const App: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
             Daily architectural judgment practice
           </h1>
-          <p className="text-sm sm:text-base text-slate-500 max-w-2xl leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
             Daily trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
           </p>
         </div>
@@ -273,7 +316,7 @@ export const App: React.FC = () => {
           {!currentDrill && (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center space-y-2">
               <p className="text-sm font-medium text-slate-700">No drills in this domain yet</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-600">
                 Pick another Architectural Domain, or choose All, for the active Format.
               </p>
             </div>
@@ -288,43 +331,38 @@ export const App: React.FC = () => {
               onNextDrill={advanceToNextDrill}
             />
           )}
-          {currentDrill && isCurrencyDrill(currentDrill) && (
-            <CurrencyRunner
-              drill={currentDrill}
-              isReviewMode={isReviewMode}
-              onDrillComplete={handleDrillComplete}
-              onNextDrill={advanceToNextDrill}
-            />
-          )}
-          {currentDrill && isScenarioDrill(currentDrill) && (
-            <DualMeterScenario
-              drill={currentDrill}
-              isReviewMode={isReviewMode}
-              onDrillComplete={handleDrillComplete}
-              onNextDrill={advanceToNextDrill}
-            />
-          )}
-          {currentDrill && isLessonDrill(currentDrill) && (
-            <LessonStepper
-              drill={currentDrill}
-              isReviewMode={isReviewMode}
-              onDrillComplete={handleDrillComplete}
-              onNextDrill={advanceToNextDrill}
-            />
-          )}
+          <Suspense fallback={<PanelFallback />}>
+            {currentDrill && isCurrencyDrill(currentDrill) && (
+              <CurrencyRunner
+                drill={currentDrill}
+                isReviewMode={isReviewMode}
+                onDrillComplete={handleDrillComplete}
+                onNextDrill={advanceToNextDrill}
+              />
+            )}
+            {currentDrill && isScenarioDrill(currentDrill) && (
+              <DualMeterScenario
+                drill={currentDrill}
+                isReviewMode={isReviewMode}
+                onDrillComplete={handleDrillComplete}
+                onNextDrill={advanceToNextDrill}
+              />
+            )}
+            {currentDrill && isLessonDrill(currentDrill) && (
+              <LessonStepper
+                drill={currentDrill}
+                isReviewMode={isReviewMode}
+                onDrillComplete={handleDrillComplete}
+                onNextDrill={advanceToNextDrill}
+              />
+            )}
+          </Suspense>
         </div>
 
         <Footer navigate={navigate} currentPath={pathname} />
       </main>
 
-      <ProgressDialog
-        open={isProgressModalOpen}
-        onOpenChange={setIsProgressModalOpen}
-        completedDrills={completedDrills}
-        totalDrillsCount={ALL_DRILLS.length}
-        allDrills={ALL_DRILLS}
-        onResetProgress={resetProgress}
-      />
+      {progressDialog}
     </div>
   );
 };

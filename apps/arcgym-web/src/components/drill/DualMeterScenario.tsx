@@ -112,10 +112,10 @@ export const DualMeterScenario: React.FC<{
           >
             {isSuccess ? <CheckCircle2 className="h-6 w-6" /> : <AlertOctagon className="h-6 w-6" />}
           </div>
-          <h3 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">
+          <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">
             {isSuccess ? 'Architectural crisis averted' : 'Technical debt hangover'}
-          </h3>
-          <p className="text-sm text-slate-500 mt-1 leading-relaxed">
+          </h2>
+          <p className="text-sm text-slate-600 mt-1 leading-relaxed">
             {isSuccess
               ? primaryIsSchedule
                 ? 'You spent schedule where the model demanded it and kept platform reliability above the go-live bar.'
@@ -128,13 +128,13 @@ export const DualMeterScenario: React.FC<{
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-2 gap-4 p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
             <div>
-              <span className="text-xs text-slate-500 font-medium">Final {meterLabels.primary.toLowerCase()}</span>
+              <span className="text-xs text-slate-600 font-medium">Final {meterLabels.primary.toLowerCase()}</span>
               <p className={`text-2xl font-medium mt-0.5 ${trustScore >= 60 ? 'text-emerald-700' : 'text-rose-600'}`}>
                 {trustScore}%
               </p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 font-medium">{meterLabels.secondary}</span>
+              <span className="text-xs text-slate-600 font-medium">{meterLabels.secondary}</span>
               <p
                 className={`text-2xl font-medium mt-0.5 ${
                   reliabilityScore >= 60 ? 'text-miro-blue' : 'text-rose-600'
@@ -188,7 +188,7 @@ export const DualMeterScenario: React.FC<{
           </div>
           <div className="flex items-center gap-3">
             <DrillFeedbackWidget drillId={drill.id} />
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-slate-600 font-medium">
               Move {currentMove.moveNumber} of {drill.moves.length}
             </span>
           </div>

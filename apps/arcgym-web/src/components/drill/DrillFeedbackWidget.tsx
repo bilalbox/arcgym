@@ -309,7 +309,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                 <Check className="h-4 w-4" />
               </div>
               <p className="text-xs font-medium text-slate-800">Feedback submitted</p>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-600">
                 Thank you for helping improve ArcGym drills.
               </p>
             </div>
@@ -351,7 +351,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
               {selectedRating === 'up' && (
                 <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-slate-500">
+                  <span className="text-[11px] font-medium text-slate-600">
                     What stood out? (Optional)
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -381,7 +381,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
               {selectedRating === 'down' && (
                 <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-slate-500">
+                  <span className="text-[11px] font-medium text-slate-600">
                     What could be better? (Optional)
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -420,7 +420,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                   Anonymous enum pills • No free text
                 </span>
                 {hasVoted ? (
-                  <span className="text-[11px] font-medium text-slate-500">
+                  <span className="text-[11px] font-medium text-slate-600">
                     Submitted
                   </span>
                 ) : (
