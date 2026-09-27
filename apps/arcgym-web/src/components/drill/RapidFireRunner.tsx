@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import {
   DrillFormat,
   DrillAttemptRecord,
   safeCitationHref,
+  orderOptions,
 } from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
@@ -60,6 +61,10 @@ export const RapidFireRunner: React.FC<{
   }, [drill.id]);
 
   const currentStep = drill.steps[currentStepIndex];
+  const orderedOptions = useMemo(
+    () => orderOptions(currentStep.options, `${drill.id}:${currentStep.id}`),
+    [drill.id, currentStep]
+  );
   const progressPercent = Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / drill.steps.length) * 100);
   const correctCitationHref = safeCitationHref(
     currentStep.options.find((o) => o.isCorrect)?.citationUrl
@@ -128,6 +133,11 @@ export const RapidFireRunner: React.FC<{
           isCorrect: r.isCorrect,
           score: r.score,
           selectedOptionId: r.selectedOptionId,
+          distractorAntipattern: r.isCorrect
+            ? undefined
+            : drill.steps
+                .find((s) => s.id === r.stepId)
+                ?.options.find((o) => o.id === r.selectedOptionId)?.distractorAntipattern,
         })),
       });
     }
@@ -267,7 +277,7 @@ export const RapidFireRunner: React.FC<{
         </h2>
 
         <div className="space-y-3 mb-6">
-          {currentStep.options.map((opt) => {
+          {orderedOptions.map((opt, index) => {
             const isSelected = selectedOptionId === opt.id;
             let containerStyle = 'border-miro-hairline hover:border-slate-400 bg-white';
 
@@ -300,16 +310,19 @@ export const RapidFireRunner: React.FC<{
                         isSelected ? 'border-miro-primary bg-miro-primary text-white' : 'border-miro-hairlineStrong text-slate-500'
                       }`}
                     >
-                      {opt.id.slice(-1).toUpperCase()}
+                      {String.fromCharCode(65 + index)}
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
                   <p className="font-normal text-slate-800">{opt.label}</p>
                   {isSubmitted && opt.distractorAntipattern && (
-                    <p className="mt-2.5 text-xs text-rose-900 bg-rose-50 border border-rose-200 p-2.5 rounded-lg">
-                      <span className="font-semibold">Antipattern risk:</span> {opt.distractorAntipattern}
-                    </p>
+                    <div className="mt-2.5 text-xs text-rose-900 bg-rose-50 border border-rose-200 p-2.5 rounded-lg space-y-1.5">
+                      <p>
+                        <span className="font-semibold">Antipattern risk:</span> {opt.distractorAntipattern}
+                      </p>
+                      {isSelected && <p className="leading-relaxed">{opt.rationale}</p>}
+                    </div>
                   )}
                 </div>
               </div>

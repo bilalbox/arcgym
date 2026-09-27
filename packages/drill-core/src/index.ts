@@ -5,4 +5,5 @@ export * from './scoring/brier.js';
 export * from './recommendation/engine.js';
 export * from './budget/evaluate.js';
 export * from './proficiency/aggregator.js';
+export * from './ui/orderOptions.js';
 

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { DrillFormat, ScenarioDrillDefinition } from '@arcgym/drill-core';
+import { DrillFormat, ScenarioDrillDefinition, orderOptions } from '@arcgym/drill-core';
 import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2, Hourglass } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
@@ -54,6 +54,10 @@ export const DualMeterScenario: React.FC<{
   }, [drill.id, drill.initialTrust, drill.initialReliability]);
 
   const currentMove = drill.moves[currentMoveIdx];
+  const orderedOptions = useMemo(
+    () => orderOptions(currentMove.options, `${drill.id}:${currentMove.moveNumber}`),
+    [drill.id, currentMove]
+  );
 
   const handleSubmit = () => {
     if (!selectedOptionId || !selectedConfidence) return;
@@ -232,7 +236,7 @@ export const DualMeterScenario: React.FC<{
         </div>
 
         <div className="space-y-3">
-          {currentMove.options.map((opt) => {
+          {orderedOptions.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
             let containerStyle = 'border-miro-hairline hover:border-slate-400 bg-white text-slate-800';
 

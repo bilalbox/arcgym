@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { DrillFormat, LessonDrillDefinition } from '@arcgym/drill-core';
+import { DrillFormat, LessonDrillDefinition, orderOptions } from '@arcgym/drill-core';
 import { CheckCircle2, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
@@ -36,6 +36,10 @@ export const LessonStepper: React.FC<{
   }, [drill.id]);
 
   const currentStage = drill.stages[currentStageIdx];
+  const orderedOptions = useMemo(
+    () => orderOptions(currentStage.options, `${drill.id}:${currentStage.stageNumber}`),
+    [drill.id, currentStage]
+  );
   const chosenOption = currentStage.options.find((o) => o.id === selectedOptionId);
 
   const handleSubmit = () => {
@@ -163,7 +167,7 @@ export const LessonStepper: React.FC<{
         </div>
 
         <div className="space-y-3">
-          {currentStage.options.map((opt) => {
+          {orderedOptions.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
             let borderStyle = 'border-miro-hairline hover:border-slate-400 bg-white text-slate-800';
 
