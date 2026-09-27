@@ -1,104 +1,91 @@
-interface Env {
-  DRILL_KV?: any;
-  ARCGYM_HMAC_SECRET?: string;
-}
+import {
+  configErrorResponse,
+  Env,
+  jsonResponse,
+  opaqueError,
+  requireKv,
+} from '../../_shared/env';
+import { requireAdminAuth } from '../../_shared/adminAuth';
+import { isValidDrillId } from '@arcgym/drill-core';
 
 export async function onRequestGet(context: {
   request: Request;
   env: Env;
 }) {
   const { request, env } = context;
-  const url = new URL(request.url);
-
-  // Authenticate admin request
-  const secret = env.ARCGYM_HMAC_SECRET || 'arcgym_hmac_secret_2026_super_secure';
-  const providedKey =
-    request.headers.get('x-arcgym-admin-key') ||
-    url.searchParams.get('admin_key');
-
-  if (!providedKey || providedKey !== secret) {
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized: Invalid or missing X-ArcGym-Admin-Key' }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  if (!env.DRILL_KV) {
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Cloudflare KV is not bound in current environment',
-        data: [],
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
-  const drillIdFilter = url.searchParams.get('drillId');
-  const ratingFilter = url.searchParams.get('rating'); // 'up' | 'down'
 
   try {
+    const authError = requireAdminAuth(request, env);
+    if (authError) return authError;
+
+    const kv = requireKv(env);
+    const url = new URL(request.url);
+    const drillIdFilter = url.searchParams.get('drillId');
+    const ratingFilter = url.searchParams.get('rating'); // 'up' | 'down'
+
     if (drillIdFilter) {
-      // 1. Single Drill Detailed View
-      const stats = await env.DRILL_KV.get(`drill:rating:${drillIdFilter}`, 'json');
+      if (!isValidDrillId(drillIdFilter)) {
+        return opaqueError(400, 'Invalid drillId');
+      }
+      if (ratingFilter && ratingFilter !== 'up' && ratingFilter !== 'down') {
+        return opaqueError(400, 'Invalid rating filter');
+      }
+
+      const stats = await kv.get(`drill:rating:${drillIdFilter}`, 'json');
       const index: string[] =
-        (await env.DRILL_KV.get(`drill:feedback_index:${drillIdFilter}`, 'json')) || [];
+        ((await kv.get(`drill:feedback_index:${drillIdFilter}`, 'json')) as string[]) ||
+        [];
 
       const records = [];
       for (const recId of index.slice(0, 50)) {
-        const item = await env.DRILL_KV.get(
-          `drill:feedback:${drillIdFilter}:${recId}`,
-          'json'
-        );
-        if (item) {
-          if (!ratingFilter || item.rating === ratingFilter) {
+        if (typeof recId !== 'string' || !/^fb_[\w-]+$/.test(recId)) continue;
+        const item = await kv.get(`drill:feedback:${drillIdFilter}:${recId}`, 'json');
+        if (item && typeof item === 'object') {
+          const rec = item as { rating?: string };
+          if (!ratingFilter || rec.rating === ratingFilter) {
             records.push(item);
           }
         }
       }
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          drillId: drillIdFilter,
-          stats: stats || null,
-          recordCount: records.length,
-          records,
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({
+        success: true,
+        drillId: drillIdFilter,
+        stats: stats || null,
+        recordCount: records.length,
+        records,
+      });
     }
 
-    // 2. All Drills Summary Overview
-    const listResult = await env.DRILL_KV.list({ prefix: 'drill:rating:' });
-    const summaries = [];
+    const listResult = await kv.list({ prefix: 'drill:rating:' });
+    const summaries: unknown[] = [];
 
     for (const key of listResult.keys || []) {
-      const stats = await env.DRILL_KV.get(key.name, 'json');
-      if (stats) {
-        summaries.push(stats);
-      }
+      const stats = await kv.get(key.name, 'json');
+      if (stats) summaries.push(stats);
     }
 
-    // Sort by lowest approval percentage first (identifying drills that need editorial revision)
     summaries.sort((a, b) => {
-      const pctA = a.likePercentage !== null ? a.likePercentage : 100;
-      const pctB = b.likePercentage !== null ? b.likePercentage : 100;
+      const pctA =
+        a && typeof a === 'object' && 'likePercentage' in a
+          ? ((a as { likePercentage: number | null }).likePercentage ?? 100)
+          : 100;
+      const pctB =
+        b && typeof b === 'object' && 'likePercentage' in b
+          ? ((b as { likePercentage: number | null }).likePercentage ?? 100)
+          : 100;
       return pctA - pctB;
     });
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        totalDrillsTracked: summaries.length,
-        drills: summaries,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-  } catch (error: any) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to query admin feedback', details: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({
+      success: true,
+      totalDrillsTracked: summaries.length,
+      drills: summaries,
+    });
+  } catch (error: unknown) {
+    const misconfigured = configErrorResponse(error);
+    if (misconfigured) return misconfigured;
+    console.error('admin/feedback failed', error);
+    return opaqueError(500, 'Failed to query admin feedback');
   }
 }

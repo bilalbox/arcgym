@@ -6,5 +6,13 @@ compatibility_date = "2026-09-27"
 binding = "DRILL_KV"
 id = "c1f903c9221b40c086115dd7fc7f43d7"
 
-[vars]
-ARCGYM_HMAC_SECRET = "arcgym_hmac_secret_2026_super_secure"
+# Secrets (never commit values — use Wrangler secrets or .dev.vars locally):
+#   ARCGYM_HMAC_SECRET       — publish-drill webhook HMAC
+#   ARCGYM_ADMIN_KEY         — X-ArcGym-Admin-Key for /api/admin/*
+#   ARCGYM_VOTE_HMAC_SECRET  — vote-dedup HMAC (IP×day×drill)
+#
+#   pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_HMAC_SECRET --project-name=arcgym
+#   pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_ADMIN_KEY --project-name=arcgym
+#   pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_VOTE_HMAC_SECRET --project-name=arcgym
+#
+# Local Pages Functions: copy apps/arcgym-web/.dev.vars.example → apps/arcgym-web/.dev.vars

@@ -13,7 +13,7 @@ Progress and confidence calibration live in the browser. There is no Salesforce 
 | App | React 19 + Vite 8 (`apps/arcgym-web`) |
 | Design | Miro-inspired system (see [`design.md`](./design.md)) via Tailwind CSS 4 + Radix primitives |
 | Domain | `@arcgym/drill-core` — scoring, calibration, recommendation types |
-| Hosting & Analytics | Cloudflare Pages + Pages Functions + KV (Wrangler 4) + Cloudflare Web Analytics (privacy-preserving, zero-PII) |
+| Hosting & Analytics | Cloudflare Pages + Pages Functions + KV (Wrangler 4) + Cloudflare Web Analytics (cookieless) |
 | Content | JSON drills under `content/drills/`, compiled by `scripts/build-drills.ts` |
 
 ## Monorepo layout
@@ -105,8 +105,32 @@ Every format uses the universal pre-submit **confidence gate** (50%, 70%, 85%, 9
 ## Calibration & Privacy Architecture
 
 - **Metacognitive Calibration**: Drills map answers against subjective confidence into four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate dangerous architectural blind spots.
-- **Zero-PII & Local-First**: No account, login, or Salesforce org connection is required. Streaks, progress, and history stay inside your browser's `localStorage`.
-- **Cookieless Telemetry**: Site analytics are strictly aggregated and anonymous via Cloudflare Web Analytics (no cookies, no IP logging, no cross-site tracking). See [`/privacy`](./apps/arcgym-web/src/pages/PrivacyPage.tsx).
+- **Local-First Practice**: No account, login, or Salesforce org connection is required. Streaks, progress, and history stay inside your browser's `localStorage`.
+- **Anonymous Drill Ratings**: Optional enum-pill feedback (no free text). Edge anti-sybil uses a short-lived HMAC over date + drill + connecting IP; raw IP is not stored in feedback records. See [`/privacy`](./apps/arcgym-web/src/pages/PrivacyPage.tsx).
+- **Cookieless Telemetry**: Site analytics are aggregated via Cloudflare Web Analytics (no cookies, no cross-site advertising profiles).
+
+## Edge secrets (required for Functions)
+
+Do **not** put secrets in `wrangler.toml` `[vars]`. Configure three separate Cloudflare Pages secrets (and matching `.dev.vars` for local Functions):
+
+| Secret | Purpose |
+| --- | --- |
+| `ARCGYM_HMAC_SECRET` | HMAC for `POST /api/webhooks/publish-drill` (`X-ArcGym-Signature`) |
+| `ARCGYM_ADMIN_KEY` | Bearer for `GET /api/admin/feedback` (`X-ArcGym-Admin-Key` header only) |
+| `ARCGYM_VOTE_HMAC_SECRET` | HMAC for ephemeral vote-dedup tokens |
+
+```bash
+# Production (Pages project "arcgym")
+pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_HMAC_SECRET --project-name=arcgym
+pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_ADMIN_KEY --project-name=arcgym
+pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_VOTE_HMAC_SECRET --project-name=arcgym
+
+# Local Functions
+cp apps/arcgym-web/.dev.vars.example apps/arcgym-web/.dev.vars
+# edit .dev.vars with `openssl rand -hex 32` values
+```
+
+If you previously used the committed placeholder `arcgym_hmac_secret_2026_super_secure`, treat it as compromised and rotate all three secrets.
 
 ## Design
 

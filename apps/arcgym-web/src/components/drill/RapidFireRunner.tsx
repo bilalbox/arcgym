@@ -10,6 +10,7 @@ import {
   RapidFireDrillDefinition,
   DrillFormat,
   DrillAttemptRecord,
+  safeCitationHref,
 } from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
@@ -60,6 +61,9 @@ export const RapidFireRunner: React.FC<{
 
   const currentStep = drill.steps[currentStepIndex];
   const progressPercent = Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / drill.steps.length) * 100);
+  const correctCitationHref = safeCitationHref(
+    currentStep.options.find((o) => o.isCorrect)?.citationUrl
+  );
 
   const handleSelectOption = (optionId: string) => {
     if (isSubmitted) return;
@@ -353,9 +357,9 @@ export const RapidFireRunner: React.FC<{
             </div>
 
             <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              {currentStep.options.find((o) => o.isCorrect)?.citationUrl && (
+              {correctCitationHref && (
                 <a
-                  href={currentStep.options.find((o) => o.isCorrect)?.citationUrl}
+                  href={correctCitationHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-miro-blue hover:text-miro-blueDeep font-medium flex items-center gap-1.5 underline"

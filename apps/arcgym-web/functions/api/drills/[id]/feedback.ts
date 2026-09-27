@@ -1,35 +1,23 @@
-interface Env {
-  DRILL_KV?: any;
-  ARCGYM_HMAC_SECRET?: string;
-}
+import {
+  calculateRatingStats,
+  isValidDrillId,
+  sanitizeFeedbackTags,
+  type FeedbackRating,
+  type DrillFeedbackRecord,
+  type DrillRatingStats,
+} from '@arcgym/drill-core';
+import {
+  configErrorResponse,
+  Env,
+  jsonResponse,
+  opaqueError,
+  readJsonBody,
+  requireKv,
+  requireSecret,
+} from '../../../_shared/env';
+import { computeVoteDedupToken } from '../../../_shared/hmac';
 
-const ALLOWED_LIKED_TAGS = new Set(['realistic', 'useful', 'good_challenge']);
-const ALLOWED_DISLIKED_TAGS = new Set(['unrealistic', 'unclear', 'too_easy', 'too_hard']);
-const MIN_RATING_THRESHOLD = 3;
-
-/**
- * Computes an ephemeral, non-reversible HMAC-SHA256 deduplication token.
- * Raw IP is never stored or logged.
- */
-async function computeEphemeralToken(
-  secret: string,
-  date: string,
-  drillId: string,
-  ip: string
-): Promise<string> {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-  const data = encoder.encode(`${date}:${drillId}:${ip}`);
-  const signature = await crypto.subtle.sign('HMAC', key, data);
-  const hashArray = Array.from(new Uint8Array(signature));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
+const MAX_FEEDBACK_BODY_BYTES = 2048;
 
 export async function onRequestPost(context: {
   request: Request;
@@ -39,140 +27,113 @@ export async function onRequestPost(context: {
   const { request, params, env } = context;
   const drillId = params.id;
 
-  if (!drillId) {
-    return new Response(JSON.stringify({ error: 'Missing drill ID' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  if (!isValidDrillId(drillId)) {
+    return opaqueError(400, 'Invalid drill ID');
   }
 
-  let body: any;
   try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+    const kv = requireKv(env);
+    const voteSecret = requireSecret(env, 'ARCGYM_VOTE_HMAC_SECRET');
 
-  const { rating, tags } = body || {};
+    // Only accept feedback for drills that exist in the catalog (seeded into KV).
+    const catalogEntry = await kv.get(`drill:id:${drillId}`);
+    if (!catalogEntry) {
+      return opaqueError(404, 'Unknown drill');
+    }
 
-  if (rating !== 'up' && rating !== 'down') {
-    return new Response(
-      JSON.stringify({ error: 'Invalid rating. Expected "up" or "down".' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    const parsed = await readJsonBody(request, MAX_FEEDBACK_BODY_BYTES);
+    if (!parsed.ok) return parsed.response;
+
+    const body = parsed.json;
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return opaqueError(400, 'Invalid JSON body');
+    }
+
+    const rating = (body as { rating?: unknown }).rating;
+    if (rating !== 'up' && rating !== 'down') {
+      return opaqueError(400, 'Invalid rating. Expected "up" or "down".');
+    }
+
+    const sanitizedTags = sanitizeFeedbackTags(
+      rating as FeedbackRating,
+      (body as { tags?: unknown }).tags
     );
-  }
 
-  // Validate tags strictly against approved enums
-  const allowedSet = rating === 'up' ? ALLOWED_LIKED_TAGS : ALLOWED_DISLIKED_TAGS;
-  const sanitizedTags: string[] = [];
-
-  if (Array.isArray(tags)) {
-    for (const tag of tags) {
-      if (typeof tag === 'string' && allowedSet.has(tag)) {
-        sanitizedTags.push(tag);
-      }
-    }
-  }
-
-  const secret = env.ARCGYM_HMAC_SECRET || 'arcgym_hmac_secret_2026_super_secure';
-  const today = new Date().toISOString().slice(0, 10);
-  const ip = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
-
-  try {
-    // 1. Ephemeral Anti-Sybil Deduplication
-    const dedupToken = await computeEphemeralToken(secret, today, drillId, ip);
-
-    if (env.DRILL_KV) {
-      const alreadyVoted = await env.DRILL_KV.get(`vote_dedup:${dedupToken}`);
-      if (alreadyVoted) {
-        return new Response(
-          JSON.stringify({ error: 'Feedback already submitted for this drill today.' }),
-          { status: 429, headers: { 'Content-Type': 'application/json' } }
-        );
-      }
-      // Store deduplication marker with 24-hour expiration TTL
-      await env.DRILL_KV.put(`vote_dedup:${dedupToken}`, '1', {
-        expirationTtl: 86400,
-      });
+    const today = new Date().toISOString().slice(0, 10);
+    // CF-Connecting-IP is set by Cloudflare; never trust a client-supplied value.
+    const ip = request.headers.get('CF-Connecting-IP');
+    if (!ip) {
+      return opaqueError(400, 'Unable to process feedback');
     }
 
-    // 2. Fetch and update aggregate rating statistics
-    let stats = env.DRILL_KV
-      ? await env.DRILL_KV.get(`drill:rating:${drillId}`, 'json')
-      : null;
+    const dedupToken = await computeVoteDedupToken(voteSecret, today, drillId, ip);
+    const dedupKey = `vote_dedup:${dedupToken}`;
 
-    if (!stats) {
-      stats = {
-        drillId,
-        upVotes: 0,
-        downVotes: 0,
-        totalVotes: 0,
-        likePercentage: null,
-        tagCounts: {},
-      };
+    const alreadyVoted = await kv.get(dedupKey);
+    if (alreadyVoted) {
+      return opaqueError(429, 'Feedback already submitted for this drill today.');
     }
 
-    if (rating === 'up') {
-      stats.upVotes = (stats.upVotes || 0) + 1;
-    } else {
-      stats.downVotes = (stats.downVotes || 0) + 1;
-    }
+    // Soft aggregate metrics: KV has no CAS. Concurrent votes may undercount.
+    // Order: persist stats/record first, then dedup — so a failed write does not
+    // burn the day's vote token.
+    const existing = (await kv.get(`drill:rating:${drillId}`, 'json')) as
+      | Partial<DrillRatingStats>
+      | null;
 
-    stats.totalVotes = stats.upVotes + stats.downVotes;
-    stats.likePercentage =
-      stats.totalVotes >= MIN_RATING_THRESHOLD
-        ? Math.round((stats.upVotes / stats.totalVotes) * 100)
-        : null;
-
-    stats.tagCounts = stats.tagCounts || {};
+    const prevUp = Number(existing?.upVotes) || 0;
+    const prevDown = Number(existing?.downVotes) || 0;
+    const nextUp = rating === 'up' ? prevUp + 1 : prevUp;
+    const nextDown = rating === 'down' ? prevDown + 1 : prevDown;
+    const tagCounts: Record<string, number> = {
+      ...((existing?.tagCounts as Record<string, number>) || {}),
+    };
     for (const tag of sanitizedTags) {
-      stats.tagCounts[tag] = (stats.tagCounts[tag] || 0) + 1;
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1;
     }
-    stats.lastUpdated = new Date().toISOString();
 
-    const recordId = `fb_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-    const feedbackRecord = {
+    const stats = calculateRatingStats(
+      drillId,
+      nextUp,
+      nextDown,
+      tagCounts,
+      new Date().toISOString()
+    );
+
+    const recordId = `fb_${crypto.randomUUID()}`;
+    const feedbackRecord: DrillFeedbackRecord = {
       id: recordId,
       drillId,
-      rating,
+      rating: rating as FeedbackRating,
       tags: sanitizedTags,
       submittedAt: new Date().toISOString(),
     };
 
-    if (env.DRILL_KV) {
-      // Save aggregate stats
-      await env.DRILL_KV.put(`drill:rating:${drillId}`, JSON.stringify(stats));
-
-      // Save individual anonymous record
-      await env.DRILL_KV.put(
-        `drill:feedback:${drillId}:${recordId}`,
-        JSON.stringify(feedbackRecord)
-      );
-
-      // Update feedback index array (capped at last 100 entries)
-      let index: string[] =
-        (await env.DRILL_KV.get(`drill:feedback_index:${drillId}`, 'json')) || [];
-      if (!Array.isArray(index)) index = [];
-      index.unshift(recordId);
-      if (index.length > 100) index = index.slice(0, 100);
-      await env.DRILL_KV.put(`drill:feedback_index:${drillId}`, JSON.stringify(index));
-    }
-
-    return new Response(
-      JSON.stringify({
-        success: true,
-        stats,
-        recorded: feedbackRecord,
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    await kv.put(`drill:rating:${drillId}`, JSON.stringify(stats));
+    await kv.put(
+      `drill:feedback:${drillId}:${recordId}`,
+      JSON.stringify(feedbackRecord)
     );
-  } catch (error: any) {
-    return new Response(
-      JSON.stringify({ error: 'Failed to record feedback', details: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+
+    let index: string[] =
+      ((await kv.get(`drill:feedback_index:${drillId}`, 'json')) as string[]) || [];
+    if (!Array.isArray(index)) index = [];
+    index.unshift(recordId);
+    if (index.length > 100) index = index.slice(0, 100);
+    await kv.put(`drill:feedback_index:${drillId}`, JSON.stringify(index));
+
+    // Mark dedup last so retries remain possible if the above puts fail.
+    await kv.put(dedupKey, '1', { expirationTtl: 86400 });
+
+    return jsonResponse({
+      success: true,
+      stats,
+      recorded: feedbackRecord,
+    });
+  } catch (error: unknown) {
+    const misconfigured = configErrorResponse(error);
+    if (misconfigured) return misconfigured;
+    console.error('feedback POST failed', error);
+    return opaqueError(500, 'Failed to record feedback');
   }
 }

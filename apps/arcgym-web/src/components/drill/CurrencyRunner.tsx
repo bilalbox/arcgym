@@ -11,6 +11,7 @@ import {
   CurrencyDrillDefinition,
   DrillFormat,
   isArchitectBudgetOptimal,
+  safeCitationHref,
 } from '@arcgym/drill-core';
 import { Gauge, AlertTriangle, CheckCircle2, RotateCcw, ExternalLink } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
@@ -51,6 +52,7 @@ export const CurrencyRunner: React.FC<{
 
   const allocatedTotal = Object.values(allocations).reduce((sum, n) => sum + n, 0);
   const isOverBudget = allocatedTotal > drill.totalPoints;
+  const citationHref = safeCitationHref(drill.citationUrl);
 
   const handleSubmit = () => {
     if (isOverBudget || !selectedConfidence) return;
@@ -194,9 +196,9 @@ export const CurrencyRunner: React.FC<{
             )}
 
             <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              {drill.citationUrl && (
+              {citationHref && (
                 <a
-                  href={drill.citationUrl}
+                  href={citationHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs text-miro-blue hover:text-miro-blueDeep font-medium flex items-center gap-1.5 underline"

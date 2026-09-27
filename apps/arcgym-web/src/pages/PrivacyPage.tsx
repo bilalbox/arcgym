@@ -61,7 +61,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-medium">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            Zero Personal Data Principle • Privacy by Design
+            No accounts • Local-first practice • Privacy by Design
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-semibold text-miro-primary tracking-tight">
@@ -69,11 +69,11 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
           </h1>
 
           <p className="text-base text-slate-600 max-w-2xl leading-relaxed">
-            ArcGym is engineered for Salesforce Technical Architects and enterprise technology leaders. We treat privacy as a non-negotiable architectural invariant: <strong>we collect, store, and process zero personal data.</strong>
+            ArcGym is engineered for Salesforce Technical Architects and enterprise technology leaders. We do not run user accounts, collect emails, or store practice scores on our servers. Practice history stays in your browser. Optional anonymous drill ratings use enum pills only—no free-text comments.
           </p>
 
           <p className="text-xs text-slate-400">
-            Effective Date: September 27, 2026 • Policy Version 1.0.0
+            Effective Date: September 28, 2026 • Policy Version 1.1.0
           </p>
         </div>
 
@@ -84,10 +84,10 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
               <EyeOff className="h-4.5 w-4.5 text-slate-700" />
             </div>
             <h3 className="font-semibold text-sm text-miro-primary mb-1">
-              Zero Personal Data
+              No Accounts or Identity
             </h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              No user accounts, no passwords, no email collection, no forms, and no identity tracking of any kind.
+              No user accounts, passwords, email collection, or cross-site advertising profiles. We do not ask you to identify yourself.
             </p>
           </Card>
 
@@ -122,15 +122,15 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             <div className="h-8 w-8 rounded-lg bg-blue-50 text-miro-blue flex items-center justify-center">
               <ThumbsUp className="h-4 w-4" />
             </div>
-            <span>Zero-PII Anonymous Drill Feedback</span>
+            <span>Anonymous Drill Feedback</span>
           </div>
           <p className="text-sm text-slate-600 leading-relaxed">
-            Learners can rate drills and provide feedback (e.g. <em>Realistic</em>, <em>Useful</em>, <em>Good challenge</em>, <em>Unrealistic</em>, <em>Unclear</em>, <em>Too easy</em>, or <em>Too hard</em>). To guarantee zero risk of leaking client corporate data or personal information:
+            Learners can rate drills with enum pills (e.g. <em>Realistic</em>, <em>Useful</em>, <em>Good challenge</em>, <em>Unrealistic</em>, <em>Unclear</em>, <em>Too easy</em>, or <em>Too hard</em>). Designed to avoid collecting corporate or personal free-text:
           </p>
           <ul className="text-xs text-slate-500 space-y-2 list-disc list-inside leading-relaxed pl-1">
-            <li><strong>No free-text input</strong>: Submissions are strictly constrained to pre-defined enum pills. We collect no comments, strings, or text areas, eliminating accidental transmission of emails, credentials, or Salesforce Org IDs.</li>
-            <li><strong>Ephemeral anti-sybil deduplication</strong>: To prevent ballot-stuffing without tracking you, the Cloudflare edge computes a temporary cryptographic hash in memory: <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11px]">HMAC-SHA256(Secret, IP + Date + DrillId)</code>. Your raw IP address is never logged, stored in KV, or transmitted. The deduplication marker automatically expires after 24 hours.</li>
-            <li><strong>Decoupled from learner scores</strong>: Feedback submissions carry only the rating and pill tags. They are completely decoupled from your practice scores, streaks, and confidence calibration telemetry.</li>
+            <li><strong>No free-text input</strong>: Submissions are limited to pre-defined enum pills. We do not collect comments or open text fields, which reduces accidental transmission of emails, credentials, or Salesforce Org IDs.</li>
+            <li><strong>Ephemeral anti-sybil deduplication</strong>: To limit ballot-stuffing, the Cloudflare edge briefly uses your connection IP (via <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11px]">CF-Connecting-IP</code>) as an input to <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11px]">HMAC-SHA256(Secret, Date + DrillId + IP)</code>. The raw IP is not written to feedback records. Only the opaque HMAC marker is stored in KV and expires after 24 hours.</li>
+            <li><strong>What we store</strong>: Each accepted vote stores drill id, up/down rating, selected pill tags, and a timestamp. Aggregates (counts and percentages) are public. Feedback is decoupled from your local practice scores and streaks.</li>
           </ul>
         </Card>
 
@@ -141,7 +141,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             Ready to practice your architectural judgment?
           </h2>
           <p className="text-sm text-slate-500 max-w-md mx-auto">
-            Test your trade-off analysis across Integration, Data Cloud, Security, and Agentforce with zero privacy compromise.
+            Test your trade-off analysis across Integration, Data Cloud, Security, and Agentforce — practice history stays on your device.
           </p>
           <Button
             size="lg"

@@ -1,5 +1,6 @@
 export * from './types/drill.js';
 export * from './types/feedback.js';
+export * from './types/validation.js';
 export * from './scoring/brier.js';
 export * from './recommendation/engine.js';
 export * from './budget/evaluate.js';

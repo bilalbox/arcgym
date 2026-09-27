@@ -43,6 +43,18 @@ function saveLocalVote(drillId: string, vote: LocalVoteRecord) {
   }
 }
 
+function clearLocalVote(drillId: string) {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const map = JSON.parse(raw);
+    delete map[drillId];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    // Local storage unavailable
+  }
+}
+
 export interface DrillFeedbackWidgetProps {
   drillId: string;
   className?: string;
@@ -70,11 +82,11 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedMessage, setSubmittedMessage] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Sync with local storage and fetch edge stats on mount or drillId change
   useEffect(() => {
     const local = getLocalVote(drillId);
     if (local) {
@@ -87,8 +99,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       setHasVoted(false);
     }
     setSubmittedMessage(false);
+    setSubmitError(null);
 
-    // Fetch stats from Cloudflare Pages API
     let isMounted = true;
     fetch(`/api/drills/${encodeURIComponent(drillId)}/rating`)
       .then((res) => (res.ok ? res.json() : null))
@@ -98,7 +110,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
         }
       })
       .catch(() => {
-        // Silently retain fallback/initial stats if offline or unseeded
+        // Retain fallback/initial stats if offline or unseeded
       });
 
     return () => {
@@ -106,7 +118,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
     };
   }, [drillId]);
 
-  // Click outside to dismiss popover
   useEffect(() => {
     if (!isOpen) return;
 
@@ -137,6 +148,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
   }, [isOpen]);
 
   const toggleTag = (tag: DrillFeedbackTag) => {
+    if (hasVoted) return;
     setSelectedTags((prev) => {
       const next = new Set(prev);
       if (next.has(tag)) {
@@ -149,42 +161,34 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
   };
 
   const handleRatingSelect = (rating: FeedbackRating) => {
+    if (hasVoted) return;
     if (rating !== selectedRating) {
       setSelectedRating(rating);
-      setSelectedTags(new Set()); // Reset tags if switching between like and dislike
+      setSelectedTags(new Set());
+      setSubmitError(null);
     }
   };
 
   const handleSubmit = async () => {
-    if (!selectedRating) return;
+    if (!selectedRating || hasVoted || isSubmitting) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     const tagsArray = Array.from(selectedTags);
+    const previousStats = stats;
 
-    const votePayload: LocalVoteRecord = {
-      rating: selectedRating,
-      tags: tagsArray,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Optimistically update local state & stats
-    saveLocalVote(drillId, votePayload);
-    setHasVoted(true);
-
-    const prevUp = stats.upVotes;
-    const prevDown = stats.downVotes;
-    const nextUp = selectedRating === 'up' ? prevUp + 1 : prevUp;
-    const nextDown = selectedRating === 'down' ? prevDown + 1 : prevDown;
+    const nextUp = selectedRating === 'up' ? stats.upVotes + 1 : stats.upVotes;
+    const nextDown = selectedRating === 'down' ? stats.downVotes + 1 : stats.downVotes;
     const updatedTagCounts = { ...(stats.tagCounts || {}) };
     for (const tag of tagsArray) {
       updatedTagCounts[tag] = (updatedTagCounts[tag] || 0) + 1;
     }
 
+    // Optimistic preview only — commit local vote after a successful edge response.
     setStats(calculateRatingStats(drillId, nextUp, nextDown, updatedTagCounts));
-    setSubmittedMessage(true);
 
     try {
-      await fetch(`/api/drills/${encodeURIComponent(drillId)}/feedback`, {
+      const res = await fetch(`/api/drills/${encodeURIComponent(drillId)}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -192,14 +196,45 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
           tags: tagsArray,
         }),
       });
-    } catch {
-      // Offline/fallback: local state is already persisted
-    } finally {
-      setIsSubmitting(false);
+
+      if (!res.ok) {
+        setStats(previousStats);
+        if (res.status === 429) {
+          setSubmitError('Already submitted for this drill today.');
+          setHasVoted(true);
+          saveLocalVote(drillId, {
+            rating: selectedRating,
+            tags: tagsArray,
+            timestamp: new Date().toISOString(),
+          });
+        } else {
+          setSubmitError('Could not save feedback. Please try again.');
+        }
+        return;
+      }
+
+      const data = (await res.json()) as { stats?: DrillRatingStats };
+      if (data.stats) {
+        setStats(data.stats);
+      }
+
+      saveLocalVote(drillId, {
+        rating: selectedRating,
+        tags: tagsArray,
+        timestamp: new Date().toISOString(),
+      });
+      setHasVoted(true);
+      setSubmittedMessage(true);
       setTimeout(() => {
         setIsOpen(false);
         setSubmittedMessage(false);
       }, 1200);
+    } catch {
+      setStats(previousStats);
+      clearLocalVote(drillId);
+      setSubmitError('Could not save feedback. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -212,7 +247,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
   return (
     <div className={`relative flex items-center gap-[7px] p-0.5 ${className}`}>
-      {/* Analyst Gym inspired trigger button */}
       <button
         ref={buttonRef}
         type="button"
@@ -242,7 +276,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
         <span className="sr-only">Rate this drill</span>
       </button>
 
-      {/* Aggregate percentage label */}
       <span
         className="font-data font-mono text-[12px] text-slate-500 select-none tracking-tight"
         title={percentageTitle}
@@ -250,7 +283,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
         {percentageDisplay}
       </span>
 
-      {/* Accessible Rating Popover */}
       {isOpen && (
         <div
           ref={popoverRef}
@@ -283,16 +315,18 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
             </div>
           ) : (
             <div className="space-y-3.5">
-              {/* Thumbs Up / Thumbs Down Primary Pills */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
+                  disabled={hasVoted}
                   onClick={() => handleRatingSelect('up')}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full text-xs font-medium border transition-colors ${
+                    hasVoted ? 'cursor-default' : 'cursor-pointer'
+                  } ${
                     selectedRating === 'up'
                       ? 'bg-miro-primary text-white border-miro-primary shadow-xs'
                       : 'bg-white text-slate-700 border-miro-hairline hover:border-slate-400'
-                  }`}
+                  } disabled:opacity-90`}
                 >
                   <ThumbsUp className="h-3.5 w-3.5" />
                   Helpful
@@ -300,19 +334,21 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
                 <button
                   type="button"
+                  disabled={hasVoted}
                   onClick={() => handleRatingSelect('down')}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full text-xs font-medium border transition-colors ${
+                    hasVoted ? 'cursor-default' : 'cursor-pointer'
+                  } ${
                     selectedRating === 'down'
                       ? 'bg-miro-primary text-white border-miro-primary shadow-xs'
                       : 'bg-white text-slate-700 border-miro-hairline hover:border-slate-400'
-                  }`}
+                  } disabled:opacity-90`}
                 >
                   <ThumbsDown className="h-3.5 w-3.5" />
                   Needs work
                 </button>
               </div>
 
-              {/* Dynamic Multiselect Pills for Liked (👍) */}
               {selectedRating === 'up' && (
                 <div className="space-y-1.5 pt-1">
                   <span className="text-[11px] font-medium text-slate-500">
@@ -325,8 +361,11 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                         <button
                           key={tag}
                           type="button"
+                          disabled={hasVoted}
                           onClick={() => toggleTag(tag)}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                            hasVoted ? 'cursor-default' : 'cursor-pointer'
+                          } ${
                             active
                               ? 'bg-blue-50 text-miro-blue border-blue-200'
                               : 'bg-white text-slate-600 border-miro-hairline hover:border-slate-300'
@@ -340,7 +379,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                 </div>
               )}
 
-              {/* Dynamic Multiselect Pills for Disliked (👎) */}
               {selectedRating === 'down' && (
                 <div className="space-y-1.5 pt-1">
                   <span className="text-[11px] font-medium text-slate-500">
@@ -353,8 +391,11 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                         <button
                           key={tag}
                           type="button"
+                          disabled={hasVoted}
                           onClick={() => toggleTag(tag)}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                            hasVoted ? 'cursor-default' : 'cursor-pointer'
+                          } ${
                             active
                               ? 'bg-rose-50 text-rose-700 border-rose-200'
                               : 'bg-white text-slate-600 border-miro-hairline hover:border-slate-300'
@@ -368,19 +409,30 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                 </div>
               )}
 
-              {/* Privacy assurance footnote & Submit CTA */}
+              {submitError && (
+                <p className="text-[11px] text-rose-600" role="alert">
+                  {submitError}
+                </p>
+              )}
+
               <div className="pt-2 flex items-center justify-between border-t border-miro-hairlineSoft">
                 <span className="text-[10px] text-slate-400">
-                  Zero personal data • Anonymous
+                  Anonymous enum pills • No free text
                 </span>
-                <button
-                  type="button"
-                  disabled={!selectedRating || isSubmitting}
-                  onClick={handleSubmit}
-                  className="rounded-full bg-miro-primary hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium px-4 py-1.5 cursor-pointer transition-colors shadow-xs"
-                >
-                  {isSubmitting ? 'Saving...' : hasVoted ? 'Update vote' : 'Submit'}
-                </button>
+                {hasVoted ? (
+                  <span className="text-[11px] font-medium text-slate-500">
+                    Submitted
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!selectedRating || isSubmitting}
+                    onClick={handleSubmit}
+                    className="rounded-full bg-miro-primary hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium px-4 py-1.5 cursor-pointer transition-colors shadow-xs"
+                  >
+                    {isSubmitting ? 'Saving...' : 'Submit'}
+                  </button>
+                )}
               </div>
             </div>
           )}

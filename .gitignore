@@ -48,3 +48,6 @@ data/feedback.json
 .vscode/
 *.swp
 *.swo
+
+# Noise from windows host
+C:*

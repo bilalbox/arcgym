@@ -27,6 +27,28 @@ export const ALL_DISLIKED_TAGS: DrillDislikedReason[] = [
   'too_hard',
 ];
 
+const LIKED_TAG_SET = new Set<string>(ALL_LIKED_TAGS);
+const DISLIKED_TAG_SET = new Set<string>(ALL_DISLIKED_TAGS);
+
+/**
+ * Filters arbitrary tag input to the allowlist for the given rating.
+ * Unknown / wrong-polarity tags are dropped (never accepted).
+ */
+export function sanitizeFeedbackTags(
+  rating: FeedbackRating,
+  tags: unknown
+): DrillFeedbackTag[] {
+  if (!Array.isArray(tags)) return [];
+  const allowed = rating === 'up' ? LIKED_TAG_SET : DISLIKED_TAG_SET;
+  const out: DrillFeedbackTag[] = [];
+  for (const tag of tags) {
+    if (typeof tag === 'string' && allowed.has(tag) && !out.includes(tag as DrillFeedbackTag)) {
+      out.push(tag as DrillFeedbackTag);
+    }
+  }
+  return out;
+}
+
 export interface DrillFeedbackSubmission {
   drillId: string;
   rating: FeedbackRating;
