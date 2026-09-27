@@ -10,33 +10,33 @@
     "Reliability",
     "Trust"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Marketing needs Snowflake behavioral scores in Salesforce for near-real-time segmentation. The lake holds 50TB of raw clickstream; leadership rejects duplicating it into Salesforce storage or paying continuous API ingest fees. Which architecture best satisfies freshness, cost, and Trust?",
+      "prompt": "Marketing wants Snowflake behavioral scores available to Data 360 segments within minutes of each score update. The scores live in a 50TB Snowflake lake whose access policies the data team already governs, and Salesforce data storage is at 90% of the org's allocation. Which architecture should the architect use?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Scheduled reverse ETL sync copying aggregated behavioral scores into Custom Big Objects via Bulk API",
+          "label": "Sync aggregated scores nightly into Custom Big Objects with a scheduled reverse ETL job over Bulk API",
           "isCorrect": false,
-          "distractorAntipattern": "Duplicating lake data into Big Objects incurs massive storage overhead, high ingest latency, and stale segmentation.",
-          "rationale": "Copying massive telemetry into Custom Big Objects duplicates storage costs, creates pipeline lag, and violates leadership requirement to avoid data duplication."
+          "distractorAntipattern": "ETL Data Hoarding",
+          "rationale": "A nightly copy misses the minutes-level freshness target and creates a second copy of lake data that must be secured and paid for outside the lake's governance."
         },
         {
           "id": "s1_b",
-          "label": "Data 360 Zero Copy federation to Snowflake, querying governed lake shares directly without data movement",
+          "label": "Federate Data 360 to the Snowflake shares with Zero Copy and read the scores in place",
           "isCorrect": true,
-          "rationale": "Zero Copy federation connects Data 360 directly to Snowflake shares, providing live query access for segmentation without data duplication or ingestion fees.",
+          "rationale": "Inbound Zero Copy reads external data where it lives, under the source's own security policies, and changes in Snowflake are available for activation as soon as they land. That meets the minutes-level freshness target without adding copied rows to storage that is already near its allocation.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#inbound-zero-copy--external-platforms-to-data-360"
         },
         {
           "id": "s1_c",
-          "label": "Synchronous External Services REST callouts querying Snowflake on-demand during segment evaluations",
+          "label": "Call Snowflake through External Services REST callouts each time a segment is evaluated",
           "isCorrect": false,
-          "distractorAntipattern": "Synchronous callouts during segmentation create severe API rate limiting, high latency, and lack lake-level SQL pushdown.",
-          "rationale": "Synchronous API callouts cannot support complex audience segmentation queries across 50TB datasets and trigger severe API throttling."
+          "distractorAntipattern": "Synchronous Callout Coupling",
+          "rationale": "Segment evaluation would wait on a synchronous callout per run against a 50TB lake, tying segmentation latency and availability to an external request-reply API."
         }
       ]
     }
