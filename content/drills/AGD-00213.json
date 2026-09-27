@@ -1,6 +1,6 @@
 {
   "id": "AGD-00213",
-  "title": "Test Data Must Use the Connector That Owns the Stream",
+  "title": "Test Rows for a Data Stream You Cannot Reach",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 & Data Cloud Zero Copy",
@@ -9,7 +9,7 @@
     "Operational_Excellence",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "published",
   "sourceCardIds": [
     "FC-0D5KX00000bDpvW0AS"
@@ -17,30 +17,30 @@
   "steps": [
     {
       "id": "s1",
-      "prompt": "An architect built a Direct Access data stream → DLO → DMO → Flow path into CRM but has no access to the upstream Direct Access source. They need a few test rows to validate the Flow. Which approach respects how Data 360 ingestion actually works?",
+      "prompt": "An architect built a Direct Access data stream that feeds a DLO, a DMO, and a Flow that writes to CRM. The upstream source belongs to another team and will not be available for three weeks. How should the architect get test rows into the DMO to validate the Flow?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Use the Ingestion API to POST sample payloads directly into the existing Direct Access Data Lake Object to trigger the pipeline",
+          "label": "POST sample payloads with the Ingestion API into the Direct Access stream's existing DLO",
           "isCorrect": false,
           "distractorAntipattern": "Arbitrary DLO Inject Bypass",
-          "rationale": "Data Lake Objects are strictly coupled to their originating connector type; the Ingestion API cannot inject records into a DLO owned by a Direct Access stream.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
-        },
-        {
-          "id": "s1_b",
-          "label": "Stand up a temporary Cloud Storage or File Upload stream mapped to the same target DMO to validate downstream Flow logic safely",
-          "isCorrect": true,
-          "rationale": "Because connector-owned DLOs cannot be injected across connectors, creating a secondary stream mapped to the same harmonized DMO validates downstream Flow logic without corrupting upstream sources.",
+          "rationale": "A DLO belongs to the stream and connector that created it, so the Ingestion API can write only to its own streams' DLOs, not to one a Direct Access stream owns.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
         },
         {
           "id": "s1_c",
-          "label": "Temporarily repoint the CRM Flow to read simulated fixture records from a custom object until live connector access is restored",
+          "label": "Point the Flow at fixture records in a CRM custom object until the source is available",
           "isCorrect": false,
           "distractorAntipattern": "CRM Fixture Path Substitution",
-          "rationale": "Testing against a CRM custom object bypasses Data Cloud DMO schemas, data types, and trigger mechanics, leaving the real integration untested.",
+          "rationale": "The Flow would read a different object, so the DMO mapping and the Data 360 trigger path it depends on go untested.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#connect-ingest-and-prepare"
+        },
+        {
+          "id": "s1_b",
+          "label": "Add a temporary Cloud Storage or file upload stream whose DLO maps to the same DMO",
+          "isCorrect": true,
+          "rationale": "Each connector ingests into the streams it owns, but several streams can map into one DMO. A temporary stream mapped to the same DMO exercises the DMO-to-Flow path without touching the Direct Access source.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
         }
       ]
     }
