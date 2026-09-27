@@ -68,5 +68,9 @@ _Avoid_: Featured-day webhook "publish", soft-delete, archive
 An incorrect drill choice deliberately modeled after a documented, real-world architectural antipattern to test an architect's discernment of technical debt and scalability boundaries.
 _Avoid_: Wrong answer, trick option
 
+**Friction Card**:
+A human-reviewed, paraphrased record of one Trailblazer Community thread: the problem, the naive approaches practitioners tried and why they failed, and how the thread resolved. Friction Cards source Antipattern Distractors and scenario realism only; a community resolution is never Well-Architected Grounding, so every correct answer still cites official documentation.
+_Avoid_: Community pattern, frontier solution, dual grounding
+
 
 

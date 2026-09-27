@@ -24,6 +24,10 @@ const ARCHITECTURAL_DOMAINS = new Set([
 
 const FORMATS = new Set(['Lesson', 'Rapid_Fire', 'Currency', 'Scenario']);
 const STATUSES = new Set(['draft', 'published']);
+const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
+const PILLARS = new Set(['Trust', 'Reliability', 'Operational_Excellence', 'Cost_Optimization', 'Fairness']);
+const OFFICIAL_DOCS_PREFIX = 'https://architect.salesforce.com';
+const CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
@@ -47,6 +51,37 @@ function err(file: string, message: string) {
   errorCount++;
 }
 
+function isOfficialCitation(url: unknown): boolean {
+  return typeof url === 'string' && url.startsWith(OFFICIAL_DOCS_PREFIX);
+}
+
+function validateOptionIds(file: string, where: string, options: any[]) {
+  const ids = options.map((o) => o.id);
+  if (new Set(ids).size !== ids.length) {
+    err(file, `${where} has duplicate option ids`);
+  }
+}
+
+function validateMetadata(file: string, drill: any) {
+  if (!DIFFICULTIES.has(drill.difficulty)) {
+    err(file, `invalid difficulty: ${drill.difficulty} (expected ${[...DIFFICULTIES].join('|')})`);
+  }
+  if (drill.pillars.length === 0) {
+    err(file, 'pillars must not be empty');
+  }
+  for (const pillar of drill.pillars) {
+    if (!PILLARS.has(pillar)) {
+      err(file, `invalid Well-Architected pillar: ${pillar}`);
+    }
+  }
+  if (drill.sourceCardIds !== undefined) {
+    const valid = Array.isArray(drill.sourceCardIds) && drill.sourceCardIds.every((id: unknown) => typeof id === 'string' && CARD_ID_PATTERN.test(id));
+    if (!valid) {
+      err(file, 'sourceCardIds must be an array of Friction Card ids (FC-<discussion_id>)');
+    }
+  }
+}
+
 function validateRapidFire(file: string, drill: any) {
   if (!Array.isArray(drill.steps) || drill.steps.length === 0) {
     err(file, 'Rapid_Fire requires non-empty steps');
@@ -55,9 +90,22 @@ function validateRapidFire(file: string, drill: any) {
   for (const step of drill.steps) {
     if (!step.prompt || !Array.isArray(step.options)) {
       err(file, `step ${step.id} has invalid prompt or options`);
+      continue;
     }
-    if (!step.options?.some((o: any) => o.isCorrect)) {
+    if (!step.options.some((o: any) => o.isCorrect)) {
       err(file, `step ${step.id} has NO correct option marked`);
+    }
+    validateOptionIds(file, `step ${step.id}`, step.options);
+    for (const option of step.options) {
+      if (!option.rationale) {
+        err(file, `option ${option.id} is missing rationale`);
+      }
+      if (!option.isCorrect && !option.distractorAntipattern) {
+        err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
+      }
+      if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
+        err(file, `correct option ${option.id} must cite ${OFFICIAL_DOCS_PREFIX} (got ${option.citationUrl ?? 'none'})`);
+      }
     }
   }
 }
@@ -65,6 +113,9 @@ function validateRapidFire(file: string, drill: any) {
 function validateCurrency(file: string, drill: any) {
   if (!drill.prompt || typeof drill.totalPoints !== 'number') {
     err(file, 'Currency requires prompt and totalPoints');
+  }
+  if (!isOfficialCitation(drill.citationUrl)) {
+    err(file, `Currency must cite ${OFFICIAL_DOCS_PREFIX} (got ${drill.citationUrl ?? 'none'})`);
   }
   if (!Array.isArray(drill.categories) || drill.categories.length === 0) {
     err(file, 'Currency requires categories[]');
@@ -95,6 +146,9 @@ function validateScenario(file: string, drill: any) {
     if (!move.options?.some((o: any) => o.isOptimal)) {
       err(file, `move ${move.moveNumber} has no optimal option`);
     }
+    if (Array.isArray(move.options)) {
+      validateOptionIds(file, `move ${move.moveNumber}`, move.options);
+    }
   }
 }
 
@@ -109,6 +163,14 @@ function validateLesson(file: string, drill: any) {
     }
     if (!stage.options?.some((o: any) => o.isCorrect)) {
       err(file, `stage ${stage.stageNumber} has no correct option`);
+    }
+    if (Array.isArray(stage.options)) {
+      validateOptionIds(file, `stage ${stage.stageNumber}`, stage.options);
+      for (const option of stage.options) {
+        if (!option.coachingFeedback) {
+          err(file, `stage ${stage.stageNumber} option ${option.id} is missing coachingFeedback`);
+        }
+      }
     }
   }
 }
@@ -138,6 +200,8 @@ for (const file of drillFiles) {
       err(file, `invalid status: ${drill.status} (expected draft|published)`);
       continue;
     }
+
+    validateMetadata(file, drill);
 
     switch (drill.format) {
       case 'Rapid_Fire':

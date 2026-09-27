@@ -3,11 +3,12 @@
 Trailhead Community Discussion Pattern Analyzer
 Analyzes discussions in SQLite, detects recurring architectural friction points,
 identifies common naive antipatterns (for drill distractors) and vetted solutions,
-and outputs a curated catalog in content/scenarios/curated_community_patterns.json.
+and outputs a curated catalog in data/curated_community_patterns.json (local only, git-ignored).
 """
 
 import os
 import re
+import sys
 import json
 import sqlite3
 import argparse
@@ -17,8 +18,7 @@ from collections import defaultdict
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 DEFAULT_DB_PATH = os.path.join(DATA_DIR, "trailhead.db")
-SCENARIOS_DIR = os.path.join(ROOT_DIR, "content/scenarios")
-OUTPUT_PATH = os.path.join(SCENARIOS_DIR, "curated_community_patterns.json")
+OUTPUT_PATH = os.path.join(DATA_DIR, "curated_community_patterns.json")
 
 # Architectural Taxonomy & Topic Signatures for Data 360 / Agentforce / Core Platform
 TAXONOMY = {
@@ -228,7 +228,7 @@ def analyze_patterns(db_path: str = DEFAULT_DB_PATH, out_path: str = OUTPUT_PATH
         "curated_patterns": curated_patterns
     }
 
-    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(catalog, f, indent=2, ensure_ascii=False)
 

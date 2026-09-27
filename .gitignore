@@ -34,6 +34,8 @@ data/chroma/
 data/*.db
 data/*.db-*
 data/trailhead*
+data/friction_cards.json
+data/curated_community_patterns.json
 
 
 # Local scratch & archived stacks (LWR / SFDX)

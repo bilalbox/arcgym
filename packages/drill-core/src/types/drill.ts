@@ -124,6 +124,8 @@ export interface DrillDefinitionBase {
   version: number;
   /** Only `published` drills are compiled into the learner-facing catalog. */
   status: DrillStatus;
+  /** Friction Cards (local data/friction_cards.json) the distractors were modeled on. */
+  sourceCardIds?: string[];
 }
 
 export interface RapidFireDrillDefinition extends DrillDefinitionBase {

@@ -22,8 +22,8 @@ Progress and confidence calibration live in the browser. There is no Salesforce 
 apps/arcgym-web/     Cloudflare Pages React app (UI + Functions + /privacy route)
 packages/drill-core/ Pure TypeScript domain library (scoring, calibration, recommendations)
 content/drills/      Authoritative drill JSON (38 drills across 6 architectural domains)
-content/scenarios/   Curated recurring problem patterns (Trailhead Community)
-scripts/             Drill build, KV seed, RAG crawler, pattern analyzer, drill generator
+scripts/             Drill build, KV seed, RAG crawler, Friction Card tooling, drill generator
+data/                Local-only RAG corpus, Trailhead SQLite, and Friction Card catalog (gitignored)
 docs/research/       Domain research notes & architectural taxonomy
 design.md            Visual system (Miro × Salesforce craft)
 CONTEXT.md           Product language / glossary
@@ -75,11 +75,19 @@ python scripts/crawler/crawl_architect.py
 # Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
 python scripts/crawler/crawl_trailhead.py --limit 100
 
-# Extract recurring practitioner problem patterns & antipattern distractors
-python scripts/crawler/analyze_trailhead_patterns.py
+# Turn threads into Friction Cards, review them, and export approved cards to data/friction_cards.json (gitignored)
+python scripts/crawler/friction_cards.py extract --limit 10   # GEMINI_API_KEY or OPENAI_API_KEY; or --prompt-only, then `import`
+python scripts/crawler/friction_cards.py review               # [p] previews official docs for the card's query, [e] edits it
+python scripts/crawler/friction_cards.py export
 
-# Generate a draft drill from Chroma context & community scenarios (status defaults to draft)
+# Generate a draft drill from Chroma context (status defaults to draft)
 npx tsx scripts/generator/generate-drill.ts --topic "Your topic"
+
+# Model distractors on a reviewed Friction Card; the correct answer is still grounded in official docs
+npx tsx scripts/generator/generate-drill.ts --from-card FC-<discussion_id> [--query "override doc search"]
+
+# Legacy keyword clustering (superseded by Friction Cards; writes data/curated_community_patterns.json)
+python scripts/crawler/analyze_trailhead_patterns.py
 ```
 
 ## Drill formats

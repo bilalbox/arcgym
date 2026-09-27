@@ -9,15 +9,18 @@
  *   npx tsx scripts/generator/generate-drill.ts --topic "Agentforce Guardrails and PII Masking"
  *   npx tsx scripts/generator/generate-drill.ts --topic "Data Cloud Zero Copy Snowflake" --prompt-only
  *   npx tsx scripts/generator/generate-drill.ts --topic "Large Data Volumes Skinny Tables" --auto-build
+ *   npx tsx scripts/generator/generate-drill.ts --from-card FC-0D5KX00000jAOVQ0A4 --prompt-only
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const CHROMA_SEARCH_SCRIPT = path.join(ROOT_DIR, 'scripts/crawler/search_chroma.py');
+const FRICTION_CARDS_PATH = path.join(ROOT_DIR, 'data/friction_cards.json');
+const WELL_ARCHITECTED_PILLARS = ['Trust', 'Reliability', 'Operational_Excellence', 'Cost_Optimization', 'Fairness'];
 
 interface ChromaChunk {
   content: string;
@@ -34,24 +37,42 @@ interface ChromaChunk {
   cosine_similarity: number;
 }
 
+/** Human-reviewed practitioner friction exported by scripts/crawler/friction_cards.py. */
+interface FrictionCard {
+  card_id: string;
+  thread_url: string;
+  title: string;
+  domain: string;
+  pillars: string[];
+  problem: string;
+  constraints: string[];
+  naive_approaches: { approach: string; why_it_fails: string }[];
+  resolution: string;
+  resolution_source: 'best_answer' | 'thread_consensus' | 'unresolved';
+  official_doc_query: string;
+}
+
 interface CliArgs {
   topic: string;
   domain?: string;
   pillar?: string;
   format: 'Rapid_Fire' | 'Currency' | 'Scenario' | 'Lesson';
-  difficulty: 'Associate' | 'Practitioner' | 'Lead_CTA';
+  difficulty: 'Associate_Domain_Architect' | 'Lead_CTA';
   steps: number;
   id?: string;
   topK: number;
   promptOnly: boolean;
   autoBuild: boolean;
   outFile?: string;
+  fromCard?: string;
+  /** Overrides the ChromaDB search phrase (defaults to the card's official_doc_query, then the topic). */
+  query?: string;
 }
 
 function parseArgs(): CliArgs {
   const args = process.argv.slice(2);
   const result: CliArgs = {
-    topic: 'Salesforce Well-Architected Decisions',
+    topic: '',
     format: 'Rapid_Fire',
     difficulty: 'Lead_CTA',
     steps: 3,
@@ -84,10 +105,26 @@ function parseArgs(): CliArgs {
       result.autoBuild = true;
     } else if (arg === '--out' && args[i + 1]) {
       result.outFile = args[++i];
+    } else if (arg === '--from-card' && args[i + 1]) {
+      result.fromCard = args[++i];
+    } else if (arg === '--query' && args[i + 1]) {
+      result.query = args[++i];
     }
   }
 
   return result;
+}
+
+function loadFrictionCard(cardId: string): FrictionCard {
+  if (!fs.existsSync(FRICTION_CARDS_PATH)) {
+    throw new Error(`${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`);
+  }
+  const catalog = JSON.parse(fs.readFileSync(FRICTION_CARDS_PATH, 'utf-8'));
+  const card = (catalog.cards as FrictionCard[]).find((c) => c.card_id === cardId);
+  if (!card) {
+    throw new Error(`Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`);
+  }
+  return card;
 }
 
 function getNextDrillId(format: string = 'Rapid_Fire'): string {
@@ -150,11 +187,11 @@ function getNextDrillId(format: string = 'Rapid_Fire'): string {
 function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[] {
   console.log(`[RAG] Searching ChromaDB for: "${query}" (top ${topK})...`);
   try {
-    let cmd = `uv run --with chromadb python "${CHROMA_SEARCH_SCRIPT}" "${query}" --top-k ${topK} --json`;
+    const cmdArgs = ['run', '--with', 'chromadb', 'python', CHROMA_SEARCH_SCRIPT, query, '--top-k', String(topK), '--json'];
     if (pillar) {
-      cmd += ` --pillar "${pillar}"`;
+      cmdArgs.push('--pillar', pillar);
     }
-    const output = execSync(cmd, { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+    const output = execFileSync('uv', cmdArgs, { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
     const parsed = JSON.parse(output.trim());
     return parsed as ChromaChunk[];
   } catch (err: any) {
@@ -206,7 +243,34 @@ function resolveCanonicalDomain(category?: string, pillar?: string): { domain: s
   return { domain: 'Platform_Core', domainLabel: 'Platform Core & Scalability' };
 }
 
-function buildPrompt(chunks: ChromaChunk[], args: CliArgs, drillId: string): string {
+/** Chunk `pillar` metadata mixes product areas (Core_Platform, Data_360) with Well-Architected pillars. */
+function resolvePillars(chunks: ChromaChunk[], card?: FrictionCard): string[] {
+  if (card?.pillars.length) return card.pillars;
+  return Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter((p) => WELL_ARCHITECTED_PILLARS.includes(p))));
+}
+
+function buildFrictionSection(card?: FrictionCard): string {
+  if (!card) return '';
+  const approaches = card.naive_approaches.length
+    ? card.naive_approaches.map((a, i) => `${i + 1}. ${a.approach}\n   Why it fails: ${a.why_it_fails}`).join('\n')
+    : '(none recorded; derive distractors from the official chunks)';
+  return `
+### Practitioner Friction (Trailblazer Community, human-reviewed paraphrase)
+- Problem: ${card.problem}
+- Constraints: ${card.constraints.length ? card.constraints.join('; ') : '(none stated)'}
+- Naive approaches practitioners tried:
+${approaches}
+- Community resolution (${card.resolution_source}): ${card.resolution || '(unresolved)'}
+
+### Rules for Using Practitioner Friction:
+1. Build the scenario from the problem and constraints above, restated in enterprise terms. Do not name the community, the thread, or any person.
+2. Every incorrect option MUST be modeled on one of the naive approaches above, not a generic strawman. Explain why it fails in the antipattern field.
+3. The community resolution is NOT grounding. The correct option must be supported and cited by the official documentation chunks below. If the chunks do not support any correct answer for this problem, output only {"error": "<what official guidance is missing>"} instead of a drill.
+`;
+}
+
+function buildPrompt(chunks: ChromaChunk[], args: CliArgs, drillId: string, card?: FrictionCard): string {
+  const frictionSection = buildFrictionSection(card);
   const contextText = chunks
     .map(
       (c, i) =>
@@ -223,6 +287,11 @@ ${c.content}
   const resolved = resolveCanonicalDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
   const domain = args.domain || resolved.domain;
   const domainLabel = resolved.domainLabel;
+  const pillars = resolvePillars(chunks, card);
+  const pillarSpec = pillars.length
+    ? JSON.stringify(pillars)
+    : `choose 1-3 from ${WELL_ARCHITECTED_PILLARS.join(' | ')}`;
+  const pillarExample = JSON.stringify(pillars.length ? pillars : ['Reliability']);
 
   if (args.format === 'Lesson') {
     return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
@@ -243,10 +312,10 @@ Generate a high-stakes, realistic 4-stage architectural Lesson drill formatted a
 - Topic: "${args.topic}"
 - Domain: "${domain}" (must be one of: Platform_Core, Data_Architecture, Security_And_Access, Integration_Apis, Ai_And_Automation, Infrastructure, Devops_Lifecycle)
 - Domain Label: "${domainLabel}"
-- Pillars: ${JSON.stringify(Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))))}
+- Pillars: ${pillarSpec}
 - Format: "Lesson"
 - Difficulty: "${args.difficulty}"
-
+${frictionSection}
 ### Grounding Documentation Chunks from architect.salesforce.com:
 ${contextText}
 
@@ -259,7 +328,7 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "domain": "${domain}",
   "domainLabel": "${domainLabel}",
   "difficulty": "${args.difficulty}",
-  "pillars": ["Reliability", "Operational_Excellence"],
+  "pillars": ${pillarExample},
   "version": 1,
   "status": "draft",
   "stages": [
@@ -358,11 +427,11 @@ Generate a high-stakes, realistic architectural judgment drill formatted as vali
 - Topic: "${args.topic}"
 - Domain: "${domain}"
 - Domain Label: "${domainLabel}"
-- Pillars: ${JSON.stringify(Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))))}
+- Pillars: ${pillarSpec}
 - Format: "${args.format}"
 - Difficulty: "${args.difficulty}"
 - Number of Steps: ${args.steps}
-
+${frictionSection}
 ### Grounding Documentation Chunks from architect.salesforce.com:
 ${contextText}
 
@@ -375,7 +444,7 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "domain": "${domain}",
   "domainLabel": "${domainLabel}",
   "difficulty": "${args.difficulty}",
-  "pillars": ["Reliability", "Trust"],
+  "pillars": ${pillarExample},
   "version": 1,
   "status": "draft",
   "steps": [
@@ -458,7 +527,7 @@ async function callLlmIfAvailable(prompt: string): Promise<string | null> {
   return null;
 }
 
-function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: string): any {
+function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: string, card?: FrictionCard): any {
   const topChunk = chunks[0] || {
     content: 'Salesforce Well-Architected guidance',
     metadata: {
@@ -473,6 +542,8 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
   const resolved = resolveCanonicalDomain(topChunk.metadata?.category, topChunk.metadata?.pillar);
   const domain = args.domain || resolved.domain;
   const domainLabel = resolved.domainLabel;
+  const resolvedPillars = resolvePillars(chunks, card);
+  const scaffoldPillars = resolvedPillars.length ? resolvedPillars : ['Reliability'];
 
   if (args.format === 'Lesson') {
     const stageDefs = [
@@ -521,7 +592,7 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
       domain,
       domainLabel,
       difficulty: args.difficulty,
-      pillars: Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))),
+      pillars: scaffoldPillars,
       version: 1,
       status: 'draft',
       stages: stageDefs.map((st) => ({
@@ -549,16 +620,19 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
   const steps = [];
   for (let i = 0; i < args.steps; i++) {
     const chunk = chunks[i] || topChunk;
+    const naive = card?.naive_approaches[i % card.naive_approaches.length];
     steps.push({
       id: `s${i + 1}`,
-      prompt: `In an enterprise implementation concerning ${args.topic}, how should you address: ${chunk.metadata.section_title || chunk.metadata.doc_title}?`,
+      prompt: card
+        ? `${card.problem} How should you address it?`
+        : `In an enterprise implementation concerning ${args.topic}, how should you address: ${chunk.metadata.section_title || chunk.metadata.doc_title}?`,
       options: [
         {
           id: `s${i + 1}_a`,
-          label: `Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.`,
+          label: naive?.approach ?? `Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.`,
           isCorrect: false,
-          distractorAntipattern: `Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.`,
-          rationale: `Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.`,
+          distractorAntipattern: naive?.why_it_fails ?? `Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.`,
+          rationale: naive?.why_it_fails ?? `Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.`,
           citationUrl: chunk.metadata.url,
         },
         {
@@ -579,7 +653,7 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
     domain,
     domainLabel,
     difficulty: args.difficulty,
-    pillars: Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))),
+    pillars: scaffoldPillars,
     version: 1,
     status: 'draft',
     steps,
@@ -588,6 +662,12 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
 
 async function main() {
   const args = parseArgs();
+  const card = args.fromCard ? loadFrictionCard(args.fromCard) : undefined;
+  if (card) {
+    args.topic ||= card.title;
+    args.domain ||= card.domain;
+  }
+  args.topic ||= 'Salesforce Well-Architected Decisions';
   const drillId = args.id || getNextDrillId(args.format);
 
   console.log('\n======================================================');
@@ -597,13 +677,14 @@ async function main() {
   console.log(`Format:     ${args.format}`);
   console.log(`Difficulty: ${args.difficulty}`);
   console.log(`Steps:      ${args.steps}`);
+  if (card) console.log(`Card:       ${card.card_id} (${card.naive_approaches.length} naive approaches)`);
 
   // Step 1: Retrieve context from ChromaDB
-  const chunks = queryChroma(args.topic, args.topK, args.pillar);
+  const chunks = queryChroma(args.query ?? card?.official_doc_query ?? args.topic, args.topK, args.pillar);
   console.log(`[RAG] Retrieved ${chunks.length} matching architectural chunks from ChromaDB.\n`);
 
   // Step 2: Build prompt
-  const prompt = buildPrompt(chunks, args, drillId);
+  const prompt = buildPrompt(chunks, args, drillId, card);
 
   if (args.promptOnly) {
     console.log('------------------------------------------------------');
@@ -626,10 +707,19 @@ async function main() {
     }
   }
 
+  if (drillJson?.error) {
+    console.error(`[ABORT] LLM declined: ${drillJson.error}`);
+    console.error('Retry with --query "<better doc search>", or fix the card\'s doc query in `friction_cards.py review` and re-export.');
+    process.exit(1);
+  }
+
   // Step 4: Fallback to scaffold if no LLM API available
   if (!drillJson) {
     console.log('[INFO] No LLM API key detected or call skipped. Generating grounded CTA drill scaffold from retrieved chunks...');
-    drillJson = generateScaffoldDrill(chunks, args, drillId);
+    drillJson = generateScaffoldDrill(chunks, args, drillId, card);
+  }
+  if (card) {
+    drillJson.sourceCardIds = [card.card_id];
   }
 
   // Step 5: Save output file
