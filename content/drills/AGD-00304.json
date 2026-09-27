@@ -1,6 +1,6 @@
 {
   "id": "AGD-00304",
-  "title": "Topic Classification: Authoring Disambiguated Natural Language Descriptions",
+  "title": "Topic Routing: Overlapping Cancellation Requests",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Associate_Domain_Architect",
@@ -8,33 +8,40 @@
     "Operational_Excellence",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An agent has two topics: \"Order Cancellation\" and \"Subscription Billing\". A customer asks: \"Stop my recurring monthly shipments.\" The agent routes to Order Cancellation and fails. How should the topic descriptions be refined?",
+      "prompt": "An agent has two topics, Order Cancellation and Subscription Billing. Customers asking to \"stop my monthly box\", \"cancel auto-ship\", or \"end recurring shipments\" are routed to Order Cancellation, whose actions can only cancel one-off orders. How should the architect fix the routing?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Define explicit scope boundaries and negative triggers distinguishing recurring plans from one-off purchases",
+          "label": "Rewrite both topic descriptions to state what each covers and which requests it excludes",
           "isCorrect": true,
-          "rationale": "Explicitly defining scope boundaries and negative triggers (e.g., \"do NOT use for recurring subscriptions\") prevents classification ambiguity.",
+          "rationale": "The agent chooses a topic by matching the request against each topic’s description and scope, so overlapping descriptions misroute requests whatever the actions can do. Drawing the one-off versus recurring boundary there works for every way customers phrase a subscription.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/agent-development-lifecycle.html#phase-2-development"
         },
         {
           "id": "s1_b",
-          "label": "Consolidate both topics into a single composite topic and let the LLM evaluate all actions in a single plan",
+          "label": "Merge both topics into one topic that holds all the cancellation and billing actions",
           "isCorrect": false,
-          "distractorAntipattern": "Bloating topics with dozens of actions degrades tool-selection precision and increases reasoning latency.",
-          "rationale": "Combining distinct operational domains into one massive topic dilutes semantic routing, increases tool selection confusion, and bloats context tokens."
+          "distractorAntipattern": "Topic Consolidation Blur",
+          "rationale": "Merging moves the same ambiguity into action selection: the agent must still tell a one-off cancellation from a subscription stop, now among the actions of two domains."
         },
         {
           "id": "s1_c",
-          "label": "Add keyword-matching routing rules in an orchestration Flow before passing the conversation context to Atlas",
+          "label": "Add a rule that routes messages containing \"recurring\" or \"subscription\" to Subscription Billing",
           "isCorrect": false,
-          "distractorAntipattern": "Keyword rules break generative natural language understanding and fail on linguistic variations or synonyms.",
-          "rationale": "Hardcoded keyword rules undermine the generative classification capabilities of the Atlas reasoning engine and fail when customers phrase requests conversationally."
+          "distractorAntipattern": "Keyword Routing Override",
+          "rationale": "Customers already say \"monthly box\" and \"auto-ship\", so a keyword list misses every phrasing it does not name and needs endless upkeep."
+        },
+        {
+          "id": "s1_d",
+          "label": "Add an Order Cancellation instruction to hand subscription requests to Subscription Billing",
+          "isCorrect": false,
+          "distractorAntipattern": "Post-Routing Instruction Patch",
+          "rationale": "Topic instructions apply only after the topic is chosen, so every subscription request still lands in Order Cancellation first and relies on the LLM to notice the mistake."
         }
       ]
     }
