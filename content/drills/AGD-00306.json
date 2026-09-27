@@ -1,6 +1,6 @@
 {
   "id": "AGD-00306",
-  "title": "Human-in-the-Loop (HITL): Seamless State Handoff to Omni-Channel",
+  "title": "Escalation Handoff: Summary vs Full Transcript",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Associate_Domain_Architect",
@@ -8,33 +8,33 @@
     "Fairness",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "When an Agentforce agent detects an emotionally distressed or angry customer requiring escalation, what is the Well-Architected handoff sequence?",
+      "prompt": "An Agentforce service agent escalates chats to human agents through Omni-Channel when a customer expresses frustration. Escalated chats average 30 turns before transfer, each human agent handles three chats at once, and post-chat surveys show customers re-explaining their issue after transfer. What should the handoff give the human agent?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Route via Omni-Channel, passing a synthesized conversation summary and structured intent payload to the human agent",
+          "label": "A work item carrying a generated summary of the issue, intent, and steps tried",
           "isCorrect": true,
-          "rationale": "Escalate via Omni-Channel routing, passing a synthesized conversation summary and structured intent payload so the human agent has instant context without customer repetition.",
+          "rationale": "Escalation should carry the conversation's context so the customer never repeats what the AI agent already collected. Someone juggling three chats cannot read 30 turns before replying, so condensed context is what lets them pick up without re-asking.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-fairness.html#time-bounded-escalation"
         },
         {
           "id": "s1_b",
-          "label": "Transfer the raw uncompressed chat history directly to a standard support queue without context summarization",
+          "label": "A work item linking the full 30-turn transcript for the human agent to review",
           "isCorrect": false,
-          "distractorAntipattern": "Dumping dozens of raw chat turns forces the human agent to read long transcripts while the frustrated customer waits.",
-          "rationale": "Transferring unsummarized chat transcripts delays live agent response time, increases customer hold duration, and leads to repeated customer questions."
+          "distractorAntipattern": "Transcript Dump Handoff",
+          "rationale": "Thirty turns take minutes to read for an agent already on two other chats, so they re-ask the customer instead, which is what the surveys show."
         },
         {
           "id": "s1_c",
-          "label": "Create an escalated Case record in Salesforce and instruct the customer to disconnect and await a callback within 24h",
+          "label": "A recap the customer writes when the AI agent asks for one just before transfer",
           "isCorrect": false,
-          "distractorAntipattern": "Terminating synchronous live engagement when a customer is distressed severely damages customer satisfaction.",
-          "rationale": "Terminating an active live interaction to force an asynchronous channel switch creates severe customer friction and violates Well-Architected experience principles."
+          "distractorAntipattern": "Customer Recap Burden",
+          "rationale": "Asking a frustrated customer to restate the issue repeats information the AI agent already holds, which is the repetition the surveys complain about."
         }
       ]
     }
