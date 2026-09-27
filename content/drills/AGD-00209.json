@@ -9,33 +9,33 @@
     "Trust",
     "Fairness"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A customer submits a GDPR Right to Erasure request. Records exist in source CRM, Data 360 DLOs, unified DMOs, and derived insights. What must the architect ensure for complete compliance?",
+      "prompt": "A customer submits a GDPR right-to-erasure request. Their data reaches Data 360 from CRM, the web SDK, and an e-commerce platform, and it feeds unified profiles and calculated insights. What should the architect do to complete the erasure?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Execute a Data Subject Rights Forget Me request in Data 360 coordinated with source deletion to purge all layers",
+          "label": "Submit a Data 360 Right to be Forgotten request and delete each source's records",
           "isCorrect": true,
-          "rationale": "Data Subject Rights (DSR) requests in Data 360 ensure that personal data is deleted or masked across DLOs, unified profiles, and downstream search indexes, in alignment with source system erasures.",
+          "rationale": "Data 360 provides native Data Subject Rights handling for deletion across the data it holds, but a source that still has the record sends it back on the next sync. With three sources feeding unified profiles and insights, erasure needs the Data 360 request plus deletion at every source.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_security_architecture.html#regulatory-compliance-enablement"
         },
         {
           "id": "s1_b",
-          "label": "Delete the source Contact in CRM and rely on standard Data Cloud connector incremental syncs to cascade deletes",
+          "label": "Delete the CRM contact and let incremental connector syncs carry the deletion into Data 360",
           "isCorrect": false,
-          "distractorAntipattern": "Standard Data Cloud connectors append change records or soft deletes; they do not automatically purge historical lake data.",
-          "rationale": "Standard data stream connectors append change events or mark deleted records, but do not physically erase historical immutable lake objects or derived insights."
+          "distractorAntipattern": "Source Delete Cascade Assumption",
+          "rationale": "A CRM delete reaches only what the CRM stream feeds; the web SDK and e-commerce data, and the profiles and insights built from them, keep the customer's data."
         },
         {
           "id": "s1_c",
-          "label": "Run an automated Data Transform to overwrite PII attributes with null values in harmonized Data Model Objects (DMOs)",
+          "label": "Run a Data Transform that overwrites the customer's PII with nulls in the harmonized DMOs",
           "isCorrect": false,
-          "distractorAntipattern": "Overwriting fields in DMOs leaves raw PII stored in staging Data Lake Objects and immutable storage partitions.",
-          "rationale": "Modifying DMO records does not remove historical PII residing in underlying Data Lake Objects, audit logs, or vector search embeddings."
+          "distractorAntipattern": "DMO-Only PII Masking",
+          "rationale": "DMOs are mapped from DLOs, so nulling harmonized fields leaves the as-ingested PII in the source DLOs the DMOs read from."
         }
       ]
     }
