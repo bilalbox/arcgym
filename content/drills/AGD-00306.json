@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Escalate via Omni-Channel routing, passing a synthesized conversation summary and structured intent payload so the human agent has instant context without customer repetition",
+          "label": "Route via Omni-Channel, passing a synthesized conversation summary and structured intent payload to the human agent",
           "isCorrect": true,
-          "rationale": "Well-Architected HITL preserves user dignity and operational velocity by delivering a concise context summary directly into the Service Cloud console.",
+          "rationale": "Escalate via Omni-Channel routing, passing a synthesized conversation summary and structured intent payload so the human agent has instant context without customer repetition.",
           "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
         },
         {
           "id": "s1_b",
-          "label": "Abruptly disconnect the chat session and send an automated email apology",
+          "label": "Transfer the raw uncompressed chat history directly to a standard support queue without context summarization",
           "isCorrect": false,
-          "distractorAntipattern": "Abrupt disconnection destroys customer satisfaction.",
-          "rationale": "Abrupt disconnects damage customer trust and brand reputation.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Dumping dozens of raw chat turns forces the human agent to read long transcripts while the frustrated customer waits.",
+          "rationale": "Transferring unsummarized chat transcripts delays live agent response time, increases customer hold duration, and leads to repeated customer questions."
         },
         {
           "id": "s1_c",
-          "label": "Have the agent repeatedly insist that it is capable of helping",
+          "label": "Create an escalated Case record in Salesforce and instruct the customer to disconnect and await a callback within 24h",
           "isCorrect": false,
-          "distractorAntipattern": "Refusing escalation creates severe customer frustration.",
-          "rationale": "Violates the Fairness pillar by trapping the user in an adversarial loop.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Terminating synchronous live engagement when a customer is distressed severely damages customer satisfaction.",
+          "rationale": "Terminating an active live interaction to force an asynchronous channel switch creates severe customer friction and violates Well-Architected experience principles."
         }
       ]
     }

@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Manual sharing rules created via Apex for each community user",
+          "label": "Apex Managed Sharing rules recalculating CaseShare records dynamically on user navigation",
           "isCorrect": false,
-          "distractorAntipattern": "Apex sharing on high volumes causes share table recalculation bloat.",
-          "rationale": "Apex sharing on 500k high-volume users triggers massive recalculation of CaseShare tables and persistent row-lock contention.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "Customer Community (high-volume) licenses do not possess individual share table entries; Apex sharing creates massive calculation overhead.",
+          "rationale": "Customer Community (high-volume) licenses do not support standard share tables (CaseShare); attempting Apex sharing triggers severe table bloat and locking."
         },
         {
           "id": "s1_b",
-          "label": "Criteria-Based Sharing Rules shared with Public Groups containing portal users",
+          "label": "Criteria-Based Sharing Rules targeting Public Groups populated with community user roles",
           "isCorrect": false,
-          "distractorAntipattern": "Customer Community licenses cannot belong to Public Groups.",
-          "rationale": "High-Volume Customer Community licenses do not support Public Groups or standard criteria-based sharing rules.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "High-Volume Customer Community users do not have user roles and cannot be added to Public Groups.",
+          "rationale": "High-Volume Customer Community licenses do not use the standard role hierarchy or public groups, rendering criteria-based sharing rules inapplicable."
         },
         {
           "id": "s1_c",
-          "label": "Sharing Sets and Share Groups designed specifically for high-volume Customer Community licenses",
+          "label": "Sharing Sets and Share Groups configured on the portal profile to map account relationships",
           "isCorrect": true,
           "rationale": "Sharing Sets grant access based on user account/contact matching without writing to physical share tables, scaling seamlessly to millions of users.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
         }
       ]
     }

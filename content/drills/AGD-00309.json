@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Specialized agents restrict action schemas and context to their specific domain, dramatically reducing tool-selection confusion, context bloat, and regression blast radius",
+          "label": "Specialized agents isolate context and action schemas to specific domains, reducing tool confusion and blast radius",
           "isCorrect": true,
           "rationale": "Decomposing into focused domain agents keeps action definitions lean, prevents LLM tool hallucination, allows independent release cycles, and minimizes context token consumption.",
           "citationUrl": "https://architect.salesforce.com/well-architected/principles"
         },
         {
           "id": "s1_b",
-          "label": "Salesforce licenses prohibit any single agent from having more than 3 actions",
+          "label": "Platform architecture restricts individual agent definitions to a maximum limit of fifteen total active actions",
           "isCorrect": false,
-          "distractorAntipattern": "There is no 3-action platform limit.",
-          "rationale": "This is not a hard license limit, but an architectural best practice for reasoning reliability.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "There is no hard platform licensing limit of 15 actions per agent; decomposition is an architectural best practice.",
+          "rationale": "Salesforce does not enforce an arbitrary hard limit of 15 actions; decomposition is driven by cognitive reasoning fidelity and blast-radius management."
         },
         {
           "id": "s1_c",
-          "label": "Monolithic agents run 10x faster because all tools are in one file",
+          "label": "Monolithic agents require shared system permissions that prevent per-topic role-based access control policies",
           "isCorrect": false,
-          "distractorAntipattern": "Bloated context slows down reasoning and increases latency.",
-          "rationale": "Monolithic agents suffer from heavy latency and frequent tool selection errors due to overloaded context.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Permission sets can be assigned per action, but monolithic reasoning still fails due to prompt bloat and tool confusion.",
+          "rationale": "While permissions are important, the primary architectural driver is preventing LLM reasoning degradation and tool confusion caused by overloaded action context."
         }
       ]
     }

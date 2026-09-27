@@ -9,35 +9,46 @@
     "Trust",
     "Fairness"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
+  "sourceCardIds": [
+    "FC-0D54V00007bLEFISA4",
+    "FC-0D5KX00000mmSig0AE",
+    "FC-0D54V00007YvibgSAB",
+    "FC-0D54V00007IfM7ZSAV"
+  ],
   "steps": [
     {
       "id": "s1",
-      "prompt": "A Data 360 Identity Resolution ruleset uses fuzzy match on Normalized Phone Number alone. Household members sharing a landline collapse into one Unified Individual, polluting consent and personalization. How should the ruleset be revised?",
+      "prompt": "A Data 360 Identity Resolution ruleset uses fuzzy match on Normalized Phone Number alone. Household members sharing a landline collapse into one Unified Individual, polluting consent and personalization. How should the architecture be revised?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Require composite match criteria — e.g. phone plus exact First Name or Date of Birth — and keep reconciliation rules separate from match rules",
+          "label": "Configure composite match criteria combining Phone with exact First Name or DOB, and preserve Unified Link DMOs for source lineage",
           "isCorrect": true,
-          "rationale": "Single-attribute fuzzy matching on shared identifiers causes Fuzzy Over-Clustering. Well-Architected rulesets combine high-signal attributes and treat reconciliation (field winners) as a separate stage after match groups form.",
+          "rationale": "Composite match rules prevent false-positive over-clustering across shared household identifiers, while Unified Link DMOs maintain full auditability to contributing source records.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Disable Identity Resolution and unify profiles with custom Apex triggers on Contact",
+          "label": "Consolidate all source contact attributes directly onto the Unified Individual DMO and remove Unified Link objects to streamline joins",
           "isCorrect": false,
-          "distractorAntipattern": "Apex Graph Unification",
-          "rationale": "Identity Resolution is a distributed big-data graph process. Apex cannot reconcile millions of cross-source identities with the same scale, lineage, or governance.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Dropping Unified Link objects destroys record lineage and prevents downstream activations from tracing back to originating source keys.",
+          "rationale": "Unified Link DMOs are architecturally required to maintain deterministic lineage between source records and unified profiles."
         },
         {
           "id": "s1_c",
-          "label": "Change only the reconciliation rule to \"Most Recently Updated\" and leave the phone-only match intact",
+          "label": "Update the profile reconciliation rule to Most Recently Updated while retaining the single-attribute fuzzy phone match criteria",
           "isCorrect": false,
-          "distractorAntipattern": "Reconciliation as Match Fix",
-          "rationale": "Reconciliation chooses winning attribute values after records are already merged. It cannot undo over-merging caused by weak match criteria.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Reconciliation rules determine winning field values after clustering, but cannot correct erroneous cluster creation.",
+          "rationale": "Reconciliation rules only decide which field value wins among already-matched profiles; they cannot unbundle incorrectly clustered individuals."
+        },
+        {
+          "id": "s1_d",
+          "label": "Replace Identity Resolution with a custom SQL Data Transform that hashes shared phone numbers into synthetic master person keys",
+          "isCorrect": false,
+          "distractorAntipattern": "Custom key transforms bypass native graph unification, duplicate clustering logic, and do not update dynamically.",
+          "rationale": "Manual SQL key transforms lack graph-based entity resolution, fail to handle multi-party cross-matching, and create unmaintainable custom pipeline debt."
         }
       ]
     }

@@ -1,0 +1,48 @@
+{
+  "id": "AGD-00211",
+  "title": "Sales Data Kit Deploy vs Preserving Custom DLO–DMO Maps",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "status": "published",
+  "sourceCardIds": [
+    "FC-0D5KX00000pNzhX0AS"
+  ],
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A mature Data 360 org already has customized Contact and Account DLO–DMO mappings powering identity resolution and activation. Marketing now requires Marketing Cloud Next, which mandates the Sales Data Kit. Leadership will not accept losing bespoke field maps, but consent/messaging kit coverage is still required. Which approach best protects the harmonized DMO layer?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Execute the automated Deploy Data Streams wizard in Marketing Cloud Next setup to reconcile custom and standard mappings into unified templates",
+          "isCorrect": false,
+          "distractorAntipattern": "Blind Packaged Kit Redeploy",
+          "rationale": "The standard Deploy wizard forces default data kit mappings, overwriting customized relationships and breaking active identity resolution models.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+        },
+        {
+          "id": "s1_b",
+          "label": "Retain custom mappings on existing DLOs and configure downstream segment activations to query Data Lake Objects directly instead of DMOs",
+          "isCorrect": false,
+          "distractorAntipattern": "Lake-Only Activation Bypass",
+          "rationale": "Marketing Cloud Next and Data Cloud segmentation require canonical Data Model Objects (DMOs) and cannot build unified audiences directly on DLOs.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+        },
+        {
+          "id": "s1_c",
+          "label": "Ingest required data kit streams selectively, preserving bespoke DLO-to-DMO harmonizations while mapping only mandatory messaging attributes",
+          "isCorrect": true,
+          "rationale": "Ingesting required data kit streams manually or selectively avoids blowing away existing custom DLO-DMO mappings, preserving identity resolution integrity while fulfilling MCN prerequisites.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+        }
+      ]
+    }
+  ]
+}

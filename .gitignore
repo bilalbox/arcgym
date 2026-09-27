@@ -36,6 +36,7 @@ data/*.db-*
 data/trailhead*
 data/friction_cards.json
 data/curated_community_patterns.json
+data/feedback.json
 
 
 # Local scratch & archived stacks (LWR / SFDX)

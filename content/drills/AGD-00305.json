@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Enforce strict XML/Markdown delimiters separating instructions from user input, paired with Einstein Trust Layer prompt defense and principle of least privilege on action credentials",
+          "label": "Enforce structured delimiters isolating user inputs, activate Trust Layer prompt defense, and restrict action permissions",
           "isCorrect": true,
-          "rationale": "Structural delimiters prevent user inputs from being parsed as system control tokens, while least privilege prevents actions from having access to sensitive credentials.",
+          "rationale": "Enforcing strict XML/Markdown delimiters separating instructions from user input, paired with Einstein Trust Layer prompt defense and principle of least privilege on action credentials.",
           "citationUrl": "https://architect.salesforce.com/well-architected/principles"
         },
         {
           "id": "s1_b",
-          "label": "Block all user inputs containing the word \"Ignore\"",
+          "label": "Implement regex validation rules on the chat interface to block known jailbreak phrases and injection keywords",
           "isCorrect": false,
-          "distractorAntipattern": "Naive word blacklists are easily bypassed via synonyms or base64.",
-          "rationale": "Naive keyword filters are trivially bypassed using synonyms, leetspeak, or multilingual translations.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Naive regex and keyword blacklists are easily bypassed via synonyms, base64 encoding, or alternative phrasings.",
+          "rationale": "Static string matching or regex filtering fails against adversarial prompt injections using linguistic evasion, character separators, or foreign languages."
         },
         {
           "id": "s1_c",
-          "label": "Grant the Agent system administrator permissions so it can handle errors",
+          "label": "Rely on LLM system prompt instructions directing the agent to ignore user commands that request credential access",
           "isCorrect": false,
-          "distractorAntipattern": "Granting sysadmin to an agent is a catastrophic security vulnerability.",
-          "rationale": "Violates the Principle of Least Privilege and turns any prompt injection into a full org compromise.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Prompt-only instructions without structural delimiters or backend permission enforcement remain vulnerable to jailbreaks.",
+          "rationale": "Relying solely on system prompt warnings is probabilistic; adversarial user prompts can override instructions unless structural isolation and backend least-privilege security are enforced."
         }
       ]
     }

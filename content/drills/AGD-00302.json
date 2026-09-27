@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Include instructions in the Agent prompt: \"Please do not ever approve refunds above $500 under any circumstances\"",
+          "label": "Specify strict financial refund boundaries and negative constraints within the Agent topic instructions",
           "isCorrect": false,
-          "distractorAntipattern": "Prompt instructions alone are non-deterministic and susceptible to jailbreaking.",
-          "rationale": "Prompt instructions alone are non-deterministic and susceptible to jailbreaking, adversarial injection, and cognitive drift.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Prompt instructions alone are non-deterministic, probabilistic, and susceptible to jailbreaking or hallucination.",
+          "rationale": "Natural language instructions cannot guarantee enforcement; malicious inputs or jailbreaks can persuade the LLM to bypass prompt guidelines."
         },
         {
           "id": "s1_b",
-          "label": "Enforce hard deterministic validation in the invoked Apex/Flow Action or Flow Guardrail with programmatic limit checks",
+          "label": "Enforce deterministic threshold validation within the backend Apex or Flow Action executing the transaction",
           "isCorrect": true,
-          "rationale": "Well-Architected Trust requires deterministic platform boundaries and API guardrails, not stochastic prompt promises.",
+          "rationale": "Deterministic server-side guardrails in code/Flow ensure business limits cannot be breached regardless of LLM output.",
           "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
         },
         {
           "id": "s1_c",
-          "label": "Rely solely on Einstein Trust Layer toxicity scoring",
+          "label": "Configure Einstein Trust Layer safety filters with maximum toxicity and hallucination detection thresholds",
           "isCorrect": false,
-          "distractorAntipattern": "Toxicity filters identify abusive language, not numerical business logic bypasses.",
-          "rationale": "Toxicity filters detect toxic language, not logical policy bypasses.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Trust Layer safety filters identify toxic language or sensitive data leakage, not numerical business logic bypasses.",
+          "rationale": "Toxicity and safety filters detect abusive language and PII, but have no semantic awareness of business thresholds like transaction amounts."
         }
       ]
     }

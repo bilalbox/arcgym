@@ -40,6 +40,22 @@ export type WellArchitectedPillar =
   | 'Cost_Optimization'
   | 'Fairness';
 
+export const WELL_ARCHITECTED_PILLARS: WellArchitectedPillar[] = [
+  'Trust',
+  'Reliability',
+  'Operational_Excellence',
+  'Cost_Optimization',
+  'Fairness',
+];
+
+export const WELL_ARCHITECTED_PILLAR_LABELS: Record<WellArchitectedPillar, string> = {
+  Trust: 'Trust',
+  Reliability: 'Reliability',
+  Operational_Excellence: 'Operational Excellence',
+  Cost_Optimization: 'Cost Optimization',
+  Fairness: 'Fairness',
+};
+
 export type MetacognitiveQuadrant =
   | 'Calibrated_Conviction'
   | 'Calibrated_Humility'
@@ -144,10 +160,25 @@ export interface CurrencyDrillDefinition extends DrillDefinitionBase {
   citationUrl?: string;
 }
 
+/**
+ * Dual-meter axis labels. Defaults preserve the original Scenario framing
+ * (stakeholder trust vs platform reliability). Data / delivery scenarios can
+ * relabel the left meter to schedule/scope/effort while keeping field names
+ * (`initialTrust`, `trustDelta`) for backward compatibility.
+ */
+export interface ScenarioMeterLabels {
+  /** Left meter (backed by initialTrust / trustDelta). */
+  primary: string;
+  /** Right meter (backed by initialReliability / reliabilityDelta). */
+  secondary: string;
+}
+
 export interface ScenarioDrillDefinition extends DrillDefinitionBase {
   format: 'Scenario';
   initialTrust: number;
   initialReliability: number;
+  /** Optional display labels for the two meters. */
+  meterLabels?: ScenarioMeterLabels;
   moves: ScenarioMoveDTO[];
 }
 
@@ -187,6 +218,15 @@ export interface AttemptSubmissionDTO {
   timeToCommitMs: number;
 }
 
+export interface StepAttemptTelemetry {
+  stepId: string;
+  confidence: ConfidenceAnchor;
+  isCorrect: boolean;
+  score: number;
+  selectedOptionId?: string;
+  distractorAntipattern?: string;
+}
+
 export interface DrillAttemptRecord {
   drillId: string;
   format: DrillFormat;
@@ -194,6 +234,19 @@ export interface DrillAttemptRecord {
   score: number;
   accuracy: number; // 0 to 1
   attemptsCount: number;
+  steps?: StepAttemptTelemetry[];
+}
+
+export type ProficiencyDimension = 'domains' | 'pillars';
+
+export interface DimensionProficiency {
+  id: string; // ArchitecturalDomain | WellArchitectedPillar
+  label: string;
+  totalQuestions: number;
+  correctQuestions: number;
+  accuracy: number; // 0 to 100 percentage
+  isMeasured: boolean; // totalQuestions >= threshold (e.g. 4)
+  drillsCompleted: number;
 }
 
 export interface VisitorProgressState {

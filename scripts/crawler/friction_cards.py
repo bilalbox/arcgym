@@ -11,6 +11,8 @@ Usage:
   python scripts/crawler/friction_cards.py prompt --limit 10 > /tmp/card-prompts.md
   python scripts/crawler/friction_cards.py prompt --thread 0D5KX00000jAOVQ0A4
   python scripts/crawler/friction_cards.py import /tmp/cards.json     # the agent's answers, as a JSON array
+  python scripts/crawler/friction_cards.py audit-prompt --tier A --limit 20 > /tmp/audit-prompts.md
+  python scripts/crawler/friction_cards.py apply-verdicts /tmp/verdicts.json
   python scripts/crawler/friction_cards.py review
   python scripts/crawler/friction_cards.py list --status approved
   python scripts/crawler/friction_cards.py export
@@ -38,10 +40,53 @@ ARCHITECTURAL_DOMAINS = [
 PILLARS = ["Trust", "Reliability", "Operational_Excellence", "Cost_Optimization", "Fairness"]
 RESOLUTION_SOURCES = ["best_answer", "thread_consensus", "unresolved"]
 STATUSES = ["pending", "approved", "rejected", "irrelevant"]
+AUDIT_VERDICTS = ["approve", "reject", "fix", "irrelevant"]
+AUDIT_TIERS = ["A", "B", "C", "D", "all"]
 
 MAX_REPLIES = 15
 MAX_TEXT_CHARS = 2500
 MAX_REPLY_CHARS = 1500
+
+AUDIT_PROMPT = """You are auditing a staged Friction Card for ArcGym against its source Trailblazer Community thread.
+
+The card must stay faithful to the thread and useful for drill distractors / scenario realism. Official docs remain the source of correct answers; only judge the card and its doc query.
+
+Rules:
+- approve: problem, naive approaches, and resolution are faithful; domain/pillars sensible; doc query would find governing architect.salesforce.com guidance.
+- reject: not useful for drills (too ops/UI-specific, no architectural tension, hallucinated naive approaches, or resolution contradicts the thread).
+- fix: mostly good but needs a better official_doc_query (and optionally a short note). Leave status pending after the query is updated.
+- irrelevant: thread has no architectural decision (learning path, UI glitch, licensing, Trailhead-org-only). Prefer this over reject when the extraction should have marked relevant=false.
+
+Card id: {card_id}
+Thread URL: {url}
+
+=== Staged card ===
+{card_json}
+
+=== Source thread ===
+Title: {title}
+
+Question:
+{question}
+
+Accepted answer:
+{best_answer}
+
+Replies:
+{replies}
+
+=== Official doc preview (Chroma) ===
+{doc_preview}
+
+Output only JSON in this shape:
+{{
+  "card_id": "{card_id}",
+  "verdict": "one of approve | reject | fix | irrelevant",
+  "issues": ["short issue strings, empty if none"],
+  "suggested_doc_query": "replacement query when verdict is fix, else empty string",
+  "note": "one-line review note for provenance"
+}}
+"""
 
 EXTRACTION_PROMPT = """You are reviewing a Salesforce Trailblazer Community thread for ArcGym, a practice app for Salesforce architects.
 Extract a Friction Card: the architectural problem, the approaches practitioners tried or proposed that do not work, and the resolution.
@@ -382,6 +427,170 @@ def cmd_export(args):
     print(f"Exported {len(cards)} approved card(s) → {args.out}")
 
 
+def card_tier(card: dict, has_best_answer: bool) -> str:
+    """Drill-readiness tier for pending cards. A is highest priority for agent audit."""
+    naives = len(card.get("naive_approaches") or [])
+    source = card.get("resolution_source")
+    if source == "unresolved":
+        return "D"
+    if naives == 0:
+        return "C"
+    if source == "best_answer" and has_best_answer and naives >= 1:
+        return "A"
+    if source in ("best_answer", "thread_consensus") and naives >= 1:
+        return "B"
+    return "D"
+
+
+def format_doc_preview(query: str, top_k: int = 3) -> str:
+    if not query or not query.strip():
+        return "(no official_doc_query on card)"
+    cmd = [
+        "uv", "run", "--with", "chromadb", "python", CHROMA_SEARCH_SCRIPT,
+        query, "--top-k", str(top_k), "--json",
+    ]
+    try:
+        out = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True).stdout
+        chunks = json.loads(out)
+    except (OSError, subprocess.CalledProcessError, json.JSONDecodeError) as e:
+        return f"(Chroma search failed: {e})"
+    if not chunks:
+        return "(no chunks retrieved)"
+    lines = []
+    for c in chunks:
+        meta = c.get("metadata") or {}
+        lines.append(
+            f"- {c.get('cosine_similarity', 0):.2f}  {meta.get('doc_title')} > {meta.get('section_title')}"
+        )
+    return "\n".join(lines)
+
+
+def select_audit_rows(conn: sqlite3.Connection, tier: str, status: str, limit: int, card_ids: list = None) -> list:
+    sql = """
+    SELECT fc.*, d.url AS thread_url, d.headline, d.body_text, d.best_answer_text,
+           d.has_best_answer, d.raw_payload, d.comments_count
+    FROM friction_cards fc
+    JOIN discussions d ON d.id = fc.discussion_id
+    WHERE fc.status = ?
+    """
+    params = [status]
+    if card_ids:
+        placeholders = ",".join("?" * len(card_ids))
+        sql += f" AND fc.card_id IN ({placeholders})"
+        params.extend(card_ids)
+    sql += " ORDER BY d.has_best_answer DESC, d.comments_count DESC, fc.card_id"
+    rows = conn.execute(sql, params).fetchall()
+
+    selected = []
+    for row in rows:
+        card = json.loads(row["card"])
+        if not card.get("relevant", True):
+            continue
+        t = card_tier(card, bool(row["has_best_answer"]))
+        if tier != "all" and t != tier:
+            continue
+        selected.append(row)
+        if limit > 0 and len(selected) >= limit:
+            break
+    return selected
+
+
+def cmd_audit_prompt(args):
+    """Print agent audit packs for staged cards, filtered by drill-readiness tier."""
+    conn = connect(args.db_path)
+    card_ids = None
+    if args.card_id:
+        card_ids = [args.card_id]
+    rows = select_audit_rows(conn, args.tier, args.status, args.limit, card_ids)
+    print(
+        f"[Friction Cards] {len(rows)} audit pack(s) selected "
+        f"(tier={args.tier}, status={args.status}).",
+        file=sys.stderr,
+    )
+    for row in rows:
+        card = json.loads(row["card"])
+        replies = thread_replies(row["raw_payload"])
+        doc_preview = (
+            format_doc_preview(card.get("official_doc_query") or "", args.doc_top_k)
+            if args.preview_docs
+            else "(skipped; pass --preview-docs to include Chroma hits)"
+        )
+        print(f"===== card_id: {row['card_id']} =====")
+        print(AUDIT_PROMPT.format(
+            card_id=row["card_id"],
+            url=row["thread_url"],
+            card_json=json.dumps(card, indent=2, ensure_ascii=False),
+            title=truncate(row["headline"], 300),
+            question=truncate(row["body_text"]) or "(empty)",
+            best_answer=truncate(row["best_answer_text"]) if row["has_best_answer"] else "(none)",
+            replies="\n".join(f"{i + 1}. {r}" for i, r in enumerate(replies)) or "(none)",
+            doc_preview=doc_preview,
+        ))
+    conn.close()
+
+
+def cmd_apply_verdicts(args):
+    """Apply agent audit verdicts: approve/reject/irrelevant statuses, optional doc-query fixes."""
+    conn = connect(args.db_path)
+    with open(args.file, encoding="utf-8") as f:
+        entries = json.load(f)
+    if isinstance(entries, dict):
+        entries = [entries]
+
+    known = {r["card_id"]: r for r in conn.execute("SELECT * FROM friction_cards")}
+    counts = {v: 0 for v in AUDIT_VERDICTS}
+    counts["skip"] = 0
+
+    for entry in entries:
+        card_id = entry.get("card_id")
+        verdict = (entry.get("verdict") or "").strip().lower()
+        if card_id not in known:
+            print(f"  [SKIP] unknown card_id {card_id!r}")
+            counts["skip"] += 1
+            continue
+        if verdict not in AUDIT_VERDICTS:
+            print(f"  [SKIP] {card_id}: invalid verdict {verdict!r}")
+            counts["skip"] += 1
+            continue
+
+        note = (entry.get("note") or "").strip() or None
+        issues = entry.get("issues") or []
+        if issues and note:
+            note = f"{note} | issues: {'; '.join(issues)}"
+        elif issues:
+            note = f"issues: {'; '.join(issues)}"
+
+        suggested = (entry.get("suggested_doc_query") or "").strip()
+
+        if args.dry_run:
+            print(f"  [DRY] {card_id} → {verdict}" + (f" query={suggested!r}" if suggested else ""))
+            counts[verdict] += 1
+            continue
+
+        if verdict == "fix":
+            if suggested:
+                update_doc_query(conn, card_id, suggested)
+                set_status(conn, card_id, "pending", note or "doc query updated by audit")
+                print(f"  [FIX] {card_id} doc query updated; still pending")
+            else:
+                if note:
+                    set_status(conn, card_id, "pending", note)
+                print(f"  [FIX] {card_id} left pending" + (f" ({note})" if note else " (no query suggested)"))
+            counts["fix"] += 1
+            continue
+
+        status = {"approve": "approved", "reject": "rejected", "irrelevant": "irrelevant"}[verdict]
+        if suggested and verdict == "approve":
+            update_doc_query(conn, card_id, suggested)
+        set_status(conn, card_id, status, note)
+        print(f"  [{status.upper()}] {card_id}")
+        counts[verdict] += 1
+
+    conn.close()
+    summary = ", ".join(f"{k}={v}" for k, v in counts.items() if v)
+    print(f"\n[Done] {summary}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Extract, review, and export Friction Cards from Trailhead threads.")
     parser.add_argument("--db-path", default=DEFAULT_DB_PATH, help="Path to SQLite database")
@@ -412,6 +621,23 @@ def main():
     p.add_argument("status", choices=STATUSES)
     p.add_argument("--note")
     p.set_defaults(func=cmd_set_status)
+
+    p = sub.add_parser(
+        "audit-prompt",
+        help="Print agent audit packs for staged cards (tier A=best+naive, B=resolved+naive, C=no naive, D=unresolved)",
+    )
+    p.add_argument("--tier", choices=AUDIT_TIERS, default="A", help="Drill-readiness tier (default A)")
+    p.add_argument("--status", choices=STATUSES, default="pending")
+    p.add_argument("--limit", type=int, default=20, help="Max packs (0 for all matching)")
+    p.add_argument("--card-id", help="Audit a single card id")
+    p.add_argument("--preview-docs", action="store_true", help="Include Chroma top hits for the card's doc query")
+    p.add_argument("--doc-top-k", type=int, default=3, help="Chroma hits when --preview-docs is set")
+    p.set_defaults(func=cmd_audit_prompt)
+
+    p = sub.add_parser("apply-verdicts", help="Apply agent audit verdicts from a JSON file")
+    p.add_argument("file", help="JSON object or array of {card_id, verdict, issues?, suggested_doc_query?, note?}")
+    p.add_argument("--dry-run", action="store_true", help="Print actions without writing")
+    p.set_defaults(func=cmd_apply_verdicts)
 
     p = sub.add_parser("export", help="Write approved cards to the local catalog used by the drill generator")
     p.add_argument("--out", default=DEFAULT_EXPORT_PATH)

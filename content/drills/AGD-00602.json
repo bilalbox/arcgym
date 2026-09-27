@@ -1,0 +1,144 @@
+{
+  "id": "AGD-00602",
+  "title": "B2B ABM Go-Live: Activation Membership Without SFMC Duplication",
+  "format": "Scenario",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 2,
+  "status": "published",
+  "sourceCardIds": [
+    "FC-0D54V00007bLMAFSA4",
+    "FC-0D5KX00000j8v9e0AA",
+    "FC-0D5KX00000j8twP0AQ",
+    "FC-0D5KX00000jAOxu0AG",
+    "FC-0D54V00007er4NUSAY"
+  ],
+  "meterLabels": {
+    "primary": "Schedule headroom",
+    "secondary": "Platform reliability"
+  },
+  "initialTrust": 78,
+  "initialReliability": 64,
+  "moves": [
+    {
+      "moveNumber": 1,
+      "stakeholderPersona": "CRM Data Architect",
+      "dialogueText": "\"ABM is in two weeks. Buying committees mean one Contact on several Accounts. Mapping a real Account Contact relationship adds a day of harmonization we do not have—can we just project Contact onto Account Contact and keep moving?\"",
+      "options": [
+        {
+          "id": "m1_a",
+          "text": "Map Account Contact 1:1 from Contact so modeling finishes today and activation planning can start tomorrow.",
+          "trustDelta": 10,
+          "reliabilityDelta": -26,
+          "techDebtImpact": "Saves ~1 day now, but collapses many-to-many Account–person roles. Later membership work cannot express “this Contact in this Account” without duplication.",
+          "isOptimal": false
+        },
+        {
+          "id": "m1_b",
+          "text": "Spend the modeling day: Account Contact as the account–person relationship (e.g. AccountContactRelation), related to Account and Individual/Contact.",
+          "trustDelta": -12,
+          "reliabilityDelta": 16,
+          "techDebtImpact": "Burns schedule on DMO harmonization, but leaves a Customer 360 relationship grain that activation can membership on later.",
+          "isOptimal": true
+        }
+      ]
+    },
+    {
+      "moveNumber": 2,
+      "stakeholderPersona": "Data 360 Admin",
+      "dialogueText": "\"The junction DMO is still category Other. Flipping it to Profile means recreate-or-transform work and re-testing relationships—half a sprint—before it shows under Activation Membership. Ship Other and hope the UI lists related DMOs?\"",
+      "options": [
+        {
+          "id": "m2_a",
+          "text": "Leave category Other and protect the sprint; Activation Membership should accept any DMO related to Account or Contact.",
+          "trustDelta": 12,
+          "reliabilityDelta": -24,
+          "techDebtImpact": "Keeps the calendar intact, but Other-category junctions never appear under Activation Membership—marketing will fall back to Contact grain.",
+          "isOptimal": false
+        },
+        {
+          "id": "m2_b",
+          "text": "Pay the recreate/transform cost: set the junction to Profile, re-relate Account and Contact, then expose it under Activation Membership.",
+          "trustDelta": -14,
+          "reliabilityDelta": 18,
+          "techDebtImpact": "Consumes schedule on category change and remap, but Profile is what Activation Membership filtering expects for relationship-grain export.",
+          "isOptimal": true
+        }
+      ]
+    },
+    {
+      "moveNumber": 3,
+      "stakeholderPersona": "Marketing Operations Lead",
+      "dialogueText": "\"Dry run: one Contact on two Accounts → two Contact rows in the Shared DE. Re-segmenting on the junction and rewiring membership is another build day. Leadership says activate on Contact and let SFMC dedupe—do we take that shortcut?\"",
+      "options": [
+        {
+          "id": "m3_a",
+          "text": "Keep membership on Contact/Individual and lean on SFMC subscriber keys / journey dedupe so we do not rebuild the activation.",
+          "trustDelta": 11,
+          "reliabilityDelta": -30,
+          "techDebtImpact": "Avoids a rebuild day, but person-grain membership multiplies Shared DE rows per related Account; journeys inherit the duplication.",
+          "isOptimal": false
+        },
+        {
+          "id": "m3_b",
+          "text": "Rebuild: segment on Profile junction rows, set Activation Membership to the junction, traverse attributes to Contact/Individual as needed.",
+          "trustDelta": -12,
+          "reliabilityDelta": 20,
+          "techDebtImpact": "Costs a rebuild cycle, but membership matches the B2B relationship grain so Account sharing stops exploding Contact rows.",
+          "isOptimal": true
+        }
+      ]
+    },
+    {
+      "moveNumber": 4,
+      "stakeholderPersona": "SFMC Admin",
+      "dialogueText": "\"Compliance wants every Contact Point Email in the DE. Max # of Attribute Values is stuck at 1. A fan-out transform plus new segment/activation is another multi-day track—can we just raise the attribute limit instead?\"",
+      "options": [
+        {
+          "id": "m4_a",
+          "text": "Raise Max # of Attribute Values on Contact Point Email (or a file-based activation DMO) and keep the existing membership object.",
+          "trustDelta": 13,
+          "reliabilityDelta": -26,
+          "techDebtImpact": "Looks like a same-day config win, but native activation will not fan out multiple emails per Individual via that limit—secondary addresses never become addressable rows.",
+          "isOptimal": false
+        },
+        {
+          "id": "m4_b",
+          "text": "Schedule the transform track: fan-out DLO/DMO (one row per Individual–email), segment on it, activate with membership on that grain.",
+          "trustDelta": -15,
+          "reliabilityDelta": 17,
+          "techDebtImpact": "Burns multi-day scope on transform + re-activation, but payload can choose a contact identifier per email row for compliance.",
+          "isOptimal": true
+        }
+      ]
+    },
+    {
+      "moveNumber": 5,
+      "stakeholderPersona": "Integration Lead",
+      "dialogueText": "\"Activation fails on colliding Id attribute names across Individual, Contact Point Email, and Redshift. Renaming the payload and re-validating the DE eats the last buffer day. Marketing wants the raw API names left alone for ‘traceability’—ship as-is?\"",
+      "options": [
+        {
+          "id": "m5_a",
+          "text": "Leave API-style Id attributes unchanged so we do not spend the buffer day on preferred names and DE revalidation.",
+          "trustDelta": 9,
+          "reliabilityDelta": -28,
+          "techDebtImpact": "Protects the last calendar day, but colliding names break or silently reshape the Shared DE under refresh.",
+          "isOptimal": false
+        },
+        {
+          "id": "m5_b",
+          "text": "Spend the buffer: assign preferred activation names that disambiguate source/meaning, keep only the identifiers SFMC needs, re-run with a clean payload.",
+          "trustDelta": -10,
+          "reliabilityDelta": 18,
+          "techDebtImpact": "Uses remaining schedule on payload hygiene so the Marketing Cloud DE stays stable across incremental refreshes.",
+          "isOptimal": true
+        }
+      ]
+    }
+  ]
+}

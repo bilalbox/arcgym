@@ -18,26 +18,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Streaming Insights with time-based sliding window aggregations over the browse event stream",
+          "label": "Streaming Insights with time-based sliding window aggregations over real-time event streams",
           "isCorrect": true,
-          "rationale": "Streaming Insights evaluate aggregations as events arrive, enabling near-real-time windowed triggers that batch Calculated Insights cannot meet.",
+          "rationale": "Streaming Insights process real-time events continuously within sub-minute sliding time windows, triggering immediate downstream actions.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Batch Calculated Insights scheduled once every 24 hours on historical browse history",
+          "label": "Calculated Insights configured with incremental hourly batch schedules on unified browse DMOs",
           "isCorrect": false,
-          "distractorAntipattern": "Batch Where Streaming Is Required",
-          "rationale": "Calculated Insights excel at scheduled historical metrics; a once-daily batch misses the live 5-minute browse window entirely.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Calculated Insights run on multi-hour schedules and cannot evaluate sub-minute sliding session windows.",
+          "rationale": "Calculated Insights are designed for periodic multidimensional batch aggregations, not real-time sub-minute event threshold evaluation."
         },
         {
           "id": "s1_c",
-          "label": "Scheduled Apex Batch counting Product_View__c rows with SOQL",
+          "label": "Data Cloud Segment triggers refreshed continuously using rapid identity resolution updates",
           "isCorrect": false,
-          "distractorAntipattern": "Core CRM as Stream Processor",
-          "rationale": "Apex/SOQL on CRM objects cannot economically process web-scale streaming telemetry or Data 360 streaming engines.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Segment publishing is a periodic batch operation, not an event-driven stream processor.",
+          "rationale": "Segment evaluation runs on schedules (typically every 12 to 24 hours) and cannot trigger real-time actions during active shopper browsing."
         }
       ]
     }

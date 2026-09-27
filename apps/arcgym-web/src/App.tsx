@@ -1,25 +1,28 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
 import { CurrencyRunner } from '@/components/drill/CurrencyRunner';
 import { DualMeterScenario } from '@/components/drill/DualMeterScenario';
 import { LessonStepper } from '@/components/drill/LessonStepper';
 import { ProgressDialog } from '@/components/progress/ProgressDialog';
-import { Badge } from '@/components/ui/badge';
+import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { PrivacyPage } from '@/pages/PrivacyPage';
+import { SkillProfilePage } from '@/pages/SkillProfilePage';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
 import { useRouter } from '@/hooks/useRouter';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import {
   ArchitecturalDomain,
+  ARCHITECTURAL_DOMAINS,
   ARCHITECTURAL_DOMAIN_LABELS,
   DrillFormat,
   isCurrencyDrill,
   isLessonDrill,
   isRapidFireDrill,
   isScenarioDrill,
+  StepAttemptTelemetry,
 } from '@arcgym/drill-core';
-import { Flame, Compass, Zap, Coins, Users2, GraduationCap, Target, CheckCircle } from 'lucide-react';
+import { Zap, Coins, Users2, GraduationCap, CheckCircle } from 'lucide-react';
 
 interface FormatConfig {
   id: DrillFormat;
@@ -56,7 +59,7 @@ const FORMATS: FormatConfig[] = [
 ];
 
 export const App: React.FC = () => {
-  const { pathname, navigate } = useRouter();
+  const { pathname, search, navigate } = useRouter();
   const [activeFormat, setActiveFormat] = useState<DrillFormat>('Rapid_Fire');
   const [activeDomain, setActiveDomain] = useState<ArchitecturalDomain | undefined>(undefined);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
@@ -68,6 +71,17 @@ export const App: React.FC = () => {
     recordDrillCompletion,
     resetProgress,
   } = useVisitorProgress();
+
+  // If URL has ?domain=Param, sync to activeDomain filter
+  useEffect(() => {
+    if (search) {
+      const params = new URLSearchParams(search);
+      const dom = params.get('domain');
+      if (dom && (ARCHITECTURAL_DOMAINS as string[]).includes(dom)) {
+        setActiveDomain(dom as ArchitecturalDomain);
+      }
+    }
+  }, [search]);
 
   const domainsForFormat = useMemo(() => {
     const present = new Set(
@@ -111,71 +125,63 @@ export const App: React.FC = () => {
     score: number;
     accuracy: number;
     streakDays: number;
+    steps?: StepAttemptTelemetry[];
   }) => {
     recordDrillCompletion({
       drillId: result.drillId,
       format: result.format,
       score: result.score,
       accuracy: result.accuracy,
+      steps: result.steps,
     });
   };
 
+  // Route: Privacy policy
   if (pathname === '/privacy') {
     return <PrivacyPage navigate={navigate} />;
   }
 
+  // Route: Skill Profile
+  if (pathname === '/skills') {
+    return (
+      <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
+        <Header
+          pathname={pathname}
+          navigate={navigate}
+          totalCompleted={totalCompleted}
+          totalDrillsCount={ALL_DRILLS.length}
+          streakDays={streakDays}
+          onOpenProgressModal={() => setIsProgressModalOpen(true)}
+        />
+        <SkillProfilePage
+          completedDrills={completedDrills}
+          allDrills={ALL_DRILLS}
+          navigate={navigate}
+          pathname={pathname}
+        />
+        <ProgressDialog
+          open={isProgressModalOpen}
+          onOpenChange={setIsProgressModalOpen}
+          completedDrills={completedDrills}
+          totalDrillsCount={ALL_DRILLS.length}
+          allDrills={ALL_DRILLS}
+          onResetProgress={resetProgress}
+        />
+      </div>
+    );
+  }
+
+  // Route: Home / Practice
   return (
     <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
-      <header className="sticky top-0 z-40 w-full border-b border-miro-hairline bg-white/95 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-3 group text-left cursor-pointer"
-            >
-              <div className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight group-hover:bg-miro-charcoal transition-colors">
-                AG
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-miro-primary tracking-tight text-lg">
-                  Arc<span className="text-miro-blue">Gym</span>
-                </span>
-                <Badge variant="outline" className="text-[11px] font-medium hidden sm:inline-flex">
-                  Salesforce Architect Edition
-                </Badge>
-              </div>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => setIsProgressModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200/80 border border-slate-200/90 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
-              title="Click to view practice history and completed drills"
-            >
-              <Target className="h-3.5 w-3.5 text-miro-blue" />
-              <span>
-                {totalCompleted} / {ALL_DRILLS.length} mastered
-              </span>
-            </button>
-
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-miro-yellowLight border border-amber-200/80 text-miro-yellowText text-xs font-medium">
-              <Flame className="h-3.5 w-3.5 text-amber-600 fill-amber-500" />
-              <span>{streakDays} day streak</span>
-            </div>
-
-            <a
-              href="https://architect.salesforce.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-miro-blue font-medium hidden md:flex items-center gap-1.5 transition-colors ml-1"
-            >
-              <Compass className="h-3.5 w-3.5 text-miro-blue" />
-              architect.salesforce.com
-            </a>
-          </div>
-        </div>
-      </header>
+      <Header
+        pathname={pathname}
+        navigate={navigate}
+        totalCompleted={totalCompleted}
+        totalDrillsCount={ALL_DRILLS.length}
+        streakDays={streakDays}
+        onOpenProgressModal={() => setIsProgressModalOpen(true)}
+      />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
         <div className="text-center sm:text-left space-y-2">

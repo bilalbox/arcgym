@@ -19,24 +19,22 @@
           "id": "s1_a",
           "label": "Request a Skinny Table from Salesforce Support containing the filtered and sorted fields",
           "isCorrect": true,
-          "rationale": "Skinny tables combine standard and custom fields into a flat, unjoined database table, eliminating join overhead for LDV reporting and queries.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "rationale": "Skinny tables combine standard and custom fields into a flat, unjoined database table, eliminating table join overhead for LDV reporting and queries.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Create a standard formula field concatenating Region and Quarter to filter on",
+          "label": "Create custom indexes on Region__c and Fiscal_Quarter__c and sort by standard CreatedDate",
           "isCorrect": false,
-          "distractorAntipattern": "Non-deterministic formula fields force full table scans across millions of rows.",
-          "rationale": "Formula fields with dynamic logic or unindexed concatenation force full table scans across millions of rows, worsening timeouts.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "Independent single-column b-tree indexes cannot eliminate composite sort overhead on standard CreatedDate across 18M rows.",
+          "rationale": "Independent single-column indexes force the query optimizer to perform index union/merges and an expensive in-memory sort on CreatedDate across millions of rows, still timing out standard reports."
         },
         {
           "id": "s1_c",
-          "label": "Create a Before-Save Flow to copy the records to an external data warehouse daily",
+          "label": "Create a deterministic formula field combining Region and Quarter with a custom index",
           "isCorrect": false,
-          "distractorAntipattern": "Before-save flows do not optimize live in-org CRM reporting.",
-          "rationale": "Before-save flows do not optimize live in-org CRM reporting on existing 18M rows.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "A custom index on a concatenated formula does not optimize composite sorting on standard CreatedDate during report aggregation.",
+          "rationale": "While deterministic formula fields can be indexed, filtering on concatenated text does not eliminate the full table sort on standard CreatedDate for 18 million records."
         }
       ]
     }

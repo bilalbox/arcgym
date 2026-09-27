@@ -9,35 +9,45 @@
     "Trust",
     "Cost_Optimization"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
+  "sourceCardIds": [
+    "FC-0D5KX00000bDlBq0AK",
+    "FC-0D5KX00000KCual0AD",
+    "FC-0D5KX00000mkBJF0A2"
+  ],
   "steps": [
     {
       "id": "s1",
-      "prompt": "An Agentforce service agent must be grounded on 10,000 PDF manuals stored and indexed through Data 360 unstructured / search capabilities. Retrieval quality is poor and token spend is high. Which chunking strategy best balances semantic coherence with retrieval cost?",
+      "prompt": "An Agentforce service agent must be grounded on PDF manuals and related Account files via Data 360 unstructured / search capabilities. Retrieval quality is poor, some PDFs never chunk, and stakeholders also want near-real-time file answers. Which approach best balances semantic coherence, product limits, and freshness?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Semantic section-aware chunks (~250–500 tokens) with modest overlap and preserved heading metadata for retrieval filters",
+          "label": "Use section-aware chunking (250–500 tokens) on text PDFs, and leverage direct Agent Actions for real-time CRM file retrieval",
           "isCorrect": true,
-          "rationale": "Moderate, structure-aware chunks keep procedures intact for embedding similarity while staying small enough for precise retrieval and controlled context-window cost when grounding agents from Data 360.",
+          "rationale": "Chunking between 250–500 tokens preserves semantic coherence. Complex tables should be preprocessed, and real-time CRM files are best queried via direct Agent Actions rather than waiting on periodic search index rebuilds.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Embed each entire 50-page PDF as one vector so \"nothing is lost\"",
+          "label": "Embed each entire multi-page PDF as a single comprehensive vector to preserve cross-paragraph context across the document",
           "isCorrect": false,
-          "distractorAntipattern": "Monolithic Document Embedding",
-          "rationale": "Whole-document embeddings dilute local semantics, hurt cosine retrieval of specific procedures, and pull oversized context into the LLM — raising cost and hallucination risk.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Monolithic document embeddings exceed token limits, dilute retrieval similarity, and cause severe hallucination.",
+          "rationale": "Single-vector document embeddings dilute semantic relevance, exceed embedding model context windows, and prevent precise chunk retrieval."
         },
         {
           "id": "s1_c",
-          "label": "Split every 10 characters regardless of word or section boundaries",
+          "label": "Ingest table-dense PDF manuals directly into unstructured search and enable automated OCR layout recognition in Data Cloud",
           "isCorrect": false,
-          "distractorAntipattern": "Character-Level Fragmentation",
-          "rationale": "Arbitrary micro-splits destroy lexical meaning and produce unusable retrieval units.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Data Cloud unstructured chunking does not reliably parse complex multi-column tables or dense tabular data without structured preprocessing.",
+          "rationale": "Complex tabular data cannot be reliably indexed by standard unstructured text chunkers, resulting in skipped chunks and corrupted answers."
+        },
+        {
+          "id": "s1_d",
+          "label": "Rely entirely on Data Cloud search index re-indexing to expose newly uploaded Account attachments to Agentforce instantly",
+          "isCorrect": false,
+          "distractorAntipattern": "Data Cloud vector indexing operates asynchronously and cannot deliver instantaneous grounding on newly attached files.",
+          "rationale": "Vector search index updates are asynchronous batch processes and cannot guarantee sub-minute freshness for newly created record attachments."
         }
       ]
     }

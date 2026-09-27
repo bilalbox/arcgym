@@ -1,75 +1,94 @@
 {
   "id": "AGD-00401",
-  "title": "Agentforce Atlas Reasoning and Guardrails: The LLM boundary: where judgment ends and code begins (Part 1)",
+  "title": "Agentforce Atlas Reasoning and Guardrails: Boundary Governance, Dynamic Planning & Deterministic Logic",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
   "pillars": [
-    "Reliability"
+    "Reliability",
+    "Trust"
   ],
   "version": 1,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "In an enterprise implementation concerning Agentforce Atlas Reasoning and Guardrails, how should you address: The LLM boundary: where judgment ends and code begins (Part 1)?",
+      "prompt": "When designing Agentforce implementations, how should architects enforce the boundary between LLM reasoning and transactional business logic?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.",
-          "isCorrect": false,
-          "distractorAntipattern": "Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.",
-          "rationale": "Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.",
+          "label": "Use the LLM for natural language intent classification; delegate all state mutations to deterministic code",
+          "isCorrect": true,
+          "rationale": "LLMs provide probabilistic interpretation and conversational intent classification, but all transactional commits, financial calculations, and data mutations must be executed deterministically in Apex or Flow.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#the-llm-boundary-where-judgment-ends-and-code-begins"
         },
         {
           "id": "s1_b",
-          "label": "Architect a Well-Architected solution complying with Agentforce: Decouple asynchronous processing and enforce deterministic governor limits.",
-          "isCorrect": true,
-          "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > The LLM boundary: where judgment ends and code begins), this pattern ensures transactional integrity and system resilience.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#the-llm-boundary-where-judgment-ends-and-code-begins"
+          "label": "Allow the LLM to dynamically generate SOQL queries and calculate discount algorithms based on user conversation context",
+          "isCorrect": false,
+          "distractorAntipattern": "Permitting generative models to synthesize database queries and execute financial algorithms introduces hallucinations and security exploits.",
+          "rationale": "Allowing an LLM to generate raw queries or perform financial arithmetic directly leads to hallucinations, SQL/SOQL injection vulnerabilities, and unverified data commits."
+        },
+        {
+          "id": "s1_c",
+          "label": "Confine the LLM to rendering static UI templates while routing user utterances through hardcoded regex classification",
+          "isCorrect": false,
+          "distractorAntipattern": "Using hardcoded regexes strips away the intent classification and semantic reasoning strengths of modern LLM agents.",
+          "rationale": "Relying on hardcoded regexes negates the primary value of Agentforce generative intent resolution and fails to adapt to natural customer conversational phrasing."
         }
       ]
     },
     {
       "id": "s2",
-      "prompt": "In an enterprise implementation concerning Agentforce Atlas Reasoning and Guardrails, how should you address: How the new Agentforce architecture works (Part 5)?",
+      "prompt": "How does the Agentforce Atlas Reasoning Engine orchestrate multi-step user requests while preventing infinite execution loops and cascading failures?",
       "options": [
         {
           "id": "s2_a",
-          "label": "Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.",
-          "isCorrect": false,
-          "distractorAntipattern": "Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.",
-          "rationale": "Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.",
+          "label": "Atlas executes iterative ReAct loops (Reason, Act, Observe), bounded by max iteration limits and strict action schemas",
+          "isCorrect": true,
+          "rationale": "Atlas iteratively evaluates context, executes tools, and observes outputs within bounded reasoning steps, enforcing strict execution limits to prevent infinite loops.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#how-the-new-agentforce-architecture-works"
         },
         {
           "id": "s2_b",
-          "label": "Architect a Well-Architected solution complying with Agentforce: Decouple asynchronous processing and enforce deterministic governor limits.",
-          "isCorrect": true,
-          "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > How the new Agentforce architecture works), this pattern ensures transactional integrity and system resilience.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#how-the-new-agentforce-architecture-works"
+          "label": "Atlas compiles user requests into an immutable DAG execution graph committed within a single atomic database transaction",
+          "isCorrect": false,
+          "distractorAntipattern": "Atlas is an adaptive, dynamic reasoning engine that re-evaluates context between steps, not a static single-shot transaction graph compiler.",
+          "rationale": "Atlas does not compile an unmodifiable static graph; it dynamically adapts subsequent steps based on intermediate tool observations and user responses."
+        },
+        {
+          "id": "s2_c",
+          "label": "Atlas delegates multi-step action coordination to client-side Web Components, waiting for browser events between steps",
+          "isCorrect": false,
+          "distractorAntipattern": "Agentforce reasoning and tool invocation occur entirely within the secure Salesforce trust perimeter on the server, not in client browsers.",
+          "rationale": "Agentforce reasoning loops execute securely server-side within Salesforce infrastructure, avoiding browser latency, tampering, and client-side dropouts."
         }
       ]
     },
     {
       "id": "s3",
-      "prompt": "In an enterprise implementation concerning Agentforce Atlas Reasoning and Guardrails, how should you address: When to use deterministic logic (Part 3)?",
+      "prompt": "A customer transaction requires inventory reservation, payment processing, and shipment creation. Which pattern correctly orchestrates these dependent steps?",
       "options": [
         {
           "id": "s3_a",
-          "label": "Implement using standard point-and-click defaults without compensating controls or asynchronous decoupling.",
-          "isCorrect": false,
-          "distractorAntipattern": "Violates platform governance by coupling transactions and risking governor limits or unhandled edge cases under concurrency.",
-          "rationale": "Point-and-click automation without architectural guardrails fails under enterprise concurrency and volume.",
+          "label": "Encapsulate the multi-step transaction inside a deterministic Flow or Apex service invoked as a single discrete Agent Action",
+          "isCorrect": true,
+          "rationale": "Grouping dependent transactional operations into a single deterministic service guarantees atomicity, rollback safety, and governor limit control, shielding mutations from LLM decision drift.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#when-to-use-deterministic-logic"
         },
         {
           "id": "s3_b",
-          "label": "Architect a Well-Architected solution complying with Agentforce: Decouple asynchronous processing and enforce deterministic governor limits.",
-          "isCorrect": true,
-          "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > When to use deterministic logic), this pattern ensures transactional integrity and system resilience.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#when-to-use-deterministic-logic"
+          "label": "Expose each operation as an independent agent tool and allow the LLM to autonomously sequence the calls across multiple turns",
+          "isCorrect": false,
+          "distractorAntipattern": "Allowing an LLM to coordinate multiple dependent transactional mutations risks partial execution, dropped steps, and orphaned records.",
+          "rationale": "Relying on probabilistic LLM reasoning to sequence dependent transactional steps risks partial completion, orphan database locks, and lack of atomic rollback on failure."
+        },
+        {
+          "id": "s3_c",
+          "label": "Configure an asynchronous prompt template to invoke external payment and shipping webhooks directly from the Trust Layer pipeline",
+          "isCorrect": false,
+          "distractorAntipattern": "Prompt templates are designed for text generation and prompt augmentation, not executing transactional ACID mutations or payment processing.",
+          "rationale": "Prompt templates are intended for grounded text generation; they cannot manage transactional state, database rollbacks, or mission-critical payment workflows."
         }
       ]
     }

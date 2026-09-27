@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Run automated evaluation suites with synthetic and historical golden benchmark test datasets, scoring semantic accuracy, tool selection fidelity, and guardrail resistance",
+          "label": "Execute automated evaluation suites against golden benchmark test datasets, scoring tool fidelity and guardrails",
           "isCorrect": true,
           "rationale": "The Agent Development Lifecycle (ADLC) mandates automated evaluation suites against fixed benchmark test cases to mathematically measure drift and regression before deployment.",
           "citationUrl": "https://architect.salesforce.com/well-architected/principles"
         },
         {
           "id": "s1_b",
-          "label": "Have one developer manually chat with the agent in sandbox for 5 minutes",
+          "label": "Conduct spot manual testing in a developer sandbox across five representative prompt variations before deployment",
           "isCorrect": false,
-          "distractorAntipattern": "Manual ad-hoc testing cannot detect subtle prompt regressions.",
-          "rationale": "Ad-hoc manual testing lacks coverage, repeatability, and statistical confidence.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Manual spot testing lacks statistical rigor, coverage, and repeatability across non-deterministic LLM outputs.",
+          "rationale": "Ad-hoc manual testing lacks coverage, repeatability, and statistical confidence, failing to detect subtle regressions in agent planning or tool selection."
         },
         {
           "id": "s1_c",
-          "label": "Deploy directly to 100% of production users and check customer survey ratings next month",
+          "label": "Deploy changes directly to production behind a feature flag and monitor agent error logs over the first 24 hours",
           "isCorrect": false,
-          "distractorAntipattern": "Testing on production users without validation introduces immense business risk.",
-          "rationale": "Testing in production without automated evals exposes real customers to hallucinations and broken actions.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Testing in production without automated benchmark evals exposes live end-users to hallucinations and broken actions.",
+          "rationale": "Relying on production user monitoring instead of pre-deployment benchmark evaluations introduces immense business risk and unvetted agent hallucinations."
         }
       ]
     }

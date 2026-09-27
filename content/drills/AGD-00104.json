@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Throws System.CalloutException (uncommitted work pending); architect should enqueue a Queueable Apex job or fire Platform Event",
+          "label": "Throws System.CalloutException (uncommitted work); decouple using Queueable Apex or a published Platform Event",
           "isCorrect": true,
           "rationale": "Salesforce transactions prohibit synchronous HTTP callouts when open DML mutations exist in the database thread. Decoupling via Queueable or Platform Event resets the transaction boundary.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
         },
         {
           "id": "s1_b",
-          "label": "Throws System.LimitException (too many callouts); architect should increase the callout timeout to 120s",
+          "label": "Throws System.LimitException (callout after DML); wrap the callout in a Database.rollback(sp) savepoint block",
           "isCorrect": false,
-          "distractorAntipattern": "Timeout adjustments do not solve transaction sequencing conflicts.",
-          "rationale": "Increasing timeouts does not resolve transactional DML-before-callout boundary restrictions.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Setting or rolling back a Database Savepoint does not clear uncommitted database mutations to permit subsequent synchronous callouts in the same thread.",
+          "rationale": "Setting or rolling back a Database Savepoint does not reset the transaction boundary to permit subsequent synchronous callouts in the same thread."
         },
         {
           "id": "s1_c",
-          "label": "Throws System.SecurityException; architect should annotate class with \"without sharing\"",
+          "label": "Throws System.AsyncException; annotate the callout method with @future(callout=true) and invoke it inline",
           "isCorrect": false,
-          "distractorAntipattern": "Without sharing has no relationship to callout boundaries.",
-          "rationale": "Sharing declarations do not alter transaction execution boundaries.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Calling an asynchronous method inline does not alter the synchronous thread execution or resolve open DML locks before the callout.",
+          "rationale": "Future methods cannot accept sObject arguments, cannot be monitored via parent-child job IDs, and still throw CalloutException if executed within existing async contexts."
         }
       ]
     }

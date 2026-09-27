@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Optimistic Concurrency Control using a Version/Timestamp field checked at commit time, with automatic client retry",
+          "label": "Optimistic Concurrency Control with a Version timestamp validated at DML commit and client retry",
           "isCorrect": true,
           "rationale": "Optimistic concurrency avoids holding prolonged database locks during payment authorization, validating version consistency at the instant of commit.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
         },
         {
           "id": "s1_b",
-          "label": "SOQL \"FOR UPDATE\" held throughout the entire checkout transaction including credit card callout",
+          "label": "Pessimistic locking using SOQL FOR UPDATE acquired prior to third-party payment authorization",
           "isCorrect": false,
-          "distractorAntipattern": "Holding locks during external callouts causes massive system lock wait timeouts.",
-          "rationale": "Holding pessimistic locks while waiting for 3rd-party payment gateway callouts freezes database rows for all users and causes lock timeouts.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Holding database locks across external HTTP callouts causes severe lock wait timeouts across concurrent buyers.",
+          "rationale": "Holding pessimistic locks while waiting for 3rd-party payment gateway callouts freezes database rows for all users and causes lock timeouts."
         },
         {
           "id": "s1_c",
-          "label": "Disable validation rules during checkout to speed up execution",
+          "label": "Platform Cache storage of inventory counts with scheduled asynchronous reconciliation to database",
           "isCorrect": false,
-          "distractorAntipattern": "Disabling validation compromises data integrity.",
-          "rationale": "Disabling validation creates corrupted business records and violates the Trust pillar.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "In-memory cache without transactional row locking leads to dirty reads and severe overselling during traffic spikes.",
+          "rationale": "Platform Cache provides fast reads but lacks transactional ACID isolation, leading to dirty reads and oversold inventory under high checkout concurrency."
         }
       ]
     }

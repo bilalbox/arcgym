@@ -20,26 +20,24 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "Scheduled reverse ETL copying 50TB into Custom Big Objects nightly",
+            "label": "Scheduled reverse ETL sync copying aggregated behavioral scores into Custom Big Objects via Bulk API",
             "isCorrect": false,
-            "distractorAntipattern": "ETL Data Hoarding",
-            "rationale": "Physically replicating 50TB creates storage bloat, stale caches between sync windows, and ongoing ingest cost — the antipattern Data 360 Zero Copy is designed to eliminate.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Duplicating lake data into Big Objects incurs massive storage overhead, high ingest latency, and stale segmentation.",
+            "rationale": "Copying massive telemetry into Custom Big Objects duplicates storage costs, creates pipeline lag, and violates leadership requirement to avoid data duplication."
           },
           {
             "id": "s1_b",
-            "label": "Data 360 inbound Zero Copy federation to Snowflake, exposing governed shares as Data Lake / Data Model Objects without moving the lake",
+            "label": "Data 360 Zero Copy federation to Snowflake, querying governed lake shares directly without data movement",
             "isCorrect": true,
-            "rationale": "Inbound Zero Copy federation lets Data 360 query Snowflake in place via governed shares, preserving freshness and avoiding lake duplication while still powering segments and insights.",
+            "rationale": "Zero Copy federation connects Data 360 directly to Snowflake shares, providing live query access for segmentation without data duplication or ingestion fees.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
           },
           {
             "id": "s1_c",
-            "label": "Synchronous External Services REST callout on every record page view to fetch scores live",
+            "label": "Synchronous External Services REST callouts querying Snowflake on-demand during segment evaluations",
             "isCorrect": false,
-            "distractorAntipattern": "Synchronous Callout Coupling",
-            "rationale": "Per-view synchronous callouts degrade UI latency and burn callout rate limits; they do not provide a governed, queryable customer data layer for segmentation at scale.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Synchronous callouts during segmentation create severe API rate limiting, high latency, and lack lake-level SQL pushdown.",
+            "rationale": "Synchronous API callouts cannot support complex audience segmentation queries across 50TB datasets and trigger severe API throttling."
           }
         ]
       }
@@ -56,35 +54,45 @@
       "Reliability",
       "Operational_Excellence"
     ],
-    "version": 2,
+    "version": 3,
     "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000J8n2i0AB",
+      "FC-0D5KX00000pNzhX0AS",
+      "FC-0D54V00007N9gcaSAB"
+    ],
     "steps": [
       {
         "id": "s1",
-        "prompt": "An ERP connector will land millions of order rows into Data 360. Architects must preserve source fidelity for reprocessing while still exposing a canonical Party/Engagement model for identity resolution and insights. What is the required modeling sequence?",
+        "prompt": "An ERP connector will land millions of party/order rows into Data 360. Architects must preserve source fidelity for reprocessing, expose a canonical Individual model for identity resolution, and later may replace a Contact DLO or install packaged Sales data kits. What modeling discipline is required?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Land raw rows in a Data Lake Object (DLO), then map DLO fields into standard or harmonized Data Model Objects (DMOs)",
+            "label": "Ingest into Data Lake Objects (DLO), map fields to standard Data Model Objects (DMO), and maintain verified primary key lineage",
             "isCorrect": true,
-            "rationale": "Data 360 separates immutable raw ingestion (DLO) from business semantics (DMO). Harmonizing after the lake layer keeps reprocessing possible and feeds identity resolution and calculated insights correctly.",
+            "rationale": "Staging data in DLOs preserves raw source fidelity, while mapping to standardized DMOs establishes the canonical layer required for identity resolution and modular stream replacement.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Write ERP payloads straight into the Unified Individual DMO, skipping raw staging",
+            "label": "Ingest ERP streams directly into Unified Individual DMOs, bypassing intermediate Data Lake Objects to maximize ingest speed",
             "isCorrect": false,
-            "distractorAntipattern": "The Raw Passthrough / Bypass DLO",
-            "rationale": "Unified Individuals are outputs of identity resolution over mapped DMOs — not a direct ingest target. Skipping DLOs blocks reprocessing and breaks governed lineage.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Ingesting directly into DMOs is technically impossible in Data 360 and destroys raw source auditability.",
+            "rationale": "Data 360 architecture requires streams to land in DLOs first; bypassing DLO staging prevents raw data reprocessing and breaks platform lineage."
           },
           {
             "id": "s1_c",
-            "label": "Base64-encode every field into a single opaque DLO column to \"secure\" the feed",
+            "label": "Unmap the active Contact DLO primary key from Individual before creating the new replacement stream to avoid mapping conflicts",
             "isCorrect": false,
-            "distractorAntipattern": "Opaque Blob Staging",
-            "rationale": "Opaque encoding destroys field-level mapping, segmentation filters, and insight engines. Trust is enforced with governance and encryption controls, not by making data unqueryable.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Unmapping primary keys from populated DMOs breaks downstream identity resolution rulesets and calculated insights.",
+            "rationale": "Severing primary key mappings on active DMOs causes immediate failures across dependent identity resolution jobs and downstream calculated insights."
+          },
+          {
+            "id": "s1_d",
+            "label": "Deploy the packaged Sales Data Kit over existing custom DLO-to-DMO mappings to automatically standardize harmonized definitions",
+            "isCorrect": false,
+            "distractorAntipattern": "Overwriting custom DLO-to-DMO mappings with default data kit templates silently breaks bespoke field mappings.",
+            "rationale": "Deploying packaged data kits over customized DLO-DMO configurations overwrites custom relationships and breaks downstream segmentation and activation."
           }
         ]
       }
@@ -101,35 +109,46 @@
       "Trust",
       "Fairness"
     ],
-    "version": 2,
+    "version": 3,
     "status": "published",
+    "sourceCardIds": [
+      "FC-0D54V00007bLEFISA4",
+      "FC-0D5KX00000mmSig0AE",
+      "FC-0D54V00007YvibgSAB",
+      "FC-0D54V00007IfM7ZSAV"
+    ],
     "steps": [
       {
         "id": "s1",
-        "prompt": "A Data 360 Identity Resolution ruleset uses fuzzy match on Normalized Phone Number alone. Household members sharing a landline collapse into one Unified Individual, polluting consent and personalization. How should the ruleset be revised?",
+        "prompt": "A Data 360 Identity Resolution ruleset uses fuzzy match on Normalized Phone Number alone. Household members sharing a landline collapse into one Unified Individual, polluting consent and personalization. How should the architecture be revised?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Require composite match criteria — e.g. phone plus exact First Name or Date of Birth — and keep reconciliation rules separate from match rules",
+            "label": "Configure composite match criteria combining Phone with exact First Name or DOB, and preserve Unified Link DMOs for source lineage",
             "isCorrect": true,
-            "rationale": "Single-attribute fuzzy matching on shared identifiers causes Fuzzy Over-Clustering. Well-Architected rulesets combine high-signal attributes and treat reconciliation (field winners) as a separate stage after match groups form.",
+            "rationale": "Composite match rules prevent false-positive over-clustering across shared household identifiers, while Unified Link DMOs maintain full auditability to contributing source records.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Disable Identity Resolution and unify profiles with custom Apex triggers on Contact",
+            "label": "Consolidate all source contact attributes directly onto the Unified Individual DMO and remove Unified Link objects to streamline joins",
             "isCorrect": false,
-            "distractorAntipattern": "Apex Graph Unification",
-            "rationale": "Identity Resolution is a distributed big-data graph process. Apex cannot reconcile millions of cross-source identities with the same scale, lineage, or governance.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Dropping Unified Link objects destroys record lineage and prevents downstream activations from tracing back to originating source keys.",
+            "rationale": "Unified Link DMOs are architecturally required to maintain deterministic lineage between source records and unified profiles."
           },
           {
             "id": "s1_c",
-            "label": "Change only the reconciliation rule to \"Most Recently Updated\" and leave the phone-only match intact",
+            "label": "Update the profile reconciliation rule to Most Recently Updated while retaining the single-attribute fuzzy phone match criteria",
             "isCorrect": false,
-            "distractorAntipattern": "Reconciliation as Match Fix",
-            "rationale": "Reconciliation chooses winning attribute values after records are already merged. It cannot undo over-merging caused by weak match criteria.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Reconciliation rules determine winning field values after clustering, but cannot correct erroneous cluster creation.",
+            "rationale": "Reconciliation rules only decide which field value wins among already-matched profiles; they cannot unbundle incorrectly clustered individuals."
+          },
+          {
+            "id": "s1_d",
+            "label": "Replace Identity Resolution with a custom SQL Data Transform that hashes shared phone numbers into synthetic master person keys",
+            "isCorrect": false,
+            "distractorAntipattern": "Custom key transforms bypass native graph unification, duplicate clustering logic, and do not update dynamically.",
+            "rationale": "Manual SQL key transforms lack graph-based entity resolution, fail to handle multi-party cross-matching, and create unmaintainable custom pipeline debt."
           }
         ]
       }
@@ -155,26 +174,24 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "File-based Zero Copy federation via Iceberg REST Catalog metadata so Data 360 queries Parquet/Iceberg in place",
+            "label": "Zero Copy federation via Iceberg REST Catalog metadata, querying Databricks Parquet tables in place",
             "isCorrect": true,
-            "rationale": "Data 360 file federation for lakehouses relies on Apache Iceberg tabular metadata and Parquet files exposed through an Iceberg REST Catalog — enabling governed zero-copy access without moving 100TB.",
+            "rationale": "File-based Zero Copy queries Parquet/Iceberg data in place using open catalog metadata, avoiding storage duplication and compute double-billing.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Nightly JDBC extract that copies all 100TB into Data 360 DLOs for \"local performance\"",
+            "label": "Scheduled JDBC pipeline extracting 100TB into native Data 360 Data Lake Objects for local processing",
             "isCorrect": false,
-            "distractorAntipattern": "ETL Data Hoarding",
-            "rationale": "Bulk-copying a 100TB lake defeats Zero Copy economics: it multiplies storage cost, extends ingest windows, and creates freshness lag versus federated query.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+            "distractorAntipattern": "Extracting lakehouse data into Data 360 duplicates storage costs and introduces heavy batch ingestion latency.",
+            "rationale": "Ingesting 100TB via JDBC duplicates storage, incurs massive credit consumption, and creates substantial data synchronization lag."
           },
           {
             "id": "s1_c",
-            "label": "Hourly SFTP drops of CSV extracts into a ContentVersion staging object",
+            "label": "Micro-batch Ingestion API jobs streaming partitioned Parquet chunks into custom CRM staging tables",
             "isCorrect": false,
-            "distractorAntipattern": "Flat-File Polling",
-            "rationale": "CSV/SFTP polling lacks lakehouse metadata federation, is high-latency, and is a poor fit for analytical telemetry at this scale.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Streaming big data telemetry into core CRM objects violates platform storage limits and triggers API throttling.",
+            "rationale": "The Ingestion API is meant for lightweight JSON/CSV records, not multi-terabyte Parquet dumps, and staging in CRM objects exhausts database quotas."
           }
         ]
       }
@@ -200,26 +217,24 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "Streaming Insights with time-based sliding window aggregations over the browse event stream",
+            "label": "Streaming Insights with time-based sliding window aggregations over real-time event streams",
             "isCorrect": true,
-            "rationale": "Streaming Insights evaluate aggregations as events arrive, enabling near-real-time windowed triggers that batch Calculated Insights cannot meet.",
+            "rationale": "Streaming Insights process real-time events continuously within sub-minute sliding time windows, triggering immediate downstream actions.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Batch Calculated Insights scheduled once every 24 hours on historical browse history",
+            "label": "Calculated Insights configured with incremental hourly batch schedules on unified browse DMOs",
             "isCorrect": false,
-            "distractorAntipattern": "Batch Where Streaming Is Required",
-            "rationale": "Calculated Insights excel at scheduled historical metrics; a once-daily batch misses the live 5-minute browse window entirely.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Calculated Insights run on multi-hour schedules and cannot evaluate sub-minute sliding session windows.",
+            "rationale": "Calculated Insights are designed for periodic multidimensional batch aggregations, not real-time sub-minute event threshold evaluation."
           },
           {
             "id": "s1_c",
-            "label": "Scheduled Apex Batch counting Product_View__c rows with SOQL",
+            "label": "Data Cloud Segment triggers refreshed continuously using rapid identity resolution updates",
             "isCorrect": false,
-            "distractorAntipattern": "Core CRM as Stream Processor",
-            "rationale": "Apex/SOQL on CRM objects cannot economically process web-scale streaming telemetry or Data 360 streaming engines.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Segment publishing is a periodic batch operation, not an event-driven stream processor.",
+            "rationale": "Segment evaluation runs on schedules (typically every 12 to 24 hours) and cannot trigger real-time actions during active shopper browsing."
           }
         ]
       }
@@ -245,26 +260,24 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "Configure a Data Action that publishes a Platform Event or invokes a Salesforce Flow when the insight threshold is met",
+            "label": "Configure a Data Action targeting a Platform Event or Flow when the threshold condition fires",
             "isCorrect": true,
-            "rationale": "Data Actions are the governed bridge from Data 360 insights to CRM execution (events, flows, and related targets), avoiding custom pollers while keeping the path declarative and observable.",
+            "rationale": "Data Actions trigger near-real-time events or Salesforce Flows directly from Streaming Insights without requiring external middleware or polling.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Nightly Apex job that pages the Data 360 Query API looking for high-risk VIPs",
+            "label": "Schedule a frequent Apex Queueable job polling the Data Cloud SQL Query API for updated scores",
             "isCorrect": false,
-            "distractorAntipattern": "API Polling Middleware",
-            "rationale": "Polling introduces multi-hour lag, wastes API/credit budget, and recreates integration debt that Data Actions already solve.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+            "distractorAntipattern": "Polling Data Cloud Query API from Apex wastes API calls, adds latency, and risks rate-limit exceptions.",
+            "rationale": "Continuous polling from Apex consumes API quotas, adds latency, and creates tight coupling instead of event-driven execution."
           },
           {
             "id": "s1_c",
-            "label": "External Python daemon updating Contacts over the SOAP API whenever it scrapes insight exports",
+            "label": "Publish segment memberships to an Amazon S3 target and trigger an external webhook to CRM",
             "isCorrect": false,
-            "distractorAntipattern": "Shadow Integration Daemon",
-            "rationale": "Unmanaged external daemons add operational debt, weaken Trust/auditability, and bypass native activation paths.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "S3 segment activation introduces file export latency and requires external orchestration middleware.",
+            "rationale": "File-based cloud storage activation introduces significant batch egress latency and violates the requirement for direct, near-real-time CRM invocation."
           }
         ]
       }
@@ -281,35 +294,45 @@
       "Trust",
       "Cost_Optimization"
     ],
-    "version": 2,
+    "version": 3,
     "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000bDlBq0AK",
+      "FC-0D5KX00000KCual0AD",
+      "FC-0D5KX00000mkBJF0A2"
+    ],
     "steps": [
       {
         "id": "s1",
-        "prompt": "An Agentforce service agent must be grounded on 10,000 PDF manuals stored and indexed through Data 360 unstructured / search capabilities. Retrieval quality is poor and token spend is high. Which chunking strategy best balances semantic coherence with retrieval cost?",
+        "prompt": "An Agentforce service agent must be grounded on PDF manuals and related Account files via Data 360 unstructured / search capabilities. Retrieval quality is poor, some PDFs never chunk, and stakeholders also want near-real-time file answers. Which approach best balances semantic coherence, product limits, and freshness?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Semantic section-aware chunks (~250–500 tokens) with modest overlap and preserved heading metadata for retrieval filters",
+            "label": "Use section-aware chunking (250–500 tokens) on text PDFs, and leverage direct Agent Actions for real-time CRM file retrieval",
             "isCorrect": true,
-            "rationale": "Moderate, structure-aware chunks keep procedures intact for embedding similarity while staying small enough for precise retrieval and controlled context-window cost when grounding agents from Data 360.",
+            "rationale": "Chunking between 250–500 tokens preserves semantic coherence. Complex tables should be preprocessed, and real-time CRM files are best queried via direct Agent Actions rather than waiting on periodic search index rebuilds.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Embed each entire 50-page PDF as one vector so \"nothing is lost\"",
+            "label": "Embed each entire multi-page PDF as a single comprehensive vector to preserve cross-paragraph context across the document",
             "isCorrect": false,
-            "distractorAntipattern": "Monolithic Document Embedding",
-            "rationale": "Whole-document embeddings dilute local semantics, hurt cosine retrieval of specific procedures, and pull oversized context into the LLM — raising cost and hallucination risk.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Monolithic document embeddings exceed token limits, dilute retrieval similarity, and cause severe hallucination.",
+            "rationale": "Single-vector document embeddings dilute semantic relevance, exceed embedding model context windows, and prevent precise chunk retrieval."
           },
           {
             "id": "s1_c",
-            "label": "Split every 10 characters regardless of word or section boundaries",
+            "label": "Ingest table-dense PDF manuals directly into unstructured search and enable automated OCR layout recognition in Data Cloud",
             "isCorrect": false,
-            "distractorAntipattern": "Character-Level Fragmentation",
-            "rationale": "Arbitrary micro-splits destroy lexical meaning and produce unusable retrieval units.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Data Cloud unstructured chunking does not reliably parse complex multi-column tables or dense tabular data without structured preprocessing.",
+            "rationale": "Complex tabular data cannot be reliably indexed by standard unstructured text chunkers, resulting in skipped chunks and corrupted answers."
+          },
+          {
+            "id": "s1_d",
+            "label": "Rely entirely on Data Cloud search index re-indexing to expose newly uploaded Account attachments to Agentforce instantly",
+            "isCorrect": false,
+            "distractorAntipattern": "Data Cloud vector indexing operates asynchronously and cannot deliver instantaneous grounding on newly attached files.",
+            "rationale": "Vector search index updates are asynchronous batch processes and cannot guarantee sub-minute freshness for newly created record attachments."
           }
         ]
       }
@@ -335,26 +358,24 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "Data 360 cloud storage activation target exporting compressed Parquet/CSV directly to the S3 bucket",
+            "label": "Data 360 Cloud Storage Activation Target exporting compressed Parquet files directly to S3",
             "isCorrect": true,
-            "rationale": "Cloud storage activation is built for high-volume parallel object egress to destinations like S3, avoiding per-row CRM API paths while keeping the activation governed inside Data 360.",
+            "rationale": "Cloud Storage activation targets push bulk compressed datasets (Parquet/CSV) directly to external buckets without touching CRM API limits or consuming transactional worker threads.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
           },
           {
             "id": "s1_b",
-            "label": "Apex trigger issuing millions of individual S3 REST callouts as Contacts update",
+            "label": "Bulk API 2.0 query job exporting segment member IDs to an intermediate on-premise staging server",
             "isCorrect": false,
-            "distractorAntipattern": "Trigger Callout Avalanche",
-            "rationale": "Synchronous/near-synchronous Apex callouts cannot egress 20M profiles without exhausting API, CPU, and callout governors.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Querying 20M rows through core CRM APIs creates significant extraction lag and consumes daily API allocations.",
+            "rationale": "Extracting 20 million profiles via CRM Bulk API incurs heavy export processing time, staging infrastructure overhead, and API quota consumption."
           },
           {
             "id": "s1_c",
-            "label": "Export the full audience as a CSV email attachment to the campaign ops alias",
+            "label": "Apex Batch job querying Unified Individual DMOs and streaming records to Amazon S3 via REST",
             "isCorrect": false,
-            "distractorAntipattern": "Email as Data Plane",
-            "rationale": "Email attachments hit size limits and create uncontrolled PII copies outside governed activation channels — a Trust and Reliability failure.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Querying DMOs from Apex batch is subject to SOQL limits, callout timeouts, and transaction heap ceilings.",
+            "rationale": "Apex batch jobs cannot stream 20 million profiles to external endpoints without encountering transaction limits, heap errors, and callout timeouts."
           }
         ]
       }
@@ -380,26 +401,24 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "Execute a governed Data Subject Rights / Forget Me request in Data 360 so erasure propagates across lake objects, unified profiles, and derived insights — coordinated with source-system deletion",
+            "label": "Execute a Data Subject Rights Forget Me request in Data 360 coordinated with source deletion to purge all layers",
             "isCorrect": true,
-            "rationale": "Data 360 retains historical lake and unified layers independently of CRM deletes. A formal data subject request is required to purge or restrict processing across DLOs, DMOs, and derived artifacts while source systems handle their own copies.",
+            "rationale": "Data Subject Rights (DSR) requests in Data 360 ensure that personal data is deleted or masked across DLOs, unified profiles, and downstream search indexes, in alignment with source system erasures.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
           },
           {
             "id": "s1_b",
-            "label": "Delete the Contact in core CRM and assume Data 360 will drop the profile on the next connector sync",
+            "label": "Delete the source Contact in CRM and rely on standard Data Cloud connector incremental syncs to cascade deletes",
             "isCorrect": false,
-            "distractorAntipattern": "Source-Delete Cascade Myth",
-            "rationale": "Connector syncs do not automatically cryptographically erase historical lake snapshots and unified graphs. Relying on CRM delete alone leaves residual PII in Data 360.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Standard Data Cloud connectors append change records or soft deletes; they do not automatically purge historical lake data.",
+            "rationale": "Standard data stream connectors append change events or mark deleted records, but do not physically erase historical immutable lake objects or derived insights."
           },
           {
             "id": "s1_c",
-            "label": "Rename the Contact to \"Deleted User\" in the CRM UI and leave lake objects untouched",
+            "label": "Run an automated Data Transform to overwrite PII attributes with null values in harmonized Data Model Objects (DMOs)",
             "isCorrect": false,
-            "distractorAntipattern": "UI Pseudonymization Theater",
-            "rationale": "Cosmetic field edits leave PII in underlying lakehouse and insight layers, failing GDPR audit requirements.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Overwriting fields in DMOs leaves raw PII stored in staging Data Lake Objects and immutable storage partitions.",
+            "rationale": "Modifying DMO records does not remove historical PII residing in underlying Data Lake Objects, audit logs, or vector search embeddings."
           }
         ]
       }
@@ -425,26 +444,312 @@
         "options": [
           {
             "id": "s1_a",
-            "label": "Move slow-changing catalog ingestion from continuous streaming connectors to scheduled batch ingestion",
+            "label": "Transition slow-changing catalog data streams from continuous streaming to daily batch ingestion",
             "isCorrect": true,
-            "rationale": "Streaming Everything on near-static sources wastes continuous compute credits. Batch ingestion matches catalog change cadence and reserves streaming budget for true real-time signals.",
+            "rationale": "Streaming connectors consume continuous compute credits for micro-batch polling; switching weekly/daily reference data to scheduled batch drastically reduces credit burn.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
           },
           {
             "id": "s1_b",
-            "label": "Buy 10× more credits and leave the streaming topology unchanged",
+            "label": "Increase the streaming buffer flush interval to 60 minutes while keeping continuous connectors",
             "isCorrect": false,
-            "distractorAntipattern": "Subsidize the Antipattern",
-            "rationale": "Purchasing capacity without fixing waste violates Cost Optimization and merely delays the next credit cliff.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Adjusting flush intervals does not eliminate the fixed infrastructure credit cost of 50 active streaming listener connections.",
+            "rationale": "Increasing flush intervals reduces message write frequency but still maintains 50 continuous streaming compute workers, yielding minimal credit savings."
           },
           {
             "id": "s1_c",
-            "label": "Disable encryption on catalog objects to reduce compute cost",
+            "label": "Consolidate all 50 product catalog tables into a single high-frequency Ingestion API endpoint",
             "isCorrect": false,
-            "distractorAntipattern": "Trust Trade for Credits",
-            "rationale": "Weakening encryption to save credits destroys Trust and compliance boundaries; credit governance must not sacrifice security controls.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "distractorAntipattern": "Directing 50 tables through a continuous Ingestion API endpoint still incurs streaming ingestion credit tariffs.",
+            "rationale": "Streaming static reference data via the Ingestion API still bills at continuous streaming rates rather than lower-cost batch processing tiers."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00211",
+    "title": "Sales Data Kit Deploy vs Preserving Custom DLO–DMO Maps",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000pNzhX0AS"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "A mature Data 360 org already has customized Contact and Account DLO–DMO mappings powering identity resolution and activation. Marketing now requires Marketing Cloud Next, which mandates the Sales Data Kit. Leadership will not accept losing bespoke field maps, but consent/messaging kit coverage is still required. Which approach best protects the harmonized DMO layer?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Execute the automated Deploy Data Streams wizard in Marketing Cloud Next setup to reconcile custom and standard mappings into unified templates",
+            "isCorrect": false,
+            "distractorAntipattern": "Blind Packaged Kit Redeploy",
+            "rationale": "The standard Deploy wizard forces default data kit mappings, overwriting customized relationships and breaking active identity resolution models.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+          },
+          {
+            "id": "s1_b",
+            "label": "Retain custom mappings on existing DLOs and configure downstream segment activations to query Data Lake Objects directly instead of DMOs",
+            "isCorrect": false,
+            "distractorAntipattern": "Lake-Only Activation Bypass",
+            "rationale": "Marketing Cloud Next and Data Cloud segmentation require canonical Data Model Objects (DMOs) and cannot build unified audiences directly on DLOs.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+          },
+          {
+            "id": "s1_c",
+            "label": "Ingest required data kit streams selectively, preserving bespoke DLO-to-DMO harmonizations while mapping only mandatory messaging attributes",
+            "isCorrect": true,
+            "rationale": "Ingesting required data kit streams manually or selectively avoids blowing away existing custom DLO-DMO mappings, preserving identity resolution integrity while fulfilling MCN prerequisites.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00212",
+    "title": "Account Engagement Needs Activation Targets, Not Link Alone",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Operational_Excellence",
+      "Reliability"
+    ],
+    "version": 1,
+    "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000jATpi0AG"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "A Marketing Cloud Account Engagement team already linked Account Engagement in Data 360 Setup. They expect Data 360 segments to show up as usable audiences in Account Engagement with no further work. Segments remain invisible. What completes the path so those audiences become available downstream?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Enable automated audience synchronization in Account Engagement connector settings to ingest all active segments",
+            "isCorrect": false,
+            "distractorAntipattern": "Connect-Only Audience Expectation",
+            "rationale": "Connecting the orgs does not automatically synchronize segments; audience delivery requires an explicit Activation Target and Segment Activation configuration.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+          },
+          {
+            "id": "s1_b",
+            "label": "Configure an Account Engagement Activation Target, then create and schedule Segment Activations for the target audience",
+            "isCorrect": true,
+            "rationale": "Data Cloud requires both an Activation Target (specifying Account Engagement as destination) and individual Segment Activations to push audience memberships downstream.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+          },
+          {
+            "id": "s1_c",
+            "label": "Create a Data Action triggered by segment membership changes that writes prospect IDs via Account Engagement REST API",
+            "isCorrect": false,
+            "distractorAntipattern": "Manual CSV Audience Re-Import",
+            "rationale": "Building custom REST API pipelines using Data Actions introduces unnecessary integration complexity and maintenance overhead when native Activation Targets provide out-of-the-box syncing.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#segment-activation-to-marketing-and-advertising-platforms"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00213",
+    "title": "Test Data Must Use the Connector That Owns the Stream",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Operational_Excellence",
+      "Reliability"
+    ],
+    "version": 1,
+    "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000bDpvW0AS"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "An architect built a Direct Access data stream → DLO → DMO → Flow path into CRM but has no access to the upstream Direct Access source. They need a few test rows to validate the Flow. Which approach respects how Data 360 ingestion actually works?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Use the Ingestion API to POST sample payloads directly into the existing Direct Access Data Lake Object to trigger the pipeline",
+            "isCorrect": false,
+            "distractorAntipattern": "Arbitrary DLO Inject Bypass",
+            "rationale": "Data Lake Objects are strictly coupled to their originating connector type; the Ingestion API cannot inject records into a DLO owned by a Direct Access stream.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
+          },
+          {
+            "id": "s1_b",
+            "label": "Stand up a temporary Cloud Storage or File Upload stream mapped to the same target DMO to validate downstream Flow logic safely",
+            "isCorrect": true,
+            "rationale": "Because connector-owned DLOs cannot be injected across connectors, creating a secondary stream mapped to the same harmonized DMO validates downstream Flow logic without corrupting upstream sources.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
+          },
+          {
+            "id": "s1_c",
+            "label": "Temporarily repoint the CRM Flow to read simulated fixture records from a custom object until live connector access is restored",
+            "isCorrect": false,
+            "distractorAntipattern": "CRM Fixture Path Substitution",
+            "rationale": "Testing against a CRM custom object bypasses Data Cloud DMO schemas, data types, and trigger mechanics, leaving the real integration untested.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#connect-ingest-and-prepare"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00602",
+    "title": "B2B ABM Go-Live: Activation Membership Without SFMC Duplication",
+    "format": "Scenario",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 2,
+    "status": "published",
+    "sourceCardIds": [
+      "FC-0D54V00007bLMAFSA4",
+      "FC-0D5KX00000j8v9e0AA",
+      "FC-0D5KX00000j8twP0AQ",
+      "FC-0D5KX00000jAOxu0AG",
+      "FC-0D54V00007er4NUSAY"
+    ],
+    "meterLabels": {
+      "primary": "Schedule headroom",
+      "secondary": "Platform reliability"
+    },
+    "initialTrust": 78,
+    "initialReliability": 64,
+    "moves": [
+      {
+        "moveNumber": 1,
+        "stakeholderPersona": "CRM Data Architect",
+        "dialogueText": "\"ABM is in two weeks. Buying committees mean one Contact on several Accounts. Mapping a real Account Contact relationship adds a day of harmonization we do not have—can we just project Contact onto Account Contact and keep moving?\"",
+        "options": [
+          {
+            "id": "m1_a",
+            "text": "Map Account Contact 1:1 from Contact so modeling finishes today and activation planning can start tomorrow.",
+            "trustDelta": 10,
+            "reliabilityDelta": -26,
+            "techDebtImpact": "Saves ~1 day now, but collapses many-to-many Account–person roles. Later membership work cannot express “this Contact in this Account” without duplication.",
+            "isOptimal": false
+          },
+          {
+            "id": "m1_b",
+            "text": "Spend the modeling day: Account Contact as the account–person relationship (e.g. AccountContactRelation), related to Account and Individual/Contact.",
+            "trustDelta": -12,
+            "reliabilityDelta": 16,
+            "techDebtImpact": "Burns schedule on DMO harmonization, but leaves a Customer 360 relationship grain that activation can membership on later.",
+            "isOptimal": true
+          }
+        ]
+      },
+      {
+        "moveNumber": 2,
+        "stakeholderPersona": "Data 360 Admin",
+        "dialogueText": "\"The junction DMO is still category Other. Flipping it to Profile means recreate-or-transform work and re-testing relationships—half a sprint—before it shows under Activation Membership. Ship Other and hope the UI lists related DMOs?\"",
+        "options": [
+          {
+            "id": "m2_a",
+            "text": "Leave category Other and protect the sprint; Activation Membership should accept any DMO related to Account or Contact.",
+            "trustDelta": 12,
+            "reliabilityDelta": -24,
+            "techDebtImpact": "Keeps the calendar intact, but Other-category junctions never appear under Activation Membership—marketing will fall back to Contact grain.",
+            "isOptimal": false
+          },
+          {
+            "id": "m2_b",
+            "text": "Pay the recreate/transform cost: set the junction to Profile, re-relate Account and Contact, then expose it under Activation Membership.",
+            "trustDelta": -14,
+            "reliabilityDelta": 18,
+            "techDebtImpact": "Consumes schedule on category change and remap, but Profile is what Activation Membership filtering expects for relationship-grain export.",
+            "isOptimal": true
+          }
+        ]
+      },
+      {
+        "moveNumber": 3,
+        "stakeholderPersona": "Marketing Operations Lead",
+        "dialogueText": "\"Dry run: one Contact on two Accounts → two Contact rows in the Shared DE. Re-segmenting on the junction and rewiring membership is another build day. Leadership says activate on Contact and let SFMC dedupe—do we take that shortcut?\"",
+        "options": [
+          {
+            "id": "m3_a",
+            "text": "Keep membership on Contact/Individual and lean on SFMC subscriber keys / journey dedupe so we do not rebuild the activation.",
+            "trustDelta": 11,
+            "reliabilityDelta": -30,
+            "techDebtImpact": "Avoids a rebuild day, but person-grain membership multiplies Shared DE rows per related Account; journeys inherit the duplication.",
+            "isOptimal": false
+          },
+          {
+            "id": "m3_b",
+            "text": "Rebuild: segment on Profile junction rows, set Activation Membership to the junction, traverse attributes to Contact/Individual as needed.",
+            "trustDelta": -12,
+            "reliabilityDelta": 20,
+            "techDebtImpact": "Costs a rebuild cycle, but membership matches the B2B relationship grain so Account sharing stops exploding Contact rows.",
+            "isOptimal": true
+          }
+        ]
+      },
+      {
+        "moveNumber": 4,
+        "stakeholderPersona": "SFMC Admin",
+        "dialogueText": "\"Compliance wants every Contact Point Email in the DE. Max # of Attribute Values is stuck at 1. A fan-out transform plus new segment/activation is another multi-day track—can we just raise the attribute limit instead?\"",
+        "options": [
+          {
+            "id": "m4_a",
+            "text": "Raise Max # of Attribute Values on Contact Point Email (or a file-based activation DMO) and keep the existing membership object.",
+            "trustDelta": 13,
+            "reliabilityDelta": -26,
+            "techDebtImpact": "Looks like a same-day config win, but native activation will not fan out multiple emails per Individual via that limit—secondary addresses never become addressable rows.",
+            "isOptimal": false
+          },
+          {
+            "id": "m4_b",
+            "text": "Schedule the transform track: fan-out DLO/DMO (one row per Individual–email), segment on it, activate with membership on that grain.",
+            "trustDelta": -15,
+            "reliabilityDelta": 17,
+            "techDebtImpact": "Burns multi-day scope on transform + re-activation, but payload can choose a contact identifier per email row for compliance.",
+            "isOptimal": true
+          }
+        ]
+      },
+      {
+        "moveNumber": 5,
+        "stakeholderPersona": "Integration Lead",
+        "dialogueText": "\"Activation fails on colliding Id attribute names across Individual, Contact Point Email, and Redshift. Renaming the payload and re-validating the DE eats the last buffer day. Marketing wants the raw API names left alone for ‘traceability’—ship as-is?\"",
+        "options": [
+          {
+            "id": "m5_a",
+            "text": "Leave API-style Id attributes unchanged so we do not spend the buffer day on preferred names and DE revalidation.",
+            "trustDelta": 9,
+            "reliabilityDelta": -28,
+            "techDebtImpact": "Protects the last calendar day, but colliding names break or silently reshape the Shared DE under refresh.",
+            "isOptimal": false
+          },
+          {
+            "id": "m5_b",
+            "text": "Spend the buffer: assign preferred activation names that disambiguate source/meaning, keep only the identifiers SFMC needs, re-run with a clean payload.",
+            "trustDelta": -10,
+            "reliabilityDelta": 18,
+            "techDebtImpact": "Uses remaining schedule on payload hygiene so the Marketing Cloud DE stays stable across incremental refreshes.",
+            "isOptimal": true
           }
         ]
       }

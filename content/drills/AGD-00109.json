@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Publish high-volume Platform Events from Master Org to Salesforce Pub/Sub API bus subscribed by child org listeners",
+          "label": "High-volume Platform Events published via Pub/Sub API to subscribers in each child org",
           "isCorrect": true,
           "rationale": "Pub/Sub API provides high-throughput, bidirectionally decoupled event distribution with guaranteed delivery and replay retention across multiple orgs.",
           "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
         },
         {
           "id": "s1_b",
-          "label": "Point-to-point Apex REST callouts chained between all four orgs sequentially",
+          "label": "Chained Outbound Messaging with sequential point-to-point Apex REST callouts to each org",
           "isCorrect": false,
-          "distractorAntipattern": "Point-to-point mesh creates N^2 brittle interdependencies.",
-          "rationale": "Mesh architectures suffer from compounding failure rates, cascading latency, and fragile authentication maintenance.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "distractorAntipattern": "Point-to-point mesh architectures create cascading timeouts, fragile endpoint maintenance, and high failure rates.",
+          "rationale": "Chained point-to-point callouts introduce N^2 interdependencies, tight operational coupling, and cascading failures if any single regional org experiences latency."
         },
         {
           "id": "s1_c",
-          "label": "Daily scheduled CSV exports imported via Data Loader into each org",
+          "label": "Salesforce Connect Cross-Org Adapters exposing master Product records via on-demand OData",
           "isCorrect": false,
-          "distractorAntipattern": "Daily batch fails the 5-second freshness requirement.",
-          "rationale": "Fails SLA requirement of sub-5-second availability.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "distractorAntipattern": "Cross-Org Adapters federate on-demand queries rather than physical synchronization, hitting API quotas and slowing CPQ pricing engines.",
+          "rationale": "Cross-Org Adapters query external orgs on-the-fly via OData rather than caching local records, causing governor limit exhaustion during CPQ quote calculations."
         }
       ]
     }

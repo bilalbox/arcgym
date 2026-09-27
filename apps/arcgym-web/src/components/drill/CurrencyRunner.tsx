@@ -13,6 +13,7 @@ import {
   isArchitectBudgetOptimal,
 } from '@arcgym/drill-core';
 import { Gauge, AlertTriangle, CheckCircle2, RotateCcw, ExternalLink } from 'lucide-react';
+import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 export const CurrencyRunner: React.FC<{
   drill: CurrencyDrillDefinition;
@@ -96,11 +97,14 @@ export const CurrencyRunner: React.FC<{
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-2 font-mono text-xs">
-            <Gauge className="h-4 w-4 text-miro-blue" />
-            <span className={isOverBudget ? 'text-miro-dangerText font-medium' : 'text-slate-700 font-medium'}>
-              Allocated: {allocatedTotal} / {drill.totalPoints} pts
-            </span>
+          <div className="flex items-center gap-3">
+            <DrillFeedbackWidget drillId={drill.id} />
+            <div className="flex items-center gap-2 font-mono text-xs">
+              <Gauge className="h-4 w-4 text-miro-blue" />
+              <span className={isOverBudget ? 'text-miro-dangerText font-medium' : 'text-slate-700 font-medium'}>
+                Allocated: {allocatedTotal} / {drill.totalPoints} pts
+              </span>
+            </div>
           </div>
         </div>
         <Progress

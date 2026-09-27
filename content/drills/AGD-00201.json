@@ -19,26 +19,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Scheduled reverse ETL copying 50TB into Custom Big Objects nightly",
+          "label": "Scheduled reverse ETL sync copying aggregated behavioral scores into Custom Big Objects via Bulk API",
           "isCorrect": false,
-          "distractorAntipattern": "ETL Data Hoarding",
-          "rationale": "Physically replicating 50TB creates storage bloat, stale caches between sync windows, and ongoing ingest cost — the antipattern Data 360 Zero Copy is designed to eliminate.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Duplicating lake data into Big Objects incurs massive storage overhead, high ingest latency, and stale segmentation.",
+          "rationale": "Copying massive telemetry into Custom Big Objects duplicates storage costs, creates pipeline lag, and violates leadership requirement to avoid data duplication."
         },
         {
           "id": "s1_b",
-          "label": "Data 360 inbound Zero Copy federation to Snowflake, exposing governed shares as Data Lake / Data Model Objects without moving the lake",
+          "label": "Data 360 Zero Copy federation to Snowflake, querying governed lake shares directly without data movement",
           "isCorrect": true,
-          "rationale": "Inbound Zero Copy federation lets Data 360 query Snowflake in place via governed shares, preserving freshness and avoiding lake duplication while still powering segments and insights.",
+          "rationale": "Zero Copy federation connects Data 360 directly to Snowflake shares, providing live query access for segmentation without data duplication or ingestion fees.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_c",
-          "label": "Synchronous External Services REST callout on every record page view to fetch scores live",
+          "label": "Synchronous External Services REST callouts querying Snowflake on-demand during segment evaluations",
           "isCorrect": false,
-          "distractorAntipattern": "Synchronous Callout Coupling",
-          "rationale": "Per-view synchronous callouts degrade UI latency and burn callout rate limits; they do not provide a governed, queryable customer data layer for segmentation at scale.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Synchronous callouts during segmentation create severe API rate limiting, high latency, and lack lake-level SQL pushdown.",
+          "rationale": "Synchronous API callouts cannot support complex audience segmentation queries across 50TB datasets and trigger severe API throttling."
         }
       ]
     }

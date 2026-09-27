@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Atlas dynamically evaluates context, generates iterative plans, orchestrates topics, selects tools, and refines execution based on intermediate observation steps",
+          "label": "Atlas evaluates context iteratively, generating dynamic plans, selecting tools, and adapting to intermediate results",
           "isCorrect": true,
-          "rationale": "The Atlas Reasoning Engine leverages ReAct (Reasoning + Acting) loops to dynamically interpret complex customer requests and orchestrate actions autonomously.",
+          "rationale": "Atlas dynamically evaluates context, generates iterative plans, orchestrates topics, selects tools, and refines execution based on intermediate observation steps.",
           "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
         },
         {
           "id": "s1_b",
-          "label": "Atlas uses an if-else switch statement executed within an Apex trigger",
+          "label": "Atlas traverses precompiled state machines where intent scores route conversations through static dialogue trees",
           "isCorrect": false,
-          "distractorAntipattern": "Atlas is a modern generative reasoning engine, not a hardcoded script.",
-          "rationale": "Decision trees cannot dynamically adapt to unexpected conversational pivots or ambiguous multi-step user intents.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Atlas is an autonomous generative reasoning engine, not a precompiled static dialogue state machine.",
+          "rationale": "Traditional chatbots rely on predefined dialogue trees and rigid branch logic, whereas Atlas reasons autonomously without hardcoded decision branches."
         },
         {
           "id": "s1_c",
-          "label": "Atlas sends all conversation audio to a human operator in real time",
+          "label": "Atlas executes semantic similarity search against indexed knowledge articles and outputs top-ranked answers directly",
           "isCorrect": false,
-          "distractorAntipattern": "Atlas is an autonomous LLM reasoning engine.",
-          "rationale": "Atlas operates autonomously using LLM reasoning and platform APIs.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Atlas orchestrates multi-step agentic plans and tools, rather than simply returning top vector search snippets.",
+          "rationale": "Direct semantic retrieval only answers static questions; it cannot orchestrate business actions, call APIs, or execute multi-turn transactional plans."
         }
       ]
     }

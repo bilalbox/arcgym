@@ -12,6 +12,7 @@ import {
   DrillAttemptRecord,
 } from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
+import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 interface StepResult {
   stepId: string;
@@ -31,6 +32,7 @@ export const RapidFireRunner: React.FC<{
     score: number;
     accuracy: number;
     streakDays: number;
+    steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
   }) => void;
   onNextDrill?: () => void;
 }> = ({
@@ -116,6 +118,13 @@ export const RapidFireRunner: React.FC<{
         score: totalPts,
         accuracy,
         streakDays: nextStreak,
+        steps: stepResults.map((r) => ({
+          stepId: r.stepId,
+          confidence: (r.confidence / 100) as ConfidenceAnchor,
+          isCorrect: r.isCorrect,
+          score: r.score,
+          selectedOptionId: r.selectedOptionId,
+        })),
       });
     }
   };
@@ -142,6 +151,9 @@ export const RapidFireRunner: React.FC<{
           <p className="text-sm text-slate-500 mt-1">
             You committed all {drill.steps.length} architectural decision reps for today.
           </p>
+          <div className="flex items-center justify-center mt-3">
+            <DrillFeedbackWidget drillId={drill.id} />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
@@ -235,9 +247,12 @@ export const RapidFireRunner: React.FC<{
               </Badge>
             )}
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Rep {currentStepIndex + 1} of {drill.steps.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <DrillFeedbackWidget drillId={drill.id} />
+            <span className="text-xs text-slate-500 font-medium">
+              Rep {currentStepIndex + 1} of {drill.steps.length}
+            </span>
+          </div>
         </div>
         <Progress value={progressPercent} className="mt-3 h-1 bg-miro-hairlineSoft" indicatorClassName="bg-miro-primary" />
       </CardHeader>

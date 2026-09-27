@@ -18,26 +18,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "File-based Zero Copy federation via Iceberg REST Catalog metadata so Data 360 queries Parquet/Iceberg in place",
+          "label": "Zero Copy federation via Iceberg REST Catalog metadata, querying Databricks Parquet tables in place",
           "isCorrect": true,
-          "rationale": "Data 360 file federation for lakehouses relies on Apache Iceberg tabular metadata and Parquet files exposed through an Iceberg REST Catalog — enabling governed zero-copy access without moving 100TB.",
+          "rationale": "File-based Zero Copy queries Parquet/Iceberg data in place using open catalog metadata, avoiding storage duplication and compute double-billing.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Nightly JDBC extract that copies all 100TB into Data 360 DLOs for \"local performance\"",
+          "label": "Scheduled JDBC pipeline extracting 100TB into native Data 360 Data Lake Objects for local processing",
           "isCorrect": false,
-          "distractorAntipattern": "ETL Data Hoarding",
-          "rationale": "Bulk-copying a 100TB lake defeats Zero Copy economics: it multiplies storage cost, extends ingest windows, and creates freshness lag versus federated query.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+          "distractorAntipattern": "Extracting lakehouse data into Data 360 duplicates storage costs and introduces heavy batch ingestion latency.",
+          "rationale": "Ingesting 100TB via JDBC duplicates storage, incurs massive credit consumption, and creates substantial data synchronization lag."
         },
         {
           "id": "s1_c",
-          "label": "Hourly SFTP drops of CSV extracts into a ContentVersion staging object",
+          "label": "Micro-batch Ingestion API jobs streaming partitioned Parquet chunks into custom CRM staging tables",
           "isCorrect": false,
-          "distractorAntipattern": "Flat-File Polling",
-          "rationale": "CSV/SFTP polling lacks lakehouse metadata federation, is high-latency, and is a poor fit for analytical telemetry at this scale.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Streaming big data telemetry into core CRM objects violates platform storage limits and triggers API throttling.",
+          "rationale": "The Ingestion API is meant for lightweight JSON/CSV records, not multi-terabyte Parquet dumps, and staging in CRM objects exhausts database quotas."
         }
       ]
     }

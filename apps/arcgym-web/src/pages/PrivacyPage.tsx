@@ -5,6 +5,7 @@ import {
   Database,
   BarChart3,
   Compass,
+  ThumbsUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -114,6 +115,24 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             </p>
           </Card>
         </div>
+
+        {/* Anonymous Feedback Section */}
+        <Card className="p-6 border-miro-hairline bg-white shadow-xs space-y-3">
+          <div className="flex items-center gap-2 text-miro-primary font-semibold text-base">
+            <div className="h-8 w-8 rounded-lg bg-blue-50 text-miro-blue flex items-center justify-center">
+              <ThumbsUp className="h-4 w-4" />
+            </div>
+            <span>Zero-PII Anonymous Drill Feedback</span>
+          </div>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Learners can rate drills and provide feedback (e.g. <em>Realistic</em>, <em>Useful</em>, <em>Good challenge</em>, <em>Unrealistic</em>, <em>Unclear</em>, <em>Too easy</em>, or <em>Too hard</em>). To guarantee zero risk of leaking client corporate data or personal information:
+          </p>
+          <ul className="text-xs text-slate-500 space-y-2 list-disc list-inside leading-relaxed pl-1">
+            <li><strong>No free-text input</strong>: Submissions are strictly constrained to pre-defined enum pills. We collect no comments, strings, or text areas, eliminating accidental transmission of emails, credentials, or Salesforce Org IDs.</li>
+            <li><strong>Ephemeral anti-sybil deduplication</strong>: To prevent ballot-stuffing without tracking you, the Cloudflare edge computes a temporary cryptographic hash in memory: <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[11px]">HMAC-SHA256(Secret, IP + Date + DrillId)</code>. Your raw IP address is never logged, stored in KV, or transmitted. The deduplication marker automatically expires after 24 hours.</li>
+            <li><strong>Decoupled from learner scores</strong>: Feedback submissions carry only the rating and pill tags. They are completely decoupled from your practice scores, streaks, and confidence calibration telemetry.</li>
+          </ul>
+        </Card>
 
 
         {/* Back to practice CTA card */}

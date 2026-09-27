@@ -18,26 +18,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Configure a Data Action that publishes a Platform Event or invokes a Salesforce Flow when the insight threshold is met",
+          "label": "Configure a Data Action targeting a Platform Event or Flow when the threshold condition fires",
           "isCorrect": true,
-          "rationale": "Data Actions are the governed bridge from Data 360 insights to CRM execution (events, flows, and related targets), avoiding custom pollers while keeping the path declarative and observable.",
+          "rationale": "Data Actions trigger near-real-time events or Salesforce Flows directly from Streaming Insights without requiring external middleware or polling.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Nightly Apex job that pages the Data 360 Query API looking for high-risk VIPs",
+          "label": "Schedule a frequent Apex Queueable job polling the Data Cloud SQL Query API for updated scores",
           "isCorrect": false,
-          "distractorAntipattern": "API Polling Middleware",
-          "rationale": "Polling introduces multi-hour lag, wastes API/credit budget, and recreates integration debt that Data Actions already solve.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+          "distractorAntipattern": "Polling Data Cloud Query API from Apex wastes API calls, adds latency, and risks rate-limit exceptions.",
+          "rationale": "Continuous polling from Apex consumes API quotas, adds latency, and creates tight coupling instead of event-driven execution."
         },
         {
           "id": "s1_c",
-          "label": "External Python daemon updating Contacts over the SOAP API whenever it scrapes insight exports",
+          "label": "Publish segment memberships to an Amazon S3 target and trigger an external webhook to CRM",
           "isCorrect": false,
-          "distractorAntipattern": "Shadow Integration Daemon",
-          "rationale": "Unmanaged external daemons add operational debt, weaken Trust/auditability, and bypass native activation paths.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "S3 segment activation introduces file export latency and requires external orchestration middleware.",
+          "rationale": "File-based cloud storage activation introduces significant batch egress latency and violates the requirement for direct, near-real-time CRM invocation."
         }
       ]
     }

@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Context window saturation increases latency and token costs while diluting model attention (\"Lost in the Middle\"); solve via sliding conversational memory and semantic summarization",
+          "label": "Context saturation increases latency and dilutes model attention; resolve using sliding memory and semantic summaries",
           "isCorrect": true,
           "rationale": "Uncompressed history balloons token consumption and degrades LLM reasoning. Implementing sliding-window memory and condensed semantic summaries maintains precision while reducing cost.",
           "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
         },
         {
           "id": "s1_b",
-          "label": "Salesforce automatically shuts down the customer org after 20 chat turns",
+          "label": "Database heap size limits in Apex are exceeded; resolve by persisting intermediate conversation turns to Big Objects",
           "isCorrect": false,
-          "distractorAntipattern": "Orgs are not shut down for long conversations.",
-          "rationale": "The failure is cognitive dilution and token waste, not an abrupt org shutdown.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "The failure is model token latency and cognitive dilution (\"lost in the middle\"), not synchronous Apex heap exhaustion.",
+          "rationale": "The primary failure is cognitive dilution and token latency inside the model context window, not an Apex heap limit exception."
         },
         {
           "id": "s1_c",
-          "label": "Pass the conversation history into a base64 encoded URL parameter",
+          "label": "HTTP payload limits on the messaging gateway reject the request; resolve by compressing messages using gzip algorithms",
           "isCorrect": false,
-          "distractorAntipattern": "URL parameters have small browser length limits.",
-          "rationale": "URL parameter size limits cause HTTP 414 Request-URI Too Large errors and do not solve LLM context costs.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Network gateway limits are not breached by chat text; the problem is model context token limits and LLM reasoning accuracy.",
+          "rationale": "Compressing transport payloads does not decrease model token consumption or prevent context saturation inside the LLM attention window."
         }
       ]
     }

@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Explicitly describe boundaries and negative triggers in each Topic (e.g. \"Use Subscription Billing for recurring plans; do NOT use Order Cancellation for subscription renewals\")",
+          "label": "Define explicit scope boundaries and negative triggers distinguishing recurring plans from one-off purchases",
           "isCorrect": true,
-          "rationale": "Clear scope boundaries and negative constraint guidance enable the reasoning engine to accurately disambiguate overlapping user intents.",
+          "rationale": "Explicitly defining scope boundaries and negative triggers (e.g., \"do NOT use for recurring subscriptions\") prevents classification ambiguity.",
           "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
         },
         {
           "id": "s1_b",
-          "label": "Merge both topics into one giant topic with 80 actions",
+          "label": "Consolidate both topics into a single composite topic and let the LLM evaluate all actions in a single plan",
           "isCorrect": false,
-          "distractorAntipattern": "Bloated topics degrade tool-selection accuracy.",
-          "rationale": "Overloading a single topic with dozens of actions degrades reasoning accuracy and exceeds action selection token limits.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Bloating topics with dozens of actions degrades tool-selection precision and increases reasoning latency.",
+          "rationale": "Combining distinct operational domains into one massive topic dilutes semantic routing, increases tool selection confusion, and bloats context tokens."
         },
         {
           "id": "s1_c",
-          "label": "Add 500 hardcoded regex pattern rules in an Apex trigger",
+          "label": "Add keyword-matching routing rules in an orchestration Flow before passing the conversation context to Atlas",
           "isCorrect": false,
-          "distractorAntipattern": "Regex cannot handle linguistic variation.",
-          "rationale": "Hardcoded regex contradicts generative intent classification and breaks on linguistic variations.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Keyword rules break generative natural language understanding and fail on linguistic variations or synonyms.",
+          "rationale": "Hardcoded keyword rules undermine the generative classification capabilities of the Atlas reasoning engine and fail when customers phrase requests conversationally."
         }
       ]
     }

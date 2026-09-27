@@ -18,26 +18,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Move slow-changing catalog ingestion from continuous streaming connectors to scheduled batch ingestion",
+          "label": "Transition slow-changing catalog data streams from continuous streaming to daily batch ingestion",
           "isCorrect": true,
-          "rationale": "Streaming Everything on near-static sources wastes continuous compute credits. Batch ingestion matches catalog change cadence and reserves streaming budget for true real-time signals.",
+          "rationale": "Streaming connectors consume continuous compute credits for micro-batch polling; switching weekly/daily reference data to scheduled batch drastically reduces credit burn.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_b",
-          "label": "Buy 10× more credits and leave the streaming topology unchanged",
+          "label": "Increase the streaming buffer flush interval to 60 minutes while keeping continuous connectors",
           "isCorrect": false,
-          "distractorAntipattern": "Subsidize the Antipattern",
-          "rationale": "Purchasing capacity without fixing waste violates Cost Optimization and merely delays the next credit cliff.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Adjusting flush intervals does not eliminate the fixed infrastructure credit cost of 50 active streaming listener connections.",
+          "rationale": "Increasing flush intervals reduces message write frequency but still maintains 50 continuous streaming compute workers, yielding minimal credit savings."
         },
         {
           "id": "s1_c",
-          "label": "Disable encryption on catalog objects to reduce compute cost",
+          "label": "Consolidate all 50 product catalog tables into a single high-frequency Ingestion API endpoint",
           "isCorrect": false,
-          "distractorAntipattern": "Trust Trade for Credits",
-          "rationale": "Weakening encryption to save credits destroys Trust and compliance boundaries; credit governance must not sacrifice security controls.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Directing 50 tables through a continuous Ingestion API endpoint still incurs streaming ingestion credit tariffs.",
+          "rationale": "Streaming static reference data via the Ingestion API still bills at continuous streaming rates rather than lower-cost batch processing tiers."
         }
       ]
     }

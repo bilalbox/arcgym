@@ -5,7 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
 import { DrillFormat, ScenarioDrillDefinition } from '@arcgym/drill-core';
-import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2 } from 'lucide-react';
+import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2, Hourglass } from 'lucide-react';
+import { DrillFeedbackWidget } from './DrillFeedbackWidget';
+
+const DEFAULT_METER_LABELS = {
+  primary: 'Stakeholder trust',
+  secondary: 'Platform reliability',
+} as const;
 
 export const DualMeterScenario: React.FC<{
   drill: ScenarioDrillDefinition;
@@ -19,6 +25,14 @@ export const DualMeterScenario: React.FC<{
   }) => void;
   onNextDrill?: () => void;
 }> = ({ drill, isReviewMode, onDrillComplete, onNextDrill }) => {
+  const meterLabels = {
+    primary: drill.meterLabels?.primary ?? DEFAULT_METER_LABELS.primary,
+    secondary: drill.meterLabels?.secondary ?? DEFAULT_METER_LABELS.secondary,
+  };
+  const primaryIsSchedule =
+    /schedule|timeline|scope|effort|delivery|headroom/i.test(meterLabels.primary);
+  const PrimaryIcon = primaryIsSchedule ? Hourglass : Users;
+
   const [currentMoveIdx, setCurrentMoveIdx] = useState(0);
   const [trustScore, setTrustScore] = useState(drill.initialTrust);
   const [reliabilityScore, setReliabilityScore] = useState(drill.initialReliability);
@@ -103,20 +117,24 @@ export const DualMeterScenario: React.FC<{
           </h3>
           <p className="text-sm text-slate-500 mt-1 leading-relaxed">
             {isSuccess
-              ? 'You successfully navigated stakeholder pressure while safeguarding Well-Architected integrity.'
-              : 'Short-term compromises degraded platform reliability below operational thresholds.'}
+              ? primaryIsSchedule
+                ? 'You spent schedule where the model demanded it and kept platform reliability above the go-live bar.'
+                : 'You successfully navigated stakeholder pressure while safeguarding Well-Architected integrity.'
+              : primaryIsSchedule
+                ? 'Shortcuts preserved the calendar but left platform reliability below operational thresholds.'
+                : 'Short-term compromises degraded platform reliability below operational thresholds.'}
           </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-2 gap-4 p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
             <div>
-              <span className="text-xs text-slate-500 font-medium">Final stakeholder trust</span>
+              <span className="text-xs text-slate-500 font-medium">Final {meterLabels.primary.toLowerCase()}</span>
               <p className={`text-2xl font-medium mt-0.5 ${trustScore >= 60 ? 'text-emerald-700' : 'text-rose-600'}`}>
                 {trustScore}%
               </p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 font-medium">Platform reliability</span>
+              <span className="text-xs text-slate-500 font-medium">{meterLabels.secondary}</span>
               <p
                 className={`text-2xl font-medium mt-0.5 ${
                   reliabilityScore >= 60 ? 'text-miro-blue' : 'text-rose-600'
@@ -168,16 +186,19 @@ export const DualMeterScenario: React.FC<{
               </Badge>
             )}
           </div>
-          <span className="text-xs text-slate-500 font-medium">
-            Move {currentMove.moveNumber} of {drill.moves.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <DrillFeedbackWidget drillId={drill.id} />
+            <span className="text-xs text-slate-500 font-medium">
+              Move {currentMove.moveNumber} of {drill.moves.length}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-miro-hairlineSoft">
           <div>
             <div className="flex justify-between text-xs font-medium mb-1">
               <span className="flex items-center gap-1.5 text-slate-700">
-                <Users className="h-3.5 w-3.5 text-miro-blue" /> Stakeholder trust
+                <PrimaryIcon className="h-3.5 w-3.5 text-miro-blue" /> {meterLabels.primary}
               </span>
               <span className="font-mono text-miro-primary font-semibold">{trustScore}%</span>
             </div>
@@ -190,7 +211,7 @@ export const DualMeterScenario: React.FC<{
           <div>
             <div className="flex justify-between text-xs font-medium mb-1">
               <span className="flex items-center gap-1.5 text-slate-700">
-                <Shield className="h-3.5 w-3.5 text-indigo-600" /> Platform reliability
+                <Shield className="h-3.5 w-3.5 text-indigo-600" /> {meterLabels.secondary}
               </span>
               <span className="font-mono text-miro-primary font-semibold">{reliabilityScore}%</span>
             </div>

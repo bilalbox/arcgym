@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Pub/Sub API uses HTTP/2 bidirectional binary gRPC streaming, client-controlled flow control (pull model), and native schema management",
+          "label": "Pub/Sub API provides HTTP/2 binary gRPC streaming, client-driven pull flow control, and schema caching",
           "isCorrect": true,
           "rationale": "Pub/Sub API replaces JSON HTTP/1.1 CometD push overhead with high-performance binary Protobuf serialization, backpressure flow control, and dynamic Apache Avro schema lookup.",
           "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
         },
         {
           "id": "s1_b",
-          "label": "Pub/Sub API allows bypass of all API governor limits and license checks",
+          "label": "Pub/Sub API bypasses event bus allocation limits by streaming directly from database transaction logs",
           "isCorrect": false,
-          "distractorAntipattern": "No platform API bypasses licensing.",
-          "rationale": "Pub/Sub API respects platform security boundaries and event publishing allocations.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "distractorAntipattern": "Pub/Sub API still enforces standard event bus publishing allocations and does not read raw database transaction logs directly.",
+          "rationale": "Pub/Sub API operates on the Salesforce event bus and respects standard platform event delivery quotas, rather than tailing physical database logs."
         },
         {
           "id": "s1_c",
-          "label": "CometD was sunset in 2021 and is permanently disabled in all instances",
+          "label": "CometD requires synchronous HTTP/1.1 polling intervals that drop events when client queues buffer full",
           "isCorrect": false,
-          "distractorAntipattern": "CometD is legacy/deprecated, not abruptly disabled.",
-          "rationale": "CometD is supported for legacy compatibility but is deprecated for high-throughput enterprise architectures.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "distractorAntipattern": "CometD uses long polling rather than short polling, but lacks binary compression and fine-grained consumer flow control.",
+          "rationale": "CometD uses HTTP/1.1 Bayeux long polling, which creates heavy JSON serialization overhead and lacks native client backpressure mechanisms."
         }
       ]
     }

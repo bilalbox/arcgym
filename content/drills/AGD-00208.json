@@ -18,26 +18,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Data 360 cloud storage activation target exporting compressed Parquet/CSV directly to the S3 bucket",
+          "label": "Data 360 Cloud Storage Activation Target exporting compressed Parquet files directly to S3",
           "isCorrect": true,
-          "rationale": "Cloud storage activation is built for high-volume parallel object egress to destinations like S3, avoiding per-row CRM API paths while keeping the activation governed inside Data 360.",
+          "rationale": "Cloud Storage activation targets push bulk compressed datasets (Parquet/CSV) directly to external buckets without touching CRM API limits or consuming transactional worker threads.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_b",
-          "label": "Apex trigger issuing millions of individual S3 REST callouts as Contacts update",
+          "label": "Bulk API 2.0 query job exporting segment member IDs to an intermediate on-premise staging server",
           "isCorrect": false,
-          "distractorAntipattern": "Trigger Callout Avalanche",
-          "rationale": "Synchronous/near-synchronous Apex callouts cannot egress 20M profiles without exhausting API, CPU, and callout governors.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Querying 20M rows through core CRM APIs creates significant extraction lag and consumes daily API allocations.",
+          "rationale": "Extracting 20 million profiles via CRM Bulk API incurs heavy export processing time, staging infrastructure overhead, and API quota consumption."
         },
         {
           "id": "s1_c",
-          "label": "Export the full audience as a CSV email attachment to the campaign ops alias",
+          "label": "Apex Batch job querying Unified Individual DMOs and streaming records to Amazon S3 via REST",
           "isCorrect": false,
-          "distractorAntipattern": "Email as Data Plane",
-          "rationale": "Email attachments hit size limits and create uncontrolled PII copies outside governed activation channels — a Trust and Reliability failure.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Querying DMOs from Apex batch is subject to SOQL limits, callout timeouts, and transaction heap ceilings.",
+          "rationale": "Apex batch jobs cannot stream 20 million profiles to external endpoints without encountering transaction limits, heap errors, and callout timeouts."
         }
       ]
     }

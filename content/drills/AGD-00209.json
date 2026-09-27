@@ -18,26 +18,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Execute a governed Data Subject Rights / Forget Me request in Data 360 so erasure propagates across lake objects, unified profiles, and derived insights — coordinated with source-system deletion",
+          "label": "Execute a Data Subject Rights Forget Me request in Data 360 coordinated with source deletion to purge all layers",
           "isCorrect": true,
-          "rationale": "Data 360 retains historical lake and unified layers independently of CRM deletes. A formal data subject request is required to purge or restrict processing across DLOs, DMOs, and derived artifacts while source systems handle their own copies.",
+          "rationale": "Data Subject Rights (DSR) requests in Data 360 ensure that personal data is deleted or masked across DLOs, unified profiles, and downstream search indexes, in alignment with source system erasures.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Delete the Contact in core CRM and assume Data 360 will drop the profile on the next connector sync",
+          "label": "Delete the source Contact in CRM and rely on standard Data Cloud connector incremental syncs to cascade deletes",
           "isCorrect": false,
-          "distractorAntipattern": "Source-Delete Cascade Myth",
-          "rationale": "Connector syncs do not automatically cryptographically erase historical lake snapshots and unified graphs. Relying on CRM delete alone leaves residual PII in Data 360.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Standard Data Cloud connectors append change records or soft deletes; they do not automatically purge historical lake data.",
+          "rationale": "Standard data stream connectors append change events or mark deleted records, but do not physically erase historical immutable lake objects or derived insights."
         },
         {
           "id": "s1_c",
-          "label": "Rename the Contact to \"Deleted User\" in the CRM UI and leave lake objects untouched",
+          "label": "Run an automated Data Transform to overwrite PII attributes with null values in harmonized Data Model Objects (DMOs)",
           "isCorrect": false,
-          "distractorAntipattern": "UI Pseudonymization Theater",
-          "rationale": "Cosmetic field edits leave PII in underlying lakehouse and insight layers, failing GDPR audit requirements.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Overwriting fields in DMOs leaves raw PII stored in staging Data Lake Objects and immutable storage partitions.",
+          "rationale": "Modifying DMO records does not remove historical PII residing in underlying Data Lake Objects, audit logs, or vector search embeddings."
         }
       ]
     }

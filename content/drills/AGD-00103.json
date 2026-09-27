@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Record-Triggered Flow (Actions and Related Records)",
+          "label": "Record-Triggered Flow with Run Asynchronously paths and transactional fault handlers",
           "isCorrect": false,
-          "distractorAntipattern": "Record-triggered flow iteration on large child batches exceeds CPU limits.",
-          "rationale": "High-frequency bulk batch processing with multi-level child traversals exceeds Flow element iteration limits and CPU thresholds.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/automation"
+          "distractorAntipattern": "Record-Triggered Flow asynchronous paths cannot isolate row-level failures across 1,000-record batches or prevent CPU timeouts on multi-child traversals.",
+          "rationale": "High-frequency bulk ingestion of 1,000 records per chunk traversing 5 child objects quickly exhausts Flow CPU limits and lacks granular partial-rollback control per row."
         },
         {
           "id": "s1_b",
           "label": "Apex Trigger framework with bulkified collections and Database.insert(records, false)",
           "isCorrect": true,
           "rationale": "Apex delivers memory bulkification, strict CPU control, and granular partial success handling via Database methods for large batches.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/automation"
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/trigger-and-flow-automation"
         },
         {
           "id": "s1_c",
-          "label": "Process Builder configured for bulk processing",
+          "label": "Batch Apex class executing with default Database.Stateful and Database.allOrNone=true",
           "isCorrect": false,
-          "distractorAntipattern": "Process Builder is deprecated and unperformant.",
-          "rationale": "Process Builder is deprecated, severely unperformant, and violates Salesforce Well-Architected Operational Excellence.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/automation"
+          "distractorAntipattern": "An allOrNone=true transaction strategy rolls back the entire 1,000-record batch chunk upon encountering any single record validation error.",
+          "rationale": "An allOrNone=true transaction strategy rolls back the entire batch chunk when any single row fails, directly violating the requirement for partial-rollback on specific row errors."
         }
       ]
     }

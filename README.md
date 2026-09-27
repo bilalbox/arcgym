@@ -77,9 +77,12 @@ python scripts/crawler/crawl_trailhead.py --limit 100
 
 # Friction Cards and drills are written by your coding agent (no LLM API keys). Project skills:
 #   .cursor/skills/extracting-friction-cards  — agent answers `friction_cards.py prompt`, then `import`s
+#   .cursor/skills/reviewing-friction-cards   — agent audits pending cards via `audit-prompt` / `apply-verdicts`
 #   .cursor/skills/generating-drills          — agent answers `generate-drill.ts prompt`, then `ingest`s
-# Human steps: review staged cards, then export approved ones to data/friction_cards.json (gitignored)
-python scripts/crawler/friction_cards.py review               # [p] previews official docs for the card's query, [e] edits it
+# Human steps: review/approve cards (or apply agent verdicts), then export to data/friction_cards.json (gitignored)
+python scripts/crawler/friction_cards.py audit-prompt --tier A --limit 20 --preview-docs > /tmp/audit.md
+python scripts/crawler/friction_cards.py apply-verdicts /tmp/verdicts.json
+python scripts/crawler/friction_cards.py review               # [p] previews official docs, [e] edits it
 python scripts/crawler/friction_cards.py export
 
 # Manual drill flow: build the grounded prompt, answer it, then validate and save as a draft

@@ -24,19 +24,17 @@
         },
         {
           "id": "s1_b",
-          "label": "Standard Salesforce Debug Logs with Apex Profiling turned on",
+          "label": "Apex Debug Logs configured with FINEST profiling on the automated process user",
           "isCorrect": false,
-          "distractorAntipattern": "Debug logs capture Apex code lines, not LLM reasoning steps.",
-          "rationale": "Apex debug logs capture server-side code execution, not distributed LLM reasoning loops or external model latencies.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Apex debug logs capture server-side code lines, not generative reasoning steps or token telemetry.",
+          "rationale": "Debug logs capture in-org Apex code execution, not distributed LLM reasoning loops, tool planning decisions, or token usage metrics."
         },
         {
           "id": "s1_c",
-          "label": "Browser developer tools Console tab",
+          "label": "Event Monitoring Real-Time Event Streams for Lightning URI and API execution events",
           "isCorrect": false,
-          "distractorAntipattern": "Browser console only has client-side DOM events.",
-          "rationale": "Client browsers cannot inspect server-side LLM trajectories or secure backend action payloads.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Standard Real-Time Event Monitoring streams track user interaction and API calls, not agentic reasoning trajectories.",
+          "rationale": "Standard event monitoring tracks user web logins and API calls, but lacks specialized agentic tracing objects and tool telemetry."
         }
       ]
     }

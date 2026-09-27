@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Customer data and PII sent to 3rd-party LLMs is masked in-flight, never retained by the LLM vendor, and never used to train foundational models",
+          "label": "Customer data sent to external LLMs is masked in-flight, never retained by model vendors, and not used for training",
           "isCorrect": true,
-          "rationale": "The Einstein Trust Layer guarantees strict enterprise data boundaries: dynamic data masking, toxic response filtering, zero vendor data retention, and audit logging.",
+          "rationale": "Customer data and PII sent to 3rd-party LLMs is masked in-flight, never retained by the LLM vendor, and never used to train foundational models.",
           "citationUrl": "https://architect.salesforce.com/well-architected/principles"
         },
         {
           "id": "s1_b",
-          "label": "The Trust Layer speeds up LLM responses by 500%",
+          "label": "Customer data is tokenized on-premises and decrypted exclusively within customer-hosted private VPC enclaves",
           "isCorrect": false,
-          "distractorAntipattern": "Security layers introduce minor validation latency, not speed increases.",
-          "rationale": "The Trust Layer enforces security and privacy, not raw throughput acceleration.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "The Einstein Trust Layer is a Salesforce-managed cloud security architecture, not an on-premises tokenization proxy.",
+          "rationale": "The Trust Layer operates natively within Salesforce cloud infrastructure rather than relying on customer on-premises encryption hardware or private VPC tunnels."
         },
         {
           "id": "s1_c",
-          "label": "The Trust Layer deletes all Salesforce records after 30 days",
+          "label": "Prompt transcripts are stored in temporary Salesforce cache and automatically purged from CRM storage upon session end",
           "isCorrect": false,
-          "distractorAntipattern": "The Trust Layer does not delete CRM records.",
-          "rationale": "Zero retention applies to LLM gateway transit memory, not customer CRM records.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Zero retention agreements apply to external foundation model providers, while in-org audit trails are preserved for governance.",
+          "rationale": "Zero-retention guarantees apply to external LLM vendors; within Salesforce, audit records are intentionally retained for compliance, tracing, and analytics."
         }
       ]
     }

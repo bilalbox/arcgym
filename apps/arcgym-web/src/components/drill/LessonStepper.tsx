@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
 import { DrillFormat, LessonDrillDefinition } from '@arcgym/drill-core';
 import { CheckCircle2, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react';
+import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 export const LessonStepper: React.FC<{
   drill: LessonDrillDefinition;
@@ -132,7 +133,10 @@ export const LessonStepper: React.FC<{
               </Badge>
             )}
           </div>
-          <span className="text-xs text-slate-500 font-medium">{currentStage.stageName}</span>
+          <div className="flex items-center gap-3">
+            <DrillFeedbackWidget drillId={drill.id} />
+            <span className="text-xs text-slate-500 font-medium">{currentStage.stageName}</span>
+          </div>
         </div>
 
         <div className="grid gap-2 mt-4" style={{ gridTemplateColumns: `repeat(${drill.stages.length}, minmax(0, 1fr))` }}>

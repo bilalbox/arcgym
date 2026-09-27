@@ -26,7 +26,7 @@ You are the model. `friction_cards.py prompt` prints one extraction prompt per t
 
    Fix each `[SKIP]` entry by the reason it prints, then re-import. Done when every entry prints `[PENDING]` or `[IRRELEVANT]`.
 
-4. **Hand off.** Approval is the user's quality gate, so your run ends with staged cards. Report them and give the user the next commands:
+4. **Hand off.** Approval is the user's quality gate, so your run ends with staged cards. For large backlogs, point them to `.cursor/skills/reviewing-friction-cards` (`audit-prompt` / `apply-verdicts`). Otherwise give:
 
    ```bash
    python scripts/crawler/friction_cards.py review   # [p] previews official docs, [e] edits the doc query

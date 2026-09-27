@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Implement a Pool of Holding Accounts (e.g. 50 holding accounts) and distribute new contacts round-robin",
+          "label": "Distribute child contacts round-robin across a dedicated pool of parent holding Accounts",
           "isCorrect": true,
           "rationale": "Distributing child records across a pool of parent accounts diffuses lock contention across distinct database rows, eliminating locking serialization bottlenecks.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Change the Account-Contact relationship from Master-Detail to Lookup",
+          "label": "Enable Granular Locking on the org and assign the holding account to a top-level user role",
           "isCorrect": false,
-          "distractorAntipattern": "Account-Contact is already a standard relationship where parent lock is still acquired on child insert.",
-          "rationale": "Salesforce standard contact inserts still acquire parent row locks on Account regardless of custom lookup configs.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "Granular locking optimizes sharing recalculations, not transactional parent row locks during child DML.",
+          "rationale": "Granular locking helps prevent group maintenance conflicts during role hierarchy changes, but does not prevent row-level locking on parent records during child inserts."
         },
         {
           "id": "s1_c",
-          "label": "Increase Apex transaction timeout to 300 seconds",
+          "label": "Convert Account lookup fields on Contact to non-clearing lookups without parent validation",
           "isCorrect": false,
-          "distractorAntipattern": "Governor limits cannot be increased arbitrarily.",
-          "rationale": "Synchronous Apex timeout is a hard governor limit of 10,000ms CPU and cannot be extended.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "Standard contact-account relationships inherently lock parent rows regardless of custom lookup configurations.",
+          "rationale": "Standard parent-child relationships always acquire an exclusive row lock on the parent record during child DML to maintain referential integrity."
         }
       ]
     }

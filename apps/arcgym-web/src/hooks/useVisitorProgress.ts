@@ -73,6 +73,7 @@ export function useVisitorProgress() {
       format: DrillFormat;
       score: number;
       accuracy: number;
+      steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
     }) => {
       const today = getTodayString();
       const yesterday = getYesterdayString();
@@ -94,6 +95,7 @@ export function useVisitorProgress() {
           score: params.score,
           accuracy: params.accuracy,
           attemptsCount: (existingRecord?.attemptsCount || 0) + 1,
+          ...(params.steps ? { steps: params.steps } : {}),
         };
 
         const updated: VisitorProgressState = {

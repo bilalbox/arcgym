@@ -9,35 +9,45 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
+  "sourceCardIds": [
+    "FC-0D5KX00000J8n2i0AB",
+    "FC-0D5KX00000pNzhX0AS",
+    "FC-0D54V00007N9gcaSAB"
+  ],
   "steps": [
     {
       "id": "s1",
-      "prompt": "An ERP connector will land millions of order rows into Data 360. Architects must preserve source fidelity for reprocessing while still exposing a canonical Party/Engagement model for identity resolution and insights. What is the required modeling sequence?",
+      "prompt": "An ERP connector will land millions of party/order rows into Data 360. Architects must preserve source fidelity for reprocessing, expose a canonical Individual model for identity resolution, and later may replace a Contact DLO or install packaged Sales data kits. What modeling discipline is required?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Land raw rows in a Data Lake Object (DLO), then map DLO fields into standard or harmonized Data Model Objects (DMOs)",
+          "label": "Ingest into Data Lake Objects (DLO), map fields to standard Data Model Objects (DMO), and maintain verified primary key lineage",
           "isCorrect": true,
-          "rationale": "Data 360 separates immutable raw ingestion (DLO) from business semantics (DMO). Harmonizing after the lake layer keeps reprocessing possible and feeds identity resolution and calculated insights correctly.",
+          "rationale": "Staging data in DLOs preserves raw source fidelity, while mapping to standardized DMOs establishes the canonical layer required for identity resolution and modular stream replacement.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Write ERP payloads straight into the Unified Individual DMO, skipping raw staging",
+          "label": "Ingest ERP streams directly into Unified Individual DMOs, bypassing intermediate Data Lake Objects to maximize ingest speed",
           "isCorrect": false,
-          "distractorAntipattern": "The Raw Passthrough / Bypass DLO",
-          "rationale": "Unified Individuals are outputs of identity resolution over mapped DMOs — not a direct ingest target. Skipping DLOs blocks reprocessing and breaks governed lineage.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Ingesting directly into DMOs is technically impossible in Data 360 and destroys raw source auditability.",
+          "rationale": "Data 360 architecture requires streams to land in DLOs first; bypassing DLO staging prevents raw data reprocessing and breaks platform lineage."
         },
         {
           "id": "s1_c",
-          "label": "Base64-encode every field into a single opaque DLO column to \"secure\" the feed",
+          "label": "Unmap the active Contact DLO primary key from Individual before creating the new replacement stream to avoid mapping conflicts",
           "isCorrect": false,
-          "distractorAntipattern": "Opaque Blob Staging",
-          "rationale": "Opaque encoding destroys field-level mapping, segmentation filters, and insight engines. Trust is enforced with governance and encryption controls, not by making data unqueryable.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "distractorAntipattern": "Unmapping primary keys from populated DMOs breaks downstream identity resolution rulesets and calculated insights.",
+          "rationale": "Severing primary key mappings on active DMOs causes immediate failures across dependent identity resolution jobs and downstream calculated insights."
+        },
+        {
+          "id": "s1_d",
+          "label": "Deploy the packaged Sales Data Kit over existing custom DLO-to-DMO mappings to automatically standardize harmonized definitions",
+          "isCorrect": false,
+          "distractorAntipattern": "Overwriting custom DLO-to-DMO mappings with default data kit templates silently breaks bespoke field mappings.",
+          "rationale": "Deploying packaged data kits over customized DLO-DMO configurations overwrites custom relationships and breaks downstream segmentation and activation."
         }
       ]
     }

@@ -17,26 +17,24 @@
       "options": [
         {
           "id": "s1_a",
-          "label": "Bulk API 2.0 (Ingest Job)",
+          "label": "Bulk API 2.0 ingest job with automated server-side batch chunking",
           "isCorrect": true,
           "rationale": "Bulk API 2.0 automatically slices data into optimal batches, optimizes thread concurrency on the server, and counts against daily row limits rather than individual API calls.",
           "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
         },
         {
           "id": "s1_b",
-          "label": "Composite Graph API with 500 nodes per request",
+          "label": "Composite Graph API submitted in 500-node transactional trees",
           "isCorrect": false,
-          "distractorAntipattern": "Composite Graph is designed for transactional trees, not 2M row bulk ingestion.",
-          "rationale": "Composite Graph is designed for complex relational parent-child graph transactions under 500 nodes, not multi-million record bulk ingestion.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "distractorAntipattern": "Composite Graph is designed for complex parent-child relational graphs under 500 nodes, not multi-million record bulk ingestion.",
+          "rationale": "Composite Graph is limited to 500 nodes per request and 75 subrequests per graph, making 2M row ingestion inefficient and prone to payload timeouts."
         },
         {
           "id": "s1_c",
-          "label": "Standard REST Collections API in a multi-threaded Python worker",
+          "label": "REST Composite Collections API executed across concurrent workers",
           "isCorrect": false,
-          "distractorAntipattern": "Standard REST rapidly exhausts daily API request limits.",
-          "rationale": "Standard REST consumes massive quantities of the 24-hour API call limit and risks connection timeouts.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "distractorAntipattern": "REST Composite Collections max out at 200 records per call and consume tens of thousands of daily API allocations.",
+          "rationale": "Ingesting 2 million records via 200-record composite calls consumes at least 10,000 API requests and risks thread contention and rate limiting."
         }
       ]
     }
