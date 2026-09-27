@@ -9,33 +9,33 @@
     "Operational_Excellence",
     "Reliability"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A Streaming Insight flags VIP churn risk above 85%. Retention must start in core CRM within minutes — without a custom polling service. How should Data 360 invoke the downstream workflow?",
+      "prompt": "A Streaming Insight flags VIP customers whose churn-risk score passes 85%. The retention team's core CRM Flow must start within 30 seconds of each crossing so an agent can call while the customer is still active. How should Data 360 start the Flow?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Configure a Data Action targeting a Platform Event or Flow when the threshold condition fires",
+          "label": "Define a Data Action on the 85% threshold that targets the retention Flow",
           "isCorrect": true,
-          "rationale": "Data Actions trigger near-real-time events or Salesforce Flows directly from Streaming Insights without requiring external middleware or polling.",
+          "rationale": "Data Actions evaluate incremental changes against rules such as threshold monitoring and send the resulting event immediately to a destination like Salesforce Flow. That push model can meet a 30-second target because no scheduler sits between the score change and the Flow.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-actions"
         },
         {
           "id": "s1_b",
-          "label": "Schedule a frequent Apex Queueable job polling the Data Cloud SQL Query API for updated scores",
+          "label": "Run a self-chaining Queueable job that polls the Query API for new scores",
           "isCorrect": false,
-          "distractorAntipattern": "Polling Data Cloud Query API from Apex wastes API calls, adds latency, and risks rate-limit exceptions.",
-          "rationale": "Continuous polling from Apex consumes API quotas, adds latency, and creates tight coupling instead of event-driven execution."
+          "distractorAntipattern": "API Polling Loop",
+          "rationale": "Each poll cycle adds its own delay and spends async Apex and query calls whether or not a score changed, so the 30-second target depends on polling constantly."
         },
         {
           "id": "s1_c",
-          "label": "Publish segment memberships to an Amazon S3 target and trigger an external webhook to CRM",
+          "label": "Activate the churn segment to Amazon S3 and have a webhook start the Flow",
           "isCorrect": false,
-          "distractorAntipattern": "S3 segment activation introduces file export latency and requires external orchestration middleware.",
-          "rationale": "File-based cloud storage activation introduces significant batch egress latency and violates the requirement for direct, near-real-time CRM invocation."
+          "distractorAntipattern": "File Export Relay",
+          "rationale": "S3 activation is a scheduled file export with minutes-to-hours latency, so the Flow starts long after the 30-second window."
         }
       ]
     }
