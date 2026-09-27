@@ -9,33 +9,33 @@
     "Reliability",
     "Cost_Optimization"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Commerce wants an engagement the moment a shopper views 3 products inside a 5-minute sliding window. Leadership will not accept next-day batch scores for this use case. Which Data 360 capability fits?",
+      "prompt": "Commerce wants to send an offer while a shopper is still browsing. The trigger is three product views within any 5-minute window, and a typical session lasts 8 minutes. Which Data 360 capability should compute the trigger?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Streaming Insights with time-based sliding window aggregations over real-time event streams",
+          "label": "Streaming Insights counting product-view events over a 5-minute time window",
           "isCorrect": true,
-          "rationale": "Streaming Insights process real-time events continuously within sub-minute sliding time windows, triggering immediate downstream actions.",
+          "rationale": "Streaming Insights compute metrics from real-time event data on Spark Structured Streaming, built for immediate, low-latency engagement. Only a streaming computation can fire inside an 8-minute session; batch insights and segments run on schedules.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
         },
         {
           "id": "s1_b",
-          "label": "Calculated Insights configured with incremental hourly batch schedules on unified browse DMOs",
+          "label": "A batch Calculated Insight counting product views on its most frequent schedule",
           "isCorrect": false,
-          "distractorAntipattern": "Calculated Insights run on multi-hour schedules and cannot evaluate sub-minute sliding session windows.",
-          "rationale": "Calculated Insights are designed for periodic multidimensional batch aggregations, not real-time sub-minute event threshold evaluation."
+          "distractorAntipattern": "Batch Aggregation for Triggers",
+          "rationale": "Batch Calculated Insights run as periodic scheduled Spark jobs built for high-volume aggregation, so the count lands after the 8-minute session has ended."
         },
         {
           "id": "s1_c",
-          "label": "Data Cloud Segment triggers refreshed continuously using rapid identity resolution updates",
+          "label": "A Rapid Publish segment of shoppers with three recent product views",
           "isCorrect": false,
-          "distractorAntipattern": "Segment publishing is a periodic batch operation, not an event-driven stream processor.",
-          "rationale": "Segment evaluation runs on schedules (typically every 12 to 24 hours) and cannot trigger real-time actions during active shopper browsing."
+          "distractorAntipattern": "Segment Cadence Mismatch",
+          "rationale": "Rapid Publish is the fastest standard segment cadence at every 1 to 4 hours, so the shopper has left before the segment reflects the third view."
         }
       ]
     }
