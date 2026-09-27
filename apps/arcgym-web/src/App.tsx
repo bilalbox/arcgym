@@ -5,7 +5,10 @@ import { DualMeterScenario } from '@/components/drill/DualMeterScenario';
 import { LessonStepper } from '@/components/drill/LessonStepper';
 import { ProgressDialog } from '@/components/progress/ProgressDialog';
 import { Badge } from '@/components/ui/badge';
+import { Footer } from '@/components/layout/Footer';
+import { PrivacyPage } from '@/pages/PrivacyPage';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
+import { useRouter } from '@/hooks/useRouter';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import {
   ArchitecturalDomain,
@@ -16,7 +19,7 @@ import {
   isRapidFireDrill,
   isScenarioDrill,
 } from '@arcgym/drill-core';
-import { Flame, Compass, Zap, Coins, Users2, GraduationCap, ExternalLink, Target, CheckCircle } from 'lucide-react';
+import { Flame, Compass, Zap, Coins, Users2, GraduationCap, Target, CheckCircle } from 'lucide-react';
 
 interface FormatConfig {
   id: DrillFormat;
@@ -53,6 +56,7 @@ const FORMATS: FormatConfig[] = [
 ];
 
 export const App: React.FC = () => {
+  const { pathname, navigate } = useRouter();
   const [activeFormat, setActiveFormat] = useState<DrillFormat>('Rapid_Fire');
   const [activeDomain, setActiveDomain] = useState<ArchitecturalDomain | undefined>(undefined);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
@@ -116,15 +120,22 @@ export const App: React.FC = () => {
     });
   };
 
+  if (pathname === '/privacy') {
+    return <PrivacyPage navigate={navigate} />;
+  }
+
   return (
     <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
       <header className="sticky top-0 z-40 w-full border-b border-miro-hairline bg-white/95 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight">
-              AG
-            </div>
-            <div>
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-3 group text-left cursor-pointer"
+            >
+              <div className="h-8 w-8 rounded-full bg-miro-primary flex items-center justify-center text-white font-medium text-xs tracking-tight group-hover:bg-miro-charcoal transition-colors">
+                AG
+              </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium text-miro-primary tracking-tight text-lg">
                   Arc<span className="text-miro-blue">Gym</span>
@@ -133,7 +144,7 @@ export const App: React.FC = () => {
                   Salesforce Architect Edition
                 </Badge>
               </div>
-            </div>
+            </button>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -297,22 +308,7 @@ export const App: React.FC = () => {
           )}
         </div>
 
-        <footer className="pt-8 pb-12 border-t border-miro-hairlineSoft text-center space-y-2">
-          <p className="text-xs text-slate-500 leading-relaxed max-w-lg mx-auto">
-            All practice scenarios are strictly grounded in official guidance from{' '}
-            <a
-              href="https://architect.salesforce.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
-            >
-              architect.salesforce.com <ExternalLink className="h-3 w-3" />
-            </a>
-          </p>
-          <p className="text-[11px] text-slate-400">
-            Powered by Cloudflare Pages.
-          </p>
-        </footer>
+        <Footer navigate={navigate} currentPath={pathname} />
       </main>
 
       <ProgressDialog
