@@ -1,6 +1,6 @@
 {
   "id": "AGD-00109",
-  "title": "Multi-Org Federation: Shared Master Data Synchronization",
+  "title": "Multi-Org Product Catalog: Live Federation vs Local Replicas",
   "format": "Rapid_Fire",
   "domain": "Integration_Apis",
   "difficulty": "Lead_CTA",
@@ -8,33 +8,40 @@
     "Cost_Optimization",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A global enterprise operates 4 separate Salesforce orgs (EMEA, APAC, NA, LATAM). Product catalog master records must be synchronized across all orgs within 5 seconds of update. Which architecture delivers lowest operational overhead and real-time scale?",
+      "prompt": "A company runs four Salesforce orgs. The NA org masters the product catalog, and CPQ in each regional org reads product records many times during every quote calculation. Price changes must reach every region within five minutes, and two more regional orgs launch next year. How should the architect distribute catalog changes?",
       "options": [
         {
           "id": "s1_a",
-          "label": "High-volume Platform Events published via Pub/Sub API to subscribers in each child org",
+          "label": "Publish product changes as platform events that a Pub/Sub API client applies to each org",
           "isCorrect": true,
-          "rationale": "Pub/Sub API provides high-throughput, bidirectionally decoupled event distribution with guaranteed delivery and replay retention across multiple orgs.",
+          "rationale": "Publish/subscribe lets one change reach many consumers without coupling the source to each of them, so the two new orgs add subscribers rather than NA code changes. Each regional org keeps local copies, so repeated quote-time reads never leave the org.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe"
         },
         {
           "id": "s1_b",
-          "label": "Chained Outbound Messaging with sequential point-to-point Apex REST callouts to each org",
+          "label": "Have a Queueable job in the NA org call each regional org's REST API in turn",
           "isCorrect": false,
-          "distractorAntipattern": "Point-to-point mesh architectures create cascading timeouts, fragile endpoint maintenance, and high failure rates.",
-          "rationale": "Chained point-to-point callouts introduce N^2 interdependencies, tight operational coupling, and cascading failures if any single regional org experiences latency."
+          "distractorAntipattern": "Point-to-Point Fan-Out",
+          "rationale": "Every new regional org means changing and redeploying NA code, and one slow or unavailable org delays the updates queued behind it."
         },
         {
           "id": "s1_c",
-          "label": "Salesforce Connect Cross-Org Adapters exposing master Product records via on-demand OData",
+          "label": "Expose NA product records in each regional org through the Salesforce Connect cross-org adapter",
           "isCorrect": false,
-          "distractorAntipattern": "Cross-Org Adapters federate on-demand queries rather than physical synchronization, hitting API quotas and slowing CPQ pricing engines.",
-          "rationale": "Cross-Org Adapters query external orgs on-the-fly via OData rather than caching local records, causing governor limit exhaustion during CPQ quote calculations."
+          "distractorAntipattern": "Virtualized Hot-Path Reads",
+          "rationale": "External objects fetch data with a real-time callout on each access, so every repeated product read during a quote calculation waits on the NA org."
+        },
+        {
+          "id": "s1_d",
+          "label": "Copy changed products to each regional org with a nightly Bulk API 2.0 job",
+          "isCorrect": false,
+          "distractorAntipattern": "Nightly Batch Latency Gap",
+          "rationale": "A nightly job leaves regional quotes on old prices for up to a day, far outside the five-minute window."
         }
       ]
     }
