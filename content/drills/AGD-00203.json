@@ -2,7 +2,7 @@
   "id": "AGD-00203",
   "title": "Identity Resolution: Preventing Profile Over-Consolidation",
   "format": "Rapid_Fire",
-  "domain": "Data 360 & Data Cloud Zero Copy",
+  "domain": "Data_Architecture",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Data 360 & Data Cloud Zero Copy"
 }

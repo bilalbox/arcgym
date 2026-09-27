@@ -2,7 +2,7 @@
   "id": "AGD-00103",
   "title": "Automation Decision Guide: High-Frequency Bulk Batch Updates",
   "format": "Rapid_Fire",
-  "domain": "Automation Decision Guide (Flow vs Apex)",
+  "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Operational_Excellence",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Automation Decision Guide (Flow vs Apex)"
 }

@@ -2,7 +2,7 @@
   "id": "AGD-00109",
   "title": "Multi-Org Federation: Shared Master Data Synchronization",
   "format": "Rapid_Fire",
-  "domain": "Enterprise Integration & Event-Driven",
+  "domain": "Integration_Apis",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Enterprise Integration & Event-Driven"
 }

@@ -1,0 +1,298 @@
+{
+  "metadata": {
+    "generated_at": "2026-09-27T08:33:39.200353+00:00",
+    "source": "Trailhead Community (* Data 360 * Group 0F94S000000kQixSAE)",
+    "total_discussions_analyzed": 68,
+    "matched_discussions": 45,
+    "unmatched_discussions": 23,
+    "cluster_count": 6
+  },
+  "curated_patterns": [
+    {
+      "pattern_id": "TCP-Data_Model_Mapping_DLO_DMO",
+      "topic_cluster": "Data Model Mapping DLO DMO",
+      "pillar": "Data_360",
+      "well_architected_domain": "Data Lake Object (DLO) to Data Model Object (DMO) Modeling",
+      "recurrence_metrics": {
+        "question_frequency": 19,
+        "total_replies": 48,
+        "solved_count": 6,
+        "community_engagement_score": 60
+      },
+      "architectural_tension": "Packaged Standard Acceleration vs. Schema Brittleness and Customization Lock-in",
+      "sample_scenario_prompt": "Hi All, I am creating a new data stream from upload from your local drive with csv file.",
+      "antipattern_distractors": [
+        "Applying standard operational configurations without evaluating architectural concurrency and schema limits."
+      ],
+      "grounding_discussions": [
+        {
+          "id": "0D5KX00000PZYX80AP",
+          "headline": "Hi All, I am creating a new data stream from upload from your local drive with csv file.",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000PZYX80AP",
+          "created_at": "2025-05-01T09:40:48.000Z",
+          "likes_count": 0,
+          "comments_count": 9,
+          "has_best_answer": true,
+          "question_body_snippet": "1st - can we update the data after creating data stream from csv file or it one time only? 2nd - I am not able to create New formula field as this is disabled while creating data stream from upload from local drive. Can anyone help on this.",
+          "best_answer_snippet": "Currently, you cannot add formula fields to a Data Stream created from a local file. That includes after the Data Stream is created (that option is removed for Local File based Data Streams). This is due to technical limitations of the implementation, we are looking into enabling this in a future release. To the first question about updating, we plan to enable you to replace the contents of an exi...",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000pNf8x0AC",
+          "headline": "Data Mappings - Not able to edit the custom field inside the Data Model Entities (DMO's) once created.",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000pNf8x0AC",
+          "created_at": "2026-06-22T17:53:30.000Z",
+          "likes_count": 0,
+          "comments_count": 2,
+          "has_best_answer": true,
+          "question_body_snippet": "Dear Community members, While making the data mapping inside the data streams, I have created a New field. When creating the Field I have given the \"Text\" as it's datatype. Now I tried to map this custom field with the Boolean Field which is inside the Data Lake Object and I encountered the following error - \"cannot map: source and target datatype ...",
+          "best_answer_snippet": "Hello Nageshwar, You cannot change the data type of the field you have created in a DMO. Since it is a custom field you are working on, you might need to create a new field with an appropriate data type as the source, then map it, ignoring the previously created field in the DMO. Thanks!",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000jAK6N0AW",
+          "headline": "Python custom code extention deploy via data kits",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000jAK6N0AW",
+          "created_at": "2026-06-11T12:43:08.000Z",
+          "likes_count": 0,
+          "comments_count": 2,
+          "has_best_answer": true,
+          "question_body_snippet": "Hi, has anyone any experience in deploying python data custom code extensions from one env to another? I can see that data kits have list them as objects that can be selected and they are actually transferred via data kit, but they don't seem to be deployed. Anyone tried that successfully? TIA",
+          "best_answer_snippet": "No — Python custom code extensions are not fully deployable via Data Kits. Data Kits can capture and transfer the metadata/reference, but the actual Python code execution environment and deployment are not promoted automatically. To move them between environments, you must: - Manually recreate or redeploy the Python extension in the target environment - Ensure dependencies, credentials, and runtim...",
+          "antipattern_cues": []
+        }
+      ]
+    },
+    {
+      "pattern_id": "TCP-Data_Activation_CrossCloud",
+      "topic_cluster": "Data Activation CrossCloud",
+      "pillar": "Data_360",
+      "well_architected_domain": "Audience Segmentation & Activation",
+      "recurrence_metrics": {
+        "question_frequency": 9,
+        "total_replies": 39,
+        "solved_count": 6,
+        "community_engagement_score": 51
+      },
+      "architectural_tension": "Timeliness & Egress Throughput vs. Downstream Consumer Fan-out Limits",
+      "sample_scenario_prompt": "Marketing Cloud Next: Sales Data Kit Alters Existing Mappings",
+      "antipattern_distractors": [
+        "Applying standard operational configurations without evaluating architectural concurrency and schema limits."
+      ],
+      "grounding_discussions": [
+        {
+          "id": "0D5KX00000pNzhX0AS",
+          "headline": "Marketing Cloud Next: Sales Data Kit Alters Existing Mappings",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000pNzhX0AS",
+          "created_at": "2026-07-02T12:20:31.000Z",
+          "likes_count": 0,
+          "comments_count": 12,
+          "has_best_answer": true,
+          "question_body_snippet": "Hi everyone, I was working on an existing Salesforce Data Cloud implementation and recently started enabling Salesforce Marketing Cloud Next. As part of the setup, we had to install/ingest the Sales Data Kit. After doing so, we observed that some of our existing DLO-to-DMO mappings were modified/overwritten, impacting our current data model. Has an...",
+          "best_answer_snippet": "Hi @Lavanya Bommini and @Lakshmeesh Reddy, I found the way out: You can update the individual data kits manually as follows: - Go to Data Cloud app in App Launcher - On the Data Streams tab, click New. - Select Installed Data Kits and Packages and click Next. [Image: image.png] - On the Data Kits tab, select a data kit that you wish to update, and proceed with the update. If Sales Data Kit is pend...",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000jATpi0AG",
+          "headline": "Is it possible to activate segments into Account engagement ?",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000jATpi0AG",
+          "created_at": "2026-09-25T10:12:40.000Z",
+          "likes_count": 0,
+          "comments_count": 7,
+          "has_best_answer": true,
+          "question_body_snippet": "",
+          "best_answer_snippet": "The links that i shared, are for 'Marketing Cloud Account Engagement'. [Image: image.png]",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000gUgK70AK",
+          "headline": "Pros and Cons of Google Bigquery vs Google Analytics Connector",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000gUgK70AK",
+          "created_at": "2025-11-12T19:47:16.000Z",
+          "likes_count": 0,
+          "comments_count": 5,
+          "has_best_answer": true,
+          "question_body_snippet": "Hi all- we are looking to bring web engagement data into Data Cloud. The use case is not real time (daily is fine), we simply want to analyze, aggregate some of the data in Data Cloud, along with CRM data, and be able to pass to Marketing Cloud Engagement. Since it's not real time and we want to minimize costs, I'm leaving out Web SDK. We also don'...",
+          "best_answer_snippet": "Hi @Fred Tchang both options work, but they serve slightly different use cases. Google BigQuery → Data Cloud (via Data Stream) Pros - Zero-ETL: Data stays in BigQuery and is queried only when needed (lowest DC compute cost). - You can pre-aggregate, clean, and model data in BigQuery before Data Cloud sees it. - Flexible: Bring in only the tables you need. Cons - Requires someone to maintain BigQue...",
+          "antipattern_cues": []
+        }
+      ]
+    },
+    {
+      "pattern_id": "TCP-Identity_Resolution_Rules",
+      "topic_cluster": "Identity Resolution Rules",
+      "pillar": "Data_360",
+      "well_architected_domain": "Identity Resolution & Unification",
+      "recurrence_metrics": {
+        "question_frequency": 12,
+        "total_replies": 28,
+        "solved_count": 5,
+        "community_engagement_score": 38
+      },
+      "architectural_tension": "Trust & Data Integrity vs. Computational Latency and Over-consolidation",
+      "sample_scenario_prompt": "Data 360: Field labels displaying in the wrong language",
+      "antipattern_distractors": [
+        "Applying standard operational configurations without evaluating architectural concurrency and schema limits."
+      ],
+      "grounding_discussions": [
+        {
+          "id": "0D5KX00000pNI7B0AW",
+          "headline": "Data 360: Field labels displaying in the wrong language",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000pNI7B0AW",
+          "created_at": "2026-06-08T12:57:15.000Z",
+          "likes_count": 0,
+          "comments_count": 4,
+          "has_best_answer": true,
+          "question_body_snippet": "Hi Trailblazers, we're in the middle of implementing Data 360 and Marketing Cloud Next, and while setting up our data streams we've run into a problem that someone here has hopefully seen before. All field labels coming through on our data streams are displaying in German instead of English. This happens regardless of the individual user's language...",
+          "best_answer_snippet": "This is a known Data Cloud (Data 360) limitation tied to the Hidden Platform Integration User language at initialization. Root Cause - Data Streams persist field labels based on the Integration User’s language at creation time - This language is effectively immutable after Data Cloud is initialized - As a result, all ingested metadata (standard, NPSP, etc.) stores labels in that language (German i...",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000jAOxu0AG",
+          "headline": "Data Cloud: Fan-Out Multiple Contact Points per Individual in Activation?",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000jAOxu0AG",
+          "created_at": "2026-07-29T06:24:14.000Z",
+          "likes_count": 0,
+          "comments_count": 3,
+          "has_best_answer": true,
+          "question_body_snippet": "An Individual in our Data Cloud has multiple Contact Point Emails for example 2 private emails, 1 business email. When we build an activation, we need to reach all of these email addresses separately, not just one. The problem: in the activation setup, the Contact Point Email section has \"Max # of Attribute Values\" locked to 1. Even when we use a c...",
+          "best_answer_snippet": "Hi @Omar Kharrat, Here is what you can try: 1. Build a custom DLO/DMO that's a bridge/fan-out table: one row per (Individual, Contact Point Email) pair — basically your Contact Point Email DMO reshaped as an engagement-style child object, related many-to-one back to Individual. 2. Instead of segmenting on Individual or Unified Individual, set \"Segment On\" to that fan-out DMO. 3. Now every row in y...",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000aoOvt0AE",
+          "headline": "Best practice for modeling Device and OS data in Salesforce Data Cloud (Contact Point App vs Device DMO)",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000aoOvt0AE",
+          "created_at": "2025-10-16T16:59:41.000Z",
+          "likes_count": 0,
+          "comments_count": 2,
+          "has_best_answer": true,
+          "question_body_snippet": "Hi everyone 👋 We’re implementing Salesforce Data Cloud with a mobile SDK data stream that provides both user-level (app engagement) and device-level data. This creates two DMOs: Contact Point App DMO – holds engagement data and includes SubscriberKey Device DMO – holds device details like OS Name, OS Version, Model, etc. Currently, only the Contact...",
+          "best_answer_snippet": "Hello Clinton, Your proposed approach — mapping SubscriberKey to a custom field in the Device DMO and creating a relationship between Device.SubscriberKey__c and Individual.IndividualId — is generally a scalable and data-normalized solution. It allows the Device DMO to remain independent while still linking to individuals for segmentation and personalization use cases. However, you should carefull...",
+          "antipattern_cues": []
+        }
+      ]
+    },
+    {
+      "pattern_id": "TCP-Zero_Copy_Data_Federation",
+      "topic_cluster": "Zero Copy Data Federation",
+      "pillar": "Data_360",
+      "well_architected_domain": "Zero Copy & External Lakehouse Integration",
+      "recurrence_metrics": {
+        "question_frequency": 3,
+        "total_replies": 15,
+        "solved_count": 1,
+        "community_engagement_score": 17
+      },
+      "architectural_tension": "Real-time Access & Zero Storage Egress vs. UI Query Latency & Governor Limits",
+      "sample_scenario_prompt": "Data360 <-> Redshift Private Connect / IDP authentication issue",
+      "antipattern_distractors": [
+        "Applying standard operational configurations without evaluating architectural concurrency and schema limits."
+      ],
+      "grounding_discussions": [
+        {
+          "id": "0D5KX00000jAEzo0AG",
+          "headline": "Data360 <-> Redshift Private Connect / IDP authentication issue",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000jAEzo0AG",
+          "created_at": "2026-04-25T16:04:23.000Z",
+          "likes_count": 0,
+          "comments_count": 6,
+          "has_best_answer": true,
+          "question_body_snippet": "Can anyone who is using Redshift Zero Copy connector to bring in data streams, confirm if this is mandatory? 'Making DB publicly accessible' is giving a lot of backlash from my client. They just won't accept this requirement, which is not even updated in Official documentation but out from SF as just a knowledge article. [Image: image.png]",
+          "best_answer_snippet": "This was resolved - issue was on client network infrastructure side.",
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000gTnjM0AS",
+          "headline": "Connect Data Cloud with Microsoft Fabric",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000gTnjM0AS",
+          "created_at": "2025-10-27T20:38:09.000Z",
+          "likes_count": 0,
+          "comments_count": 7,
+          "has_best_answer": false,
+          "question_body_snippet": "Hi all, I am trying to connect Data Cloud and Microsoft Fabric. What is your recommendation for the best connector? I Zero Copy an option? Kind regards Morten",
+          "best_answer_snippet": null,
+          "antipattern_cues": []
+        },
+        {
+          "id": "0D5KX00000pN2qc0AC",
+          "headline": "Custom Object Data Cloud Related List",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000pN2qc0AC",
+          "created_at": "2026-05-28T13:30:09.000Z",
+          "likes_count": 0,
+          "comments_count": 2,
+          "has_best_answer": false,
+          "question_body_snippet": "Hi, I am trying to enrich our CRM data on a custom object. We've ingested a custom object and through zero copy we've ingested data that is related to records of the custom object. i've connected it to CRM. However there is no option on the custom object in the object manager to create a data cloud related list. It is there for Account. Any thought...",
+          "best_answer_snippet": null,
+          "antipattern_cues": []
+        }
+      ]
+    },
+    {
+      "pattern_id": "TCP-Data_Stream_Diagnostics_Governance",
+      "topic_cluster": "Data Stream Diagnostics Governance",
+      "pillar": "Operational_Excellence",
+      "well_architected_domain": "Ingestion Monitoring, Diagnostics & Governance",
+      "recurrence_metrics": {
+        "question_frequency": 1,
+        "total_replies": 5,
+        "solved_count": 1,
+        "community_engagement_score": 7
+      },
+      "architectural_tension": "Operational Observability vs. Ingestion Overhead and Diagnostic Latency",
+      "sample_scenario_prompt": "Data Cloud Sandbox strategy",
+      "antipattern_distractors": [
+        "Applying standard operational configurations without evaluating architectural concurrency and schema limits."
+      ],
+      "grounding_discussions": [
+        {
+          "id": "0D5KX00000jA7qw0AC",
+          "headline": "Data Cloud Sandbox strategy",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000jA7qw0AC",
+          "created_at": "2026-02-18T06:22:03.000Z",
+          "likes_count": 1,
+          "comments_count": 5,
+          "has_best_answer": true,
+          "question_body_snippet": "Hey All, We are currently defining the environment strategy for Data 360. I have few queries related to the same. 1) Is Data 360 license provisioning required for sandbox environments, or only for Production? If sandbox licenses are provisioned, can Data 360 be enabled in any sandbox, or is the provisioning environment-specific? 2) In a multi-envir...",
+          "best_answer_snippet": "Hi @Nisha Yadav - 1. You can provision data cloud in sandbox as well. You need to do same setup in sandbox. 2. Considering cost implications you can keep a single sandbox which has required data to ingest (If you use SF CRM as source) and if its external its fine. When you try to connect usage will be calculated across all sandboxes. 3. Try to have it in partial or fullcopy where you can mimic the...",
+          "antipattern_cues": []
+        }
+      ]
+    },
+    {
+      "pattern_id": "TCP-Large_Data_Volumes_Hierarchy_Aggregations",
+      "topic_cluster": "Large Data Volumes Hierarchy Aggregations",
+      "pillar": "Reliability",
+      "well_architected_domain": "Large Data Volumes & Asynchronous Aggregations",
+      "recurrence_metrics": {
+        "question_frequency": 1,
+        "total_replies": 5,
+        "solved_count": 0,
+        "community_engagement_score": 5
+      },
+      "architectural_tension": "Pre-computed Materialization vs. Real-time Traversal & Hierarchy Reparenting Drift",
+      "sample_scenario_prompt": "Best approach for bulk email, activity, and transcript analysis across Account hierarchy",
+      "antipattern_distractors": [
+        "Resolving complex recursive hierarchies at query time rather than materializing hierarchy paths at ingest.",
+        "Full weekly batch re-computation over unchanged records causing severe processing costs."
+      ],
+      "grounding_discussions": [
+        {
+          "id": "0D5KX00000jATZ10AO",
+          "headline": "Best approach for bulk email, activity, and transcript analysis across Account hierarchy",
+          "url": "https://trailhead.salesforce.com/trailblazer-community/feed/0D5KX00000jATZ10AO",
+          "created_at": "2026-09-20T10:42:55.000Z",
+          "likes_count": 0,
+          "comments_count": 5,
+          "has_best_answer": false,
+          "question_body_snippet": "Hi Community / Salesforce Team, We need guidance on the best Salesforce architecture to analyze a high volume of emails, activities, and meeting/call transcripts across an Account hierarchy. The requirement is to analyze interactions recorded against an Account, its Contacts, and related child objects, then roll relevant findings from child Account...",
+          "best_answer_snippet": null,
+          "antipattern_cues": [
+            "Resolving complex recursive hierarchies at query time rather than materializing hierarchy paths at ingest.",
+            "Full weekly batch re-computation over unchanged records causing severe processing costs."
+          ]
+        }
+      ]
+    }
+  ]
+}

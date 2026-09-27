@@ -2,7 +2,7 @@
   "id": "AGD-00206",
   "title": "Data Actions: Orchestrating Real-Time Downstream CRM Engagement",
   "format": "Rapid_Fire",
-  "domain": "Data 360 & Data Cloud Zero Copy",
+  "domain": "Data_Architecture",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Operational_Excellence",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Data 360 & Data Cloud Zero Copy"
 }

@@ -1,0 +1,88 @@
+{
+  "id": "AGD-00701",
+  "title": "Case Flow monolith: 4-stage Well-Architected refactor",
+  "format": "Lesson",
+  "domain": "Ai_And_Automation",
+  "domainLabel": "Automation Governance",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Operational_Excellence", "Reliability"],
+  "version": 1,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "stageName": "Stage 1: Forensic Diagnosis",
+      "scenario": "A 14-element record-triggered Flow on Case runs after-save. Under a bulk update of 200 cases via Data Loader, the transaction crashes with Apex CPU time limit exceeded (10,001 ms). What is the root architectural bottleneck?",
+      "options": [
+        {
+          "id": "st1_a",
+          "text": "The Flow contains a loop with an embedded Get Records and Update Records element executing queries inside the iteration.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Loops with data operations inside Flows violate bulkification, executing 200 distinct SOQL and DML statements."
+        },
+        {
+          "id": "st1_b",
+          "text": "Salesforce record-triggered Flows cannot process more than 5 records per batch.",
+          "isCorrect": false,
+          "coachingFeedback": "False assumption: Flows are automatically bulkified by the platform engine unless loops contain DML/SOQL operations."
+        }
+      ]
+    },
+    {
+      "stageNumber": 2,
+      "stageName": "Stage 2: Target Architecture Pattern",
+      "scenario": "To refactor this high-volume Case processing pipeline into a Well-Architected Operational Excellence standard, what is the recommended target architecture?",
+      "options": [
+        {
+          "id": "st2_a",
+          "text": "Migrate the heavy calculations into an Apex Trigger Handler framework utilizing Maps and Set collections for bulk single-query lookups.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Automation Decision Guide explicitly recommends Apex for complex looping, math, and high-frequency bulkification."
+        },
+        {
+          "id": "st2_b",
+          "text": "Split the single Flow into 5 separate record-triggered Flows on Case without an entry condition.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Multiple uncontrolled Flows trigger recursion, multiply CPU time, and have non-deterministic execution order."
+        }
+      ]
+    },
+    {
+      "stageNumber": 3,
+      "stageName": "Stage 3: Migration & Cutover Strategy",
+      "scenario": "How should you safely cut over from the legacy Flow monolith to the new Apex trigger handler in an active 24/7 enterprise production org?",
+      "options": [
+        {
+          "id": "st3_a",
+          "text": "Deploy an org-wide Custom Permission or Custom Metadata feature toggle allowing instant zero-downtime rollback if needed.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Well-Architected Operational Excellence mandates feature toggles for high-impact automation cutovers."
+        },
+        {
+          "id": "st3_b",
+          "text": "Deactivate the Flow directly in Production during business hours and deploy the trigger via Change Set.",
+          "isCorrect": false,
+          "coachingFeedback": "Risky! Direct deactivation without fallback causes race conditions and dropped transaction updates during cutover."
+        }
+      ]
+    },
+    {
+      "stageNumber": 4,
+      "stageName": "Stage 4: Telemetry & Observability",
+      "scenario": "What observability tool should be configured to proactively monitor whether the new Apex handler is staying within healthy CPU thresholds?",
+      "options": [
+        {
+          "id": "st4_a",
+          "text": "Subscribe to ApexExecution and FlowExecution Event Monitoring Real-Time Event Streams with CRM Analytics dashboards.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Event Monitoring provides sub-second transaction observability across CPU, SOQL, and DB time."
+        },
+        {
+          "id": "st4_b",
+          "text": "Wait for users to report email error notifications when limit exceptions occur.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Reactive user reports indicate failed operational governance and unmonitored production debt."
+        }
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@
     "id": "AGD-00101",
     "title": "Enterprise Integration: Scale vs. Tight Coupling in Order Egress",
     "format": "Rapid_Fire",
-    "domain": "Enterprise Integration & Event-Driven",
+    "domain": "Integration_Apis",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -41,13 +41,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Enterprise Integration & Event-Driven"
   },
   {
     "id": "AGD-00102",
     "title": "Large Data Volumes: Eliminating Reporting Timeouts Across 18M Rows",
     "format": "Rapid_Fire",
-    "domain": "Large Data Volumes & Query Optimization",
+    "domain": "Data_Architecture",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Reliability",
@@ -84,13 +85,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Large Data Volumes & Query Optimization"
   },
   {
     "id": "AGD-00103",
     "title": "Automation Decision Guide: High-Frequency Bulk Batch Updates",
     "format": "Rapid_Fire",
-    "domain": "Automation Decision Guide (Flow vs Apex)",
+    "domain": "Ai_And_Automation",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Operational_Excellence",
@@ -127,13 +129,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Automation Decision Guide (Flow vs Apex)"
   },
   {
     "id": "AGD-00104",
     "title": "Transaction Boundaries: Uncommitted Work and Callouts in Apex",
     "format": "Rapid_Fire",
-    "domain": "Core Platform & Execution Limits",
+    "domain": "Platform_Core",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -170,13 +173,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Core Platform & Execution Limits"
   },
   {
     "id": "AGD-00105",
     "title": "Portal Security: High-Volume Sharing Architecture for 500,000 Users",
     "format": "Rapid_Fire",
-    "domain": "Security, Sharing & Trust Boundaries",
+    "domain": "Security_And_Access",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Trust",
@@ -213,13 +217,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Security, Sharing & Trust Boundaries"
   },
   {
     "id": "AGD-00106",
     "title": "High-Velocity Ingestion: Bulk API 2.0 vs Composite Graph API",
     "format": "Rapid_Fire",
-    "domain": "Enterprise Integration & Event-Driven",
+    "domain": "Integration_Apis",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Reliability",
@@ -256,13 +261,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Enterprise Integration & Event-Driven"
   },
   {
     "id": "AGD-00107",
     "title": "Data Skew Mitigation: Account Skew and Lookup Lock Contention",
     "format": "Rapid_Fire",
-    "domain": "Large Data Volumes & Query Optimization",
+    "domain": "Data_Architecture",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -299,13 +305,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Large Data Volumes & Query Optimization"
   },
   {
     "id": "AGD-00108",
     "title": "Concurrency Control: Pessimistic vs Optimistic Locking in Flash Sales",
     "format": "Rapid_Fire",
-    "domain": "Core Platform & Execution Limits",
+    "domain": "Platform_Core",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -342,13 +349,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Core Platform & Execution Limits"
   },
   {
     "id": "AGD-00109",
     "title": "Multi-Org Federation: Shared Master Data Synchronization",
     "format": "Rapid_Fire",
-    "domain": "Enterprise Integration & Event-Driven",
+    "domain": "Integration_Apis",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Cost_Optimization",
@@ -385,13 +393,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Enterprise Integration & Event-Driven"
   },
   {
     "id": "AGD-00110",
     "title": "Event Streaming Modernization: Pub/Sub API with Replay ID vs CometD",
     "format": "Rapid_Fire",
-    "domain": "Enterprise Integration & Event-Driven",
+    "domain": "Integration_Apis",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Reliability",
@@ -428,13 +437,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Enterprise Integration & Event-Driven"
   },
   {
     "id": "AGD-00201",
     "title": "Data Cloud: Zero Copy Federation vs Scheduled Reverse ETL",
-    "format": "Currency",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Cost_Optimization",
@@ -472,13 +482,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00202",
     "title": "Data Ingestion Architecture: DLO to DMO Canonical Mapping",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Reliability",
@@ -515,13 +526,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00203",
     "title": "Identity Resolution: Preventing Profile Over-Consolidation",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Trust",
@@ -558,13 +570,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00204",
     "title": "Zero Copy Lakehouse: Apache Iceberg Tables vs JDBC Ingest",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Cost_Optimization",
@@ -601,13 +614,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00205",
     "title": "Calculated Insights vs Streaming Insights: Real-Time Windowing",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Reliability",
@@ -644,13 +658,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00206",
     "title": "Data Actions: Orchestrating Real-Time Downstream CRM Engagement",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Operational_Excellence",
@@ -687,13 +702,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00207",
     "title": "Vector Search & Grounding: Chunking Unstructured Knowledge for RAG",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Trust",
@@ -730,13 +746,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00208",
     "title": "Segment Activation: Egress Optimization to Cloud Storage",
     "format": "Rapid_Fire",
-    "domain": "Data 360 & Data Cloud Zero Copy",
+    "domain": "Data_Architecture",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Cost_Optimization",
@@ -773,13 +790,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Data 360 & Data Cloud Zero Copy"
   },
   {
     "id": "AGD-00209",
     "title": "Data Lineage & Privacy: Handling GDPR Deletions in Data Cloud",
     "format": "Rapid_Fire",
-    "domain": "Security, Sharing & Trust Boundaries",
+    "domain": "Security_And_Access",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Trust",
@@ -816,13 +834,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Security, Sharing & Trust Boundaries"
   },
   {
     "id": "AGD-00210",
     "title": "Consumption Credit Governance: Batch vs Streaming Credit Economics",
     "format": "Rapid_Fire",
-    "domain": "Core Platform & Execution Limits",
+    "domain": "Platform_Core",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Cost_Optimization",
@@ -859,13 +878,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Core Platform & Execution Limits"
   },
   {
     "id": "AGD-00301",
     "title": "Atlas Reasoning Engine: Autonomous Planning vs Hardcoded Decision Trees",
     "format": "Rapid_Fire",
-    "domain": "Agentforce & Agentic Enterprise",
+    "domain": "Ai_And_Automation",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -902,13 +922,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Agentforce & Agentic Enterprise"
   },
   {
     "id": "AGD-00302",
     "title": "Action Guardrails: Server-Side Limit Checks vs Prompt Promises",
-    "format": "Scenario",
-    "domain": "Agentforce & Agentic Enterprise",
+    "format": "Rapid_Fire",
+    "domain": "Ai_And_Automation",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Trust",
@@ -945,13 +966,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Agentforce & Agentic Enterprise"
   },
   {
     "id": "AGD-00303",
     "title": "Einstein Trust Layer: Prompt Defense, PII Masking & Zero Retention",
     "format": "Rapid_Fire",
-    "domain": "Security, Sharing & Trust Boundaries",
+    "domain": "Security_And_Access",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Trust",
@@ -988,13 +1010,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Security, Sharing & Trust Boundaries"
   },
   {
     "id": "AGD-00304",
     "title": "Topic Classification: Authoring Disambiguated Natural Language Descriptions",
     "format": "Rapid_Fire",
-    "domain": "Agentforce & Agentic Enterprise",
+    "domain": "Ai_And_Automation",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Operational_Excellence",
@@ -1031,13 +1054,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Agentforce & Agentic Enterprise"
   },
   {
     "id": "AGD-00305",
     "title": "Prompt Injection Defense: Delimiters and Context Shielding",
     "format": "Rapid_Fire",
-    "domain": "Security, Sharing & Trust Boundaries",
+    "domain": "Security_And_Access",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Trust",
@@ -1074,13 +1098,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Security, Sharing & Trust Boundaries"
   },
   {
     "id": "AGD-00306",
     "title": "Human-in-the-Loop (HITL): Seamless State Handoff to Omni-Channel",
     "format": "Rapid_Fire",
-    "domain": "Agentforce & Agentic Enterprise",
+    "domain": "Ai_And_Automation",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Fairness",
@@ -1117,13 +1142,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Agentforce & Agentic Enterprise"
   },
   {
     "id": "AGD-00307",
     "title": "Agent Development Lifecycle (ADLC): Benchmarking Synthetic Evals",
     "format": "Rapid_Fire",
-    "domain": "Operational Excellence (Maintainability & Delivery)",
+    "domain": "Devops_Lifecycle",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Operational_Excellence",
@@ -1160,13 +1186,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Operational Excellence (Maintainability & Delivery)"
   },
   {
     "id": "AGD-00308",
     "title": "Session Tracing: Auditing Reasoning Steps and Tool Call Latency",
     "format": "Rapid_Fire",
-    "domain": "Agentforce & Agentic Enterprise",
+    "domain": "Ai_And_Automation",
     "difficulty": "Associate_Domain_Architect",
     "pillars": [
       "Operational_Excellence",
@@ -1203,13 +1230,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Agentforce & Agentic Enterprise"
   },
   {
     "id": "AGD-00309",
     "title": "Multi-Agent Decomposition: Specialized Sub-Agents vs Monolithic Architectures",
     "format": "Rapid_Fire",
-    "domain": "Agentforce & Agentic Enterprise",
+    "domain": "Ai_And_Automation",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -1246,13 +1274,14 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Agentforce & Agentic Enterprise"
   },
   {
     "id": "AGD-00310",
     "title": "Context Window Economics: Semantic Retrieval Pruning vs Raw Chat History",
     "format": "Rapid_Fire",
-    "domain": "Core Platform & Execution Limits",
+    "domain": "Platform_Core",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Cost_Optimization",
@@ -1289,16 +1318,17 @@
           }
         ]
       }
-    ]
+    ],
+    "domainLabel": "Core Platform & Execution Limits"
   },
   {
     "id": "AGD-00401",
     "title": "Agentforce Atlas Reasoning and Guardrails: The LLM boundary: where judgment ends and code begins (Part 1)",
     "format": "Rapid_Fire",
-    "domain": "Agentic Enterprise & Governance",
+    "domain": "Ai_And_Automation",
     "difficulty": "Lead_CTA",
     "pillars": [
-      "Agentforce"
+      "Reliability"
     ],
     "version": 1,
     "steps": [
@@ -1362,6 +1392,258 @@
             "isCorrect": true,
             "rationale": "According to Hybrid Reasoning with New Agentforce Builder and Agent Script (Hybrid Reasoning with New Agentforce Builder and Agent Script > When to use deterministic logic), this pattern ensures transactional integrity and system resilience.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#when-to-use-deterministic-logic"
+          }
+        ]
+      }
+    ],
+    "domainLabel": "Agentic Enterprise & Governance"
+  },
+  {
+    "id": "AGD-00501",
+    "title": "Order spike pipeline: allocate 100-point governor capacity budget",
+    "format": "Currency",
+    "domain": "Platform_Core",
+    "domainLabel": "Core Platform Governor Capacity",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Cost_Optimization"
+    ],
+    "version": 1,
+    "prompt": "Order spike pipeline: allocate 100-point governor capacity budget",
+    "detail": "During a peak volume spike (10,000 orders/sec into Salesforce), allocate your 100-point transaction envelope across four critical architectural resources to prevent transaction rollback under high concurrency.",
+    "totalPoints": 100,
+    "categories": [
+      {
+        "id": "soql",
+        "label": "Database SOQL & locking budget",
+        "description": "Controls indexed SOQL selectivity and FOR UPDATE parent-child lock contention.",
+        "defaultPoints": 25,
+        "maxPoints": 50,
+        "step": 5
+      },
+      {
+        "id": "cpu",
+        "label": "Apex CPU execution budget",
+        "description": "Allocated to high-density bulkified triggers and JSON business validation.",
+        "defaultPoints": 30,
+        "maxPoints": 60,
+        "step": 5
+      },
+      {
+        "id": "heap",
+        "label": "Platform cache & heap memory",
+        "description": "In-memory state and Platform Cache session partition sizing.",
+        "defaultPoints": 25,
+        "maxPoints": 40,
+        "step": 5
+      },
+      {
+        "id": "callout",
+        "label": "Outbound event egress budget",
+        "description": "High-volume Platform Event publishing and asynchronous queue handoffs.",
+        "defaultPoints": 20,
+        "maxPoints": 40,
+        "step": 5
+      }
+    ],
+    "optimalRules": [
+      {
+        "categoryId": "soql",
+        "op": "lte",
+        "value": 25
+      },
+      {
+        "categoryId": "cpu",
+        "op": "gte",
+        "value": 30
+      },
+      {
+        "categoryId": "heap",
+        "op": "lte",
+        "value": 25
+      },
+      {
+        "categoryId": "callout",
+        "op": "lte",
+        "value": 20
+      }
+    ],
+    "analysis": "During 10,000 orders/sec spikes, prioritizing CPU budget (≥30 pts) ensures complex business validation completes without hitting 10,000ms CPU timeouts. Keeping SOQL budget (≤25 pts) forces the use of Platform Cache and Skinny Tables, eliminating unindexed database row lock contention.",
+    "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html"
+  },
+  {
+    "id": "AGD-00601",
+    "title": "Dreamforce Agentforce crunch: Dual-Meter stakeholder pressure",
+    "format": "Scenario",
+    "domain": "Ai_And_Automation",
+    "domainLabel": "Agentic Enterprise Governance",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Trust",
+      "Reliability"
+    ],
+    "version": 1,
+    "initialTrust": 65,
+    "initialReliability": 70,
+    "moves": [
+      {
+        "moveNumber": 1,
+        "stakeholderPersona": "Chief Technology Officer (CTO)",
+        "dialogueText": "\"We have 48 hours until Dreamforce keynotes. The CEO wants to demo an autonomous Agentforce agent that issues full refunds directly to customers up to $5,000 without human approval. Can we skip prompt defense testing to hit the demo window?\"",
+        "options": [
+          {
+            "id": "m1_a",
+            "text": "Agree to bypass prompt defense and deploy directly to production sandbox for speed.",
+            "trustDelta": 15,
+            "reliabilityDelta": -35,
+            "techDebtImpact": "Severe vulnerability: Prompt injection can trigger unlimited fraudulent refund loops.",
+            "isOptimal": false
+          },
+          {
+            "id": "m1_b",
+            "text": "Firmly counter with a Well-Architected Guardrail: Enforce a $100 autonomous cap and route >$100 to Human-in-the-Loop Omni-Channel with Trust Layer PII masking active.",
+            "trustDelta": 5,
+            "reliabilityDelta": 20,
+            "techDebtImpact": "Minimal: Establishes safe boundary pattern while delivering full keynote demo capability.",
+            "isOptimal": true
+          }
+        ]
+      },
+      {
+        "moveNumber": 2,
+        "stakeholderPersona": "VP of Customer Experience",
+        "dialogueText": "\"Our agent seems slow when fetching customer history. The dev team wants to query the entire 20M Account history table synchronously on every single user turn.\"",
+        "options": [
+          {
+            "id": "m2_a",
+            "text": "Allow unindexed synchronous queries on every turn to maximize conversational context.",
+            "trustDelta": -10,
+            "reliabilityDelta": -30,
+            "techDebtImpact": "Catastrophic: Triggers 10,000ms CPU timeouts and locks user sessions during peak hours.",
+            "isOptimal": false
+          },
+          {
+            "id": "m2_b",
+            "text": "Ground the agent via Data Cloud Unified Profile with pre-computed Calculated Insights instead of live SOQL scans.",
+            "trustDelta": 10,
+            "reliabilityDelta": 15,
+            "techDebtImpact": "Zero: Decouples analytics from core transaction engine with sub-200ms grounding retrieval.",
+            "isOptimal": true
+          }
+        ]
+      },
+      {
+        "moveNumber": 3,
+        "stakeholderPersona": "Lead Security Auditor",
+        "dialogueText": "\"Our compliance review shows customer Social Security Numbers and credit cards are entering prompt logs in plaintext. We must shut down the agent unless we can guarantee zero retention.\"",
+        "options": [
+          {
+            "id": "m3_a",
+            "text": "Activate the Einstein Trust Layer Zero Data Retention and PII Masking policy immediately.",
+            "trustDelta": 20,
+            "reliabilityDelta": 10,
+            "techDebtImpact": "Resolved: 100% compliance with GDPR/HIPAA with contractual LLM zero data retention.",
+            "isOptimal": true
+          },
+          {
+            "id": "m3_b",
+            "text": "Write a custom regex trigger in Apex to scrub plaintext logs after they are saved to disk.",
+            "trustDelta": -25,
+            "reliabilityDelta": -15,
+            "techDebtImpact": "Regulatory violation: Scrubbing after save still violates zero-retention mandates during inference.",
+            "isOptimal": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00701",
+    "title": "Case Flow monolith: 4-stage Well-Architected refactor",
+    "format": "Lesson",
+    "domain": "Ai_And_Automation",
+    "domainLabel": "Automation Governance",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Operational_Excellence",
+      "Reliability"
+    ],
+    "version": 1,
+    "stages": [
+      {
+        "stageNumber": 1,
+        "stageName": "Stage 1: Forensic Diagnosis",
+        "scenario": "A 14-element record-triggered Flow on Case runs after-save. Under a bulk update of 200 cases via Data Loader, the transaction crashes with Apex CPU time limit exceeded (10,001 ms). What is the root architectural bottleneck?",
+        "options": [
+          {
+            "id": "st1_a",
+            "text": "The Flow contains a loop with an embedded Get Records and Update Records element executing queries inside the iteration.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Loops with data operations inside Flows violate bulkification, executing 200 distinct SOQL and DML statements."
+          },
+          {
+            "id": "st1_b",
+            "text": "Salesforce record-triggered Flows cannot process more than 5 records per batch.",
+            "isCorrect": false,
+            "coachingFeedback": "False assumption: Flows are automatically bulkified by the platform engine unless loops contain DML/SOQL operations."
+          }
+        ]
+      },
+      {
+        "stageNumber": 2,
+        "stageName": "Stage 2: Target Architecture Pattern",
+        "scenario": "To refactor this high-volume Case processing pipeline into a Well-Architected Operational Excellence standard, what is the recommended target architecture?",
+        "options": [
+          {
+            "id": "st2_a",
+            "text": "Migrate the heavy calculations into an Apex Trigger Handler framework utilizing Maps and Set collections for bulk single-query lookups.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Automation Decision Guide explicitly recommends Apex for complex looping, math, and high-frequency bulkification."
+          },
+          {
+            "id": "st2_b",
+            "text": "Split the single Flow into 5 separate record-triggered Flows on Case without an entry condition.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Multiple uncontrolled Flows trigger recursion, multiply CPU time, and have non-deterministic execution order."
+          }
+        ]
+      },
+      {
+        "stageNumber": 3,
+        "stageName": "Stage 3: Migration & Cutover Strategy",
+        "scenario": "How should you safely cut over from the legacy Flow monolith to the new Apex trigger handler in an active 24/7 enterprise production org?",
+        "options": [
+          {
+            "id": "st3_a",
+            "text": "Deploy an org-wide Custom Permission or Custom Metadata feature toggle allowing instant zero-downtime rollback if needed.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Well-Architected Operational Excellence mandates feature toggles for high-impact automation cutovers."
+          },
+          {
+            "id": "st3_b",
+            "text": "Deactivate the Flow directly in Production during business hours and deploy the trigger via Change Set.",
+            "isCorrect": false,
+            "coachingFeedback": "Risky! Direct deactivation without fallback causes race conditions and dropped transaction updates during cutover."
+          }
+        ]
+      },
+      {
+        "stageNumber": 4,
+        "stageName": "Stage 4: Telemetry & Observability",
+        "scenario": "What observability tool should be configured to proactively monitor whether the new Apex handler is staying within healthy CPU thresholds?",
+        "options": [
+          {
+            "id": "st4_a",
+            "text": "Subscribe to ApexExecution and FlowExecution Event Monitoring Real-Time Event Streams with CRM Analytics dashboards.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Event Monitoring provides sub-second transaction observability across CPU, SOQL, and DB time."
+          },
+          {
+            "id": "st4_b",
+            "text": "Wait for users to report email error notifications when limit exceptions occur.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Reactive user reports indicate failed operational governance and unmonitored production debt."
           }
         ]
       }

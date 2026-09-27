@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import {
+  ArchitecturalDomain,
   DrillDefinitionDTO,
   DrillFormat,
   DrillAttemptRecord,
@@ -12,7 +13,8 @@ const ALL_DRILLS = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
 
 export function useDrillRecommendation(
   format: DrillFormat,
-  completedDrills: Record<string, DrillAttemptRecord>
+  completedDrills: Record<string, DrillAttemptRecord>,
+  domain?: ArchitecturalDomain
 ) {
   const [sessionSkipCount, setSessionSkipCount] = useState<number>(0);
 
@@ -24,9 +26,10 @@ export function useDrillRecommendation(
       completedDrills,
       todayDateStr,
       format,
+      domain,
       sessionSkipCount,
     });
-  }, [completedDrills, todayDateStr, format, sessionSkipCount]);
+  }, [completedDrills, todayDateStr, format, domain, sessionSkipCount]);
 
   const advanceToNextDrill = useCallback(() => {
     setSessionSkipCount((prev) => prev + 1);
@@ -40,7 +43,7 @@ export function useDrillRecommendation(
     recommendation,
     currentDrill: recommendation?.drill ?? null,
     isDaily: recommendation?.isDaily ?? false,
-    reason: recommendation?.reason ?? 'daily',
+    reason: recommendation?.reason ?? null,
     isReviewMode: recommendation?.reason === 'review',
     previousAttempt: recommendation?.previousAttempt,
     uncompletedCount: recommendation?.uncompletedCount ?? 0,
@@ -51,3 +54,5 @@ export function useDrillRecommendation(
     resetSessionSkip,
   };
 }
+
+export { ALL_DRILLS };

@@ -1,0 +1,83 @@
+{
+  "id": "AGD-00601",
+  "title": "Dreamforce Agentforce crunch: Dual-Meter stakeholder pressure",
+  "format": "Scenario",
+  "domain": "Ai_And_Automation",
+  "domainLabel": "Agentic Enterprise Governance",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Trust", "Reliability"],
+  "version": 1,
+  "initialTrust": 65,
+  "initialReliability": 70,
+  "moves": [
+    {
+      "moveNumber": 1,
+      "stakeholderPersona": "Chief Technology Officer (CTO)",
+      "dialogueText": "\"We have 48 hours until Dreamforce keynotes. The CEO wants to demo an autonomous Agentforce agent that issues full refunds directly to customers up to $5,000 without human approval. Can we skip prompt defense testing to hit the demo window?\"",
+      "options": [
+        {
+          "id": "m1_a",
+          "text": "Agree to bypass prompt defense and deploy directly to production sandbox for speed.",
+          "trustDelta": 15,
+          "reliabilityDelta": -35,
+          "techDebtImpact": "Severe vulnerability: Prompt injection can trigger unlimited fraudulent refund loops.",
+          "isOptimal": false
+        },
+        {
+          "id": "m1_b",
+          "text": "Firmly counter with a Well-Architected Guardrail: Enforce a $100 autonomous cap and route >$100 to Human-in-the-Loop Omni-Channel with Trust Layer PII masking active.",
+          "trustDelta": 5,
+          "reliabilityDelta": 20,
+          "techDebtImpact": "Minimal: Establishes safe boundary pattern while delivering full keynote demo capability.",
+          "isOptimal": true
+        }
+      ]
+    },
+    {
+      "moveNumber": 2,
+      "stakeholderPersona": "VP of Customer Experience",
+      "dialogueText": "\"Our agent seems slow when fetching customer history. The dev team wants to query the entire 20M Account history table synchronously on every single user turn.\"",
+      "options": [
+        {
+          "id": "m2_a",
+          "text": "Allow unindexed synchronous queries on every turn to maximize conversational context.",
+          "trustDelta": -10,
+          "reliabilityDelta": -30,
+          "techDebtImpact": "Catastrophic: Triggers 10,000ms CPU timeouts and locks user sessions during peak hours.",
+          "isOptimal": false
+        },
+        {
+          "id": "m2_b",
+          "text": "Ground the agent via Data Cloud Unified Profile with pre-computed Calculated Insights instead of live SOQL scans.",
+          "trustDelta": 10,
+          "reliabilityDelta": 15,
+          "techDebtImpact": "Zero: Decouples analytics from core transaction engine with sub-200ms grounding retrieval.",
+          "isOptimal": true
+        }
+      ]
+    },
+    {
+      "moveNumber": 3,
+      "stakeholderPersona": "Lead Security Auditor",
+      "dialogueText": "\"Our compliance review shows customer Social Security Numbers and credit cards are entering prompt logs in plaintext. We must shut down the agent unless we can guarantee zero retention.\"",
+      "options": [
+        {
+          "id": "m3_a",
+          "text": "Activate the Einstein Trust Layer Zero Data Retention and PII Masking policy immediately.",
+          "trustDelta": 20,
+          "reliabilityDelta": 10,
+          "techDebtImpact": "Resolved: 100% compliance with GDPR/HIPAA with contractual LLM zero data retention.",
+          "isOptimal": true
+        },
+        {
+          "id": "m3_b",
+          "text": "Write a custom regex trigger in Apex to scrub plaintext logs after they are saved to disk.",
+          "trustDelta": -25,
+          "reliabilityDelta": -15,
+          "techDebtImpact": "Regulatory violation: Scrubbing after save still violates zero-retention mandates during inference.",
+          "isOptimal": false
+        }
+      ]
+    }
+  ]
+}

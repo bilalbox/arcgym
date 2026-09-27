@@ -2,7 +2,7 @@
   "id": "AGD-00102",
   "title": "Large Data Volumes: Eliminating Reporting Timeouts Across 18M Rows",
   "format": "Rapid_Fire",
-  "domain": "Large Data Volumes & Query Optimization",
+  "domain": "Data_Architecture",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Large Data Volumes & Query Optimization"
 }

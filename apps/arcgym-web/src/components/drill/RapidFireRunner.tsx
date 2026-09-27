@@ -1,123 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { ArcGymScoringEngine, ConfidenceAnchor, DrillDefinitionDTO, DrillFormat, DrillAttemptRecord } from '@arcgym/drill-core';
+import {
+  ArcGymScoringEngine,
+  ConfidenceAnchor,
+  RapidFireDrillDefinition,
+  DrillFormat,
+  DrillAttemptRecord,
+} from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
 import confetti from 'canvas-confetti';
-
-interface DrillOption {
-  id: string;
-  label: string;
-  isCorrect: boolean;
-  distractorAntipattern?: string;
-  rationale: string;
-  citationUrl?: string;
-}
-
-interface DrillStep {
-  id: string;
-  prompt: string;
-  options: DrillOption[];
-}
-
-interface RapidFireDrill {
-  id: string;
-  title: string;
-  domain: string;
-  pillars: string[];
-  steps: DrillStep[];
-}
-
-const DEFAULT_DRILL: RapidFireDrill = {
-  id: 'AGD-00101',
-  title: 'Enterprise Integration: Scale vs. Tight Coupling in Order Egress',
-  domain: 'Enterprise Integration & Event-Driven',
-  pillars: ['Reliability', 'Trust', 'Operational_Excellence'],
-  steps: [
-    {
-      id: 's1',
-      prompt: 'An enterprise ERP requires near-real-time updates when an Order or Account changes (450,000 events/day). Custom business payload transformation and filtering are required prior to external publication. Which integration pattern complies with Well-Architected Trust & Reliability?',
-      options: [
-        {
-          id: 's1_a',
-          label: 'Change Data Capture (CDC) with default channel publishing',
-          isCorrect: false,
-          distractorAntipattern: 'CDC publishes raw schema deltas and cannot filter or enrich business payloads prior to egress.',
-          rationale: 'CDC publishes raw database deltas and does not support custom Apex transformation or business filtering prior to external event egress.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/decision-guides#event-driven-architecture'
-        },
-        {
-          id: 's1_b',
-          label: 'Custom High-Volume Platform Event published via Apex after-save trigger with event enrichments',
-          isCorrect: true,
-          rationale: 'Platform Events decouple systems asynchronously, support custom schemas, and allow Apex trigger filtering and enrichment before event egress.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/decision-guides#event-driven-architecture'
-        },
-        {
-          id: 's1_c',
-          label: 'Direct synchronous REST callout inside an after-update Apex trigger',
-          isCorrect: false,
-          distractorAntipattern: 'Synchronous callouts inside triggers block worker threads and throw uncommitted work exceptions.',
-          rationale: 'Synchronous callouts inside triggers block database transactions, risk uncommitted work exceptions, and violate platform scalability standards.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/decision-guides#event-driven-architecture'
-        }
-      ]
-    },
-    {
-      id: 's2',
-      prompt: 'A global B2B portal has 80 million Order records. Complex dashboard queries filtering by Order Date and Customer Tier are resulting in SOQL 101 query timeouts. Which Well-Architected pattern resolves this Large Data Volume (LDV) bottleneck?',
-      options: [
-        {
-          id: 's2_a',
-          label: 'Add a standard custom index on Customer Tier and run query synchronously',
-          isCorrect: false,
-          distractorAntipattern: 'Low-cardinality picklists without compound indexing still exceed standard index selectivity thresholds on 80M records.',
-          rationale: 'Standard custom indexes alone do not provide deterministic performance on tables over 50M rows when filter selectivity is below the 10% threshold.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html'
-        },
-        {
-          id: 's2_b',
-          label: 'Deploy Salesforce Skinny Tables combining Order header and critical filter fields, backed by Big Objects archive tiering',
-          isCorrect: true,
-          rationale: 'Skinny tables eliminate expensive join tables in physical database storage for high-volume objects, dramatically reducing IOPS for complex queries.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html'
-        },
-        {
-          id: 's2_c',
-          label: 'Query all 80M records in Batch Apex with 200 batch size on page load',
-          isCorrect: false,
-          distractorAntipattern: 'Asynchronous batch jobs cannot power synchronous interactive UI dashboards and exceed flex queue limits.',
-          rationale: 'Batch Apex is designed for asynchronous bulk processing, not interactive portal latency budgets.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html'
-        }
-      ]
-    },
-    {
-      id: 's3',
-      prompt: 'An enterprise needs to query 15 billion historical customer telemetry transactions stored in Snowflake directly inside Data Cloud without incurring recurring cross-cloud data replication costs or storage synchronization lag. What pattern should you architect?',
-      options: [
-        {
-          id: 's3_a',
-          label: 'Zero Copy Snowflake Query Federation into Data Cloud DMOs via Apache Iceberg metadata sharing',
-          isCorrect: true,
-          rationale: 'Data Cloud Zero Copy queries federated Snowflake tables directly at the storage/query layer without copying or duplicating petabyte data volumes.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#inbound-zero-copy--external-platforms-to-data-360'
-        },
-        {
-          id: 's3_b',
-          label: 'Nightly MuleSoft ETL pipeline batch extracting 15B rows into Salesforce Big Objects',
-          isCorrect: false,
-          distractorAntipattern: 'Massive ETL replication burns huge egress costs, causes 24h data staleness, and hits platform storage ceilings.',
-          rationale: 'Traditional ETL duplication for multi-billion record datasets violates Cost Optimization and Operational Excellence.',
-          citationUrl: 'https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html'
-        }
-      ]
-    }
-  ]
-};
 
 interface StepResult {
   stepId: string;
@@ -128,7 +23,7 @@ interface StepResult {
 }
 
 export const RapidFireRunner: React.FC<{
-  drill?: RapidFireDrill | DrillDefinitionDTO;
+  drill: RapidFireDrillDefinition;
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
   onDrillComplete?: (result: {
@@ -140,7 +35,7 @@ export const RapidFireRunner: React.FC<{
   }) => void;
   onNextDrill?: () => void;
 }> = ({
-  drill = DEFAULT_DRILL,
+  drill,
   isReviewMode = false,
   previousAttempt,
   onDrillComplete,
@@ -250,10 +145,10 @@ export const RapidFireRunner: React.FC<{
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-medium text-miro-primary">Drill completed</CardTitle>
-          <CardDescription>
+          <h3 className="text-xl sm:text-2xl font-medium text-miro-primary">Drill completed</h3>
+          <p className="text-sm text-slate-500 mt-1">
             You committed all {drill.steps.length} architectural decision reps for today.
-          </CardDescription>
+          </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
@@ -268,7 +163,7 @@ export const RapidFireRunner: React.FC<{
               </p>
             </div>
             <div>
-              <span className="text-xs text-slate-500 font-medium">Avg conviction</span>
+              <span className="text-xs text-slate-500 font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-slate-800 mt-0.5">
                 {Math.round(stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length)}%
               </p>
@@ -292,7 +187,7 @@ export const RapidFireRunner: React.FC<{
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant={r.isCorrect ? 'success' : 'destructive'}>
-                    {r.confidence}% conviction
+                    {r.confidence}% confidence
                   </Badge>
                   <span className={`font-mono text-xs font-semibold ${r.score >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                     {r.score >= 0 ? `+${r.score}` : r.score} pts
@@ -335,7 +230,7 @@ export const RapidFireRunner: React.FC<{
       <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="domain">{drill.domain}</Badge>
+            <Badge variant="domain">{drill.domainLabel}</Badge>
             {(drill.pillars || []).map((p) => (
               <Badge key={p} variant="pillar">
                 {p}
@@ -433,7 +328,7 @@ export const RapidFireRunner: React.FC<{
                   </Badge>
                 )}
                 <span className="text-xs text-slate-500">
-                  Conviction: {selectedConfidence}%
+                  Confidence: {selectedConfidence}%
                 </span>
               </div>
               <span className="text-sm font-mono font-semibold text-miro-primary">

@@ -2,7 +2,7 @@
   "id": "AGD-00106",
   "title": "High-Velocity Ingestion: Bulk API 2.0 vs Composite Graph API",
   "format": "Rapid_Fire",
-  "domain": "Enterprise Integration & Event-Driven",
+  "domain": "Integration_Apis",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Enterprise Integration & Event-Driven"
 }

@@ -1,104 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { DrillFormat } from '@arcgym/drill-core';
+import { DrillFormat, ScenarioDrillDefinition } from '@arcgym/drill-core';
 import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-interface ScenarioMove {
-  moveNumber: number;
-  stakeholderPersona: string;
-  dialogueText: string;
-  options: {
-    id: string;
-    text: string;
-    trustDelta: number;
-    reliabilityDelta: number;
-    techDebtImpact: string;
-    isOptimal: boolean;
-  }[];
-}
-
-const SCENARIO_MOVES: ScenarioMove[] = [
-
-  {
-    moveNumber: 1,
-    stakeholderPersona: 'Chief Technology Officer (CTO)',
-    dialogueText:
-      '"We have 48 hours until Dreamforce keynotes. The CEO wants to demo an autonomous Agentforce agent that issues full refunds directly to customers up to $5,000 without human approval. Can we skip prompt defense testing to hit the demo window?"',
-    options: [
-      {
-        id: 'm1_a',
-        text: 'Agree to bypass prompt defense and deploy directly to production sandbox for speed.',
-        trustDelta: 15,
-        reliabilityDelta: -35,
-        techDebtImpact: 'Severe vulnerability: Prompt injection can trigger unlimited fraudulent refund loops.',
-        isOptimal: false,
-      },
-      {
-        id: 'm1_b',
-        text: 'Firmly counter with a Well-Architected Guardrail: Enforce a $100 autonomous cap and route >$100 to Human-in-the-Loop Omni-Channel with Trust Layer PII masking active.',
-        trustDelta: 5,
-        reliabilityDelta: 20,
-        techDebtImpact: 'Minimal: Establishes safe boundary pattern while delivering full keynote demo capability.',
-        isOptimal: true,
-      },
-    ],
-  },
-  {
-    moveNumber: 2,
-    stakeholderPersona: 'VP of Customer Experience',
-    dialogueText:
-      '"Our agent seems slow when fetching customer history. The dev team wants to query the entire 20M Account history table synchronously on every single user turn."',
-    options: [
-      {
-        id: 'm2_a',
-        text: 'Allow unindexed synchronous queries on every turn to maximize conversational context.',
-        trustDelta: -10,
-        reliabilityDelta: -30,
-        techDebtImpact: 'Catastrophic: Triggers 10,000ms CPU timeouts and locks user sessions during peak hours.',
-        isOptimal: false,
-      },
-      {
-        id: 'm2_b',
-        text: 'Ground the agent via Data Cloud Unified Profile with pre-computed Calculated Insights instead of live SOQL scans.',
-        trustDelta: 10,
-        reliabilityDelta: 15,
-        techDebtImpact: 'Zero: Decouples analytics from core transaction engine with sub-200ms grounding retrieval.',
-        isOptimal: true,
-      },
-    ],
-  },
-  {
-    moveNumber: 3,
-    stakeholderPersona: 'Lead Security Auditor',
-    dialogueText:
-      '"Our compliance review shows customer Social Security Numbers and credit cards are entering prompt logs in plaintext. We must shut down the agent unless we can guarantee zero retention."',
-    options: [
-      {
-        id: 'm3_a',
-        text: 'Activate the Einstein Trust Layer Zero Data Retention and PII Masking policy immediately.',
-        trustDelta: 20,
-        reliabilityDelta: 10,
-        techDebtImpact: 'Resolved: 100% compliance with GDPR/HIPAA with contractual LLM zero data retention.',
-        isOptimal: true,
-      },
-      {
-        id: 'm3_b',
-        text: 'Write a custom regex trigger in Apex to scrub plaintext logs after they are saved to disk.',
-        trustDelta: -25,
-        reliabilityDelta: -15,
-        techDebtImpact: 'Regulatory violation: Scrubbing after save still violates zero-retention mandates during inference.',
-        isOptimal: false,
-      },
-    ],
-  },
-];
-
 export const DualMeterScenario: React.FC<{
+  drill: ScenarioDrillDefinition;
   isReviewMode?: boolean;
   onDrillComplete?: (result: {
     drillId: string;
@@ -107,17 +18,29 @@ export const DualMeterScenario: React.FC<{
     accuracy: number;
     streakDays: number;
   }) => void;
-}> = ({ isReviewMode, onDrillComplete }) => {
+  onNextDrill?: () => void;
+}> = ({ drill, isReviewMode, onDrillComplete, onNextDrill }) => {
   const [currentMoveIdx, setCurrentMoveIdx] = useState(0);
-  const [trustScore, setTrustScore] = useState(65);
-  const [reliabilityScore, setReliabilityScore] = useState(70);
+  const [trustScore, setTrustScore] = useState(drill.initialTrust);
+  const [reliabilityScore, setReliabilityScore] = useState(drill.initialReliability);
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [hangoverLogs, setHangoverLogs] = useState<string[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  const currentMove = SCENARIO_MOVES[currentMoveIdx];
+  useEffect(() => {
+    setCurrentMoveIdx(0);
+    setTrustScore(drill.initialTrust);
+    setReliabilityScore(drill.initialReliability);
+    setSelectedOptionId(null);
+    setSelectedConfidence(null);
+    setIsSubmitted(false);
+    setHangoverLogs([]);
+    setIsCompleted(false);
+  }, [drill.id, drill.initialTrust, drill.initialReliability]);
+
+  const currentMove = drill.moves[currentMoveIdx];
 
   const handleSubmit = () => {
     if (!selectedOptionId || !selectedConfidence) return;
@@ -127,13 +50,15 @@ export const DualMeterScenario: React.FC<{
 
     setTrustScore((prev) => Math.max(0, Math.min(100, prev + chosen.trustDelta)));
     setReliabilityScore((prev) => Math.max(0, Math.min(100, prev + chosen.reliabilityDelta)));
-    setHangoverLogs((prev) => [...prev, `${chosen.isOptimal ? '✓' : '⚠️'} Move ${currentMove.moveNumber}: ${chosen.techDebtImpact}`]);
-
+    setHangoverLogs((prev) => [
+      ...prev,
+      `${chosen.isOptimal ? '✓' : '⚠️'} Move ${currentMove.moveNumber}: ${chosen.techDebtImpact}`,
+    ]);
     setIsSubmitted(true);
   };
 
   const handleNext = () => {
-    if (currentMoveIdx + 1 < SCENARIO_MOVES.length) {
+    if (currentMoveIdx + 1 < drill.moves.length) {
       setCurrentMoveIdx((prev) => prev + 1);
       setSelectedOptionId(null);
       setSelectedConfidence(null);
@@ -143,7 +68,7 @@ export const DualMeterScenario: React.FC<{
       confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       const finalScore = Math.round((trustScore + reliabilityScore) / 2);
       onDrillComplete?.({
-        drillId: 'AGD-00302',
+        drillId: drill.id,
         format: 'Scenario',
         score: finalScore,
         accuracy: trustScore >= 50 && reliabilityScore >= 50 ? 1.0 : 0.5,
@@ -154,8 +79,8 @@ export const DualMeterScenario: React.FC<{
 
   const handleReset = () => {
     setCurrentMoveIdx(0);
-    setTrustScore(65);
-    setReliabilityScore(70);
+    setTrustScore(drill.initialTrust);
+    setReliabilityScore(drill.initialReliability);
     setSelectedOptionId(null);
     setSelectedConfidence(null);
     setIsSubmitted(false);
@@ -194,7 +119,11 @@ export const DualMeterScenario: React.FC<{
             </div>
             <div>
               <span className="text-xs text-slate-500 font-medium">Platform reliability</span>
-              <p className={`text-2xl font-medium mt-0.5 ${reliabilityScore >= 60 ? 'text-miro-blue' : 'text-rose-600'}`}>
+              <p
+                className={`text-2xl font-medium mt-0.5 ${
+                  reliabilityScore >= 60 ? 'text-miro-blue' : 'text-rose-600'
+                }`}
+              >
                 {reliabilityScore}%
               </p>
             </div>
@@ -209,9 +138,16 @@ export const DualMeterScenario: React.FC<{
             </div>
           </div>
 
-          <Button onClick={handleReset} variant="secondary" className="w-full gap-2">
-            <RotateCcw className="h-4 w-4" /> Replay scenario
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={handleReset} variant="secondary" className="flex-1 gap-2">
+              <RotateCcw className="h-4 w-4" /> Replay scenario
+            </Button>
+            {onNextDrill && (
+              <Button onClick={onNextDrill} className="flex-1">
+                Next drill
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     );
@@ -222,9 +158,12 @@ export const DualMeterScenario: React.FC<{
       <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="domain">Agentic Enterprise Governance</Badge>
-            <Badge variant="pillar">Trust</Badge>
-            <Badge variant="pillar">Reliability</Badge>
+            <Badge variant="domain">{drill.domainLabel}</Badge>
+            {drill.pillars.map((p) => (
+              <Badge key={p} variant="pillar">
+                {p}
+              </Badge>
+            ))}
             {isReviewMode && (
               <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
                 Review Mode
@@ -232,11 +171,10 @@ export const DualMeterScenario: React.FC<{
             )}
           </div>
           <span className="text-xs text-slate-500 font-medium">
-            Move {currentMove.moveNumber} of {SCENARIO_MOVES.length}
+            Move {currentMove.moveNumber} of {drill.moves.length}
           </span>
         </div>
 
-        {/* Dual Meters */}
         <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-miro-hairlineSoft">
           <div>
             <div className="flex justify-between text-xs font-medium mb-1">
@@ -271,9 +209,7 @@ export const DualMeterScenario: React.FC<{
           <span className="text-xs font-semibold text-slate-800">
             Stakeholder transmission: {currentMove.stakeholderPersona}
           </span>
-          <p className="text-sm font-normal text-slate-700 italic leading-relaxed">
-            {currentMove.dialogueText}
-          </p>
+          <p className="text-sm font-normal text-slate-700 italic leading-relaxed">{currentMove.dialogueText}</p>
         </div>
 
         <div className="space-y-3">
@@ -320,7 +256,10 @@ export const DualMeterScenario: React.FC<{
               {currentMove.options.find((o) => o.id === selectedOptionId)?.techDebtImpact}
             </p>
             <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
-              Continue to move {currentMove.moveNumber + 1} <ArrowRight className="h-4 w-4" />
+              {currentMoveIdx + 1 < drill.moves.length
+                ? `Continue to move ${currentMove.moveNumber + 1}`
+                : 'Finish scenario'}{' '}
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         )}

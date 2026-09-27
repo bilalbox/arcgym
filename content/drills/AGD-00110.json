@@ -2,7 +2,7 @@
   "id": "AGD-00110",
   "title": "Event Streaming Modernization: Pub/Sub API with Replay ID vs CometD",
   "format": "Rapid_Fire",
-  "domain": "Enterprise Integration & Event-Driven",
+  "domain": "Integration_Apis",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Enterprise Integration & Event-Driven"
 }

@@ -2,7 +2,7 @@
   "id": "AGD-00303",
   "title": "Einstein Trust Layer: Prompt Defense, PII Masking & Zero Retention",
   "format": "Rapid_Fire",
-  "domain": "Security, Sharing & Trust Boundaries",
+  "domain": "Security_And_Access",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Trust",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Security, Sharing & Trust Boundaries"
 }

@@ -2,7 +2,7 @@
   "id": "AGD-00105",
   "title": "Portal Security: High-Volume Sharing Architecture for 500,000 Users",
   "format": "Rapid_Fire",
-  "domain": "Security, Sharing & Trust Boundaries",
+  "domain": "Security_And_Access",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Security, Sharing & Trust Boundaries"
 }

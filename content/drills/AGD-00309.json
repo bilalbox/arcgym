@@ -2,7 +2,7 @@
   "id": "AGD-00309",
   "title": "Multi-Agent Decomposition: Specialized Sub-Agents vs Monolithic Architectures",
   "format": "Rapid_Fire",
-  "domain": "Agentforce & Agentic Enterprise",
+  "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Agentforce & Agentic Enterprise"
 }

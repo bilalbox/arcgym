@@ -2,7 +2,7 @@
   "id": "AGD-00107",
   "title": "Data Skew Mitigation: Account Skew and Lookup Lock Contention",
   "format": "Rapid_Fire",
-  "domain": "Large Data Volumes & Query Optimization",
+  "domain": "Data_Architecture",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Large Data Volumes & Query Optimization"
 }

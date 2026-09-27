@@ -1,8 +1,8 @@
 {
   "id": "AGD-00201",
   "title": "Data Cloud: Zero Copy Federation vs Scheduled Reverse ETL",
-  "format": "Currency",
-  "domain": "Data 360 & Data Cloud Zero Copy",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
@@ -40,5 +40,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Data 360 & Data Cloud Zero Copy"
 }

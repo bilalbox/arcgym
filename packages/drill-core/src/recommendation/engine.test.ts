@@ -4,39 +4,34 @@ import {
   getDailyDrillIndex,
   selectRecommendedDrill,
 } from './engine.js';
-import { DrillDefinitionDTO, DrillAttemptRecord } from '../types/drill.js';
+import {
+  ArchitecturalDomain,
+  DrillDefinitionDTO,
+  DrillAttemptRecord,
+} from '../types/drill.js';
 
-const mockDrills: DrillDefinitionDTO[] = [
-  {
-    id: 'D-1',
-    title: 'Drill 1',
+function mockDrill(
+  id: string,
+  domain: ArchitecturalDomain,
+  domainLabel = domain
+): DrillDefinitionDTO {
+  return {
+    id,
+    title: `Drill ${id}`,
     format: 'Rapid_Fire',
-    domain: 'Domain A',
+    domain,
+    domainLabel,
     difficulty: 'Lead_CTA',
     pillars: ['Reliability'],
     steps: [],
     version: 1,
-  },
-  {
-    id: 'D-2',
-    title: 'Drill 2',
-    format: 'Rapid_Fire',
-    domain: 'Domain B',
-    difficulty: 'Lead_CTA',
-    pillars: ['Trust'],
-    steps: [],
-    version: 1,
-  },
-  {
-    id: 'D-3',
-    title: 'Drill 3',
-    format: 'Rapid_Fire',
-    domain: 'Domain C',
-    difficulty: 'Lead_CTA',
-    pillars: ['Operational_Excellence'],
-    steps: [],
-    version: 1,
-  },
+  };
+}
+
+const mockDrills: DrillDefinitionDTO[] = [
+  mockDrill('D-1', 'Platform_Core'),
+  mockDrill('D-2', 'Data_Architecture'),
+  mockDrill('D-3', 'Platform_Core'),
 ];
 
 describe('Recommendation Engine', () => {
@@ -68,12 +63,38 @@ describe('Recommendation Engine', () => {
     expect(result?.completionPercentage).toBe(0);
   });
 
+  it('hard-filters by Architectural Domain when provided', () => {
+    const today = '2026-09-27';
+    const result = selectRecommendedDrill({
+      drills: mockDrills,
+      completedDrills: {},
+      todayDateStr: today,
+      format: 'Rapid_Fire',
+      domain: 'Platform_Core',
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.totalCount).toBe(2);
+    expect(result?.drill.domain).toBe('Platform_Core');
+  });
+
+  it('returns null when Format ∩ Domain is empty', () => {
+    const result = selectRecommendedDrill({
+      drills: mockDrills,
+      completedDrills: {},
+      todayDateStr: '2026-09-27',
+      format: 'Rapid_Fire',
+      domain: 'Infrastructure',
+    });
+
+    expect(result).toBeNull();
+  });
+
   it('does NOT suggest the same drill if visitor has already completed today drill', () => {
     const today = '2026-09-27';
     const dailyIdx = getDailyDrillIndex(today, mockDrills.length);
     const dailyDrill = mockDrills[dailyIdx];
 
-    // Mark daily drill as completed
     const completed: Record<string, DrillAttemptRecord> = {
       [dailyDrill.id]: {
         drillId: dailyDrill.id,
@@ -93,7 +114,6 @@ describe('Recommendation Engine', () => {
     });
 
     expect(result).not.toBeNull();
-    // Must NOT be the daily drill
     expect(result?.drill.id).not.toBe(dailyDrill.id);
     expect(result?.reason).toBe('next_uncompleted');
     expect(result?.isDaily).toBe(false);
@@ -107,7 +127,7 @@ describe('Recommendation Engine', () => {
       'D-1': {
         drillId: 'D-1',
         format: 'Rapid_Fire',
-        completedAt: '2026-09-20T10:00:00Z', // oldest
+        completedAt: '2026-09-20T10:00:00Z',
         score: 70,
         accuracy: 0.6,
         attemptsCount: 1,
@@ -141,7 +161,6 @@ describe('Recommendation Engine', () => {
     expect(result?.reason).toBe('review');
     expect(result?.uncompletedCount).toBe(0);
     expect(result?.completionPercentage).toBe(100);
-    // Oldest completed is D-1
     expect(result?.drill.id).toBe('D-1');
     expect(result?.previousAttempt?.score).toBe(70);
   });

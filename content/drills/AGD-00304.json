@@ -2,7 +2,7 @@
   "id": "AGD-00304",
   "title": "Topic Classification: Authoring Disambiguated Natural Language Descriptions",
   "format": "Rapid_Fire",
-  "domain": "Agentforce & Agentic Enterprise",
+  "domain": "Ai_And_Automation",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Operational_Excellence",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Agentforce & Agentic Enterprise"
 }

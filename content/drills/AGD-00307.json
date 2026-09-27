@@ -2,7 +2,7 @@
   "id": "AGD-00307",
   "title": "Agent Development Lifecycle (ADLC): Benchmarking Synthetic Evals",
   "format": "Rapid_Fire",
-  "domain": "Operational Excellence (Maintainability & Delivery)",
+  "domain": "Devops_Lifecycle",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Operational_Excellence",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Operational Excellence (Maintainability & Delivery)"
 }

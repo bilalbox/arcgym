@@ -2,10 +2,10 @@
   "id": "AGD-00401",
   "title": "Agentforce Atlas Reasoning and Guardrails: The LLM boundary: where judgment ends and code begins (Part 1)",
   "format": "Rapid_Fire",
-  "domain": "Agentic Enterprise & Governance",
+  "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
   "pillars": [
-    "Agentforce"
+    "Reliability"
   ],
   "version": 1,
   "steps": [
@@ -72,5 +72,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Agentic Enterprise & Governance"
 }

@@ -2,7 +2,7 @@
   "id": "AGD-00301",
   "title": "Atlas Reasoning Engine: Autonomous Planning vs Hardcoded Decision Trees",
   "format": "Rapid_Fire",
-  "domain": "Agentforce & Agentic Enterprise",
+  "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Agentforce & Agentic Enterprise"
 }

@@ -2,7 +2,7 @@
   "id": "AGD-00305",
   "title": "Prompt Injection Defense: Delimiters and Context Shielding",
   "format": "Rapid_Fire",
-  "domain": "Security, Sharing & Trust Boundaries",
+  "domain": "Security_And_Access",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Security, Sharing & Trust Boundaries"
 }

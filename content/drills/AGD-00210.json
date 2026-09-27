@@ -2,7 +2,7 @@
   "id": "AGD-00210",
   "title": "Consumption Credit Governance: Batch vs Streaming Credit Economics",
   "format": "Rapid_Fire",
-  "domain": "Core Platform & Execution Limits",
+  "domain": "Platform_Core",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Core Platform & Execution Limits"
 }

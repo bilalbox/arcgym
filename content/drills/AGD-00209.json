@@ -2,7 +2,7 @@
   "id": "AGD-00209",
   "title": "Data Lineage & Privacy: Handling GDPR Deletions in Data Cloud",
   "format": "Rapid_Fire",
-  "domain": "Security, Sharing & Trust Boundaries",
+  "domain": "Security_And_Access",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Security, Sharing & Trust Boundaries"
 }

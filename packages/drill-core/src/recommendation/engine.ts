@@ -1,4 +1,9 @@
-import { DrillDefinitionDTO, DrillFormat, DrillAttemptRecord } from '../types/drill.js';
+import {
+  ArchitecturalDomain,
+  DrillDefinitionDTO,
+  DrillFormat,
+  DrillAttemptRecord,
+} from '../types/drill.js';
 
 export type RecommendationReason = 'daily' | 'next_uncompleted' | 'review';
 
@@ -19,7 +24,7 @@ export function hashDateString(dateStr: string): number {
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
     const char = dateStr.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash |= 0;
   }
   return Math.abs(hash);
@@ -34,26 +39,33 @@ export function getDailyDrillIndex(dateStr: string, totalDrills: number): number
 }
 
 /**
- * Selects the optimal drill for the visitor:
- * 1. If today's drill for the format is uncompleted, recommend it (reason: 'daily').
- * 2. If today's drill is already completed, recommend the next uncompleted drill (reason: 'next_uncompleted').
- *    If an offset is specified (e.g. user clicked "Next Drill"), skip forward among uncompleted drills.
- * 3. If all drills in the format are completed, enter review mode (reason: 'review'),
- *    prioritizing the least recently completed drill or lowest score.
+ * Selects the optimal drill for the visitor within Format ∩ optional Architectural Domain:
+ * 1. If today's drill is uncompleted, recommend it (reason: 'daily').
+ * 2. If today's drill is completed, recommend the next uncompleted drill.
+ * 3. If all candidates are completed, enter review mode.
  */
 export function selectRecommendedDrill(params: {
   drills: DrillDefinitionDTO[];
   completedDrills: Record<string, DrillAttemptRecord>;
   todayDateStr: string;
   format?: DrillFormat;
+  domain?: ArchitecturalDomain;
   sessionSkipCount?: number;
 }): RecommendationResult | null {
-  const { drills, completedDrills, todayDateStr, format, sessionSkipCount = 0 } = params;
+  const {
+    drills,
+    completedDrills,
+    todayDateStr,
+    format,
+    domain,
+    sessionSkipCount = 0,
+  } = params;
 
-  // Filter by format if provided
-  const candidateDrills = format
-    ? drills.filter((d) => d.format === format)
-    : drills;
+  const candidateDrills = drills.filter((d) => {
+    if (format && d.format !== format) return false;
+    if (domain && d.domain !== domain) return false;
+    return true;
+  });
 
   if (candidateDrills.length === 0) {
     return null;
@@ -62,13 +74,14 @@ export function selectRecommendedDrill(params: {
   const totalCount = candidateDrills.length;
   const uncompleted = candidateDrills.filter((d) => !completedDrills[d.id]);
   const uncompletedCount = uncompleted.length;
-  const completionPercentage = Math.round(((totalCount - uncompletedCount) / totalCount) * 100);
+  const completionPercentage = Math.round(
+    ((totalCount - uncompletedCount) / totalCount) * 100
+  );
 
   const dailyIndex = getDailyDrillIndex(todayDateStr, totalCount);
   const todayDrill = candidateDrills[dailyIndex];
   const isTodayCompleted = Boolean(completedDrills[todayDrill.id]);
 
-  // Case 1: Today's drill is NOT completed and user hasn't skipped past it
   if (!isTodayCompleted && sessionSkipCount === 0) {
     return {
       drill: todayDrill,
@@ -80,9 +93,7 @@ export function selectRecommendedDrill(params: {
     };
   }
 
-  // Case 2: Today's drill is completed, or user requested next drill, but uncompleted drills remain
   if (uncompletedCount > 0) {
-    // Sort uncompleted candidates starting circularly after the daily index
     const sortedUncompleted = [...uncompleted].sort((a, b) => {
       const idxA = candidateDrills.findIndex((d) => d.id === a.id);
       const idxB = candidateDrills.findIndex((d) => d.id === b.id);
@@ -91,7 +102,6 @@ export function selectRecommendedDrill(params: {
       return distA - distB;
     });
 
-    // Handle skip count safely with modulo
     const chosenIndex = sessionSkipCount % sortedUncompleted.length;
     const chosenDrill = sortedUncompleted[chosenIndex];
 
@@ -105,8 +115,6 @@ export function selectRecommendedDrill(params: {
     };
   }
 
-  // Case 3: All candidate drills are completed -> Mastery Review Mode
-  // Sort candidate drills by oldest completedAt (or lowest score as tiebreak)
   const reviewSorted = [...candidateDrills].sort((a, b) => {
     const recA = completedDrills[a.id];
     const recB = completedDrills[b.id];
@@ -114,9 +122,9 @@ export function selectRecommendedDrill(params: {
 
     const timeA = new Date(recA.completedAt).getTime();
     const timeB = new Date(recB.completedAt).getTime();
-    if (timeA !== timeB) return timeA - timeB; // Oldest first
+    if (timeA !== timeB) return timeA - timeB;
 
-    return (recA.score || 0) - (recB.score || 0); // Lowest score first
+    return (recA.score || 0) - (recB.score || 0);
   });
 
   const reviewIndex = sessionSkipCount % reviewSorted.length;

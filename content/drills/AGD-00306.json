@@ -2,7 +2,7 @@
   "id": "AGD-00306",
   "title": "Human-in-the-Loop (HITL): Seamless State Handoff to Omni-Channel",
   "format": "Rapid_Fire",
-  "domain": "Agentforce & Agentic Enterprise",
+  "domain": "Ai_And_Automation",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Fairness",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Agentforce & Agentic Enterprise"
 }

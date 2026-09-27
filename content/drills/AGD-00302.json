@@ -1,8 +1,8 @@
 {
   "id": "AGD-00302",
   "title": "Action Guardrails: Server-Side Limit Checks vs Prompt Promises",
-  "format": "Scenario",
-  "domain": "Agentforce & Agentic Enterprise",
+  "format": "Rapid_Fire",
+  "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Agentforce & Agentic Enterprise"
 }

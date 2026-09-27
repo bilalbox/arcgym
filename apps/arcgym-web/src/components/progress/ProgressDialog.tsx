@@ -93,7 +93,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               .map((attempt) => {
                 const def = drillMap.get(attempt.drillId);
                 const title = def?.title || `Drill ${attempt.drillId}`;
-                const domain = def?.domain || attempt.format;
+                const domain = def?.domainLabel || def?.domain || attempt.format;
                 const dateStr = new Date(attempt.completedAt).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',

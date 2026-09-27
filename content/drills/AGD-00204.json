@@ -2,7 +2,7 @@
   "id": "AGD-00204",
   "title": "Zero Copy Lakehouse: Apache Iceberg Tables vs JDBC Ingest",
   "format": "Rapid_Fire",
-  "domain": "Data 360 & Data Cloud Zero Copy",
+  "domain": "Data_Architecture",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Data 360 & Data Cloud Zero Copy"
 }

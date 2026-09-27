@@ -31,6 +31,10 @@ __pycache__/
 .venv/
 venv/
 data/chroma/
+data/*.db
+data/*.db-*
+data/trailhead*
+
 
 # Local scratch & archived stacks (LWR / SFDX)
 .scratch/

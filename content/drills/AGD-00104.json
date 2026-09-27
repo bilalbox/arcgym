@@ -2,7 +2,7 @@
   "id": "AGD-00104",
   "title": "Transaction Boundaries: Uncommitted Work and Callouts in Apex",
   "format": "Rapid_Fire",
-  "domain": "Core Platform & Execution Limits",
+  "domain": "Platform_Core",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Core Platform & Execution Limits"
 }

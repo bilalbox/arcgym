@@ -2,7 +2,7 @@
   "id": "AGD-00208",
   "title": "Segment Activation: Egress Optimization to Cloud Storage",
   "format": "Rapid_Fire",
-  "domain": "Data 360 & Data Cloud Zero Copy",
+  "domain": "Data_Architecture",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Cost_Optimization",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Data 360 & Data Cloud Zero Copy"
 }

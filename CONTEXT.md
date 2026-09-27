@@ -1,12 +1,20 @@
 # ArcGym (Architect Gym)
 
-ArcGym is a daily architectural judgment practice platform for Salesforce Architects, training high-stakes decision-making across Core Platform, Data 360, and Agentic AI using the Salesforce Well-Architected Framework.
+ArcGym is a daily architectural judgment practice platform for Salesforce Architects, training high-stakes decision-making across Architectural Domains using the Salesforce Well-Architected Framework.
 
 ## Language
 
 **Drill**:
 A self-contained, 2-minute daily architectural judgment practice exercise.
 _Avoid_: Quiz, test, exam, flashcard
+
+**Architectural Domain**:
+One of seven practice categories drawn from Salesforce Architect Fundamentals (Platform Core, Data Architecture, Security and Access, Integration APIs, AI and Automation, Infrastructure, DevOps Lifecycle). Every Drill has exactly one primary Architectural Domain. Orthogonal to Well-Architected pillars: domain is *where* on the platform map a Drill sits; pillars are *how* the Architectural Trade-Off is judged.
+_Avoid_: Topic tag, free-form domain string, Well-Architected pillar
+
+**Domain Label**:
+A short human-facing curriculum title for a Drill (for example "Data 360 & Data Cloud Zero Copy") that sits beside its Architectural Domain. Used for display, not filtering.
+_Avoid_: Architectural Domain, subtitle, SEO keyword
 
 **Confidence Calibration**:
 The practice of rating self-assessed certainty before committing an answer, scoring architects on whether they know what they know (and know what they don't know).
@@ -17,7 +25,7 @@ A design tension evaluated across the Salesforce Well-Architected Framework pill
 _Avoid_: Feature preference, single right answer
 
 **Drill Format**:
-One of four distinct interaction archetypes: Lesson, Rapid Fire, Currency, or Scenario.
+One of four distinct interaction archetypes: Lesson, Rapid Fire, Currency, or Scenario. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
 _Avoid_: Question type, quiz mode
 
 **Architect Budget**:

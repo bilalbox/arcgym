@@ -20,10 +20,12 @@ Progress and confidence calibration live in the browser. There is no Salesforce 
 apps/arcgym-web/     Cloudflare Pages React app (UI + Functions)
 packages/drill-core/ Pure TypeScript domain library
 content/drills/      Authoritative drill JSON
+content/scenarios/   Curated recurring problem patterns (Trailhead Community)
 scripts/             Drill build, KV seed, RAG crawler/generator
 docs/research/       Domain research notes
 design.md            Visual system (Miro × Salesforce craft)
 CONTEXT.md           Product language / glossary
+
 ```
 
 ## Prerequisites
@@ -62,12 +64,19 @@ pnpm seed
 # Validate & emit canonical-drills.json only
 pnpm build:drills
 
-# RAG crawl / index (Python + Chroma under data/chroma/, gitignored)
+# RAG crawl / index official docs (Python + Chroma under data/chroma/, gitignored)
 python scripts/crawler/crawl_architect.py
 
-# Generate a draft drill from Chroma context
+# Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
+python scripts/crawler/crawl_trailhead.py --limit 100
+
+# Extract recurring practitioner problem patterns & antipattern distractors
+python scripts/crawler/analyze_trailhead_patterns.py
+
+# Generate a draft drill from Chroma context & community scenarios
 npx tsx scripts/generator/generate-drill.ts --topic "Your topic"
 ```
+
 
 ## Drill formats
 
@@ -85,4 +94,4 @@ UI follows the Miro-adapted ArcGym design system: black-pill primary actions, Sa
 ## Notes
 
 - `.archive/` may contain retired LWR / SFDX experiments; it is gitignored and not part of the runtime.
-- Local scratch, Chroma indexes, Wrangler caches, and env files are gitignored — see [`.gitignore`](./.gitignore).
+- Local scratch, Chroma indexes, SQLite databases (`data/*.db`), Wrangler caches, and env files are gitignored — see [`.gitignore`](./.gitignore).

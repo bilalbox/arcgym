@@ -2,7 +2,7 @@
   "id": "AGD-00108",
   "title": "Concurrency Control: Pessimistic vs Optimistic Locking in Flash Sales",
   "format": "Rapid_Fire",
-  "domain": "Core Platform & Execution Limits",
+  "domain": "Platform_Core",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Core Platform & Execution Limits"
 }

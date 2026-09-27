@@ -2,7 +2,7 @@
   "id": "AGD-00205",
   "title": "Calculated Insights vs Streaming Insights: Real-Time Windowing",
   "format": "Rapid_Fire",
-  "domain": "Data 360 & Data Cloud Zero Copy",
+  "domain": "Data_Architecture",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Reliability",
@@ -39,5 +39,6 @@
         }
       ]
     }
-  ]
+  ],
+  "domainLabel": "Data 360 & Data Cloud Zero Copy"
 }

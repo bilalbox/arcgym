@@ -31,6 +31,7 @@ if (!fs.existsSync(WEB_PUBLIC_DRILLS)) {
 const drills = JSON.parse(fs.readFileSync(WEB_PUBLIC_DRILLS, 'utf-8')) as Array<{
   id: string;
   domain?: string;
+  domainLabel?: string;
   steps?: Array<{ options?: Array<{ citationUrl?: string }> }>;
 }>;
 
@@ -49,6 +50,16 @@ const kvEntries = [
   })),
 ];
 
+const domainCounts = new Map<string, number>();
+for (const drill of drills) {
+  const domain = drill.domain ?? 'unknown';
+  domainCounts.set(domain, (domainCounts.get(domain) || 0) + 1);
+}
+
+console.log('\n--- Curriculum Architectural Domain distribution ---');
+for (const [domain, count] of domainCounts.entries()) {
+  console.log(` • ${domain.padEnd(45)} : ${count}`);
+}
 fs.writeFileSync(KV_PAYLOAD_PATH, JSON.stringify(kvEntries, null, 2), 'utf-8');
 console.log(`Wrote KV bulk payload (${kvEntries.length} entries) → ${KV_PAYLOAD_PATH}`);
 
@@ -62,17 +73,6 @@ try {
 } catch (e: unknown) {
   const message = e instanceof Error ? e.message : String(e);
   console.warn(`Cloudflare KV sync skipped or failed: ${message}`);
-}
-
-const domainCounts = new Map<string, number>();
-for (const drill of drills) {
-  const domain = drill.domain ?? 'unknown';
-  domainCounts.set(domain, (domainCounts.get(domain) || 0) + 1);
-}
-
-console.log('\n--- Curriculum domain distribution ---');
-for (const [domain, count] of domainCounts.entries()) {
-  console.log(` • ${domain.padEnd(45)} : ${count}`);
 }
 
 const grounded = drills.filter((d) =>
