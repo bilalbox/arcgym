@@ -5,8 +5,12 @@
   "domain": "Platform_Core",
   "domainLabel": "Core Platform Governor Capacity",
   "difficulty": "Lead_CTA",
-  "pillars": ["Reliability", "Cost_Optimization"],
+  "pillars": [
+    "Reliability",
+    "Cost_Optimization"
+  ],
   "version": 1,
+  "status": "draft",
   "prompt": "Order spike pipeline: allocate 100-point governor capacity budget",
   "detail": "During a peak volume spike (10,000 orders/sec into Salesforce), allocate your 100-point transaction envelope across four critical architectural resources to prevent transaction rollback under high concurrency.",
   "totalPoints": 100,
@@ -45,11 +49,27 @@
     }
   ],
   "optimalRules": [
-    { "categoryId": "soql", "op": "lte", "value": 25 },
-    { "categoryId": "cpu", "op": "gte", "value": 30 },
-    { "categoryId": "heap", "op": "lte", "value": 25 },
-    { "categoryId": "callout", "op": "lte", "value": 20 }
+    {
+      "categoryId": "soql",
+      "op": "lte",
+      "value": 25
+    },
+    {
+      "categoryId": "cpu",
+      "op": "gte",
+      "value": 30
+    },
+    {
+      "categoryId": "heap",
+      "op": "lte",
+      "value": 25
+    },
+    {
+      "categoryId": "callout",
+      "op": "lte",
+      "value": 20
+    }
   ],
-  "analysis": "During 10,000 orders/sec spikes, prioritizing CPU budget (≥30 pts) ensures complex business validation completes without hitting 10,000ms CPU timeouts. Keeping SOQL budget (≤25 pts) forces the use of Platform Cache and Skinny Tables, eliminating unindexed database row lock contention.",
+  "analysis": "During 10,000 orders/sec spikes, prioritizing CPU budget (\u226530 pts) ensures complex business validation completes without hitting 10,000ms CPU timeouts. Keeping SOQL budget (\u226425 pts) forces the use of Platform Cache and Skinny Tables, eliminating unindexed database row lock contention.",
   "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/reliability.html"
 }

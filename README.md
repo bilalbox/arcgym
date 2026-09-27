@@ -62,8 +62,12 @@ pnpm seed
 ### Content authoring helpers
 
 ```bash
-# Validate & emit canonical-drills.json only
+# Validate & emit published drills into canonical-drills.json only
 pnpm build:drills
+
+# Toggle editorial status (draft stays in content/; published enters the learner catalog)
+pnpm drill:status --status draft --all
+pnpm drill:status --status published --domain-label "Data 360"
 
 # RAG crawl / index official docs (Python + Chroma under data/chroma/, gitignored)
 python scripts/crawler/crawl_architect.py
@@ -74,7 +78,7 @@ python scripts/crawler/crawl_trailhead.py --limit 100
 # Extract recurring practitioner problem patterns & antipattern distractors
 python scripts/crawler/analyze_trailhead_patterns.py
 
-# Generate a draft drill from Chroma context & community scenarios
+# Generate a draft drill from Chroma context & community scenarios (status defaults to draft)
 npx tsx scripts/generator/generate-drill.ts --topic "Your topic"
 ```
 

@@ -1,44 +1,45 @@
 {
   "id": "AGD-00209",
-  "title": "Data Lineage & Privacy: Handling GDPR Deletions in Data Cloud",
+  "title": "Data Subject Erasure Across Data 360 Lake and Unified Profiles",
   "format": "Rapid_Fire",
   "domain": "Security_And_Access",
+  "domainLabel": "Data 360 Privacy & Trust",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
     "Fairness"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A customer submits a GDPR \"Right to be Forgotten\" erasure request. How must an architect ensure complete erasure compliance across Data Cloud and connected source systems?",
+      "prompt": "A customer submits a GDPR Right to Erasure request. Records exist in source CRM, Data 360 DLOs, unified DMOs, and derived insights. What must the architect ensure for complete compliance?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Execute the Data Cloud Consent API (Data Subject Rights / Forget Me request), which purges customer records across DLOs, unified DMOs, and calculated insights",
+          "label": "Execute a governed Data Subject Rights / Forget Me request in Data 360 so erasure propagates across lake objects, unified profiles, and derived insights — coordinated with source-system deletion",
           "isCorrect": true,
-          "rationale": "The Data Cloud Consent API coordinates cryptographic erasure across both raw storage and unified model layers, ensuring global regulatory compliance.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "rationale": "Data 360 retains historical lake and unified layers independently of CRM deletes. A formal data subject request is required to purge or restrict processing across DLOs, DMOs, and derived artifacts while source systems handle their own copies.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Delete the record in core CRM and assume Data Cloud will auto-delete it during the next sync",
+          "label": "Delete the Contact in core CRM and assume Data 360 will drop the profile on the next connector sync",
           "isCorrect": false,
-          "distractorAntipattern": "Data Cloud retains historic DLO snapshots unless Consent API is invoked.",
-          "rationale": "Source deletions do not automatically purge historical immutable data lake storage without explicit Data Subject Rights requests.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Source-Delete Cascade Myth",
+          "rationale": "Connector syncs do not automatically cryptographically erase historical lake snapshots and unified graphs. Relying on CRM delete alone leaves residual PII in Data 360.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_c",
-          "label": "Change the customer name to \"Deleted User\" in the CRM UI",
+          "label": "Rename the Contact to \"Deleted User\" in the CRM UI and leave lake objects untouched",
           "isCorrect": false,
-          "distractorAntipattern": "UI pseudonymization leaves unmasked data in underlying lakehouse storage.",
-          "rationale": "Superficial field editing leaves PII unmasked across data lake storage, violating GDPR audit requirements.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "UI Pseudonymization Theater",
+          "rationale": "Cosmetic field edits leave PII in underlying lakehouse and insight layers, failing GDPR audit requirements.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Security, Sharing & Trust Boundaries"
+  ]
 }

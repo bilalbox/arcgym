@@ -1,44 +1,45 @@
 {
   "id": "AGD-00207",
-  "title": "Vector Search & Grounding: Chunking Unstructured Knowledge for RAG",
+  "title": "Unstructured Grounding: Chunking Knowledge in Data 360",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
     "Cost_Optimization"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "To ground an Agentforce service agent with 10,000 PDF user manuals, what chunking strategy ensures semantic coherence without blowing LLM context window token costs?",
+      "prompt": "An Agentforce service agent must be grounded on 10,000 PDF manuals stored and indexed through Data 360 unstructured / search capabilities. Retrieval quality is poor and token spend is high. Which chunking strategy best balances semantic coherence with retrieval cost?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Semantic Markdown chunking (250–500 tokens) with 15% sliding overlap and section header metadata preservation",
+          "label": "Semantic section-aware chunks (~250–500 tokens) with modest overlap and preserved heading metadata for retrieval filters",
           "isCorrect": true,
-          "rationale": "Semantic chunking with moderate overlap prevents fragmentation of technical instructions while keeping individual passage embeddings concise and highly retrievable.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "rationale": "Moderate, structure-aware chunks keep procedures intact for embedding similarity while staying small enough for precise retrieval and controlled context-window cost when grounding agents from Data 360.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Embed each entire 50-page PDF document as a single vector embedding",
+          "label": "Embed each entire 50-page PDF as one vector so \"nothing is lost\"",
           "isCorrect": false,
-          "distractorAntipattern": "Embedding entire 50-page PDFs causes semantic dilution and retrieval failure.",
-          "rationale": "Embedding massive documents washes out specific semantic details, resulting in poor cosine similarity retrieval and hallucinated responses.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Monolithic Document Embedding",
+          "rationale": "Whole-document embeddings dilute local semantics, hurt cosine retrieval of specific procedures, and pull oversized context into the LLM — raising cost and hallucination risk.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_c",
-          "label": "Split text arbitrarily every 10 characters",
+          "label": "Split every 10 characters regardless of word or section boundaries",
           "isCorrect": false,
-          "distractorAntipattern": "Character-level splitting breaks words and meaning.",
-          "rationale": "Breaking mid-word destroys lexical and semantic meaning completely.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "distractorAntipattern": "Character-Level Fragmentation",
+          "rationale": "Arbitrary micro-splits destroy lexical meaning and produce unusable retrieval units.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Data 360 & Data Cloud Zero Copy"
+  ]
 }

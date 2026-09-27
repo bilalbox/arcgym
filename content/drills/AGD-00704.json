@@ -5,8 +5,12 @@
   "domain": "Ai_And_Automation",
   "domainLabel": "Agentic AI & Automation",
   "difficulty": "Lead_CTA",
-  "pillars": ["Trust", "Operational_Excellence"],
+  "pillars": [
+    "Trust",
+    "Operational_Excellence"
+  ],
   "version": 1,
+  "status": "draft",
   "stages": [
     {
       "stageNumber": 1,

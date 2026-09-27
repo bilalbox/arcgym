@@ -261,6 +261,7 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "difficulty": "${args.difficulty}",
   "pillars": ["Reliability", "Operational_Excellence"],
   "version": 1,
+  "status": "draft",
   "stages": [
     {
       "stageNumber": 1,
@@ -376,6 +377,7 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "difficulty": "${args.difficulty}",
   "pillars": ["Reliability", "Trust"],
   "version": 1,
+  "status": "draft",
   "steps": [
     {
       "id": "s1",
@@ -521,6 +523,7 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
       difficulty: args.difficulty,
       pillars: Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))),
       version: 1,
+      status: 'draft',
       stages: stageDefs.map((st) => ({
         stageNumber: st.stageNumber,
         stageName: st.stageName,
@@ -578,6 +581,7 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
     difficulty: args.difficulty,
     pillars: Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))),
     version: 1,
+    status: 'draft',
     steps,
   };
 }

@@ -25,6 +25,7 @@ function mockDrill(
     pillars: ['Reliability'],
     steps: [],
     version: 1,
+    status: 'published',
   };
 }
 

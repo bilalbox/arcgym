@@ -5,8 +5,12 @@
   "domain": "Platform_Core",
   "domainLabel": "Platform Core & Scalability",
   "difficulty": "Lead_CTA",
-  "pillars": ["Reliability", "Operational_Excellence"],
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
   "version": 1,
+  "status": "draft",
   "stages": [
     {
       "stageNumber": 1,

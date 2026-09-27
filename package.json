@@ -7,6 +7,7 @@
     "dev": "pnpm --filter @arcgym/web dev",
     "build": "npx tsx scripts/build-drills.ts && pnpm --recursive run build",
     "build:drills": "npx tsx scripts/build-drills.ts",
+    "drill:status": "npx tsx scripts/set-drill-status.ts",
     "seed": "npx tsx scripts/seed-drills.ts",
     "test": "pnpm --recursive run test",
     "lint": "pnpm --recursive run lint",

@@ -5,8 +5,12 @@
   "domain": "Security_And_Access",
   "domainLabel": "Security & Access",
   "difficulty": "Lead_CTA",
-  "pillars": ["Trust", "Reliability"],
+  "pillars": [
+    "Trust",
+    "Reliability"
+  ],
   "version": 1,
+  "status": "draft",
   "stages": [
     {
       "stageNumber": 1,
@@ -40,7 +44,7 @@
       "options": [
         {
           "id": "st2_a",
-          "text": "Flatten the role hierarchy to 3–4 executive levels, shift regional branch visibility to Account Teams with programmatic provisioning, and replace broad criteria-based sharing with Restriction Rules or Scoping Rules for sensitive data filtering.",
+          "text": "Flatten the role hierarchy to 3\u20134 executive levels, shift regional branch visibility to Account Teams with programmatic provisioning, and replace broad criteria-based sharing with Restriction Rules or Scoping Rules for sensitive data filtering.",
           "isCorrect": true,
           "coachingFeedback": "Correct! The Platform Sharing Architecture fundamentals guide recommends flattening the hierarchy, using granular Account Teams to localize share recalculations, and leveraging Restriction/Scoping Rules to control record visibility without rebuilding the share table."
         },

@@ -48,6 +48,14 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
     const drill = JSON.parse(rawBody);
 
+    // Catalog drafts must not become the featured edge "today" drill.
+    if (drill.status === 'draft') {
+      return new Response(
+        JSON.stringify({ error: 'Refusing to feature a draft drill; set status to published first' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Persist to Cloudflare Workers KV
     if (env.DRILL_KV) {
       const scheduledDate = drill.scheduledDate || new Date().toISOString().slice(0, 10);

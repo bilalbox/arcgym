@@ -5,8 +5,12 @@
   "domain": "Ai_And_Automation",
   "domainLabel": "Agentic Enterprise Governance",
   "difficulty": "Lead_CTA",
-  "pillars": ["Trust", "Reliability"],
+  "pillars": [
+    "Trust",
+    "Reliability"
+  ],
   "version": 1,
+  "status": "draft",
   "initialTrust": 65,
   "initialReliability": 70,
   "moves": [

@@ -23,6 +23,7 @@ const ARCHITECTURAL_DOMAINS = new Set([
 ]);
 
 const FORMATS = new Set(['Lesson', 'Rapid_Fire', 'Currency', 'Scenario']);
+const STATUSES = new Set(['draft', 'published']);
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
@@ -38,6 +39,7 @@ const drillFiles = fs.readdirSync(DRILLS_DIR).filter((f) => f.endsWith('.json'))
 console.log(`Found ${drillFiles.length} drill JSON files in ${DRILLS_DIR}`);
 
 const allDrills: any[] = [];
+const draftDrills: any[] = [];
 let errorCount = 0;
 
 function err(file: string, message: string) {
@@ -132,6 +134,11 @@ for (const file of drillFiles) {
       continue;
     }
 
+    if (!STATUSES.has(drill.status)) {
+      err(file, `invalid status: ${drill.status} (expected draft|published)`);
+      continue;
+    }
+
     switch (drill.format) {
       case 'Rapid_Fire':
         validateRapidFire(file, drill);
@@ -147,7 +154,11 @@ for (const file of drillFiles) {
         break;
     }
 
-    allDrills.push(drill);
+    if (drill.status === 'published') {
+      allDrills.push(drill);
+    } else {
+      draftDrills.push(drill);
+    }
   } catch (e: any) {
     err(file, `Failed to parse: ${e.message}`);
   }
@@ -159,14 +170,15 @@ if (errorCount > 0) {
 }
 
 allDrills.sort((a, b) => a.id.localeCompare(b.id));
+draftDrills.sort((a, b) => a.id.localeCompare(b.id));
 
 const bundlePath = path.join(WEB_DATA_DIR, 'canonicalDrills.json');
 fs.writeFileSync(bundlePath, JSON.stringify(allDrills, null, 2), 'utf-8');
-console.log(`Wrote ${allDrills.length} drills → ${bundlePath}`);
+console.log(`Wrote ${allDrills.length} published drills → ${bundlePath}`);
 
 const publicPath = path.join(WEB_PUBLIC_DIR, 'canonical-drills.json');
 fs.writeFileSync(publicPath, JSON.stringify(allDrills, null, 2), 'utf-8');
-console.log(`Wrote ${allDrills.length} drills → ${publicPath}`);
+console.log(`Wrote ${allDrills.length} published drills → ${publicPath}`);
 
 const byFormat = allDrills.reduce((acc: Record<string, number>, d) => {
   acc[d.format] = (acc[d.format] || 0) + 1;
@@ -176,6 +188,10 @@ const byDomain = allDrills.reduce((acc: Record<string, number>, d) => {
   acc[d.domain] = (acc[d.domain] || 0) + 1;
   return acc;
 }, {});
-console.log('\nBy Format:', byFormat);
-console.log('By Domain:', byDomain);
+console.log('\nPublished by Format:', byFormat);
+console.log('Published by Domain:', byDomain);
+console.log(`Drafts excluded from catalog: ${draftDrills.length}`);
+if (draftDrills.length > 0) {
+  console.log(`  ${draftDrills.map((d) => d.id).join(', ')}`);
+}
 console.log('\nBuild complete.\n');

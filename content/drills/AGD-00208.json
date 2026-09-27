@@ -1,44 +1,45 @@
 {
   "id": "AGD-00208",
-  "title": "Segment Activation: Egress Optimization to Cloud Storage",
+  "title": "Segment Activation: Cloud Storage Egress at Audience Scale",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Cost_Optimization",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A marketing team activates a 20-million-profile audience segment every morning to Amazon S3 for digital ad targeting. Which activation pattern complies with Well-Architected Cost and Reliability standards?",
+      "prompt": "Marketing activates a 20-million-profile segment to Amazon S3 every morning for ad platforms. The design must avoid CRM API ceilings and keep egress operationally simple. Which activation pattern fits?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Direct Cloud Storage Activation Target exporting compressed Parquet/CSV files directly to the S3 bucket",
+          "label": "Data 360 cloud storage activation target exporting compressed Parquet/CSV directly to the S3 bucket",
           "isCorrect": true,
-          "rationale": "Direct Cloud Storage Activation utilizes high-speed parallel object egress to Amazon S3, avoiding CRM API rate limits.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "rationale": "Cloud storage activation is built for high-volume parallel object egress to destinations like S3, avoiding per-row CRM API paths while keeping the activation governed inside Data 360.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_b",
-          "label": "Stream 20 million individual REST calls to the Amazon S3 REST API from an Apex trigger",
+          "label": "Apex trigger issuing millions of individual S3 REST callouts as Contacts update",
           "isCorrect": false,
-          "distractorAntipattern": "Trigger callouts cannot process 20 million records.",
-          "rationale": "Violates daily API limits, CPU limits, and synchronous callout governor limits.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Trigger Callout Avalanche",
+          "rationale": "Synchronous/near-synchronous Apex callouts cannot egress 20M profiles without exhausting API, CPU, and callout governors.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_c",
-          "label": "Export the segment as an email attachment sent to the marketing manager",
+          "label": "Export the full audience as a CSV email attachment to the campaign ops alias",
           "isCorrect": false,
-          "distractorAntipattern": "Email attachments exceed size limits and violate Trust privacy.",
-          "rationale": "Email attachments have strict size limits (25MB) and violate data privacy governance.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Email as Data Plane",
+          "rationale": "Email attachments hit size limits and create uncontrolled PII copies outside governed activation channels — a Trust and Reliability failure.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Data 360 & Data Cloud Zero Copy"
+  ]
 }

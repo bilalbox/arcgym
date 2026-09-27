@@ -5,8 +5,12 @@
   "domain": "Ai_And_Automation",
   "domainLabel": "Automation Governance",
   "difficulty": "Lead_CTA",
-  "pillars": ["Operational_Excellence", "Reliability"],
+  "pillars": [
+    "Operational_Excellence",
+    "Reliability"
+  ],
   "version": 1,
+  "status": "draft",
   "stages": [
     {
       "stageNumber": 1,

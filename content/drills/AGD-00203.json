@@ -1,44 +1,45 @@
 {
   "id": "AGD-00203",
-  "title": "Identity Resolution: Preventing Profile Over-Consolidation",
+  "title": "Identity Resolution: Stopping Fuzzy Over-Clustering",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Trust",
     "Fairness"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "In Data Cloud Identity Resolution, configuring a fuzzy match rule on \"Normalized Phone Number\" alone merges multiple unrelated family members sharing a landline into a single Unified Individual. How should this rule set be revised?",
+      "prompt": "A Data 360 Identity Resolution ruleset uses fuzzy match on Normalized Phone Number alone. Household members sharing a landline collapse into one Unified Individual, polluting consent and personalization. How should the ruleset be revised?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Combine Normalized Phone Number with Exact Match on First Name or Date of Birth in a multi-criteria match rule",
+          "label": "Require composite match criteria — e.g. phone plus exact First Name or Date of Birth — and keep reconciliation rules separate from match rules",
           "isCorrect": true,
-          "rationale": "Single-attribute fuzzy matching on shared identifiers (phone, address) leads to catastrophic identity over-merging. Well-Architected rulesets require composite multi-attribute reconciliation.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "rationale": "Single-attribute fuzzy matching on shared identifiers causes Fuzzy Over-Clustering. Well-Architected rulesets combine high-signal attributes and treat reconciliation (field winners) as a separate stage after match groups form.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Disable Identity Resolution and manage unification with custom Apex triggers",
+          "label": "Disable Identity Resolution and unify profiles with custom Apex triggers on Contact",
           "isCorrect": false,
-          "distractorAntipattern": "Apex triggers cannot process millions of unified graph reconciliations.",
-          "rationale": "Identity Resolution operates as a distributed big-data graph processing pipeline; custom Apex cannot scale to millions of records.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Apex Graph Unification",
+          "rationale": "Identity Resolution is a distributed big-data graph process. Apex cannot reconcile millions of cross-source identities with the same scale, lineage, or governance.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_c",
-          "label": "Set the reconciliation rule to \"Always Source from Most Recently Updated\"",
+          "label": "Change only the reconciliation rule to \"Most Recently Updated\" and leave the phone-only match intact",
           "isCorrect": false,
-          "distractorAntipattern": "Reconciliation rules define attribute selection, not match criteria.",
-          "rationale": "Reconciliation controls field winning logic after unification, not the matching rules that group records.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Reconciliation as Match Fix",
+          "rationale": "Reconciliation chooses winning attribute values after records are already merged. It cannot undo over-merging caused by weak match criteria.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Data 360 & Data Cloud Zero Copy"
+  ]
 }

@@ -1,44 +1,45 @@
 {
   "id": "AGD-00210",
-  "title": "Consumption Credit Governance: Batch vs Streaming Credit Economics",
+  "title": "Credit Economics: Stop Streaming Static Catalog Feeds",
   "format": "Rapid_Fire",
-  "domain": "Platform_Core",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data 360 Credit Governance",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An organization is rapidly exhausting Data Cloud credits. An audit reveals 50 streaming connectors ingesting product catalog updates that change only once a week. What architectural refactor is required?",
+      "prompt": "Data 360 credits are burning down early each month. An audit finds 50 streaming connectors on product catalog tables that change about once a week, while scarce credit headroom is needed for real-time behavioral streams. What refactor is required?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Transition catalog ingestion from real-time streaming connectors to scheduled daily batch ingestion",
+          "label": "Move slow-changing catalog ingestion from continuous streaming connectors to scheduled batch ingestion",
           "isCorrect": true,
-          "rationale": "Streaming connectors consume continuous compute credits for zero business gain on static data. Scheduled batch ingestion preserves valuable credits for real-time customer behavioral signals.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "rationale": "Streaming Everything on near-static sources wastes continuous compute credits. Batch ingestion matches catalog change cadence and reserves streaming budget for true real-time signals.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_b",
-          "label": "Purchase 10x more credits without modifying pipeline architecture",
+          "label": "Buy 10× more credits and leave the streaming topology unchanged",
           "isCorrect": false,
-          "distractorAntipattern": "Throwing money at architectural anti-patterns creates runaway TCO.",
-          "rationale": "Violates Well-Architected Cost Optimization by subsidizing architectural waste.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Subsidize the Antipattern",
+          "rationale": "Purchasing capacity without fixing waste violates Cost Optimization and merely delays the next credit cliff.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_c",
-          "label": "Disable data encryption to reduce compute costs",
+          "label": "Disable encryption on catalog objects to reduce compute cost",
           "isCorrect": false,
-          "distractorAntipattern": "Disabling encryption destroys Trust and compliance.",
-          "rationale": "Disabling security controls violates fundamental Trust boundaries.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Trust Trade for Credits",
+          "rationale": "Weakening encryption to save credits destroys Trust and compliance boundaries; credit governance must not sacrifice security controls.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Core Platform & Execution Limits"
+  ]
 }

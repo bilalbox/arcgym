@@ -108,6 +108,11 @@ export interface LessonStageDTO {
   options: LessonOptionDTO[];
 }
 
+/** Editorial lifecycle — drafts stay in content/ but are excluded from the live catalog. */
+export type DrillStatus = 'draft' | 'published';
+
+export const DRILL_STATUSES: DrillStatus[] = ['draft', 'published'];
+
 /** Shared catalog metadata — recommendation and filters only need this surface. */
 export interface DrillDefinitionBase {
   id: string;
@@ -117,6 +122,8 @@ export interface DrillDefinitionBase {
   difficulty: 'Associate_Domain_Architect' | 'Lead_CTA';
   pillars: WellArchitectedPillar[];
   version: number;
+  /** Only `published` drills are compiled into the learner-facing catalog. */
+  status: DrillStatus;
 }
 
 export interface RapidFireDrillDefinition extends DrillDefinitionBase {

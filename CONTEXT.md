@@ -60,6 +60,10 @@ _Avoid_: Live API polling, direct runtime proxy
 The 3-tier automated validation pipeline (Schema, Deterministic Platform Rule Linter, Adversarial CTA Red-Team LLM) that verifies generated drills prior to human editorial review.
 _Avoid_: Code checker, syntax validator
 
+**Drill Status**:
+Editorial lifecycle on a Drill source file: `draft` (in `content/drills/`, excluded from the learner catalog) or `published` (compiled into `canonicalDrills.json` and seedable to KV). Toggle with `pnpm drill:status`.
+_Avoid_: Featured-day webhook "publish", soft-delete, archive
+
 **Antipattern Distractor**:
 An incorrect drill choice deliberately modeled after a documented, real-world architectural antipattern to test an architect's discernment of technical debt and scalability boundaries.
 _Avoid_: Wrong answer, trick option

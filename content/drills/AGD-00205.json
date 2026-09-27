@@ -1,44 +1,45 @@
 {
   "id": "AGD-00205",
-  "title": "Calculated Insights vs Streaming Insights: Real-Time Windowing",
+  "title": "Streaming vs Calculated Insights for Sub-Minute Triggers",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Associate_Domain_Architect",
   "pillars": [
     "Reliability",
     "Cost_Optimization"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "To trigger an immediate engagement when an e-commerce customer browses 3 products within a 5-minute sliding window, which Data Cloud feature must be deployed?",
+      "prompt": "Commerce wants an engagement the moment a shopper views 3 products inside a 5-minute sliding window. Leadership will not accept next-day batch scores for this use case. Which Data 360 capability fits?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Streaming Insights with time-based sliding window aggregations",
+          "label": "Streaming Insights with time-based sliding window aggregations over the browse event stream",
           "isCorrect": true,
-          "rationale": "Streaming Insights compute metric aggregations in real-time as events stream in, enabling instantaneous sub-second action triggers.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "rationale": "Streaming Insights evaluate aggregations as events arrive, enabling near-real-time windowed triggers that batch Calculated Insights cannot meet.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Batch Calculated Insights scheduled to run every 24 hours",
+          "label": "Batch Calculated Insights scheduled once every 24 hours on historical browse history",
           "isCorrect": false,
-          "distractorAntipattern": "Batch calculated insights cannot satisfy sub-minute responsiveness.",
-          "rationale": "Batch Calculated Insights run on a scheduled cadence (e.g. daily) for historical trends, missing immediate browse sessions.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "Batch Where Streaming Is Required",
+          "rationale": "Calculated Insights excel at scheduled historical metrics; a once-daily batch misses the live 5-minute browse window entirely.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_c",
-          "label": "Scheduled Apex Batch executing SOQL count() queries",
+          "label": "Scheduled Apex Batch counting Product_View__c rows with SOQL",
           "isCorrect": false,
-          "distractorAntipattern": "Apex SOQL count queries cannot query Data Cloud streaming engines directly.",
-          "rationale": "Standard Apex cannot query unstructured streaming event telemetry at web scale.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+          "distractorAntipattern": "Core CRM as Stream Processor",
+          "rationale": "Apex/SOQL on CRM objects cannot economically process web-scale streaming telemetry or Data 360 streaming engines.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Data 360 & Data Cloud Zero Copy"
+  ]
 }

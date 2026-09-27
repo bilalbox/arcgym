@@ -1,45 +1,46 @@
 {
   "id": "AGD-00201",
-  "title": "Data Cloud: Zero Copy Federation vs Scheduled Reverse ETL",
+  "title": "Zero Copy Federation vs Reverse ETL for Real-Time Segmentation",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
     "Reliability",
     "Trust"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Marketing leadership wants Snowflake customer behavioral scores available in Salesforce for real-time segmentation without copying 50TB of raw data or incurring API ingest fees. Which architecture is optimal?",
+      "prompt": "Marketing needs Snowflake behavioral scores in Salesforce for near-real-time segmentation. The lake holds 50TB of raw clickstream; leadership rejects duplicating it into Salesforce storage or paying continuous API ingest fees. Which architecture best satisfies freshness, cost, and Trust?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Scheduled Reverse ETL pipeline copying 50TB into Custom Big Objects",
+          "label": "Scheduled reverse ETL copying 50TB into Custom Big Objects nightly",
           "isCorrect": false,
-          "distractorAntipattern": "Copying 50TB causes immense data storage bloat and stale cache issues.",
-          "rationale": "Duplicating 50TB causes immense data storage bloat, stale cache synchronization issues, and heavy API ingest overhead.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "ETL Data Hoarding",
+          "rationale": "Physically replicating 50TB creates storage bloat, stale caches between sync windows, and ongoing ingest cost — the antipattern Data 360 Zero Copy is designed to eliminate.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "Data Cloud Zero Copy integration federating Snowflake data shares to Data Model Objects (DMOs)",
+          "label": "Data 360 inbound Zero Copy federation to Snowflake, exposing governed shares as Data Lake / Data Model Objects without moving the lake",
           "isCorrect": true,
-          "rationale": "Data Cloud Zero Copy enables bidirectional access to Snowflake data in place without ETL pipelines or physical data duplication.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "rationale": "Inbound Zero Copy federation lets Data 360 query Snowflake in place via governed shares, preserving freshness and avoiding lake duplication while still powering segments and insights.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_c",
-          "label": "Custom External Services REST connector called synchronously on record view",
+          "label": "Synchronous External Services REST callout on every record page view to fetch scores live",
           "isCorrect": false,
-          "distractorAntipattern": "Synchronous REST calls degrade page speeds.",
-          "rationale": "Synchronous REST calls on record view degrade page load speeds and rapidly exceed platform callout rate limits.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Synchronous Callout Coupling",
+          "rationale": "Per-view synchronous callouts degrade UI latency and burn callout rate limits; they do not provide a governed, queryable customer data layer for segmentation at scale.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Data 360 & Data Cloud Zero Copy"
+  ]
 }

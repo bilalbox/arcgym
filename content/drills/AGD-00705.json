@@ -3,10 +3,14 @@
   "title": "ETL storage hoarding to Zero-Copy: 4-stage Data Virtualization refactor",
   "format": "Lesson",
   "domain": "Data_Architecture",
-  "domainLabel": "Data Architecture & Virtualization",
+  "domainLabel": "Data 360 & Data Virtualization",
   "difficulty": "Lead_CTA",
-  "pillars": ["Cost_Optimization", "Reliability"],
-  "version": 1,
+  "pillars": [
+    "Cost_Optimization",
+    "Reliability"
+  ],
+  "version": 2,
+  "status": "published",
   "stages": [
     {
       "stageNumber": 1,
@@ -29,7 +33,7 @@
           "id": "st1_c",
           "text": "Hourly ETL pipelines are required by Salesforce for any external system containing more than 1 million records.",
           "isCorrect": false,
-          "coachingFeedback": "False: Salesforce encourages Zero-Copy patterns and Data Virtualization via Salesforce Connect and Data Cloud to eliminate unnecessary ETL pipelines."
+          "coachingFeedback": "False: Salesforce encourages Zero Copy patterns and Data Virtualization via Salesforce Connect and Data 360 to eliminate unnecessary ETL pipelines."
         }
       ]
     },

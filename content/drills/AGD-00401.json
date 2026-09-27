@@ -8,6 +8,7 @@
     "Reliability"
   ],
   "version": 1,
+  "status": "draft",
   "steps": [
     {
       "id": "s1",

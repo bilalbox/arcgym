@@ -1,44 +1,45 @@
 {
   "id": "AGD-00204",
-  "title": "Zero Copy Lakehouse: Apache Iceberg Tables vs JDBC Ingest",
+  "title": "Lakehouse Zero Copy: Iceberg Federation vs Bulk JDBC Copy",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
+  "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Cost_Optimization",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
+  "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A company stores 100TB of telemetry in Databricks. They want Data Cloud to query this telemetry without data copying. Which open table format powers this zero-copy federation?",
+      "prompt": "A company keeps 100TB of telemetry in Databricks as Apache Iceberg tables (Parquet). Product wants Data 360 insights on that telemetry without paying to duplicate the lake into Salesforce storage. Which approach is Well-Architected?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Apache Iceberg open table metadata standard shared via Delta Sharing or Object Storage catalog",
+          "label": "File-based Zero Copy federation via Iceberg REST Catalog metadata so Data 360 queries Parquet/Iceberg in place",
           "isCorrect": true,
-          "rationale": "Data Cloud Zero Copy leverages Apache Iceberg and Parquet formats to read and write directly to external cloud data lakes with zero data movement.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "rationale": "Data 360 file federation for lakehouses relies on Apache Iceberg tabular metadata and Parquet files exposed through an Iceberg REST Catalog — enabling governed zero-copy access without moving 100TB.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         },
         {
           "id": "s1_b",
-          "label": "CSV flat files polled over secure FTP hourly",
+          "label": "Nightly JDBC extract that copies all 100TB into Data 360 DLOs for \"local performance\"",
           "isCorrect": false,
-          "distractorAntipattern": "CSV FTP is slow and unindexed.",
-          "rationale": "SFTP CSV polling incurs high latency and lacks zero-copy metadata federation.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "ETL Data Hoarding",
+          "rationale": "Bulk-copying a 100TB lake defeats Zero Copy economics: it multiplies storage cost, extends ingest windows, and creates freshness lag versus federated query.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
         },
         {
           "id": "s1_c",
-          "label": "Direct ODBC socket open connection through enterprise firewall",
+          "label": "Hourly SFTP drops of CSV extracts into a ContentVersion staging object",
           "isCorrect": false,
-          "distractorAntipattern": "Direct ODBC sockets violate cloud security standards.",
-          "rationale": "Direct ODBC connections violate cloud security boundaries and lack serverless scaling.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "distractorAntipattern": "Flat-File Polling",
+          "rationale": "CSV/SFTP polling lacks lakehouse metadata federation, is high-latency, and is a poor fit for analytical telemetry at this scale.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
         }
       ]
     }
-  ],
-  "domainLabel": "Data 360 & Data Cloud Zero Copy"
+  ]
 }
