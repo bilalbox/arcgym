@@ -6,4 +6,5 @@ export * from './recommendation/engine.js';
 export * from './budget/evaluate.js';
 export * from './proficiency/aggregator.js';
 export * from './ui/orderOptions.js';
+export * from './lint/wording.js';
 

@@ -20,7 +20,7 @@ You are the model. `generate-drill.ts prompt` retrieves official chunks and prin
 
    Stderr lists the drill id and the retrieved chunk titles. Rerun with `--query "<sharper doc search>"` until the chunks govern the problem. Done when every step or stage you plan to write has a chunk that states its governing guidance.
 
-3. **Write the drill** as the prompt's answer, saved to `/tmp/arcgym/<drill id>.json`. Done when every correct option is grounded (its rationale restates what its cited chunk says), or, when the prompt's error rule applies, you have told the user which guidance is missing and stopped.
+3. **Write the drill** as the prompt's answer, saved to `/tmp/arcgym/<drill id>.json`. Done when every correct option is grounded (its rationale restates what its cited chunk says) and ingest reports no wording findings, or, when the prompt's error rule applies, you have told the user which guidance is missing and stopped.
 
 4. **Ingest.**
 

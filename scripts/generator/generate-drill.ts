@@ -15,6 +15,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
+import { lintDrillWording } from '../../packages/drill-core/src/index.js';
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
@@ -219,6 +220,15 @@ ${approaches}
 `;
 }
 
+/** The wording standard for every generated drill; `ingest` enforces the mechanical parts via lintDrillWording. */
+const WORDING_RULES = `### Wording Rules (ingest rejects drills that break the checkable ones):
+- Question text (prompt / scenario): the situation, then the constraint(s) the answer depends on, then exactly one question. Every sentence and number must matter to at least one option's reasoning; keep it to 55 words or fewer. State constraints as facts or numbers (e.g. "the org already uses 80% of its daily API allocation"), never as the negation of an option's approach ("without a polling service" rules out the polling option by keyword). Ask for the decision ("Which pattern should the architect use?"), not "Which is Well-Architected?". Never name the source document. No stakeholder emotion ("Leadership will not accept…").
+- Options: every option answers the same question in the same grammatical shape, with one decision per option. The correct option must not be the longest: keep all options within ±25% of each other in word count. Every distractor is something a competent practitioner would plausibly choose. Never use words that announce a wrong answer: entirely, blindly, immediately, always, never, directly to production, raw, without X.
+- Facts: every number, limit, product name, and API or exception name must be real. A distractor may misapply a real limit but may not invent one.
+- Correct-option rationale (Rapid Fire rationale, Lesson coachingFeedback): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
+- Feedback text (rationale, coachingFeedback): no verdict prefixes ("Correct!", "Antipattern:", "Risky!"); the UI already shows the verdict.
+`;
+
 function buildPrompt(chunks: ChromaChunk[], args: PromptArgs, drillId: string, card?: FrictionCard): string {
   const frictionSection = buildFrictionSection(card);
   const contextText = chunks
@@ -253,11 +263,12 @@ Generate a high-stakes, realistic 4-stage architectural Lesson drill formatted a
    - Stage 2: Target Architecture Pattern (select optimal Well-Architected design pattern and justify trade-offs)
    - Stage 3: Migration & Cutover Strategy (zero-downtime cutover, backward compatibility, feature toggles, or canary rollout)
    - Stage 4: Telemetry & Observability (transaction monitoring, health thresholds, drift alerts, or Event Monitoring)
-2. Authoritative Coaching Feedback: Every option MUST include detailed 'coachingFeedback' explaining precisely why it is correct (grounded in official Salesforce architecture) or why it is an architectural antipattern.
+2. Coaching Feedback: Every option's 'coachingFeedback' explains the mechanism. For the correct option, give the principle and the constraint in the scenario that decides it; for a wrong option, explain why it fails under this stage's constraint. Never open with a verdict ("Correct!", "Antipattern:").
 3. Grounding: Every correct option is grounded: its coachingFeedback restates guidance from one of the official chunks below. If the chunks cannot ground all 4 stages, output only {"error": "<what official guidance is missing>"}.
-4. Option Balance: Place the correct option in varied positions across stages, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
+4. Option Balance: At least 3 options per stage, every one a choice a competent practitioner would plausibly make. Place the correct option in varied positions across stages, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
 5. Language & Tone: Professional, authoritative CTA-level precision. Sentence-case typography. No filler phrases.
 
+${WORDING_RULES}
 ### Target Drill Specifications:
 - Drill ID: "${drillId}"
 - Topic: "${args.topic}"
@@ -286,76 +297,100 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
     {
       "stageNumber": 1,
       "stageName": "Stage 1: Forensic Diagnosis",
-      "scenario": "Diagnostic scenario describing the enterprise bottleneck, errors, and system symptoms...",
+      "scenario": "Symptoms with the numbers that matter, then one question asking for the root cause...",
       "options": [
         {
           "id": "st1_a",
-          "text": "Antipattern explanation or false assumption...",
+          "text": "A real platform behavior that fits some symptoms but not the deciding one...",
           "isCorrect": false,
-          "coachingFeedback": "Why this explanation is an antipattern or misses the platform root cause..."
+          "coachingFeedback": "Which symptom this cause would produce, and which observed symptom rules it out."
         },
         {
           "id": "st1_b",
-          "text": "Precise architectural bottleneck identification...",
+          "text": "The actual root cause, stated as the platform mechanism...",
           "isCorrect": true,
-          "coachingFeedback": "Correct! Authoritative Well-Architected analysis explaining why this occurs."
+          "coachingFeedback": "The principle from the cited chunk, tied to the symptom in the scenario that decides it."
+        },
+        {
+          "id": "st1_c",
+          "text": "A second cause a competent architect would check first...",
+          "isCorrect": false,
+          "coachingFeedback": "Why this cause does not explain the symptoms under this stage's constraint."
         }
       ]
     },
     {
       "stageNumber": 2,
       "stageName": "Stage 2: Target Architecture Pattern",
-      "scenario": "Scenario asking for the optimal Well-Architected pattern to replace the flawed design...",
+      "scenario": "The constraint the replacement must meet, as a fact or number, then one question asking for the pattern...",
       "options": [
         {
           "id": "st2_a",
-          "text": "Target pattern description...",
-          "isCorrect": true,
-          "coachingFeedback": "Correct! Why this pattern satisfies Well-Architected principles."
+          "text": "A proven pattern that solves a neighboring problem...",
+          "isCorrect": false,
+          "coachingFeedback": "The constraint this pattern misses and the cost it adds as a result."
         },
         {
           "id": "st2_b",
-          "text": "Suboptimal quick-fix pattern...",
+          "text": "The familiar quick fix most teams reach for first...",
           "isCorrect": false,
-          "coachingFeedback": "Antipattern: Why this quick fix introduces downstream technical debt."
+          "coachingFeedback": "What this fix defers and when that debt comes due under this load."
+        },
+        {
+          "id": "st2_c",
+          "text": "The target pattern the cited chunk governs...",
+          "isCorrect": true,
+          "coachingFeedback": "The principle from the cited chunk and the constraint that rules out the alternatives."
         }
       ]
     },
     {
       "stageNumber": 3,
       "stageName": "Stage 3: Migration & Cutover Strategy",
-      "scenario": "Scenario asking how to cut over safely in a live production environment without downtime...",
+      "scenario": "The live-operations constraint on cutover, as a fact or number, then one question asking for the sequence...",
       "options": [
         {
           "id": "st3_a",
-          "text": "Safe cutover strategy using feature toggles or canary deployment...",
+          "text": "A staged cutover with a validation gate and a rollback path...",
           "isCorrect": true,
-          "coachingFeedback": "Correct! Well-Architected Operational Excellence mandates zero-downtime rollback controls."
+          "coachingFeedback": "Why the validation gate and rollback path satisfy the stated live-operations constraint."
         },
         {
           "id": "st3_b",
-          "text": "High-risk direct cutover...",
+          "text": "A weekend cutover with a full regression pass beforehand...",
           "isCorrect": false,
-          "coachingFeedback": "Antipattern: In-place cutovers without circuit breakers cause live user data loss."
+          "coachingFeedback": "What a single cutover window cannot catch that a staged rollout would."
+        },
+        {
+          "id": "st3_c",
+          "text": "A parallel run that keeps both designs writing indefinitely...",
+          "isCorrect": false,
+          "coachingFeedback": "The drift and reconciliation cost of running both designs with no exit criterion."
         }
       ]
     },
     {
       "stageNumber": 4,
       "stageName": "Stage 4: Telemetry & Observability",
-      "scenario": "Scenario asking how to monitor health and proactively alert on threshold breaches...",
+      "scenario": "The failure mode that must be caught and how fast, then one question asking for the monitoring design...",
       "options": [
         {
           "id": "st4_a",
-          "text": "Proactive event-driven telemetry and monitoring approach...",
-          "isCorrect": true,
-          "coachingFeedback": "Correct! Real-time observability detects degradation before end users are impacted."
+          "text": "A daily summary report of failed transactions for the support team...",
+          "isCorrect": false,
+          "coachingFeedback": "How long this failure mode runs undetected before a daily summary surfaces it."
         },
         {
           "id": "st4_b",
-          "text": "Reactive failure logging...",
+          "text": "A threshold alert on the leading metric this failure mode moves...",
+          "isCorrect": true,
+          "coachingFeedback": "Why this metric moves before users are affected, per the cited chunk."
+        },
+        {
+          "id": "st4_c",
+          "text": "Verbose debug logging enabled on every transaction in production...",
           "isCorrect": false,
-          "coachingFeedback": "Antipattern: Reactive error digests fail to prevent systemic outages."
+          "coachingFeedback": "The storage and signal-to-noise cost of logging everything without an alert."
         }
       ]
     }
@@ -369,11 +404,12 @@ Generate a high-stakes, realistic architectural judgment drill formatted as vali
 
 ### Core Authoring Principles:
 1. Dilemma Under Constraint: Do NOT write simple trivia or recall questions. Pose a realistic enterprise scenario with competing priorities (e.g. scale vs cost, real-time vs governor limits, speed vs trust).
-2. Explicit Antipatterns: Every distractor option MUST name a real-world architectural antipattern in 'distractorAntipattern' as a short name (e.g. "ETL Data Hoarding", "Synchronous Callout Coupling"), and explain why it fails in 'rationale'. Use 3 options per step.
+2. Explicit Antipatterns: Every distractor option MUST name a real-world architectural antipattern in 'distractorAntipattern' as a short name of 2–5 words (e.g. "ETL Data Hoarding", "Synchronous Callout Coupling"). Its 'rationale' is 1–2 sentences: why it fails under this step's constraint. Use 3 options per step.
 3. Grounding: Every correct option is grounded: its rationale restates guidance from one chunk below, and its citationUrl is that chunk's Citation URL, copied exactly. Write only steps the chunks govern; fewer steps than requested is right when they govern fewer decisions. If they govern none, output only {"error": "<what official guidance is missing>"}.
 4. Option Balance: Place the correct option in varied positions across steps, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
 5. Language & Tone: Professional, authoritative, CTA-level precision. Sentence-case typography. No casual jargon or LLM filler phrases.
 
+${WORDING_RULES}
 ### Target Drill Specifications:
 - Drill ID: "${drillId}"
 - Topic: "${args.topic}"
@@ -402,21 +438,21 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "steps": [
     {
       "id": "s1",
-      "prompt": "Scenario prompt explaining constraints and trade-offs...",
+      "prompt": "Situation, then the constraint(s) the answer depends on, then one question...",
       "options": [
         {
           "id": "s1_a",
           "label": "Option A description...",
           "isCorrect": false,
           "distractorAntipattern": "Short Antipattern Name",
-          "rationale": "Why this option fails or violates platform principles",
+          "rationale": "1–2 sentences: why it fails under this step's constraint",
           "citationUrl": "${chunks[0]?.metadata?.url || 'https://architect.salesforce.com'}"
         },
         {
           "id": "s1_b",
           "label": "Option B description (optimal)...",
           "isCorrect": true,
-          "rationale": "Comprehensive explanation of why this complies with Well-Architected standards",
+          "rationale": "The principle from the cited chunk and the constraint in the prompt that decides it",
           "citationUrl": "${chunks[0]?.metadata?.url || 'https://architect.salesforce.com'}"
         }
       ]
@@ -491,16 +527,27 @@ function runIngest(argv: string[]) {
 
   drill.status = 'draft';
   fs.writeFileSync(outPath, JSON.stringify(drill, null, 2) + '\n', 'utf-8');
-
-  try {
-    execFileSync('npx', ['tsx', 'scripts/build-drills.ts'], { stdio: 'inherit', cwd: ROOT_DIR });
-  } catch {
+  const rollBack = (reason: string): never => {
     if (previous === null) {
       fs.unlinkSync(outPath);
     } else {
       fs.writeFileSync(outPath, previous, 'utf-8');
     }
-    fail(`Validation failed; ${outPath} was rolled back. Fix ${file} and rerun ingest.`);
+    fail(`${reason}; ${outPath} was rolled back. Fix ${file} and rerun ingest.`);
+  };
+
+  try {
+    execFileSync('npx', ['tsx', 'scripts/build-drills.ts'], { stdio: 'inherit', cwd: ROOT_DIR });
+  } catch {
+    rollBack('Validation failed');
+  }
+
+  const wordingFindings = lintDrillWording(drill);
+  if (wordingFindings.length > 0) {
+    for (const f of wordingFindings) {
+      console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
+    }
+    rollBack(`${wordingFindings.length} wording findings (new drills must have none)`);
   }
   console.error(`\n✓ Saved draft drill: ${outPath}`);
 }

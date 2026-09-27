@@ -6,6 +6,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { lintDrillWording } from '../packages/drill-core/src/index.js';
+
+/** When true, wording findings on published drills fail the build; drafts only ever warn. */
+const WORDING_ENFORCE = false;
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
@@ -45,10 +49,24 @@ console.log(`Found ${drillFiles.length} drill JSON files in ${DRILLS_DIR}`);
 const allDrills: any[] = [];
 const draftDrills: any[] = [];
 let errorCount = 0;
+let wordingWarningCount = 0;
 
 function err(file: string, message: string) {
   console.error(`  [ERROR] ${file}: ${message}`);
   errorCount++;
+}
+
+function lintWording(file: string, drill: any) {
+  const enforced = WORDING_ENFORCE && drill.status === 'published';
+  for (const finding of lintDrillWording(drill)) {
+    const message = `wording ${finding.ruleId} at ${finding.where}: ${finding.message}`;
+    if (enforced) {
+      err(file, message);
+    } else {
+      console.warn(`  [WARN] ${file}: ${message}`);
+      wordingWarningCount++;
+    }
+  }
 }
 
 const crawledCitationUrls = new Set<string>(
@@ -223,6 +241,8 @@ for (const file of drillFiles) {
         break;
     }
 
+    lintWording(file, drill);
+
     if (drill.status === 'published') {
       allDrills.push(drill);
     } else {
@@ -231,6 +251,10 @@ for (const file of drillFiles) {
   } catch (e: any) {
     err(file, `Failed to parse: ${e.message}`);
   }
+}
+
+if (wordingWarningCount > 0) {
+  console.warn(`\n${wordingWarningCount} wording warnings (see [WARN] lines).`);
 }
 
 if (errorCount > 0) {
