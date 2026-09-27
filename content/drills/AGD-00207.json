@@ -9,45 +9,40 @@
     "Trust",
     "Cost_Optimization"
   ],
-  "version": 3,
+  "version": 4,
   "status": "published",
-  "sourceCardIds": [
-    "FC-0D5KX00000bDlBq0AK",
-    "FC-0D5KX00000KCual0AD",
-    "FC-0D5KX00000mkBJF0A2"
-  ],
   "steps": [
     {
       "id": "s1",
-      "prompt": "An Agentforce service agent must be grounded on PDF manuals and related Account files via Data 360 unstructured / search capabilities. Retrieval quality is poor, some PDFs never chunk, and stakeholders also want near-real-time file answers. Which approach best balances semantic coherence, product limits, and freshness?",
+      "prompt": "An Agentforce service agent grounds answers in a Data 360 search index over 400 product manuals, currently split into fixed 40-token chunks. Retrieved chunks match the question but omit the neighboring steps the agent needs to answer correctly. How should the architect change the chunking?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Use section-aware chunking (250–500 tokens) on text PDFs, and leverage direct Agent Actions for real-time CRM file retrieval",
+          "label": "Chunk by paragraph, with overlapping context windows between neighboring chunks",
           "isCorrect": true,
-          "rationale": "Chunking between 250–500 tokens preserves semantic coherence. Complex tables should be preprocessed, and real-time CRM files are best queried via direct Agent Actions rather than waiting on periodic search index rebuilds.",
+          "rationale": "Chunks that are too small lose the surrounding context the LLM needs, and chunks that are too large dilute relevance. Paragraph-level chunks with overlap keep each step's neighbors attached while staying focused enough to rank well.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/agentic-integration-patterns.html#knowledge-grounding-from-enterprise-content-outbound"
         },
         {
           "id": "s1_b",
-          "label": "Embed each entire multi-page PDF as a single comprehensive vector to preserve cross-paragraph context across the document",
+          "label": "Embed each manual as one vector so every step stays in context",
           "isCorrect": false,
-          "distractorAntipattern": "Monolithic document embeddings exceed token limits, dilute retrieval similarity, and cause severe hallucination.",
-          "rationale": "Single-vector document embeddings dilute semantic relevance, exceed embedding model context windows, and prevent precise chunk retrieval."
+          "distractorAntipattern": "Monolithic Document Embedding",
+          "rationale": "One vector per manual averages similarity across hundreds of pages, so relevance is diluted and the retriever cannot tell which section answers the question."
         },
         {
           "id": "s1_c",
-          "label": "Ingest table-dense PDF manuals directly into unstructured search and enable automated OCR layout recognition in Data Cloud",
+          "label": "Keep the 40-token chunks and raise the retriever's top-k to 50",
           "isCorrect": false,
-          "distractorAntipattern": "Data Cloud unstructured chunking does not reliably parse complex multi-column tables or dense tabular data without structured preprocessing.",
-          "rationale": "Complex tabular data cannot be reliably indexed by standard unstructured text chunkers, resulting in skipped chunks and corrupted answers."
+          "distractorAntipattern": "Top-K Context Flooding",
+          "rationale": "More small chunks bring in unrelated fragments without restoring the missing neighbors, and low-relevance content in the context window degrades answers."
         },
         {
           "id": "s1_d",
-          "label": "Rely entirely on Data Cloud search index re-indexing to expose newly uploaded Account attachments to Agentforce instantly",
+          "label": "Split each manual into one chunk per chapter to keep procedures whole",
           "isCorrect": false,
-          "distractorAntipattern": "Data Cloud vector indexing operates asynchronously and cannot deliver instantaneous grounding on newly attached files.",
-          "rationale": "Vector search index updates are asynchronous batch processes and cannot guarantee sub-minute freshness for newly created record attachments."
+          "distractorAntipattern": "Oversized Chunk Dilution",
+          "rationale": "Chapter-sized chunks dilute relevance the way whole documents do and crowd the context window with steps unrelated to the question."
         }
       ]
     }
