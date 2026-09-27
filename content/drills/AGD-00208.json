@@ -21,7 +21,7 @@
           "label": "Data 360 Cloud Storage Activation Target exporting compressed Parquet files directly to S3",
           "isCorrect": true,
           "rationale": "Cloud Storage activation targets push bulk compressed datasets (Parquet/CSV) directly to external buckets without touching CRM API limits or consuming transactional worker threads.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#data-export-to-cloud-storage"
         },
         {
           "id": "s1_b",

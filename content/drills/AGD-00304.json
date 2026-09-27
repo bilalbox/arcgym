@@ -20,7 +20,7 @@
           "label": "Define explicit scope boundaries and negative triggers distinguishing recurring plans from one-off purchases",
           "isCorrect": true,
           "rationale": "Explicitly defining scope boundaries and negative triggers (e.g., \"do NOT use for recurring subscriptions\") prevents classification ambiguity.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/agent-development-lifecycle.html#phase-2-development"
         },
         {
           "id": "s1_b",

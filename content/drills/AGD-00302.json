@@ -27,7 +27,7 @@
           "label": "Enforce deterministic threshold validation within the backend Apex or Flow Action executing the transaction",
           "isCorrect": true,
           "rationale": "Deterministic server-side guardrails in code/Flow ensure business limits cannot be breached regardless of LLM output.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#make-an-agentic-bank-transfer-deterministic"
         },
         {
           "id": "s1_c",

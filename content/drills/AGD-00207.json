@@ -26,7 +26,7 @@
           "label": "Use section-aware chunking (250–500 tokens) on text PDFs, and leverage direct Agent Actions for real-time CRM file retrieval",
           "isCorrect": true,
           "rationale": "Chunking between 250–500 tokens preserves semantic coherence. Complex tables should be preprocessed, and real-time CRM files are best queried via direct Agent Actions rather than waiting on periodic search index rebuilds.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/agentic-integration-patterns.html#knowledge-grounding-from-enterprise-content-outbound"
         },
         {
           "id": "s1_b",

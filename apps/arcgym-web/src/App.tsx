@@ -248,10 +248,10 @@ export const App: React.FC = () => {
           )}
 
           <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
-            Daily architectural judgment practice
+            Architectural judgment practice
           </h1>
           <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
-            Daily trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
+            Trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
           </p>
         </div>
 

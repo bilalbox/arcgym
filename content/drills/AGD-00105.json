@@ -34,7 +34,7 @@
           "label": "Sharing Sets and Share Groups configured on the portal profile to map account relationships",
           "isCorrect": true,
           "rationale": "Sharing Sets grant access based on user account/contact matching without writing to physical share tables, scaling seamlessly to millions of users.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/platform-sharing-architecture.html#users-and-licenses"
         }
       ]
     }

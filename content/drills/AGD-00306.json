@@ -20,7 +20,7 @@
           "label": "Route via Omni-Channel, passing a synthesized conversation summary and structured intent payload to the human agent",
           "isCorrect": true,
           "rationale": "Escalate via Omni-Channel routing, passing a synthesized conversation summary and structured intent payload so the human agent has instant context without customer repetition.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-fairness.html#time-bounded-escalation"
         },
         {
           "id": "s1_b",

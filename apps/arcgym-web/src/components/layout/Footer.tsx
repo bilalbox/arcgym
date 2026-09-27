@@ -36,10 +36,6 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-slate-400">
         <span>Powered by Cloudflare Pages</span>
         <span className="text-slate-300">•</span>
-        <span className="inline-flex items-center gap-1 text-slate-600">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-          Zero Personal Data Stored
-        </span>
         {!isPrivacyPage && (
           <>
             <span className="text-slate-300">•</span>

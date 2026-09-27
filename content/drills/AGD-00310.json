@@ -20,7 +20,7 @@
           "label": "Context saturation increases latency and dilutes model attention; resolve using sliding memory and semantic summaries",
           "isCorrect": true,
           "rationale": "Uncompressed history balloons token consumption and degrades LLM reasoning. Implementing sliding-window memory and condensed semantic summaries maintains precision while reducing cost.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-resource-and-cost-optimization.html#context-window-management"
         },
         {
           "id": "s1_b",

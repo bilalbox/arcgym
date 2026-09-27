@@ -28,7 +28,7 @@
           "label": "High-Volume Platform Event published via an after-save trigger with custom enrichment",
           "isCorrect": true,
           "rationale": "High-Volume Platform Events decouple downstream consumers asynchronously, allow Apex triggers to filter and reshape business payloads before publishing, and support 450k+ daily event volume.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe"
         },
         {
           "id": "s1_c",

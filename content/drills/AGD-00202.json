@@ -26,7 +26,7 @@
           "label": "Ingest into Data Lake Objects (DLO), map fields to standard Data Model Objects (DMO), and maintain verified primary key lineage",
           "isCorrect": true,
           "rationale": "Staging data in DLOs preserves raw source fidelity, while mapping to standardized DMOs establishes the canonical layer required for identity resolution and modular stream replacement.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
         },
         {
           "id": "s1_b",

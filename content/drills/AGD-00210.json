@@ -21,7 +21,7 @@
           "label": "Transition slow-changing catalog data streams from continuous streaming to daily batch ingestion",
           "isCorrect": true,
           "rationale": "Streaming connectors consume continuous compute credits for micro-batch polling; switching weekly/daily reference data to scheduled batch drastically reduces credit burn.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
         },
         {
           "id": "s1_b",

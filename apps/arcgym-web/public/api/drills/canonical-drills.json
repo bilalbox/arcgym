@@ -30,7 +30,7 @@
             "label": "Data 360 Zero Copy federation to Snowflake, querying governed lake shares directly without data movement",
             "isCorrect": true,
             "rationale": "Zero Copy federation connects Data 360 directly to Snowflake shares, providing live query access for segmentation without data duplication or ingestion fees.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#inbound-zero-copy--external-platforms-to-data-360"
           },
           {
             "id": "s1_c",
@@ -71,7 +71,7 @@
             "label": "Ingest into Data Lake Objects (DLO), map fields to standard Data Model Objects (DMO), and maintain verified primary key lineage",
             "isCorrect": true,
             "rationale": "Staging data in DLOs preserves raw source fidelity, while mapping to standardized DMOs establishes the canonical layer required for identity resolution and modular stream replacement.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
           },
           {
             "id": "s1_b",
@@ -127,7 +127,7 @@
             "label": "Configure composite match criteria combining Phone with exact First Name or DOB, and preserve Unified Link DMOs for source lineage",
             "isCorrect": true,
             "rationale": "Composite match rules prevent false-positive over-clustering across shared household identifiers, while Unified Link DMOs maintain full auditability to contributing source records.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#identity-resolution"
           },
           {
             "id": "s1_b",
@@ -177,7 +177,7 @@
             "label": "Zero Copy federation via Iceberg REST Catalog metadata, querying Databricks Parquet tables in place",
             "isCorrect": true,
             "rationale": "File-based Zero Copy queries Parquet/Iceberg data in place using open catalog metadata, avoiding storage duplication and compute double-billing.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-federation"
           },
           {
             "id": "s1_b",
@@ -220,7 +220,7 @@
             "label": "Streaming Insights with time-based sliding window aggregations over real-time event streams",
             "isCorrect": true,
             "rationale": "Streaming Insights process real-time events continuously within sub-minute sliding time windows, triggering immediate downstream actions.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
           },
           {
             "id": "s1_b",
@@ -263,7 +263,7 @@
             "label": "Configure a Data Action targeting a Platform Event or Flow when the threshold condition fires",
             "isCorrect": true,
             "rationale": "Data Actions trigger near-real-time events or Salesforce Flows directly from Streaming Insights without requiring external middleware or polling.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-actions"
           },
           {
             "id": "s1_b",
@@ -311,7 +311,7 @@
             "label": "Use section-aware chunking (250–500 tokens) on text PDFs, and leverage direct Agent Actions for real-time CRM file retrieval",
             "isCorrect": true,
             "rationale": "Chunking between 250–500 tokens preserves semantic coherence. Complex tables should be preprocessed, and real-time CRM files are best queried via direct Agent Actions rather than waiting on periodic search index rebuilds.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/agentic-integration-patterns.html#knowledge-grounding-from-enterprise-content-outbound"
           },
           {
             "id": "s1_b",
@@ -361,7 +361,7 @@
             "label": "Data 360 Cloud Storage Activation Target exporting compressed Parquet files directly to S3",
             "isCorrect": true,
             "rationale": "Cloud Storage activation targets push bulk compressed datasets (Parquet/CSV) directly to external buckets without touching CRM API limits or consuming transactional worker threads.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#data-export-to-cloud-storage"
           },
           {
             "id": "s1_b",
@@ -404,7 +404,7 @@
             "label": "Execute a Data Subject Rights Forget Me request in Data 360 coordinated with source deletion to purge all layers",
             "isCorrect": true,
             "rationale": "Data Subject Rights (DSR) requests in Data 360 ensure that personal data is deleted or masked across DLOs, unified profiles, and downstream search indexes, in alignment with source system erasures.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_security_architecture.html#regulatory-compliance-enablement"
           },
           {
             "id": "s1_b",
@@ -447,7 +447,7 @@
             "label": "Transition slow-changing catalog data streams from continuous streaming to daily batch ingestion",
             "isCorrect": true,
             "rationale": "Streaming connectors consume continuous compute credits for micro-batch polling; switching weekly/daily reference data to scheduled batch drastically reduces credit burn.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices"
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
           },
           {
             "id": "s1_b",

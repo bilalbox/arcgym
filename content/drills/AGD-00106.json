@@ -20,7 +20,7 @@
           "label": "Bulk API 2.0 ingest job with automated server-side batch chunking",
           "isCorrect": true,
           "rationale": "Bulk API 2.0 automatically slices data into optimal batches, optimizes thread concurrency on the server, and counts against daily row limits rather than individual API calls.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/async-fundamentals.html#bulk-api-and-bulk-api-20"
         },
         {
           "id": "s1_b",

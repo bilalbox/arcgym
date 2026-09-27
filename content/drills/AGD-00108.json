@@ -20,7 +20,7 @@
           "label": "Optimistic Concurrency Control with a Version timestamp validated at DML commit and client retry",
           "isCorrect": true,
           "rationale": "Optimistic concurrency avoids holding prolonged database locks during payment authorization, validating version consistency at the instant of commit.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/integration-patterns.html#batch-data-synchronization"
         },
         {
           "id": "s1_b",

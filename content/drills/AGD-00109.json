@@ -20,7 +20,7 @@
           "label": "High-volume Platform Events published via Pub/Sub API to subscribers in each child org",
           "isCorrect": true,
           "rationale": "Pub/Sub API provides high-throughput, bidirectionally decoupled event distribution with guaranteed delivery and replay retention across multiple orgs.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe"
         },
         {
           "id": "s1_b",

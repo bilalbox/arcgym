@@ -21,7 +21,7 @@
           "label": "Configure a Data Action targeting a Platform Event or Flow when the threshold condition fires",
           "isCorrect": true,
           "rationale": "Data Actions trigger near-real-time events or Salesforce Flows directly from Streaming Insights without requiring external middleware or polling.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-actions"
         },
         {
           "id": "s1_b",

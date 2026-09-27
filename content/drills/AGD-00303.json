@@ -20,7 +20,7 @@
           "label": "Customer data sent to external LLMs is masked in-flight, never retained by model vendors, and not used for training",
           "isCorrect": true,
           "rationale": "Customer data and PII sent to 3rd-party LLMs is masked in-flight, never retained by the LLM vendor, and never used to train foundational models.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-trust.html#trust-layer-capabilities"
         },
         {
           "id": "s1_b",

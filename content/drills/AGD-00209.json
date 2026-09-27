@@ -21,7 +21,7 @@
           "label": "Execute a Data Subject Rights Forget Me request in Data 360 coordinated with source deletion to purge all layers",
           "isCorrect": true,
           "rationale": "Data Subject Rights (DSR) requests in Data 360 ensure that personal data is deleted or masked across DLOs, unified profiles, and downstream search indexes, in alignment with source system erasures.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_security_architecture.html#regulatory-compliance-enablement"
         },
         {
           "id": "s1_b",

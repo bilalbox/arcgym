@@ -20,7 +20,7 @@
           "label": "Execute automated evaluation suites against golden benchmark test datasets, scoring tool fidelity and guardrails",
           "isCorrect": true,
           "rationale": "The Agent Development Lifecycle (ADLC) mandates automated evaluation suites against fixed benchmark test cases to mathematically measure drift and regression before deployment.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/agent-development-lifecycle.html#phase-3-testing-and-validation"
         },
         {
           "id": "s1_b",

@@ -20,7 +20,7 @@
           "label": "Request a Skinny Table from Salesforce Support containing the filtered and sorted fields",
           "isCorrect": true,
           "rationale": "Skinny tables combine standard and custom fields into a flat, unjoined database table, eliminating table join overhead for LDV reporting and queries.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/resource-and-cost-optimization.html#query-selectivity"
         },
         {
           "id": "s1_b",

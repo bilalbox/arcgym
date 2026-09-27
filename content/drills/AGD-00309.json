@@ -20,7 +20,7 @@
           "label": "Specialized agents isolate context and action schemas to specific domains, reducing tool confusion and blast radius",
           "isCorrect": true,
           "rationale": "Decomposing into focused domain agents keeps action definitions lean, prevents LLM tool hallucination, allows independent release cycles, and minimizes context token consumption.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-resource-and-cost-optimization.html#multi-agent-architecture-patterns"
         },
         {
           "id": "s1_b",

@@ -160,23 +160,15 @@ function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[
     console.error(`[WARN] Chroma search failed (${err.message}). Falling back to flat JSON data if available.`);
     const fallbackPath = path.join(ROOT_DIR, 'data/architect_chunks.json');
     if (!fs.existsSync(fallbackPath)) return [];
-    const allChunks = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+    const allChunks: { document: string; metadata: ChromaChunk['metadata'] }[] = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
     const queryLower = query.toLowerCase();
     return allChunks
-      .filter((c: any) => c.text.toLowerCase().includes(queryLower) || c.section_title.toLowerCase().includes(queryLower))
+      .filter((c) => !pillar || c.metadata.pillar === pillar)
+      .filter((c) => c.document.toLowerCase().includes(queryLower) || c.metadata.section_title.toLowerCase().includes(queryLower))
       .slice(0, topK)
-      .map((c: any) => ({
-        content: c.text,
-        metadata: {
-          doc_title: c.doc_title,
-          section_title: c.section_title,
-          breadcrumb: c.breadcrumb,
-          pillar: c.pillar,
-          category: c.category,
-          url: c.url,
-          crawled_at: c.crawled_at,
-          char_count: c.text.length,
-        },
+      .map((c) => ({
+        content: c.document,
+        metadata: c.metadata,
         cosine_similarity: 0.8,
       }));
   }

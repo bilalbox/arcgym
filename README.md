@@ -1,6 +1,6 @@
 # ArcGym
 
-Daily architectural judgment practice for Salesforce Architects — Core Platform, Data 360, and Agentic AI — grounded in the [Salesforce Well-Architected](https://architect.salesforce.com) framework.
+Architectural judgment practice for Salesforce Architects — Core Platform, Data 360, and Agentic AI — grounded in the [Salesforce Well-Architected](https://architect.salesforce.com) framework.
 
 Progress and confidence calibration live in the browser. There is no Salesforce org runtime dependency.
 

@@ -1,11 +1,11 @@
 # ArcGym (Architect Gym)
 
-ArcGym is a daily architectural judgment practice platform for Salesforce Architects, training high-stakes decision-making across Architectural Domains using the Salesforce Well-Architected Framework.
+ArcGym is an architectural judgment practice platform for Salesforce Architects, training high-stakes decision-making across Architectural Domains using the Salesforce Well-Architected Framework.
 
 ## Language
 
 **Drill**:
-A self-contained, 2-minute daily architectural judgment practice exercise.
+A self-contained, 2-minute architectural judgment practice exercise.
 _Avoid_: Quiz, test, exam, flashcard
 
 **Architectural Domain**:
@@ -71,6 +71,3 @@ _Avoid_: Wrong answer, trick option
 **Friction Card**:
 A human-reviewed, paraphrased record of one Trailblazer Community thread: the problem, the naive approaches practitioners tried and why they failed, and how the thread resolved. Friction Cards source Antipattern Distractors and scenario realism only; a community resolution is never Well-Architected Grounding, so every correct answer still cites official documentation.
 _Avoid_: Community pattern, frontier solution, dual grounding
-
-
-

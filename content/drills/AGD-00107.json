@@ -20,7 +20,7 @@
           "label": "Distribute child contacts round-robin across a dedicated pool of parent holding Accounts",
           "isCorrect": true,
           "rationale": "Distributing child records across a pool of parent accounts diffuses lock contention across distinct database rows, eliminating locking serialization bottlenecks.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/data-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/resource-and-cost-optimization.html#data-skew"
         },
         {
           "id": "s1_b",

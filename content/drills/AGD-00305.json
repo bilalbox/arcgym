@@ -20,7 +20,7 @@
           "label": "Enforce structured delimiters isolating user inputs, activate Trust Layer prompt defense, and restrict action permissions",
           "isCorrect": true,
           "rationale": "Enforcing strict XML/Markdown delimiters separating instructions from user input, paired with Einstein Trust Layer prompt defense and principle of least privilege on action credentials.",
-          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-trust.html#architectural-defenses"
         },
         {
           "id": "s1_b",

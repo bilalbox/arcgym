@@ -11,6 +11,7 @@ const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const WEB_DATA_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/src/data');
 const WEB_PUBLIC_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/public/api/drills');
+const ARCHITECT_CHUNKS_PATH = path.join(ROOT_DIR, 'data/architect_chunks.json');
 
 const ARCHITECTURAL_DOMAINS = new Set([
   'Platform_Core',
@@ -26,7 +27,6 @@ const FORMATS = new Set(['Lesson', 'Rapid_Fire', 'Currency', 'Scenario']);
 const STATUSES = new Set(['draft', 'published']);
 const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
 const PILLARS = new Set(['Trust', 'Reliability', 'Operational_Excellence', 'Cost_Optimization', 'Fairness']);
-const OFFICIAL_DOCS_PREFIX = 'https://architect.salesforce.com';
 const CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
@@ -51,8 +51,13 @@ function err(file: string, message: string) {
   errorCount++;
 }
 
+const crawledCitationUrls = new Set<string>(
+  JSON.parse(fs.readFileSync(ARCHITECT_CHUNKS_PATH, 'utf-8')).map((c: any) => c.metadata.url),
+);
+
+/** A citation must be the exact (anchored) URL of a crawled chunk, so learners land on the governing section. */
 function isOfficialCitation(url: unknown): boolean {
-  return typeof url === 'string' && url.startsWith(OFFICIAL_DOCS_PREFIX);
+  return typeof url === 'string' && crawledCitationUrls.has(url);
 }
 
 function validateOptionIds(file: string, where: string, options: any[]) {
@@ -104,7 +109,7 @@ function validateRapidFire(file: string, drill: any) {
         err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
       }
       if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
-        err(file, `correct option ${option.id} must cite ${OFFICIAL_DOCS_PREFIX} (got ${option.citationUrl ?? 'none'})`);
+        err(file, `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`);
       }
     }
   }
@@ -115,7 +120,7 @@ function validateCurrency(file: string, drill: any) {
     err(file, 'Currency requires prompt and totalPoints');
   }
   if (!isOfficialCitation(drill.citationUrl)) {
-    err(file, `Currency must cite ${OFFICIAL_DOCS_PREFIX} (got ${drill.citationUrl ?? 'none'})`);
+    err(file, `Currency must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${drill.citationUrl ?? 'none'})`);
   }
   if (!Array.isArray(drill.categories) || drill.categories.length === 0) {
     err(file, 'Currency requires categories[]');

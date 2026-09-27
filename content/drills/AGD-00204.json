@@ -21,7 +21,7 @@
           "label": "Zero Copy federation via Iceberg REST Catalog metadata, querying Databricks Parquet tables in place",
           "isCorrect": true,
           "rationale": "File-based Zero Copy queries Parquet/Iceberg data in place using open catalog metadata, avoiding storage duplication and compute double-billing.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-federation"
         },
         {
           "id": "s1_b",

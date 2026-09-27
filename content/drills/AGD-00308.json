@@ -20,7 +20,7 @@
           "label": "Session Tracing Data Model (STDM) queried via Data Cloud or Agentforce Analytics",
           "isCorrect": true,
           "rationale": "The Session Tracing Data Model (STDM) records step-by-step reasoning trajectories, tool call inputs/outputs, latency breakdowns, and token metrics for comprehensive auditing.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-agentic-patterns.html#agent-observability"
         },
         {
           "id": "s1_b",

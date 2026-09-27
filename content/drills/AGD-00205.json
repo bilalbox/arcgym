@@ -21,7 +21,7 @@
           "label": "Streaming Insights with time-based sliding window aggregations over real-time event streams",
           "isCorrect": true,
           "rationale": "Streaming Insights process real-time events continuously within sub-minute sliding time windows, triggering immediate downstream actions.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
         },
         {
           "id": "s1_b",

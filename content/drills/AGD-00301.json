@@ -20,7 +20,7 @@
           "label": "Atlas evaluates context iteratively, generating dynamic plans, selecting tools, and adapting to intermediate results",
           "isCorrect": true,
           "rationale": "Atlas dynamically evaluates context, generates iterative plans, orchestrates topics, selects tools, and refines execution based on intermediate observation steps.",
-          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#how-the-new-agentforce-architecture-works"
         },
         {
           "id": "s1_b",

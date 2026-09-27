@@ -20,7 +20,7 @@
           "label": "Throws System.CalloutException (uncommitted work); decouple using Queueable Apex or a published Platform Event",
           "isCorrect": true,
           "rationale": "Salesforce transactions prohibit synchronous HTTP callouts when open DML mutations exist in the database thread. Decoupling via Queueable or Platform Event resets the transaction boundary.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-integration.html#use-case-outbound-integration-using-pro-code-tools"
         },
         {
           "id": "s1_b",

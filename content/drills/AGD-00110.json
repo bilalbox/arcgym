@@ -20,7 +20,7 @@
           "label": "Pub/Sub API provides HTTP/2 binary gRPC streaming, client-driven pull flow control, and schema caching",
           "isCorrect": true,
           "rationale": "Pub/Sub API replaces JSON HTTP/1.1 CometD push overhead with high-performance binary Protobuf serialization, backpressure flow control, and dynamic Apache Avro schema lookup.",
-          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/integration-patterns.html#appendix-b-legacy-salesforce-integration-products"
         },
         {
           "id": "s1_b",
