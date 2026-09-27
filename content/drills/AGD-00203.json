@@ -9,10 +9,9 @@
     "Trust",
     "Fairness"
   ],
-  "version": 3,
+  "version": 4,
   "status": "published",
   "sourceCardIds": [
-    "FC-0D54V00007bLEFISA4",
     "FC-0D5KX00000mmSig0AE",
     "FC-0D54V00007YvibgSAB",
     "FC-0D54V00007IfM7ZSAV"
@@ -20,35 +19,35 @@
   "steps": [
     {
       "id": "s1",
-      "prompt": "A Data 360 Identity Resolution ruleset uses fuzzy match on Normalized Phone Number alone. Household members sharing a landline collapse into one Unified Individual, polluting consent and personalization. How should the architecture be revised?",
+      "prompt": "A Data 360 identity resolution ruleset matches Individuals on exact Normalized Phone Number alone. In 18% of households, several people share one landline, and each of those households collapses into a single unified profile that mixes their consent records. How should the architect revise the ruleset?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Configure composite match criteria combining Phone with exact First Name or DOB, and preserve Unified Link DMOs for source lineage",
+          "label": "Make the phone match rule also require an exact first name or birth date match",
           "isCorrect": true,
-          "rationale": "Composite match rules prevent false-positive over-clustering across shared household identifiers, while Unified Link DMOs maintain full auditability to contributing source records.",
+          "rationale": "Identity resolution treats every set of records a rule matches as one entity, so a rule keyed only on a shared attribute merges everyone who shares it. Pairing the shared landline with a person-level attribute keeps one household phone from collapsing several people into one profile.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#identity-resolution"
         },
         {
           "id": "s1_b",
-          "label": "Consolidate all source contact attributes directly onto the Unified Individual DMO and remove Unified Link objects to streamline joins",
+          "label": "Set the reconciliation rule for consent fields to Most Recently Updated",
           "isCorrect": false,
-          "distractorAntipattern": "Dropping Unified Link objects destroys record lineage and prevents downstream activations from tracing back to originating source keys.",
-          "rationale": "Unified Link DMOs are architecturally required to maintain deterministic lineage between source records and unified profiles."
+          "distractorAntipattern": "Reconciliation as Match Fix",
+          "rationale": "Reconciliation rules choose which value wins inside a profile that is already matched; they cannot separate household members the phone rule has merged."
         },
         {
           "id": "s1_c",
-          "label": "Update the profile reconciliation rule to Most Recently Updated while retaining the single-attribute fuzzy phone match criteria",
+          "label": "Replace the ruleset with a SQL Data Transform that builds a master person key from phone",
           "isCorrect": false,
-          "distractorAntipattern": "Reconciliation rules determine winning field values after clustering, but cannot correct erroneous cluster creation.",
-          "rationale": "Reconciliation rules only decide which field value wins among already-matched profiles; they cannot unbundle incorrectly clustered individuals."
+          "distractorAntipattern": "Hand-Built Identity Keys",
+          "rationale": "A phone-derived key merges the same household members the current rule does, and it rebuilds identity resolution as a custom pipeline the team must maintain."
         },
         {
           "id": "s1_d",
-          "label": "Replace Identity Resolution with a custom SQL Data Transform that hashes shared phone numbers into synthetic master person keys",
+          "label": "Add an email match rule so members with distinct emails form separate profiles",
           "isCorrect": false,
-          "distractorAntipattern": "Custom key transforms bypass native graph unification, duplicate clustering logic, and do not update dynamically.",
-          "rationale": "Manual SQL key transforms lack graph-based entity resolution, fail to handle multi-party cross-matching, and create unmaintainable custom pipeline debt."
+          "distractorAntipattern": "Additive Rule Split Fallacy",
+          "rationale": "Match rules combine with OR, so a new email rule adds another way to merge records; members still merge through the phone-only rule."
         }
       ]
     }
