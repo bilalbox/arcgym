@@ -1,6 +1,6 @@
 {
   "id": "AGD-00401",
-  "title": "Agentforce Atlas Reasoning and Guardrails: Boundary Governance, Dynamic Planning & Deterministic Logic",
+  "title": "Agentforce Hybrid Reasoning: Where the LLM Boundary Falls",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
@@ -8,87 +8,87 @@
     "Reliability",
     "Trust"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "When designing Agentforce implementations, how should architects enforce the boundary between LLM reasoning and transactional business logic?",
+      "prompt": "A bank's Agentforce agent handles funds transfer requests. Transfers over $10,000 require a verified identity, every transfer must leave a reproducible audit trail, and customers phrase their requests in many different ways. How should the architect split the work between the LLM and deterministic logic?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Use the LLM for natural language intent classification; delegate all state mutations to deterministic code",
+          "label": "The LLM interprets the request; script logic runs the identity check and transfer",
           "isCorrect": true,
-          "rationale": "LLMs provide probabilistic interpretation and conversational intent classification, but all transactional commits, financial calculations, and data mutations must be executed deterministically in Apex or Flow.",
+          "rationale": "Decisions that can be expressed as code belong in logic, and judgment such as reading varied phrasing belongs to the LLM. The $10,000 identity rule and the audit trail need guaranteed, reproducible execution, which only the deterministic path provides.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#the-llm-boundary-where-judgment-ends-and-code-begins"
         },
         {
           "id": "s1_b",
-          "label": "Allow the LLM to dynamically generate SOQL queries and calculate discount algorithms based on user conversation context",
+          "label": "The LLM interprets the request and applies the identity rule stated in its instructions",
           "isCorrect": false,
-          "distractorAntipattern": "Permitting generative models to synthesize database queries and execute financial algorithms introduces hallucinations and security exploits.",
-          "rationale": "Allowing an LLM to generate raw queries or perform financial arithmetic directly leads to hallucinations, SQL/SOQL injection vulnerabilities, and unverified data commits."
+          "distractorAntipattern": "Prompt-Enforced Business Rule",
+          "rationale": "A rule in the prompt is applied through probabilistic reasoning, so a large transfer can proceed unverified and the audit trail cannot prove the rule ran."
         },
         {
           "id": "s1_c",
-          "label": "Confine the LLM to rendering static UI templates while routing user utterances through hardcoded regex classification",
+          "label": "Script logic matches known request phrasings; the LLM only writes the confirmation reply",
           "isCorrect": false,
-          "distractorAntipattern": "Using hardcoded regexes strips away the intent classification and semantic reasoning strengths of modern LLM agents.",
-          "rationale": "Relying on hardcoded regexes negates the primary value of Agentforce generative intent resolution and fails to adapt to natural customer conversational phrasing."
+          "distractorAntipattern": "Keyword Intent Routing",
+          "rationale": "Customers phrase transfer requests in many ways that fixed phrase matching misses; interpreting varied language is the judgment the LLM is there for."
         }
       ]
     },
     {
       "id": "s2",
-      "prompt": "How does the Agentforce Atlas Reasoning Engine orchestrate multi-step user requests while preventing infinite execution loops and cascading failures?",
+      "prompt": "A retailer's Returns subagent in Agent Script includes an action that issues refunds. Policy allows refunds only for orders in Delivered status, and customers with any other status must not be offered one. Where should the architect enforce the status condition?",
       "options": [
         {
           "id": "s2_a",
-          "label": "Atlas executes iterative ReAct loops (Reason, Act, Observe), bounded by max iteration limits and strict action schemas",
+          "label": "A script condition that exposes the refund action only for Delivered orders",
           "isCorrect": true,
-          "rationale": "Atlas iteratively evaluates context, executes tools, and observes outputs within bounded reasoning steps, enforcing strict execution limits to prevent infinite loops.",
+          "rationale": "The Atlas Reasoning Engine enforces guard clauses and conditional routing from the compiled Agent Graph at runtime, before any LLM call on that node. With the action unavailable, the model cannot offer or invoke a refund for an order in another status.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#how-the-new-agentforce-architecture-works"
         },
         {
           "id": "s2_b",
-          "label": "Atlas compiles user requests into an immutable DAG execution graph committed within a single atomic database transaction",
+          "label": "A sentence in the subagent's prompt instructions telling the LLM to check status first",
           "isCorrect": false,
-          "distractorAntipattern": "Atlas is an adaptive, dynamic reasoning engine that re-evaluates context between steps, not a static single-shot transaction graph compiler.",
-          "rationale": "Atlas does not compile an unmodifiable static graph; it dynamically adapts subsequent steps based on intermediate tool observations and user responses."
+          "distractorAntipattern": "Prompt-Instructed Guard",
+          "rationale": "Prompt instructions are interpreted by the LLM, so a persistent customer can still get a refund offered; a rule that can be written as a condition belongs in logic."
         },
         {
           "id": "s2_c",
-          "label": "Atlas delegates multi-step action coordination to client-side Web Components, waiting for browser events between steps",
+          "label": "An after_reasoning block that checks the order status once the LLM has replied",
           "isCorrect": false,
-          "distractorAntipattern": "Agentforce reasoning and tool invocation occur entirely within the secure Salesforce trust perimeter on the server, not in client browsers.",
-          "rationale": "Agentforce reasoning loops execute securely server-side within Salesforce infrastructure, avoiding browser latency, tampering, and client-side dropouts."
+          "distractorAntipattern": "Post-Response Guard Check",
+          "rationale": "after_reasoning runs only after the LLM has responded, so the refund may already have been offered by the time the check runs."
         }
       ]
     },
     {
       "id": "s3",
-      "prompt": "A customer transaction requires inventory reservation, payment processing, and shipment creation. Which pattern correctly orchestrates these dependent steps?",
+      "prompt": "An internal Agentforce agent answers employee questions about travel policy from Knowledge articles. It takes no actions and updates no records, the articles change monthly, and employees ask in free-form language. How should the architect build the policy subagent?",
       "options": [
         {
           "id": "s3_a",
-          "label": "Encapsulate the multi-step transaction inside a deterministic Flow or Apex service invoked as a single discrete Agent Action",
+          "label": "Prompt instructions that let the LLM answer from the retrieved Knowledge articles",
           "isCorrect": true,
-          "rationale": "Grouping dependent transactional operations into a single deterministic service guarantees atomicity, rollback safety, and governor limit control, shielding mutations from LLM decision drift.",
+          "rationale": "Low-stakes informational queries are where LLM variability is a feature rather than a risk, and nothing here needs a guaranteed sequence or audit trail. Monthly article changes flow through retrieval without editing the agent.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/hybrid-reasoning-agentforce-builder-agent-script.html#when-to-use-deterministic-logic"
         },
         {
           "id": "s3_b",
-          "label": "Expose each operation as an independent agent tool and allow the LLM to autonomously sequence the calls across multiple turns",
+          "label": "An Agent Script decision tree with a scripted branch for each policy question",
           "isCorrect": false,
-          "distractorAntipattern": "Allowing an LLM to coordinate multiple dependent transactional mutations risks partial execution, dropped steps, and orphaned records.",
-          "rationale": "Relying on probabilistic LLM reasoning to sequence dependent transactional steps risks partial completion, orphan database locks, and lack of atomic rollback on failure."
+          "distractorAntipattern": "Over-Scripted Informational Agent",
+          "rationale": "A boundary this rigid cannot handle free-form questions and must be rewritten every time the articles change, which makes the agent expensive to maintain."
         },
         {
           "id": "s3_c",
-          "label": "Configure an asynchronous prompt template to invoke external payment and shipping webhooks directly from the Trust Layer pipeline",
+          "label": "A Flow action that runs a keyword article search and returns the top article",
           "isCorrect": false,
-          "distractorAntipattern": "Prompt templates are designed for text generation and prompt augmentation, not executing transactional ACID mutations or payment processing.",
-          "rationale": "Prompt templates are intended for grounded text generation; they cannot manage transactional state, database rollbacks, or mission-critical payment workflows."
+          "distractorAntipattern": "Keyword Search Answering",
+          "rationale": "Keyword search misses questions phrased in the employee's own words, and handing back a whole article leaves the employee to find the answer in it."
         }
       ]
     }
