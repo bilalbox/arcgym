@@ -1,6 +1,6 @@
 {
   "id": "AGD-00601",
-  "title": "Dreamforce Agentforce crunch: Dual-Meter stakeholder pressure",
+  "title": "Dreamforce Agentforce demo: keynote deadline vs. agent guardrails",
   "format": "Scenario",
   "domain": "Ai_And_Automation",
   "domainLabel": "Agentic Enterprise Governance",
@@ -9,7 +9,7 @@
     "Trust",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "initialTrust": 65,
   "initialReliability": 70,
@@ -17,45 +17,53 @@
     {
       "moveNumber": 1,
       "stakeholderPersona": "Chief Technology Officer (CTO)",
-      "dialogueText": "\"We have 48 hours until Dreamforce keynotes. The CEO wants to demo an autonomous Agentforce agent that issues full refunds directly to customers up to $5,000 without human approval. Can we skip prompt defense testing to hit the demo window?\"",
+      "dialogueText": "\"We have 48 hours until the Dreamforce keynote. The CEO wants the Agentforce agent to approve refunds up to $5,000 on its own, live on stage. Guardrail testing on the refund action would take both days. How do we hit the keynote?\"",
       "options": [
         {
           "id": "m1_a",
-          "text": "Agree to bypass prompt defense and deploy directly to production sandbox for speed.",
-          "trustDelta": 15,
-          "reliabilityDelta": -35,
-          "techDebtImpact": "Severe vulnerability: Prompt injection can trigger unlimited fraudulent refund loops.",
+          "text": "Skip the guardrail tests and rely on the Trust Layer's built-in prompt defense during the live demo.",
+          "trustDelta": 12,
+          "reliabilityDelta": -30,
+          "techDebtImpact": "Gains both days for demo polish, but prompt defense filters known injection patterns only; one novel injection on stage can still trigger a $5,000 refund.",
           "isOptimal": false
         },
         {
           "id": "m1_b",
-          "text": "Firmly counter with a Well-Architected Guardrail: Enforce a $100 autonomous cap and route >$100 to Human-in-the-Loop Omni-Channel with Trust Layer PII masking active.",
-          "trustDelta": 5,
+          "text": "Cap autonomous refunds at finance's approved range, escalate larger ones through Omni-Channel, and test that boundary.",
+          "trustDelta": -6,
           "reliabilityDelta": 20,
-          "techDebtImpact": "Minimal: Establishes safe boundary pattern while delivering full keynote demo capability.",
+          "techDebtImpact": "Costs the CEO the fully autonomous $5,000 moment, but leaves a narrow boundary that two days of testing can cover and puts a human on every large refund.",
           "isOptimal": true
+        },
+        {
+          "id": "m1_c",
+          "text": "Swap the refund demo for a read-only order-status agent and ship refunds after Dreamforce.",
+          "trustDelta": -18,
+          "reliabilityDelta": 8,
+          "techDebtImpact": "Removes the refund risk from the keynote, but gives up the refund story when a bounded version fits inside the window.",
+          "isOptimal": false
         }
       ]
     },
     {
       "moveNumber": 2,
       "stakeholderPersona": "VP of Customer Experience",
-      "dialogueText": "\"Our agent seems slow when fetching customer history. The dev team wants to query the entire 20M Account history table synchronously on every single user turn.\"",
+      "dialogueText": "\"The agent takes several seconds to pull customer history. Its action queries our 20-million-row order history object, filtered only by status. The dev team wants to move grounding to Data 360 Calculated Insights, a two-week build. What do we do before the keynote?\"",
       "options": [
         {
           "id": "m2_a",
-          "text": "Allow unindexed synchronous queries on every turn to maximize conversational context.",
-          "trustDelta": -10,
-          "reliabilityDelta": -30,
-          "techDebtImpact": "Catastrophic: Triggers 10,000ms CPU timeouts and locks user sessions during peak hours.",
+          "text": "Start the two-week Data 360 build and demo with one customer whose short history loads quickly.",
+          "trustDelta": -12,
+          "reliabilityDelta": 4,
+          "techDebtImpact": "Buys a grounding layer the agent may use later, but misses the keynote and hides a table scan that one indexed filter already fixes.",
           "isOptimal": false
         },
         {
           "id": "m2_b",
-          "text": "Ground the agent via Data Cloud Unified Profile with pre-computed Calculated Insights instead of live SOQL scans.",
+          "text": "Add the customer's Account lookup to the action's query filter so it uses an index.",
           "trustDelta": 10,
-          "reliabilityDelta": 15,
-          "techDebtImpact": "Zero: Decouples analytics from core transaction engine with sub-200ms grounding retrieval.",
+          "reliabilityDelta": 16,
+          "techDebtImpact": "Saves the two-week build at little later cost: lookup fields carry standard indexes, so each turn reads one customer's rows instead of scanning 20 million.",
           "isOptimal": true
         }
       ]
@@ -63,22 +71,30 @@
     {
       "moveNumber": 3,
       "stakeholderPersona": "Lead Security Auditor",
-      "dialogueText": "\"Our compliance review shows customer Social Security Numbers and credit cards are entering prompt logs in plaintext. We must shut down the agent unless we can guarantee zero retention.\"",
+      "dialogueText": "\"Trust Layer audit data shows customer Social Security numbers and card numbers from Case records inside prompts sent to the model. The agent stays live only if you show me how that stops. What is the plan?\"",
       "options": [
         {
           "id": "m3_a",
-          "text": "Activate the Einstein Trust Layer Zero Data Retention and PII Masking policy immediately.",
-          "trustDelta": 20,
-          "reliabilityDelta": 10,
-          "techDebtImpact": "Resolved: 100% compliance with GDPR/HIPAA with contractual LLM zero data retention.",
+          "text": "Remove SSN and card fields from the grounding actions and keep Trust Layer masking as a backstop.",
+          "trustDelta": 12,
+          "reliabilityDelta": 16,
+          "techDebtImpact": "Costs a day of action edits and retesting, but the fields stop entering prompts at the source, and masking still catches PII typed into free text.",
           "isOptimal": true
         },
         {
           "id": "m3_b",
-          "text": "Write a custom regex trigger in Apex to scrub plaintext logs after they are saved to disk.",
-          "trustDelta": -25,
-          "reliabilityDelta": -15,
-          "techDebtImpact": "Regulatory violation: Scrubbing after save still violates zero-retention mandates during inference.",
+          "text": "Keep the full record context and rely on Trust Layer data masking to strip SSNs and card numbers.",
+          "trustDelta": 4,
+          "reliabilityDelta": -18,
+          "techDebtImpact": "Keeps the agent live with no rework, but masking covers known PII patterns only; numbers in unexpected formats or free-text fields can still reach the model.",
+          "isOptimal": false
+        },
+        {
+          "id": "m3_c",
+          "text": "Show the auditor the zero data retention agreement with the model provider as the proof.",
+          "trustDelta": 6,
+          "reliabilityDelta": -20,
+          "techDebtImpact": "Answers the audit today, but zero retention is a contractual commitment covering the provider after inference; the numbers still leave Salesforce in every prompt.",
           "isOptimal": false
         }
       ]
