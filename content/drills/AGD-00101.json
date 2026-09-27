@@ -1,6 +1,6 @@
 {
   "id": "AGD-00101",
-  "title": "Enterprise Integration: Scale vs. Tight Coupling in Order Egress",
+  "title": "Order Egress: Change Events or Custom Events for Three Consumers",
   "format": "Rapid_Fire",
   "domain": "Integration_Apis",
   "difficulty": "Lead_CTA",
@@ -9,33 +9,33 @@
     "Trust",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An enterprise ERP requires near-real-time updates when an Order or Account changes (450,000 events/day). Custom business payload transformation and filtering are required prior to external publication. Which integration pattern complies with Well-Architected Trust & Reliability?",
+      "prompt": "When an Order's status changes, an ERP, a warehouse system, and a billing service each need a near-real-time message. The message must carry a business payload computed from the Order, its line items, and its Account. Which integration pattern should the architect use?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Change Data Capture (CDC) custom channel with event enrichment configured on standard fields",
+          "label": "Change Data Capture on Order, with enriched fields on a custom channel",
           "isCorrect": false,
-          "distractorAntipattern": "CDC custom channels only enrich unchanged record fields; they cannot execute procedural transformations, cross-object joins, or custom business payload formatting prior to egress.",
-          "rationale": "While CDC custom channels support field enrichment, they cannot execute complex Apex transformations, join data from related objects, or apply conditional business filtering before event publishing."
+          "distractorAntipattern": "CDC Enrichment as Transform",
+          "rationale": "A change event carries field values of the changed Order; enrichment adds unchanged Order fields but runs no logic, so it cannot compute a payload from line items and the Account."
         },
         {
           "id": "s1_b",
-          "label": "High-Volume Platform Event published via an after-save trigger with custom enrichment",
+          "label": "A custom platform event that an Order after-save trigger publishes",
           "isCorrect": true,
-          "rationale": "High-Volume Platform Events decouple downstream consumers asynchronously, allow Apex triggers to filter and reshape business payloads before publishing, and support 450k+ daily event volume.",
+          "rationale": "Publish/subscribe lets one message reach every dependent system without coupling the Order to each consumer. Because Apex publishes the event, the trigger can build the business payload from line items and the Account first.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe"
         },
         {
           "id": "s1_c",
-          "label": "Queueable Apex callout handler enqueued from the after-save trigger with backoff retries",
+          "label": "A Queueable callout job per system, enqueued by an Order after-save trigger",
           "isCorrect": false,
-          "distractorAntipattern": "High-frequency Queueable callouts at 450,000 events/day exhaust rolling 24-hour asynchronous Apex allocations and create severe thread serialization bottlenecks.",
-          "rationale": "At 450,000 events/day, firing individual Queueable Apex callouts exceeds standard asynchronous execution limits (250,000 daily or org allocation) and couples outbound delivery to external ERP availability."
+          "distractorAntipattern": "Point-to-Point Callout Fan-Out",
+          "rationale": "One callout job per system ties Order processing to every consumer, so each new subscriber means changing the trigger and adding async Apex executions for every order."
         }
       ]
     }
