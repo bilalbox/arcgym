@@ -10,6 +10,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { lintDrillWording } from '../packages/drill-core/src/index.js';
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
@@ -71,6 +72,7 @@ function main() {
   const idSet = new Set(args.ids.map((id) => id.toUpperCase()));
   let updated = 0;
   let matched = 0;
+  let blocked = 0;
 
   for (const file of files) {
     const filePath = path.join(DRILLS_DIR, file);
@@ -95,6 +97,16 @@ function main() {
       continue;
     }
 
+    if (args.status === 'published') {
+      const findings = lintDrillWording(drill);
+      if (findings.length > 0) {
+        console.error(`  block ${drill.id}: ${findings.length} wording finding(s)`);
+        for (const f of findings) console.error(`    [WORDING] ${f.ruleId} @ ${f.where}: ${f.message}`);
+        blocked++;
+        continue;
+      }
+    }
+
     drill.status = args.status;
     fs.writeFileSync(filePath, `${JSON.stringify(drill, null, 2)}\n`, 'utf-8');
     console.log(`  ${drill.id}: → ${args.status}`);
@@ -108,6 +120,11 @@ function main() {
 
   console.log(`\nUpdated ${updated} of ${matched} matched drills to status=${args.status}.`);
   console.log('Run `pnpm build:drills` to refresh the learner catalog.\n');
+
+  if (blocked > 0) {
+    console.error(`${blocked} drill(s) not published: fix their wording findings first.`);
+    process.exit(1);
+  }
 }
 
 main();
