@@ -9,7 +9,7 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "published",
   "sourceCardIds": [
     "FC-0D5KX00000pNzhX0AS"
@@ -17,29 +17,29 @@
   "steps": [
     {
       "id": "s1",
-      "prompt": "A mature Data 360 org already has customized Contact and Account DLO–DMO mappings powering identity resolution and activation. Marketing now requires Marketing Cloud Next, which mandates the Sales Data Kit. Leadership will not accept losing bespoke field maps, but consent/messaging kit coverage is still required. Which approach best protects the harmonized DMO layer?",
+      "prompt": "A mature Data 360 org has customized Contact and Account DLO-to-DMO mappings that feed identity resolution and activation. Enabling Marketing Cloud Next requires the Sales Data Kit, whose consent and messaging streams the team needs. How should the architect bring in the kit?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Execute the automated Deploy Data Streams wizard in Marketing Cloud Next setup to reconcile custom and standard mappings into unified templates",
+          "label": "Run the Deploy Data Streams step in Marketing Cloud Next setup to reconcile the mappings",
           "isCorrect": false,
           "distractorAntipattern": "Blind Packaged Kit Redeploy",
-          "rationale": "The standard Deploy wizard forces default data kit mappings, overwriting customized relationships and breaking active identity resolution models.",
+          "rationale": "The setup deploy reapplies the kit's predefined DLO-to-DMO mappings over the custom ones, breaking the identity resolution and activation built on them.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
         },
         {
           "id": "s1_b",
-          "label": "Retain custom mappings on existing DLOs and configure downstream segment activations to query Data Lake Objects directly instead of DMOs",
+          "label": "Keep the custom mappings and point segments and activations at the DLOs instead",
           "isCorrect": false,
           "distractorAntipattern": "Lake-Only Activation Bypass",
-          "rationale": "Marketing Cloud Next and Data Cloud segmentation require canonical Data Model Objects (DMOs) and cannot build unified audiences directly on DLOs.",
+          "rationale": "Segmentation and activation build on the harmonized DMO layer, so moving them to DLOs gives up the canonical model that identity resolution unifies.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
         },
         {
           "id": "s1_c",
-          "label": "Ingest required data kit streams selectively, preserving bespoke DLO-to-DMO harmonizations while mapping only mandatory messaging attributes",
+          "label": "Deploy only the kit's consent and messaging streams and map them beside the custom mappings",
           "isCorrect": true,
-          "rationale": "Ingesting required data kit streams manually or selectively avoids blowing away existing custom DLO-DMO mappings, preserving identity resolution integrity while fulfilling MCN prerequisites.",
+          "rationale": "DMOs are the harmonized layer that identity resolution and activation read, so the custom DLO-to-DMO mappings must stay intact. Bringing in only the streams Marketing Cloud Next needs adds consent and messaging data without replacing those mappings.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
         }
       ]
