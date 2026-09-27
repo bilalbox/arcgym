@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { DrillFormat, ScenarioDrillDefinition, orderOptions } from '@arcgym/drill-core';
+import { DrillFormat, ScenarioDrillDefinition, orderOptions, optionSeed } from '@arcgym/drill-core';
 import { Users, Shield, ArrowRight, RotateCcw, AlertOctagon, CheckCircle2, Hourglass } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
@@ -55,7 +55,7 @@ export const DualMeterScenario: React.FC<{
 
   const currentMove = drill.moves[currentMoveIdx];
   const orderedOptions = useMemo(
-    () => orderOptions(currentMove.options, `${drill.id}:${currentMove.moveNumber}`),
+    () => orderOptions(currentMove.options, optionSeed(drill.id, currentMove.moveNumber)),
     [drill.id, currentMove]
   );
 

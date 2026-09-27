@@ -20,7 +20,7 @@ function hitCounts(drills: DrillDefinitionDTO[]): Partial<Record<WordingRuleId, 
   return counts;
 }
 
-/** Ingest rejects drafts with findings and build-drills rejects published ones, so the corpus stays clean. */
+/** Stricter than build-drills, which only warns on drafts: a hand-edited draft must be fixed before this passes. */
 describe('wording findings on content/drills', () => {
   it('has no findings on any drill', () => {
     expect(hitCounts(loadCorpus())).toEqual({});

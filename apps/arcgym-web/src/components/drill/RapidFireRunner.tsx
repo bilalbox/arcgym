@@ -12,6 +12,7 @@ import {
   DrillAttemptRecord,
   safeCitationHref,
   orderOptions,
+  optionSeed,
 } from '@arcgym/drill-core';
 import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
@@ -62,7 +63,7 @@ export const RapidFireRunner: React.FC<{
 
   const currentStep = drill.steps[currentStepIndex];
   const orderedOptions = useMemo(
-    () => orderOptions(currentStep.options, `${drill.id}:${currentStep.id}`),
+    () => orderOptions(currentStep.options, optionSeed(drill.id, currentStep.id)),
     [drill.id, currentStep]
   );
   const progressPercent = Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / drill.steps.length) * 100);
@@ -321,7 +322,7 @@ export const RapidFireRunner: React.FC<{
                       <p>
                         <span className="font-semibold">Antipattern risk:</span> {opt.distractorAntipattern}
                       </p>
-                      {isSelected && <p className="leading-relaxed">{opt.rationale}</p>}
+                      {isSelected && <p className="text-xs sm:text-sm leading-relaxed">{opt.rationale}</p>}
                     </div>
                   )}
                 </div>

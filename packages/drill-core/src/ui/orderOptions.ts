@@ -17,9 +17,14 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+/** Shuffle seed for one decision: a Rapid Fire step id, a Lesson stage number, or a Scenario move number. */
+export function optionSeed(drillId: string, decisionKey: string | number): string {
+  return `${drillId}:${decisionKey}`;
+}
+
 /**
- * Display order for a step's options: a deterministic shuffle seeded by `drillId:stepId`,
- * so authored position never reveals the answer and every render of a step agrees.
+ * Display order for a decision's options: a deterministic shuffle seeded by `optionSeed`,
+ * so authored position never reveals the answer and every render of a decision agrees.
  */
 export function orderOptions<T>(options: readonly T[], seed: string): T[] {
   const random = mulberry32(fnv1a(seed));
