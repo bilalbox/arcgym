@@ -9,7 +9,7 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "sourceCardIds": [
     "FC-0D54V00007bLMAFSA4",
@@ -31,20 +31,20 @@
       "dialogueText": "\"ABM is in two weeks. Buying committees mean one Contact on several Accounts. Mapping a real Account Contact relationship adds a day of harmonization we do not have—can we just project Contact onto Account Contact and keep moving?\"",
       "options": [
         {
-          "id": "m1_a",
-          "text": "Map Account Contact 1:1 from Contact so modeling finishes today and activation planning can start tomorrow.",
-          "trustDelta": 10,
-          "reliabilityDelta": -26,
-          "techDebtImpact": "Saves ~1 day now, but collapses many-to-many Account–person roles. Later membership work cannot express “this Contact in this Account” without duplication.",
-          "isOptimal": false
-        },
-        {
           "id": "m1_b",
           "text": "Spend the modeling day: Account Contact as the account–person relationship (e.g. AccountContactRelation), related to Account and Individual/Contact.",
           "trustDelta": -12,
           "reliabilityDelta": 16,
           "techDebtImpact": "Burns schedule on DMO harmonization, but leaves a Customer 360 relationship grain that activation can membership on later.",
           "isOptimal": true
+        },
+        {
+          "id": "m1_a",
+          "text": "Map Account Contact 1:1 from Contact so modeling finishes today and activation planning can start tomorrow.",
+          "trustDelta": 10,
+          "reliabilityDelta": -26,
+          "techDebtImpact": "Saves ~1 day now, but collapses many-to-many Account–person roles. Later membership work cannot express “this Contact in this Account” without duplication.",
+          "isOptimal": false
         }
       ]
     },
@@ -100,43 +100,43 @@
       "dialogueText": "\"Compliance wants every Contact Point Email in the DE. Max # of Attribute Values is stuck at 1. A fan-out transform plus new segment/activation is another multi-day track—can we just raise the attribute limit instead?\"",
       "options": [
         {
-          "id": "m4_a",
-          "text": "Raise Max # of Attribute Values on Contact Point Email (or a file-based activation DMO) and keep the existing membership object.",
-          "trustDelta": 13,
-          "reliabilityDelta": -26,
-          "techDebtImpact": "Looks like a same-day config win, but native activation will not fan out multiple emails per Individual via that limit—secondary addresses never become addressable rows.",
-          "isOptimal": false
-        },
-        {
           "id": "m4_b",
           "text": "Schedule the transform track: fan-out DLO/DMO (one row per Individual–email), segment on it, activate with membership on that grain.",
           "trustDelta": -15,
           "reliabilityDelta": 17,
           "techDebtImpact": "Burns multi-day scope on transform + re-activation, but payload can choose a contact identifier per email row for compliance.",
           "isOptimal": true
+        },
+        {
+          "id": "m4_a",
+          "text": "Raise Max # of Attribute Values on Contact Point Email (or a file-based activation DMO) and keep the existing membership object.",
+          "trustDelta": 13,
+          "reliabilityDelta": -26,
+          "techDebtImpact": "Looks like a same-day config win, but native activation will not fan out multiple emails per Individual via that limit—secondary addresses never become addressable rows.",
+          "isOptimal": false
         }
       ]
     },
     {
       "moveNumber": 5,
       "stakeholderPersona": "Integration Lead",
-      "dialogueText": "\"Activation fails on colliding Id attribute names across Individual, Contact Point Email, and Redshift. Renaming the payload and re-validating the DE eats the last buffer day. Marketing wants the raw API names left alone for ‘traceability’—ship as-is?\"",
+      "dialogueText": "\"Activation fails because three attributes named Id collide across Individual, Contact Point Email, and the Redshift DMO. I can give them preferred activation names this afternoon, or we rebuild the Redshift DMO with non-overlapping field names first—three days, past go-live. Which do we do?\"",
       "options": [
         {
           "id": "m5_a",
-          "text": "Leave API-style Id attributes unchanged so we do not spend the buffer day on preferred names and DE revalidation.",
-          "trustDelta": 9,
-          "reliabilityDelta": -28,
-          "techDebtImpact": "Protects the last calendar day, but colliding names break or silently reshape the Shared DE under refresh.",
-          "isOptimal": false
+          "text": "Assign preferred activation names to the three colliding Id attributes and re-run the activation today.",
+          "trustDelta": 8,
+          "reliabilityDelta": 16,
+          "techDebtImpact": "Saves three days now at no later cost: the collision lives in the activation payload, so distinct names fix the Data Extension columns without touching the model.",
+          "isOptimal": true
         },
         {
           "id": "m5_b",
-          "text": "Spend the buffer: assign preferred activation names that disambiguate source/meaning, keep only the identifiers SFMC needs, re-run with a clean payload.",
-          "trustDelta": -10,
-          "reliabilityDelta": 18,
-          "techDebtImpact": "Uses remaining schedule on payload hygiene so the Marketing Cloud DE stays stable across incremental refreshes.",
-          "isOptimal": true
+          "text": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
+          "trustDelta": -14,
+          "reliabilityDelta": 4,
+          "techDebtImpact": "Buys a tidier source model, but spends three days past go-live on a collision that payload names already resolve.",
+          "isOptimal": false
         }
       ]
     }
