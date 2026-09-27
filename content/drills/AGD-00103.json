@@ -1,6 +1,6 @@
 {
   "id": "AGD-00103",
-  "title": "Automation Decision Guide: High-Frequency Bulk Batch Updates",
+  "title": "Record-Triggered Automation: Row-Level Rejection in a Nightly Bulk Load",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Lead_CTA",
@@ -8,33 +8,33 @@
     "Operational_Excellence",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "A nightly integration pushes 200,000 upserts in 1,000-record batches to Invoice__c. Business logic requires complex discount calculations across 5 child objects and partial-rollback on specific row errors. Which automation tool is required?",
+      "prompt": "A nightly integration upserts 200,000 Invoice__c records. Each invoice's discount is calculated from rows in 5 child objects, and an invoice whose calculation fails must be rejected from the load while the other invoices save. Which automation should the architect build?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Record-Triggered Flow with Run Asynchronously paths and transactional fault handlers",
+          "label": "Record-triggered flow whose asynchronous path computes discounts from the child objects",
           "isCorrect": false,
-          "distractorAntipattern": "Record-Triggered Flow asynchronous paths cannot isolate row-level failures across 1,000-record batches or prevent CPU timeouts on multi-child traversals.",
-          "rationale": "High-frequency bulk ingestion of 1,000 records per chunk traversing 5 child objects quickly exhausts Flow CPU limits and lacks granular partial-rollback control per row."
+          "distractorAntipattern": "Post-Commit Async Validation",
+          "rationale": "The asynchronous path runs in a separate transaction after the invoices commit, so a failed calculation can no longer reject its invoice from the load."
         },
         {
           "id": "s1_b",
-          "label": "Apex Trigger framework with bulkified collections and Database.insert(records, false)",
+          "label": "Bulkified Apex trigger that calls addError on each failing invoice",
           "isCorrect": true,
-          "rationale": "Apex delivers memory bulkification, strict CPU control, and granular partial success handling via Database methods for large batches.",
+          "rationale": "For complex, high-volume record logic the record-triggered guide favors Apex, which gives the control Flow trades for simplicity. An error raised inside the save lets the platform's partial save drop only the failing invoices and commit the rest.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/record-triggered.html#best-fit-recommendations"
         },
         {
           "id": "s1_c",
-          "label": "Batch Apex class executing with default Database.Stateful and Database.allOrNone=true",
+          "label": "Scheduled Batch Apex job that recalculates discounts after the load ends",
           "isCorrect": false,
-          "distractorAntipattern": "An allOrNone=true transaction strategy rolls back the entire 1,000-record batch chunk upon encountering any single record validation error.",
-          "rationale": "An allOrNone=true transaction strategy rolls back the entire batch chunk when any single row fails, directly violating the requirement for partial-rollback on specific row errors."
+          "distractorAntipattern": "Post-Load Batch Recalculation",
+          "rationale": "A job that starts after the load sees invoices that are already saved, so a failed calculation cannot keep its invoice out of the load."
         }
       ]
     }
