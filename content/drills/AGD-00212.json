@@ -1,6 +1,6 @@
 {
   "id": "AGD-00212",
-  "title": "Account Engagement Needs Activation Targets, Not Link Alone",
+  "title": "Getting Data 360 Segments into Account Engagement",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 & Data Cloud Zero Copy",
@@ -9,7 +9,7 @@
     "Operational_Excellence",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "published",
   "sourceCardIds": [
     "FC-0D5KX00000jATpi0AG"
@@ -17,29 +17,29 @@
   "steps": [
     {
       "id": "s1",
-      "prompt": "A Marketing Cloud Account Engagement team already linked Account Engagement in Data 360 Setup. They expect Data 360 segments to show up as usable audiences in Account Engagement with no further work. Segments remain invisible. What completes the path so those audiences become available downstream?",
+      "prompt": "A Marketing Cloud Account Engagement team linked Account Engagement to Data 360 in Setup and built three segments for a campaign. None of the segments appear as audiences in Account Engagement. What should the architect configure next?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Enable automated audience synchronization in Account Engagement connector settings to ingest all active segments",
+          "label": "Set each segment to publish on a schedule so the linked business unit receives the members",
           "isCorrect": false,
           "distractorAntipattern": "Connect-Only Audience Expectation",
-          "rationale": "Connecting the orgs does not automatically synchronize segments; audience delivery requires an explicit Activation Target and Segment Activation configuration.",
+          "rationale": "Publishing refreshes segment membership inside Data 360, but linking the products does not deliver it anywhere; delivery needs an activation to an Account Engagement target.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
         },
         {
           "id": "s1_b",
-          "label": "Configure an Account Engagement Activation Target, then create and schedule Segment Activations for the target audience",
+          "label": "Create an Account Engagement activation target, then activate each segment to that target",
           "isCorrect": true,
-          "rationale": "Data Cloud requires both an Activation Target (specifying Account Engagement as destination) and individual Segment Activations to push audience memberships downstream.",
+          "rationale": "Activation is the step that delivers segmented, unified profiles to endpoints such as Marketing Cloud; linking the products only establishes the connection. Each segment needs an activation to an Account Engagement target before it appears there as an audience.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
         },
         {
           "id": "s1_c",
-          "label": "Create a Data Action triggered by segment membership changes that writes prospect IDs via Account Engagement REST API",
+          "label": "Build a Data Action on segment membership changes that calls the Account Engagement API",
           "isCorrect": false,
-          "distractorAntipattern": "Manual CSV Audience Re-Import",
-          "rationale": "Building custom REST API pipelines using Data Actions introduces unnecessary integration complexity and maintenance overhead when native Activation Targets provide out-of-the-box syncing.",
+          "distractorAntipattern": "Custom Audience Sync Pipeline",
+          "rationale": "Data Actions fire on individual data events, so rebuilding audience delivery on them means custom API code for every membership add and removal that activation already handles.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#segment-activation-to-marketing-and-advertising-platforms"
         }
       ]
