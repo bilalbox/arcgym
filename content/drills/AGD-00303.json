@@ -1,6 +1,6 @@
 {
   "id": "AGD-00303",
-  "title": "Einstein Trust Layer: Prompt Defense, PII Masking & Zero Retention",
+  "title": "LLM Data Retention: Platform Controls vs Custom Safeguards",
   "format": "Rapid_Fire",
   "domain": "Security_And_Access",
   "difficulty": "Associate_Domain_Architect",
@@ -8,33 +8,40 @@
     "Trust",
     "Fairness"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Why is the Einstein Trust Layer zero-retention architecture essential for enterprise healthcare and financial services Salesforce deployments?",
+      "prompt": "A bank will approve an Agentforce service agent on a third-party LLM only if the model provider retains no prompt data and does not train on it. Regulators also require a record of every inference call. What should the architect rely on to meet both requirements?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Customer data sent to external LLMs is masked in-flight, never retained by model vendors, and not used for training",
+          "label": "The Einstein Trust Layer controls applied to each third-party model call",
           "isCorrect": true,
-          "rationale": "Customer data and PII sent to 3rd-party LLMs is masked in-flight, never retained by the LLM vendor, and never used to train foundational models.",
+          "rationale": "The Trust Layer governs data in motion at inference time: zero data retention agreements mean providers keep nothing after inference and never use it for training, and audit events log each request with the controls applied. Both requirements are met without infrastructure the bank must build.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/agentic-enterprise-trust.html#trust-layer-capabilities"
         },
         {
           "id": "s1_b",
-          "label": "Customer data is tokenized on-premises and decrypted exclusively within customer-hosted private VPC enclaves",
+          "label": "A customer-hosted proxy that tokenizes customer data before prompts leave Salesforce",
           "isCorrect": false,
-          "distractorAntipattern": "The Einstein Trust Layer is a Salesforce-managed cloud security architecture, not an on-premises tokenization proxy.",
-          "rationale": "The Trust Layer operates natively within Salesforce cloud infrastructure rather than relying on customer on-premises encryption hardware or private VPC tunnels."
+          "distractorAntipattern": "Customer-Hosted Tokenization Proxy",
+          "rationale": "The proxy is infrastructure the bank must run, yet it neither binds the provider’s retention and training terms nor records each inference call."
         },
         {
           "id": "s1_c",
-          "label": "Prompt transcripts are stored in temporary Salesforce cache and automatically purged from CRM storage upon session end",
+          "label": "Automatic deletion of stored prompt transcripts from Salesforce when each session ends",
           "isCorrect": false,
-          "distractorAntipattern": "Zero retention agreements apply to external foundation model providers, while in-org audit trails are preserved for governance.",
-          "rationale": "Zero-retention guarantees apply to external LLM vendors; within Salesforce, audit records are intentionally retained for compliance, tracing, and analytics."
+          "distractorAntipattern": "In-Org Audit Purge",
+          "rationale": "Retention terms apply to the external model provider, not Salesforce; deleting in-org transcripts destroys the inference records regulators require and changes nothing the provider keeps."
+        },
+        {
+          "id": "s1_d",
+          "label": "Shield Platform Encryption on every Salesforce field the agent reads for grounding",
+          "isCorrect": false,
+          "distractorAntipattern": "At-Rest Encryption Misapplied",
+          "rationale": "Shield encrypts data at rest, but fields are decrypted when the agent reads them into a prompt, so the provider still receives the values and no inference call is logged."
         }
       ]
     }
