@@ -1,6 +1,6 @@
 {
   "id": "AGD-00108",
-  "title": "Concurrency Control: Pessimistic vs Optimistic Locking in Flash Sales",
+  "title": "Flash Sale Inventory: Lock Duration vs Oversell Risk",
   "format": "Rapid_Fire",
   "domain": "Platform_Core",
   "difficulty": "Lead_CTA",
@@ -8,33 +8,33 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "During high-concurrency checkout, multiple orders query the same Product inventory row simultaneously. Which pattern prevents race condition overselling without holding prolonged exclusive database locks?",
+      "prompt": "During a flash sale, hundreds of buyers a minute check out against 40 Product inventory records. Each checkout calls an external payment gateway that takes 3–8 seconds to authorize before stock is decremented, and no unit may be sold twice. Which concurrency pattern should the architect use?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Optimistic Concurrency Control with a Version timestamp validated at DML commit and client retry",
+          "label": "Add a version field to inventory rows and compare it when saving each decrement",
           "isCorrect": true,
-          "rationale": "Optimistic concurrency avoids holding prolonged database locks during payment authorization, validating version consistency at the instant of commit.",
+          "rationale": "Optimistic locking records when data was read and, at save, checks whether someone else changed the record in the interim, sending the writer back for the latest version. No lock stays open during the 3–8 second gateway call, and a buyer who loses the race re-reads stock instead of overselling.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/integration-patterns.html#batch-data-synchronization"
         },
         {
           "id": "s1_b",
-          "label": "Pessimistic locking using SOQL FOR UPDATE acquired prior to third-party payment authorization",
+          "label": "Query the inventory rows with SOQL FOR UPDATE before calling the payment gateway",
           "isCorrect": false,
-          "distractorAntipattern": "Holding database locks across external HTTP callouts causes severe lock wait timeouts across concurrent buyers.",
-          "rationale": "Holding pessimistic locks while waiting for 3rd-party payment gateway callouts freezes database rows for all users and causes lock timeouts."
+          "distractorAntipattern": "Lock Held Across Callout",
+          "rationale": "FOR UPDATE keeps the row locked until the transaction ends, so every buyer of that product queues behind a 3–8 second gateway call and waiting transactions fail with lock errors."
         },
         {
           "id": "s1_c",
-          "label": "Platform Cache storage of inventory counts with scheduled asynchronous reconciliation to database",
+          "label": "Keep stock counts in Platform Cache and reconcile them to the records on a schedule",
           "isCorrect": false,
-          "distractorAntipattern": "In-memory cache without transactional row locking leads to dirty reads and severe overselling during traffic spikes.",
-          "rationale": "Platform Cache provides fast reads but lacks transactional ACID isolation, leading to dirty reads and oversold inventory under high checkout concurrency."
+          "distractorAntipattern": "Cache as Source of Truth",
+          "rationale": "Platform Cache has no row locking or transactions, so two buyers can read the same last unit and both sell it before the scheduled reconciliation runs."
         }
       ]
     }
