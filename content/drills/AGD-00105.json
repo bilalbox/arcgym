@@ -1,6 +1,6 @@
 {
   "id": "AGD-00105",
-  "title": "Portal Security: High-Volume Sharing Architecture for 500,000 Users",
+  "title": "Portal Security: Account-Wide Case Access on Customer Community Licenses",
   "format": "Rapid_Fire",
   "domain": "Security_And_Access",
   "difficulty": "Lead_CTA",
@@ -8,32 +8,32 @@
     "Trust",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An Experience Cloud portal will serve 500,000 Customer Community users who each need read access to their own Cases and sibling account Cases. Which sharing mechanism avoids group maintenance performance degradation?",
+      "prompt": "An Experience Cloud site serves customers on Customer Community licenses. Each user must read every Case on their own Account, including Cases their coworkers opened. Which sharing mechanism should the architect use?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Apex Managed Sharing rules recalculating CaseShare records dynamically on user navigation",
+          "label": "Apex managed sharing that writes a CaseShare row per user and Case",
           "isCorrect": false,
-          "distractorAntipattern": "Customer Community (high-volume) licenses do not possess individual share table entries; Apex sharing creates massive calculation overhead.",
-          "rationale": "Customer Community (high-volume) licenses do not support standard share tables (CaseShare); attempting Apex sharing triggers severe table bloat and locking."
+          "distractorAntipattern": "Apex Sharing for Community Users",
+          "rationale": "Customer Community users sit outside the standard sharing model, so share rows are not how they gain access; their access comes from Account and Contact lookup matches."
         },
         {
           "id": "s1_b",
-          "label": "Criteria-Based Sharing Rules targeting Public Groups populated with community user roles",
+          "label": "A criteria-based sharing rule that grants Cases to a public group of site users",
           "isCorrect": false,
-          "distractorAntipattern": "High-Volume Customer Community users do not have user roles and cannot be added to Public Groups.",
-          "rationale": "High-Volume Customer Community licenses do not use the standard role hierarchy or public groups, rendering criteria-based sharing rules inapplicable."
+          "distractorAntipattern": "Group Rules for Community Users",
+          "rationale": "Sharing rules work through the roles and groups of the standard sharing model, which Customer Community licenses do not use because they do not support roles."
         },
         {
           "id": "s1_c",
-          "label": "Sharing Sets and Share Groups configured on the portal profile to map account relationships",
+          "label": "A sharing set that matches each user's Account to the Case's Account",
           "isCorrect": true,
-          "rationale": "Sharing Sets grant access based on user account/contact matching without writing to physical share tables, scaling seamlessly to millions of users.",
+          "rationale": "Customer Community licenses do not support roles, so they rely on a sharing model that matches the user to Account and Contact lookups on the record. Matching on the Case's Account reaches Cases opened by every coworker at that Account.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/platform-sharing-architecture.html#users-and-licenses"
         }
       ]
