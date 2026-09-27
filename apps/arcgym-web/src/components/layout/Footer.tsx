@@ -11,7 +11,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
 
   return (
     <footer className="pt-8 pb-12 border-t border-miro-hairlineSoft text-center space-y-3">
-      <p className="text-xs text-slate-500 leading-relaxed max-w-lg mx-auto">
+      <p className="text-xs text-slate-500 leading-relaxed max-w-2xl mx-auto">
         All practice scenarios are strictly grounded in official guidance from{' '}
         <a
           href="https://architect.salesforce.com"
@@ -21,6 +21,16 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
         >
           architect.salesforce.com <ExternalLink className="h-3 w-3" />
         </a>
+        . Note: ArcGym is heavily inspired by{' '}
+        <a
+          href="https://analystgym.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
+        >
+          Analyst Gym <ExternalLink className="h-3 w-3" />
+        </a>
+        .
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-slate-400">
