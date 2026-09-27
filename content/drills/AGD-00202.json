@@ -9,45 +9,44 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 3,
+  "version": 4,
   "status": "published",
   "sourceCardIds": [
-    "FC-0D5KX00000J8n2i0AB",
     "FC-0D5KX00000pNzhX0AS",
     "FC-0D54V00007N9gcaSAB"
   ],
   "steps": [
     {
       "id": "s1",
-      "prompt": "An ERP connector will land millions of party/order rows into Data 360. Architects must preserve source fidelity for reprocessing, expose a canonical Individual model for identity resolution, and later may replace a Contact DLO or install packaged Sales data kits. What modeling discipline is required?",
+      "prompt": "An ERP connector will land millions of party and order rows in Data 360, where CRM contacts already use custom DLO-to-DMO mappings. The team reprocesses source rows after each mapping change, and ERP customers must unify with CRM contacts. Which modeling approach should the architect set before the first load?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Ingest into Data Lake Objects (DLO), map fields to standard Data Model Objects (DMO), and maintain verified primary key lineage",
+          "label": "Keep the raw ERP stream DLOs and map them to standard DMOs like Individual with verified keys",
           "isCorrect": true,
-          "rationale": "Staging data in DLOs preserves raw source fidelity, while mapping to standardized DMOs establishes the canonical layer required for identity resolution and modular stream replacement.",
+          "rationale": "DLOs are the persistent layer that holds ingested data for reprocessing, and mapping them to standard DMOs gives identity resolution the canonical Individual it unifies on. Keeping the stream DLOs satisfies the reprocessing need; the standard mapping lets ERP customers unify with CRM contacts.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
         },
         {
           "id": "s1_b",
-          "label": "Ingest ERP streams directly into Unified Individual DMOs, bypassing intermediate Data Lake Objects to maximize ingest speed",
+          "label": "Map the ERP stream DLOs to custom DMOs that mirror the ERP schema field for field",
           "isCorrect": false,
-          "distractorAntipattern": "Ingesting directly into DMOs is technically impossible in Data 360 and destroys raw source auditability.",
-          "rationale": "Data 360 architecture requires streams to land in DLOs first; bypassing DLO staging prevents raw data reprocessing and breaks platform lineage."
+          "distractorAntipattern": "Source-Shaped Custom Model",
+          "rationale": "Identity resolution rulesets unify standard DMOs such as Individual and its contact points, so a source-shaped custom model leaves ERP customers out of unification with CRM contacts."
         },
         {
           "id": "s1_c",
-          "label": "Unmap the active Contact DLO primary key from Individual before creating the new replacement stream to avoid mapping conflicts",
+          "label": "Merge the ERP rows into one curated derived DLO with a batch transform, then delete the raw stream DLOs",
           "isCorrect": false,
-          "distractorAntipattern": "Unmapping primary keys from populated DMOs breaks downstream identity resolution rulesets and calculated insights.",
-          "rationale": "Severing primary key mappings on active DMOs causes immediate failures across dependent identity resolution jobs and downstream calculated insights."
+          "distractorAntipattern": "Raw Layer Deletion",
+          "rationale": "Derived DLOs are built on top of source DLOs, not in place of them; deleting the raw stream DLOs removes the as-ingested rows the team reprocesses after mapping changes."
         },
         {
           "id": "s1_d",
-          "label": "Deploy the packaged Sales Data Kit over existing custom DLO-to-DMO mappings to automatically standardize harmonized definitions",
+          "label": "Install the packaged Sales Data Kit over the existing custom DLO-to-DMO mappings to standardize them",
           "isCorrect": false,
-          "distractorAntipattern": "Overwriting custom DLO-to-DMO mappings with default data kit templates silently breaks bespoke field mappings.",
-          "rationale": "Deploying packaged data kits over customized DLO-DMO configurations overwrites custom relationships and breaks downstream segmentation and activation."
+          "distractorAntipattern": "Blind Packaged Kit Redeploy",
+          "rationale": "Deploying the kit reapplies its predefined DLO-to-DMO mappings over the custom CRM ones, breaking the segments and activations built on them."
         }
       ]
     }
