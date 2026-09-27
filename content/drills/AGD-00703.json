@@ -1,0 +1,94 @@
+{
+  "id": "AGD-00703",
+  "title": "Enterprise visibility recalculation freeze: 4-stage Sharing Architecture refactor",
+  "format": "Lesson",
+  "domain": "Security_And_Access",
+  "domainLabel": "Security & Access",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Trust", "Reliability"],
+  "version": 1,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "stageName": "Stage 1: Forensic Diagnosis",
+      "scenario": "A multinational financial services enterprise with 3 million Accounts experiences cascading row-lock failures (`UNABLE_TO_LOCK_ROW`) and 6-hour system-wide recalculation freezes whenever territory alignments occur. Inspection reveals an 11-level role hierarchy and 180 criteria-based sharing rules granting access across regional branches. What is the fundamental platform bottleneck?",
+      "options": [
+        {
+          "id": "st1_a",
+          "text": "Deep role hierarchies amplify implicit sharing tree traversal exponentially; modifying a high-level node or criteria-based sharing rule locks the entire UserRole and Group sharing tables to rebuild millions of share rows.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! According to the Platform Sharing Architecture guide, deep hierarchies (> 4-5 levels) and proliferation of criteria-based sharing rules trigger massive implicit sharing recalculations, causing systemic table locking on AccountShare."
+        },
+        {
+          "id": "st1_b",
+          "text": "Criteria-based sharing rules are limited to a maximum of 20 rules per object across all editions.",
+          "isCorrect": false,
+          "coachingFeedback": "False limit: Salesforce allows up to 300 criteria-based sharing rules per object (50 criteria-based in Enterprise), but using them heavily on large data volumes causes severe recalculation overhead."
+        },
+        {
+          "id": "st1_c",
+          "text": "The platform requires all 3 million Accounts to be assigned to a single default system administrator role.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Assigning millions of records to a single user or role creates catastrophic ownership skew and lock contention on record updates."
+        }
+      ]
+    },
+    {
+      "stageNumber": 2,
+      "stageName": "Stage 2: Target Architecture Pattern",
+      "scenario": "To redesign this sharing architecture for enterprise scale and eliminate long recalculation freezes, what target pattern does the Platform Sharing Architecture guide prescribe?",
+      "options": [
+        {
+          "id": "st2_a",
+          "text": "Flatten the role hierarchy to 3–4 executive levels, shift regional branch visibility to Account Teams with programmatic provisioning, and replace broad criteria-based sharing with Restriction Rules or Scoping Rules for sensitive data filtering.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Platform Sharing Architecture fundamentals guide recommends flattening the hierarchy, using granular Account Teams to localize share recalculations, and leveraging Restriction/Scoping Rules to control record visibility without rebuilding the share table."
+        },
+        {
+          "id": "st2_b",
+          "text": "Set Organization-Wide Defaults (OWD) to Public Read/Write on Account and enforce data privacy using validation rules.",
+          "isCorrect": false,
+          "coachingFeedback": "Severe antipattern: Validation rules only block edit/save operations and cannot prevent unauthorized data reads, reports, API queries, or list view exposure, violating the Trust pillar."
+        }
+      ]
+    },
+    {
+      "stageNumber": 3,
+      "stageName": "Stage 3: Migration & Cutover Strategy",
+      "scenario": "How should the enterprise safely execute the transition from the legacy 11-level hierarchy and criteria rules to the flattened architecture without locking active production transactions?",
+      "options": [
+        {
+          "id": "st3_a",
+          "text": "Leverage 'Defer Sharing Calculation' in Setup to suspend automatic rule processing, restructure roles and Account Teams during a scheduled maintenance window, and then trigger asynchronous background recalculation.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Platform Sharing Architecture guide recommends enabling Deferred Sharing Calculation for major structural reorganizations so role hierarchy and sharing changes can be applied in bulk without intermediate locks."
+        },
+        {
+          "id": "st3_b",
+          "text": "Delete old roles directly during business hours while users are actively logging in to allow real-time redistribution.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Deleting and reassigning roles during peak hours creates immediate deadlocks on Group and Share tables, locking out users."
+        }
+      ]
+    },
+    {
+      "stageNumber": 4,
+      "stageName": "Stage 4: Telemetry & Observability",
+      "scenario": "What observability mechanism should be put in place to ensure sharing recalculations remain within healthy thresholds post-cutover?",
+      "options": [
+        {
+          "id": "st4_a",
+          "text": "Subscribe to Real-Time Event Monitoring for URI and ApexExecution events tracking share recalculation duration, and monitor the Background Jobs page for asynchronous share maintenance throughput.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Event Monitoring and Background Jobs telemetry allow architects to track asynchronous job queue latency and verify that recalculations finish within SLA windows."
+        },
+        {
+          "id": "st4_b",
+          "text": "Rely on user complaints about missing records on their dashboard to indicate sharing issues.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Relying on end-user complaints represents a lack of operational observability and risks latent data exposure or access revocation."
+        }
+      ]
+    }
+  ]
+}

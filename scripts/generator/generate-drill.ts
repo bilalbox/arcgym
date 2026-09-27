@@ -90,17 +90,57 @@ function parseArgs(): CliArgs {
   return result;
 }
 
-function getNextDrillId(): string {
+function getNextDrillId(format: string = 'Rapid_Fire'): string {
   if (!fs.existsSync(DRILLS_DIR)) {
+    if (format === 'Lesson') return 'AGD-00701';
+    if (format === 'Currency') return 'AGD-00501';
+    if (format === 'Scenario') return 'AGD-00601';
     return 'AGD-00401';
   }
   const files = fs.readdirSync(DRILLS_DIR).filter((f) => f.endsWith('.json'));
+
+  if (format === 'Lesson') {
+    let maxNum = 700;
+    for (const f of files) {
+      const match = f.match(/AGD-00(7\d\d)\.json/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
+  }
+
+  if (format === 'Currency') {
+    let maxNum = 500;
+    for (const f of files) {
+      const match = f.match(/AGD-00(5\d\d)\.json/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
+  }
+
+  if (format === 'Scenario') {
+    let maxNum = 600;
+    for (const f of files) {
+      const match = f.match(/AGD-00(6\d\d)\.json/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    }
+    return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
+  }
+
   let maxNum = 0;
   for (const f of files) {
     const match = f.match(/AGD-(\d+)\.json/);
     if (match) {
       const num = parseInt(match[1], 10);
-      if (num > maxNum) maxNum = num;
+      if (num < 500 && num > maxNum) maxNum = num;
     }
   }
   const nextNum = Math.max(401, maxNum + 1);
@@ -147,6 +187,25 @@ function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[
   }
 }
 
+function resolveCanonicalDomain(category?: string, pillar?: string): { domain: string; domainLabel: string } {
+  if (pillar === 'Agentforce' || category?.includes('agent')) {
+    return { domain: 'Ai_And_Automation', domainLabel: 'Agentic AI & Automation' };
+  }
+  if (pillar === 'Data_360' || category?.includes('data')) {
+    return { domain: 'Data_Architecture', domainLabel: 'Data Architecture & Virtualization' };
+  }
+  if (category === 'decision-guides' || category?.includes('integration')) {
+    return { domain: 'Integration_Apis', domainLabel: 'Integration APIs & Events' };
+  }
+  if (pillar === 'Trust' || category?.includes('security')) {
+    return { domain: 'Security_And_Access', domainLabel: 'Security & Access' };
+  }
+  if (category === 'devops' || category?.includes('devops')) {
+    return { domain: 'Devops_Lifecycle', domainLabel: 'DevOps & Governance' };
+  }
+  return { domain: 'Platform_Core', domainLabel: 'Platform Core & Scalability' };
+}
+
 function buildPrompt(chunks: ChromaChunk[], args: CliArgs, drillId: string): string {
   const contextText = chunks
     .map(
@@ -161,6 +220,129 @@ ${c.content}
     )
     .join('\n');
 
+  const resolved = resolveCanonicalDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
+  const domain = args.domain || resolved.domain;
+  const domainLabel = resolved.domainLabel;
+
+  if (args.format === 'Lesson') {
+    return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
+Generate a high-stakes, realistic 4-stage architectural Lesson drill formatted as valid JSON strictly adhering to the ArcGym Lesson schema.
+
+### Core Lesson Authoring Principles:
+1. 4-Stage Progressive Refactor: A Lesson drill simulates an enterprise refactor walkthrough across exactly 4 chronological stages:
+   - Stage 1: Forensic Diagnosis (diagnose real-world architectural bottleneck, concurrency collision, or technical debt)
+   - Stage 2: Target Architecture Pattern (select optimal Well-Architected design pattern and justify trade-offs)
+   - Stage 3: Migration & Cutover Strategy (zero-downtime cutover, backward compatibility, feature toggles, or canary rollout)
+   - Stage 4: Telemetry & Observability (transaction monitoring, health thresholds, drift alerts, or Event Monitoring)
+2. Authoritative Coaching Feedback: Every option MUST include detailed 'coachingFeedback' explaining precisely why it is correct (grounded in official Salesforce architecture) or why it is an architectural antipattern.
+3. Grounding & Citations: Ground decisions directly in the provided official documentation chunks from architect.salesforce.com.
+4. Language & Tone: Professional, authoritative CTA-level precision. Sentence-case typography. No filler phrases.
+
+### Target Drill Specifications:
+- Drill ID: "${drillId}"
+- Topic: "${args.topic}"
+- Domain: "${domain}" (must be one of: Platform_Core, Data_Architecture, Security_And_Access, Integration_Apis, Ai_And_Automation, Infrastructure, Devops_Lifecycle)
+- Domain Label: "${domainLabel}"
+- Pillars: ${JSON.stringify(Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))))}
+- Format: "Lesson"
+- Difficulty: "${args.difficulty}"
+
+### Grounding Documentation Chunks from architect.salesforce.com:
+${contextText}
+
+### Required JSON Output Format:
+Output ONLY valid, parseable JSON conforming to this TypeScript schema with no markdown code blocks outside:
+{
+  "id": "${drillId}",
+  "title": "Concise CTA-level title (e.g. 'Async Pipeline: 4-stage Well-Architected refactor')",
+  "format": "Lesson",
+  "domain": "${domain}",
+  "domainLabel": "${domainLabel}",
+  "difficulty": "${args.difficulty}",
+  "pillars": ["Reliability", "Operational_Excellence"],
+  "version": 1,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "stageName": "Stage 1: Forensic Diagnosis",
+      "scenario": "Diagnostic scenario describing the enterprise bottleneck, errors, and system symptoms...",
+      "options": [
+        {
+          "id": "st1_a",
+          "text": "Antipattern explanation or false assumption...",
+          "isCorrect": false,
+          "coachingFeedback": "Why this explanation is an antipattern or misses the platform root cause..."
+        },
+        {
+          "id": "st1_b",
+          "text": "Precise architectural bottleneck identification...",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Authoritative Well-Architected analysis explaining why this occurs."
+        }
+      ]
+    },
+    {
+      "stageNumber": 2,
+      "stageName": "Stage 2: Target Architecture Pattern",
+      "scenario": "Scenario asking for the optimal Well-Architected pattern to replace the flawed design...",
+      "options": [
+        {
+          "id": "st2_a",
+          "text": "Target pattern description...",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Why this pattern satisfies Well-Architected principles."
+        },
+        {
+          "id": "st2_b",
+          "text": "Suboptimal quick-fix pattern...",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Why this quick fix introduces downstream technical debt."
+        }
+      ]
+    },
+    {
+      "stageNumber": 3,
+      "stageName": "Stage 3: Migration & Cutover Strategy",
+      "scenario": "Scenario asking how to cut over safely in a live production environment without downtime...",
+      "options": [
+        {
+          "id": "st3_a",
+          "text": "Safe cutover strategy using feature toggles or canary deployment...",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Well-Architected Operational Excellence mandates zero-downtime rollback controls."
+        },
+        {
+          "id": "st3_b",
+          "text": "High-risk direct cutover...",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: In-place cutovers without circuit breakers cause live user data loss."
+        }
+      ]
+    },
+    {
+      "stageNumber": 4,
+      "stageName": "Stage 4: Telemetry & Observability",
+      "scenario": "Scenario asking how to monitor health and proactively alert on threshold breaches...",
+      "options": [
+        {
+          "id": "st4_a",
+          "text": "Proactive event-driven telemetry and monitoring approach...",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Real-time observability detects degradation before end users are impacted."
+        },
+        {
+          "id": "st4_b",
+          "text": "Reactive failure logging...",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Reactive error digests fail to prevent systemic outages."
+        }
+      ]
+    }
+  ]
+}
+`;
+  }
+
   return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
 Generate a high-stakes, realistic architectural judgment drill formatted as valid JSON strictly adhering to the ArcGym schema.
 
@@ -173,7 +355,8 @@ Generate a high-stakes, realistic architectural judgment drill formatted as vali
 ### Target Drill Specifications:
 - Drill ID: "${drillId}"
 - Topic: "${args.topic}"
-- Domain: "${args.domain || (chunks[0]?.metadata?.category || 'Core Platform Architecture')}"
+- Domain: "${domain}"
+- Domain Label: "${domainLabel}"
 - Pillars: ${JSON.stringify(Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))))}
 - Format: "${args.format}"
 - Difficulty: "${args.difficulty}"
@@ -188,8 +371,8 @@ Output ONLY valid, parseable JSON conforming to this TypeScript schema with no m
   "id": "${drillId}",
   "title": "Clear, concise CTA-level drill title",
   "format": "${args.format}",
-  "domain": "Platform_Core",
-  "domainLabel": "${args.domain || 'Enterprise Architecture'}",
+  "domain": "${domain}",
+  "domainLabel": "${domainLabel}",
   "difficulty": "${args.difficulty}",
   "pillars": ["Reliability", "Trust"],
   "version": 1,
@@ -273,14 +456,6 @@ async function callLlmIfAvailable(prompt: string): Promise<string | null> {
   return null;
 }
 
-function resolveCanonicalDomain(category?: string, pillar?: string): string {
-  if (pillar === 'Agentforce' || category?.includes('agent')) return 'Agentic Enterprise & Governance';
-  if (pillar === 'Data_360' || category?.includes('data')) return 'Data Cloud & Zero Copy Architecture';
-  if (category === 'decision-guides') return 'Enterprise Integration & Event-Driven';
-  if (category === 'well-architected') return 'Core Platform & Scalability';
-  return 'Enterprise Architecture & Governance';
-}
-
 function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: string): any {
   const topChunk = chunks[0] || {
     content: 'Salesforce Well-Architected guidance',
@@ -293,7 +468,80 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
     },
   };
 
-  const domain = args.domain || resolveCanonicalDomain(topChunk.metadata?.category, topChunk.metadata?.pillar);
+  const resolved = resolveCanonicalDomain(topChunk.metadata?.category, topChunk.metadata?.pillar);
+  const domain = args.domain || resolved.domain;
+  const domainLabel = resolved.domainLabel;
+
+  if (args.format === 'Lesson') {
+    const stageDefs = [
+      {
+        stageNumber: 1,
+        stageName: 'Stage 1: Forensic Diagnosis',
+        scenario: `In an enterprise production org implementing ${args.topic}, users experience latency spikes and transaction failures under peak concurrency. Based on official platform guidance, what is the root architectural bottleneck?`,
+        correctText: `The current architecture violates platform boundaries: ${topChunk.metadata.section_title || 'uncontrolled synchronous processing'} introduces unmonitored thread consumption and lock contention.`,
+        correctFeedback: `Correct! Grounded in ${topChunk.metadata.doc_title} (${topChunk.metadata.url}), uncoordinated synchronous processing risks governor exhaustion and unhandled exceptions.`,
+        distractorText: `The issue is an unavoidable platform infrastructure limit that must be resolved by requesting a temporary governor limit increase from Salesforce Support.`,
+        distractorFeedback: `Antipattern: Requesting limit increases masks structural design antipatterns and violates Well-Architected Operational Excellence standards.`,
+      },
+      {
+        stageNumber: 2,
+        stageName: 'Stage 2: Target Architecture Pattern',
+        scenario: `To resolve this bottleneck while adhering to Well-Architected ${topChunk.metadata.pillar || 'Reliability'}, what is the recommended target architecture pattern?`,
+        correctText: `Implement a decoupled, stateful pattern aligning with ${topChunk.metadata.section_title || 'standard platform patterns'}: isolate transactions and enforce deterministic governor limits.`,
+        correctFeedback: `Correct! ${topChunk.metadata.doc_title} recommends decoupling workload boundaries to guarantee operational isolation and transaction boundaries.`,
+        distractorText: `Deploy additional point-and-click automations without governance frameworks or compensating controls.`,
+        distractorFeedback: `Antipattern: Layering ungoverned automations multiplies transaction depth, recursion, and unpredictability.`,
+      },
+      {
+        stageNumber: 3,
+        stageName: 'Stage 3: Migration & Cutover Strategy',
+        scenario: `How should you safely cut over from the legacy architecture to the new pattern in a live enterprise production environment without downtime?`,
+        correctText: `Deploy an org-wide feature toggle (Custom Metadata or Custom Permission) allowing phased canary tenant routing and instant zero-downtime rollback.`,
+        correctFeedback: `Correct! Well-Architected Operational Excellence mandates feature toggles and canary cutovers for high-risk architectural migrations.`,
+        distractorText: `Perform an immediate hard cutover during active business hours and monitor the exception log queue for user failure reports.`,
+        distractorFeedback: `Antipattern: Direct cutovers without circuit breakers cause live user data loss and uncoordinated transaction rollback.`,
+      },
+      {
+        stageNumber: 4,
+        stageName: 'Stage 4: Telemetry & Observability',
+        scenario: `What observability and telemetry mechanism must be implemented to continuously verify platform health and prevent architectural drift?`,
+        correctText: `Configure real-time event streams (Event Monitoring) and proactive platform metrics to monitor execution latency, limit headroom, and failure alerts.`,
+        correctFeedback: `Correct! Proactive telemetry provides sub-second visibility into execution ceilings and operational health.`,
+        distractorText: `Rely on weekly apex batch error digest emails sent to system administrators to identify transaction failures.`,
+        distractorFeedback: `Antipattern: Batch digest emails are reactive and fail to provide the granularity needed for high-stakes enterprise systems.`,
+      },
+    ];
+
+    return {
+      id: drillId,
+      title: `${args.topic}: 4-stage Well-Architected refactor`,
+      format: 'Lesson',
+      domain,
+      domainLabel,
+      difficulty: args.difficulty,
+      pillars: Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))),
+      version: 1,
+      stages: stageDefs.map((st) => ({
+        stageNumber: st.stageNumber,
+        stageName: st.stageName,
+        scenario: st.scenario,
+        options: [
+          {
+            id: `st${st.stageNumber}_a`,
+            text: st.correctText,
+            isCorrect: true,
+            coachingFeedback: st.correctFeedback,
+          },
+          {
+            id: `st${st.stageNumber}_b`,
+            text: st.distractorText,
+            isCorrect: false,
+            coachingFeedback: st.distractorFeedback,
+          },
+        ],
+      })),
+    };
+  }
 
   const steps = [];
   for (let i = 0; i < args.steps; i++) {
@@ -325,8 +573,8 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
     id: drillId,
     title: `${args.topic}: ${topChunk.metadata.section_title || 'Architectural Trade-offs'}`,
     format: args.format,
-    domain: 'Platform_Core',
-    domainLabel: domain,
+    domain,
+    domainLabel,
     difficulty: args.difficulty,
     pillars: Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter(Boolean))),
     version: 1,
@@ -336,7 +584,7 @@ function generateScaffoldDrill(chunks: ChromaChunk[], args: CliArgs, drillId: st
 
 async function main() {
   const args = parseArgs();
-  const drillId = args.id || getNextDrillId();
+  const drillId = args.id || getNextDrillId(args.format);
 
   console.log('\n======================================================');
   console.log(`   ArcGym RAG Drill Generator (${drillId})`);

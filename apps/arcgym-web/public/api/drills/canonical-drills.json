@@ -1648,5 +1648,399 @@
         ]
       }
     ]
+  },
+  {
+    "id": "AGD-00702",
+    "title": "Monolithic async chaining: 4-stage Step-Based Framework refactor",
+    "format": "Lesson",
+    "domain": "Platform_Core",
+    "domainLabel": "Platform Core & Scalability",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "stages": [
+      {
+        "stageNumber": 1,
+        "stageName": "Stage 1: Forensic Diagnosis",
+        "scenario": "An enterprise billing engine chains 6 consecutive Queueable Apex jobs to process invoice recalculations across 45,000 accounts. Under month-end billing load, job #4 encounters a sporadic row lock timeout (`UNABLE_TO_LOCK_ROW`). Jobs #5 and #6 never execute, no transaction recovery fires, and hundreds of accounts remain in an inconsistent partial state. What is the fundamental architectural flaw in this chaining model?",
+        "options": [
+          {
+            "id": "st1_a",
+            "text": "Monolithic Queueable chains lack isolated step boundaries, transaction finalizers, and state persistence; an unhandled exception in any link silently terminates the entire remaining chain without checkpointing.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! According to the Step-Based Async Framework guide, standard Queueable chaining creates tight coupling where any unhandled exception terminates the sequence, leaving upstream state dirty and downstream work stranded without telemetry."
+          },
+          {
+            "id": "st1_b",
+            "text": "Queueable Apex is restricted by Salesforce to execute a maximum of 3 chained jobs in production environments.",
+            "isCorrect": false,
+            "coachingFeedback": "False assumption: Salesforce allows unlimited Queueable chaining in Production (one child per parent job), but unhandled exceptions break the chain without recovery."
+          },
+          {
+            "id": "st1_c",
+            "text": "The billing logic must be converted into synchronous `@future` methods to prevent concurrency locks.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: `@future` methods cannot be chained, cannot pass complex objects or collections of sObjects, and lack execution monitoring or finalizers."
+          }
+        ]
+      },
+      {
+        "stageNumber": 2,
+        "stageName": "Stage 2: Target Architecture Pattern",
+        "scenario": "To refactor this brittle billing sequence into the Salesforce Well-Architected Step-Based Async Framework, how should the execution engine be designed?",
+        "options": [
+          {
+            "id": "st2_a",
+            "text": "Implement a modular Step Interface with an abstract Step Processor, using Apex Cursors for chunked state navigation, Queueable Apex with Transaction Finalizers for recovery, and custom metadata for step orchestration.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Step-Based Async Framework establishes a standard Step interface where each step runs independently, checkpoints state via Apex Cursors or record markers, and uses Finalizers to capture and recover from unhandled faults."
+          },
+          {
+            "id": "st2_b",
+            "text": "Consolidate all 6 operations into a single massive Batchable Apex class running with a batch size of 2,000.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Combining disparate multi-system steps into a single batch class creates a monolithic maintainability bottleneck and risks hitting the 10,001 ms CPU limit under complex business logic."
+          },
+          {
+            "id": "st2_c",
+            "text": "Trigger 6 asynchronous scheduled Flows that fire at 5-minute fixed offsets.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Fixed-time offset scheduling assumes predictable runtimes and causes race conditions when data volumes vary between batches."
+          }
+        ]
+      },
+      {
+        "stageNumber": 3,
+        "stageName": "Stage 3: Migration & Cutover Strategy",
+        "scenario": "How should you safely cut over from the legacy Queueable chain to the new Step-Based Async Processor in an active production org with ongoing billing operations?",
+        "options": [
+          {
+            "id": "st3_a",
+            "text": "Implement a Custom Metadata-driven routing toggle with tenant/account-range canary partitioning, executing the Step Processor for a 5% pilot while retaining the legacy path for fallback.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Well-Architected Operational Excellence mandates canary routing via declarative metadata toggles, enabling verified pilot evaluation with instant rollback capability."
+          },
+          {
+            "id": "st3_b",
+            "text": "Delete the legacy Queueable classes from production via destructive changes deployment during weekend off-peak hours.",
+            "isCorrect": false,
+            "coachingFeedback": "High risk: Hard cutovers without feature toggles prevent immediate rollback if unforeseen edge cases or lock contentions emerge in the new processor."
+          }
+        ]
+      },
+      {
+        "stageNumber": 4,
+        "stageName": "Stage 4: Telemetry & Observability",
+        "scenario": "What observability mechanism should be implemented in the Step-Based Async Framework to guarantee SLA visibility and automated failure triage?",
+        "options": [
+          {
+            "id": "st4_a",
+            "text": "Bind a Transaction Finalizer (`System.Finalizer`) to each step execution to log start/end timestamps, record counts, and failure diagnostics to an async audit custom object and publish a Real-Time Event for alerting.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Step-Based Async Framework guide emphasizes `System.Finalizer` as the platform-native mechanism to inspect queueable execution results, recover failed state, and emit structured telemetry."
+          },
+          {
+            "id": "st4_b",
+            "text": "Rely on standard Salesforce Setup > Apex Jobs page views and weekly administrator manual spot-checks.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: The standard Apex Jobs UI does not capture granular step-level payload context, recovery attempts, or threshold-based alerting."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00703",
+    "title": "Enterprise visibility recalculation freeze: 4-stage Sharing Architecture refactor",
+    "format": "Lesson",
+    "domain": "Security_And_Access",
+    "domainLabel": "Security & Access",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Trust",
+      "Reliability"
+    ],
+    "version": 1,
+    "stages": [
+      {
+        "stageNumber": 1,
+        "stageName": "Stage 1: Forensic Diagnosis",
+        "scenario": "A multinational financial services enterprise with 3 million Accounts experiences cascading row-lock failures (`UNABLE_TO_LOCK_ROW`) and 6-hour system-wide recalculation freezes whenever territory alignments occur. Inspection reveals an 11-level role hierarchy and 180 criteria-based sharing rules granting access across regional branches. What is the fundamental platform bottleneck?",
+        "options": [
+          {
+            "id": "st1_a",
+            "text": "Deep role hierarchies amplify implicit sharing tree traversal exponentially; modifying a high-level node or criteria-based sharing rule locks the entire UserRole and Group sharing tables to rebuild millions of share rows.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! According to the Platform Sharing Architecture guide, deep hierarchies (> 4-5 levels) and proliferation of criteria-based sharing rules trigger massive implicit sharing recalculations, causing systemic table locking on AccountShare."
+          },
+          {
+            "id": "st1_b",
+            "text": "Criteria-based sharing rules are limited to a maximum of 20 rules per object across all editions.",
+            "isCorrect": false,
+            "coachingFeedback": "False limit: Salesforce allows up to 300 criteria-based sharing rules per object (50 criteria-based in Enterprise), but using them heavily on large data volumes causes severe recalculation overhead."
+          },
+          {
+            "id": "st1_c",
+            "text": "The platform requires all 3 million Accounts to be assigned to a single default system administrator role.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Assigning millions of records to a single user or role creates catastrophic ownership skew and lock contention on record updates."
+          }
+        ]
+      },
+      {
+        "stageNumber": 2,
+        "stageName": "Stage 2: Target Architecture Pattern",
+        "scenario": "To redesign this sharing architecture for enterprise scale and eliminate long recalculation freezes, what target pattern does the Platform Sharing Architecture guide prescribe?",
+        "options": [
+          {
+            "id": "st2_a",
+            "text": "Flatten the role hierarchy to 3–4 executive levels, shift regional branch visibility to Account Teams with programmatic provisioning, and replace broad criteria-based sharing with Restriction Rules or Scoping Rules for sensitive data filtering.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Platform Sharing Architecture fundamentals guide recommends flattening the hierarchy, using granular Account Teams to localize share recalculations, and leveraging Restriction/Scoping Rules to control record visibility without rebuilding the share table."
+          },
+          {
+            "id": "st2_b",
+            "text": "Set Organization-Wide Defaults (OWD) to Public Read/Write on Account and enforce data privacy using validation rules.",
+            "isCorrect": false,
+            "coachingFeedback": "Severe antipattern: Validation rules only block edit/save operations and cannot prevent unauthorized data reads, reports, API queries, or list view exposure, violating the Trust pillar."
+          }
+        ]
+      },
+      {
+        "stageNumber": 3,
+        "stageName": "Stage 3: Migration & Cutover Strategy",
+        "scenario": "How should the enterprise safely execute the transition from the legacy 11-level hierarchy and criteria rules to the flattened architecture without locking active production transactions?",
+        "options": [
+          {
+            "id": "st3_a",
+            "text": "Leverage 'Defer Sharing Calculation' in Setup to suspend automatic rule processing, restructure roles and Account Teams during a scheduled maintenance window, and then trigger asynchronous background recalculation.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Platform Sharing Architecture guide recommends enabling Deferred Sharing Calculation for major structural reorganizations so role hierarchy and sharing changes can be applied in bulk without intermediate locks."
+          },
+          {
+            "id": "st3_b",
+            "text": "Delete old roles directly during business hours while users are actively logging in to allow real-time redistribution.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Deleting and reassigning roles during peak hours creates immediate deadlocks on Group and Share tables, locking out users."
+          }
+        ]
+      },
+      {
+        "stageNumber": 4,
+        "stageName": "Stage 4: Telemetry & Observability",
+        "scenario": "What observability mechanism should be put in place to ensure sharing recalculations remain within healthy thresholds post-cutover?",
+        "options": [
+          {
+            "id": "st4_a",
+            "text": "Subscribe to Real-Time Event Monitoring for URI and ApexExecution events tracking share recalculation duration, and monitor the Background Jobs page for asynchronous share maintenance throughput.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Event Monitoring and Background Jobs telemetry allow architects to track asynchronous job queue latency and verify that recalculations finish within SLA windows."
+          },
+          {
+            "id": "st4_b",
+            "text": "Rely on user complaints about missing records on their dashboard to indicate sharing issues.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Relying on end-user complaints represents a lack of operational observability and risks latent data exposure or access revocation."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00704",
+    "title": "Autonomous agent governance: 4-stage Agent Development Lifecycle (ADLC) refactor",
+    "format": "Lesson",
+    "domain": "Ai_And_Automation",
+    "domainLabel": "Agentic AI & Automation",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Trust",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "stages": [
+      {
+        "stageNumber": 1,
+        "stageName": "Stage 1: Forensic Diagnosis",
+        "scenario": "An enterprise service center deploys a customer-facing Agentforce agent. Following an unversioned production prompt update made directly by a business administrator, the agent begins promising unauthorized 40% order discounts and enters infinite circular clarification loops when customers mention order tracking. What is the root governance and architectural failure?",
+        "options": [
+          {
+            "id": "st1_a",
+            "text": "The implementation lacks an Agent Development Lifecycle (ADLC) discipline: instructions were modified directly in production without versioning, isolated sandbox testing, evaluation against golden benchmark test sets, or deterministic guardrails.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Agent Development Lifecycle (ADLC) guide explicitly warns against direct-to-production prompting. Agent changes require systematic evaluation against curated test sets to prevent behavioral regression and prompt drift."
+          },
+          {
+            "id": "st1_b",
+            "text": "The LLM temperature was accidentally set to 0.0, which causes creative hallucination in all transformer models.",
+            "isCorrect": false,
+            "coachingFeedback": "Misconception: A temperature of 0.0 maximizes determinism and minimizes variance, rather than increasing hallucinations."
+          },
+          {
+            "id": "st1_c",
+            "text": "Salesforce Agentforce agents should never be allowed to call invocable actions or access customer data.",
+            "isCorrect": false,
+            "coachingFeedback": "Incorrect premise: Agentforce is specifically designed for action-oriented execution, provided actions are governed by strict input schemas, permission sets, and the Trust Layer."
+          }
+        ]
+      },
+      {
+        "stageNumber": 2,
+        "stageName": "Stage 2: Target Architecture Pattern",
+        "scenario": "To establish enterprise-grade reliability according to the Salesforce ADLC guide, how should the agent architecture and delivery lifecycle be restructured?",
+        "options": [
+          {
+            "id": "st2_a",
+            "text": "Implement the 5-phase ADLC framework: decompose the monolithic agent into modular topics with distinct instructions, enforce server-side validation in Apex invocable actions, and mandate automated regression testing in sandboxes against synthetic and historic conversation benchmarks before release.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The ADLC guide prescribes structured topic scoping, strict separation of concerns, sandbox development with evaluation benchmark suites, and server-side code-level guardrails rather than relying on prompt promises."
+          },
+          {
+            "id": "st2_b",
+            "text": "Add a single paragraph to the master system prompt telling the agent: 'Never offer unauthorized discounts and never repeat yourself under any circumstances.'",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: 'Prompt promises' are non-deterministic and fail under adversarial prompting or conversational complexity; business guardrails must be enforced server-side."
+          }
+        ]
+      },
+      {
+        "stageNumber": 3,
+        "stageName": "Stage 3: Migration & Cutover Strategy",
+        "scenario": "How should the architect safely release the newly refactored agent version to live enterprise customers without risking brand trust or service interruption?",
+        "options": [
+          {
+            "id": "st3_a",
+            "text": "Package the agent metadata in a source-tracked DevOps pipeline, deploy to staging for end-to-end evaluation, and execute a canary rollout via Omni-Channel routing allocating 5% of customer traffic with automatic instant escalation to human agents upon sentiment drop.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Well-Architected ADLC deployment combines versioned metadata release pipelines, canary session allocation, and seamless Human-in-the-Loop (HITL) fallback paths via Omni-Channel."
+          },
+          {
+            "id": "st3_b",
+            "text": "Immediately activate the agent for 100% of global inbound traffic and disable the human escalation queue to force agent adoption.",
+            "isCorrect": false,
+            "coachingFeedback": "Critical antipattern: Forcing traffic without Human-in-the-Loop escape hatches traps frustrated users and severely violates the Well-Architected Trust pillar."
+          }
+        ]
+      },
+      {
+        "stageNumber": 4,
+        "stageName": "Stage 4: Telemetry & Observability",
+        "scenario": "What observability tooling should be configured to monitor agent health, identify intent drift, and measure reasoning quality continuously in production?",
+        "options": [
+          {
+            "id": "st4_a",
+            "text": "Deploy Agentforce Analytics and Session Tracing to audit topic classification accuracy, action call latency, goal completion rates, and human escalation triggers in near real time.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The ADLC Phase 5 (Monitoring & Tuning) focuses on Session Tracing and analytics dashboards to audit decision sequences, track topic drift, and iteratively tune action descriptions."
+          },
+          {
+            "id": "st4_b",
+            "text": "Review random chat transcripts manually at the end of each fiscal quarter.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Manual quarterly transcript review provides zero real-time alerting on hallucination spikes or customer drop-off trends."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00705",
+    "title": "ETL storage hoarding to Zero-Copy: 4-stage Data Virtualization refactor",
+    "format": "Lesson",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data Architecture & Virtualization",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Cost_Optimization",
+      "Reliability"
+    ],
+    "version": 1,
+    "stages": [
+      {
+        "stageNumber": 1,
+        "stageName": "Stage 1: Forensic Diagnosis",
+        "scenario": "An enterprise replicates 50 million legacy ERP billing and invoice line records into custom sObjects via hourly scheduled ETL batch pipelines. The org has exceeded its licensed Salesforce data storage by 140%, resulting in heavy monthly storage overage penalties. Furthermore, batch API jobs frequently fail during peak hours due to 24-hour API limit exhaustion, leaving sales reps with out-of-sync invoice records. What is the fundamental architectural antipattern?",
+        "options": [
+          {
+            "id": "st1_a",
+            "text": "The architecture commits 'ETL Data Hoarding': replicating cold, read-mostly reference data into transactional Salesforce storage instead of querying it at source on demand via Data Virtualization.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! The Salesforce Data Virtualization guide emphasizes that high-volume, read-mostly operational data should not be physically replicated into transactional relational storage, which wastes storage credits and consumes API limits."
+          },
+          {
+            "id": "st1_b",
+            "text": "The custom sObject should be converted into Big Objects to completely eliminate all API usage.",
+            "isCorrect": false,
+            "coachingFeedback": "Misconception: Ingesting data into Big Objects still requires API calls and Async SOQL for complex querying; it does not eliminate ETL pipeline maintenance."
+          },
+          {
+            "id": "st1_c",
+            "text": "Hourly ETL pipelines are required by Salesforce for any external system containing more than 1 million records.",
+            "isCorrect": false,
+            "coachingFeedback": "False: Salesforce encourages Zero-Copy patterns and Data Virtualization via Salesforce Connect and Data Cloud to eliminate unnecessary ETL pipelines."
+          }
+        ]
+      },
+      {
+        "stageNumber": 2,
+        "stageName": "Stage 2: Target Architecture Pattern",
+        "scenario": "To eliminate physical storage overhead while providing seamless real-time access to ERP invoices directly on Account page layouts, what target pattern does the Data Virtualization fundamentals guide recommend?",
+        "options": [
+          {
+            "id": "st2_a",
+            "text": "Deploy Salesforce Connect with External Objects mapped to the data source (OData or Snowflake), configuring Query Pushdown, Indirect Lookups to Account, and dual governance through Named/Per-User Principals.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! According to the Data Virtualization guide, Salesforce Connect with External Objects leverages Query Pushdown to execute filtering at source, renders external data seamlessly in standard UI components, and consumes zero Salesforce relational storage."
+          },
+          {
+            "id": "st2_b",
+            "text": "Build a custom Lightning Web Component that executes synchronous Apex HTTP REST callouts to the ERP system on every page load.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: Ad-hoc Apex callouts in UI components lack native declarative integration (reports, Flow lookups, list views), risk thread exhaustion, and fail to leverage platform query pushdown optimizations."
+          }
+        ]
+      },
+      {
+        "stageNumber": 3,
+        "stageName": "Stage 3: Migration & Cutover Strategy",
+        "scenario": "How should the enterprise safely transition users from the legacy custom sObject to External Objects without disrupting daily sales operations?",
+        "options": [
+          {
+            "id": "st3_a",
+            "text": "Deploy External Objects side-by-side on a dedicated Lightning page tab for a pilot user group, validate source query latency and Indirect Lookup indexing, and then decommission the hourly ETL jobs followed by staged truncation of the legacy custom object records.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Well-Architected migration prescribes side-by-side pilot validation to verify source query pushdown responsiveness before shutting down ETL replication and reclaiming physical storage."
+          },
+          {
+            "id": "st3_b",
+            "text": "Immediately delete all 50 million custom object records with Bulk API Hard Delete before setting up the External Data Source.",
+            "isCorrect": false,
+            "coachingFeedback": "Catastrophic risk: Deleting legacy data before external connectivity and lookups are validated creates severe business downtime if the external connection fails."
+          }
+        ]
+      },
+      {
+        "stageNumber": 4,
+        "stageName": "Stage 4: Telemetry & Observability",
+        "scenario": "What observability mechanism should be implemented to ensure the virtualized data layer maintains high availability and stays within external callout constraints?",
+        "options": [
+          {
+            "id": "st4_a",
+            "text": "Monitor External Data Callout metrics via Event Monitoring, track OData response times and HTTP 429/500 status codes, and set automated alerts on named credential authentication expiration.",
+            "isCorrect": true,
+            "coachingFeedback": "Correct! Real-time telemetry on External Data Callouts ensures architects can monitor source query latencies, detect external rate limits, and proactively refresh credentials before user sessions fail."
+          },
+          {
+            "id": "st4_b",
+            "text": "Assume the external system is always healthy since External Objects do not consume standard SOQL query rows.",
+            "isCorrect": false,
+            "coachingFeedback": "Antipattern: External systems can suffer outages, latency degradation, or credential rotations that break the virtualized UI if unmonitored."
+          }
+        ]
+      }
+    ]
   }
 ]

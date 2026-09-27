@@ -1,0 +1,100 @@
+{
+  "id": "AGD-00702",
+  "title": "Monolithic async chaining: 4-stage Step-Based Framework refactor",
+  "format": "Lesson",
+  "domain": "Platform_Core",
+  "domainLabel": "Platform Core & Scalability",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Reliability", "Operational_Excellence"],
+  "version": 1,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "stageName": "Stage 1: Forensic Diagnosis",
+      "scenario": "An enterprise billing engine chains 6 consecutive Queueable Apex jobs to process invoice recalculations across 45,000 accounts. Under month-end billing load, job #4 encounters a sporadic row lock timeout (`UNABLE_TO_LOCK_ROW`). Jobs #5 and #6 never execute, no transaction recovery fires, and hundreds of accounts remain in an inconsistent partial state. What is the fundamental architectural flaw in this chaining model?",
+      "options": [
+        {
+          "id": "st1_a",
+          "text": "Monolithic Queueable chains lack isolated step boundaries, transaction finalizers, and state persistence; an unhandled exception in any link silently terminates the entire remaining chain without checkpointing.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! According to the Step-Based Async Framework guide, standard Queueable chaining creates tight coupling where any unhandled exception terminates the sequence, leaving upstream state dirty and downstream work stranded without telemetry."
+        },
+        {
+          "id": "st1_b",
+          "text": "Queueable Apex is restricted by Salesforce to execute a maximum of 3 chained jobs in production environments.",
+          "isCorrect": false,
+          "coachingFeedback": "False assumption: Salesforce allows unlimited Queueable chaining in Production (one child per parent job), but unhandled exceptions break the chain without recovery."
+        },
+        {
+          "id": "st1_c",
+          "text": "The billing logic must be converted into synchronous `@future` methods to prevent concurrency locks.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: `@future` methods cannot be chained, cannot pass complex objects or collections of sObjects, and lack execution monitoring or finalizers."
+        }
+      ]
+    },
+    {
+      "stageNumber": 2,
+      "stageName": "Stage 2: Target Architecture Pattern",
+      "scenario": "To refactor this brittle billing sequence into the Salesforce Well-Architected Step-Based Async Framework, how should the execution engine be designed?",
+      "options": [
+        {
+          "id": "st2_a",
+          "text": "Implement a modular Step Interface with an abstract Step Processor, using Apex Cursors for chunked state navigation, Queueable Apex with Transaction Finalizers for recovery, and custom metadata for step orchestration.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Step-Based Async Framework establishes a standard Step interface where each step runs independently, checkpoints state via Apex Cursors or record markers, and uses Finalizers to capture and recover from unhandled faults."
+        },
+        {
+          "id": "st2_b",
+          "text": "Consolidate all 6 operations into a single massive Batchable Apex class running with a batch size of 2,000.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Combining disparate multi-system steps into a single batch class creates a monolithic maintainability bottleneck and risks hitting the 10,001 ms CPU limit under complex business logic."
+        },
+        {
+          "id": "st2_c",
+          "text": "Trigger 6 asynchronous scheduled Flows that fire at 5-minute fixed offsets.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Fixed-time offset scheduling assumes predictable runtimes and causes race conditions when data volumes vary between batches."
+        }
+      ]
+    },
+    {
+      "stageNumber": 3,
+      "stageName": "Stage 3: Migration & Cutover Strategy",
+      "scenario": "How should you safely cut over from the legacy Queueable chain to the new Step-Based Async Processor in an active production org with ongoing billing operations?",
+      "options": [
+        {
+          "id": "st3_a",
+          "text": "Implement a Custom Metadata-driven routing toggle with tenant/account-range canary partitioning, executing the Step Processor for a 5% pilot while retaining the legacy path for fallback.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Well-Architected Operational Excellence mandates canary routing via declarative metadata toggles, enabling verified pilot evaluation with instant rollback capability."
+        },
+        {
+          "id": "st3_b",
+          "text": "Delete the legacy Queueable classes from production via destructive changes deployment during weekend off-peak hours.",
+          "isCorrect": false,
+          "coachingFeedback": "High risk: Hard cutovers without feature toggles prevent immediate rollback if unforeseen edge cases or lock contentions emerge in the new processor."
+        }
+      ]
+    },
+    {
+      "stageNumber": 4,
+      "stageName": "Stage 4: Telemetry & Observability",
+      "scenario": "What observability mechanism should be implemented in the Step-Based Async Framework to guarantee SLA visibility and automated failure triage?",
+      "options": [
+        {
+          "id": "st4_a",
+          "text": "Bind a Transaction Finalizer (`System.Finalizer`) to each step execution to log start/end timestamps, record counts, and failure diagnostics to an async audit custom object and publish a Real-Time Event for alerting.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Step-Based Async Framework guide emphasizes `System.Finalizer` as the platform-native mechanism to inspect queueable execution results, recover failed state, and emit structured telemetry."
+        },
+        {
+          "id": "st4_b",
+          "text": "Rely on standard Salesforce Setup > Apex Jobs page views and weekly administrator manual spot-checks.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: The standard Apex Jobs UI does not capture granular step-level payload context, recovery attempts, or threshold-based alerting."
+        }
+      ]
+    }
+  ]
+}

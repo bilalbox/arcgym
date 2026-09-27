@@ -1,0 +1,94 @@
+{
+  "id": "AGD-00704",
+  "title": "Autonomous agent governance: 4-stage Agent Development Lifecycle (ADLC) refactor",
+  "format": "Lesson",
+  "domain": "Ai_And_Automation",
+  "domainLabel": "Agentic AI & Automation",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Trust", "Operational_Excellence"],
+  "version": 1,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "stageName": "Stage 1: Forensic Diagnosis",
+      "scenario": "An enterprise service center deploys a customer-facing Agentforce agent. Following an unversioned production prompt update made directly by a business administrator, the agent begins promising unauthorized 40% order discounts and enters infinite circular clarification loops when customers mention order tracking. What is the root governance and architectural failure?",
+      "options": [
+        {
+          "id": "st1_a",
+          "text": "The implementation lacks an Agent Development Lifecycle (ADLC) discipline: instructions were modified directly in production without versioning, isolated sandbox testing, evaluation against golden benchmark test sets, or deterministic guardrails.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Agent Development Lifecycle (ADLC) guide explicitly warns against direct-to-production prompting. Agent changes require systematic evaluation against curated test sets to prevent behavioral regression and prompt drift."
+        },
+        {
+          "id": "st1_b",
+          "text": "The LLM temperature was accidentally set to 0.0, which causes creative hallucination in all transformer models.",
+          "isCorrect": false,
+          "coachingFeedback": "Misconception: A temperature of 0.0 maximizes determinism and minimizes variance, rather than increasing hallucinations."
+        },
+        {
+          "id": "st1_c",
+          "text": "Salesforce Agentforce agents should never be allowed to call invocable actions or access customer data.",
+          "isCorrect": false,
+          "coachingFeedback": "Incorrect premise: Agentforce is specifically designed for action-oriented execution, provided actions are governed by strict input schemas, permission sets, and the Trust Layer."
+        }
+      ]
+    },
+    {
+      "stageNumber": 2,
+      "stageName": "Stage 2: Target Architecture Pattern",
+      "scenario": "To establish enterprise-grade reliability according to the Salesforce ADLC guide, how should the agent architecture and delivery lifecycle be restructured?",
+      "options": [
+        {
+          "id": "st2_a",
+          "text": "Implement the 5-phase ADLC framework: decompose the monolithic agent into modular topics with distinct instructions, enforce server-side validation in Apex invocable actions, and mandate automated regression testing in sandboxes against synthetic and historic conversation benchmarks before release.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The ADLC guide prescribes structured topic scoping, strict separation of concerns, sandbox development with evaluation benchmark suites, and server-side code-level guardrails rather than relying on prompt promises."
+        },
+        {
+          "id": "st2_b",
+          "text": "Add a single paragraph to the master system prompt telling the agent: 'Never offer unauthorized discounts and never repeat yourself under any circumstances.'",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: 'Prompt promises' are non-deterministic and fail under adversarial prompting or conversational complexity; business guardrails must be enforced server-side."
+        }
+      ]
+    },
+    {
+      "stageNumber": 3,
+      "stageName": "Stage 3: Migration & Cutover Strategy",
+      "scenario": "How should the architect safely release the newly refactored agent version to live enterprise customers without risking brand trust or service interruption?",
+      "options": [
+        {
+          "id": "st3_a",
+          "text": "Package the agent metadata in a source-tracked DevOps pipeline, deploy to staging for end-to-end evaluation, and execute a canary rollout via Omni-Channel routing allocating 5% of customer traffic with automatic instant escalation to human agents upon sentiment drop.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Well-Architected ADLC deployment combines versioned metadata release pipelines, canary session allocation, and seamless Human-in-the-Loop (HITL) fallback paths via Omni-Channel."
+        },
+        {
+          "id": "st3_b",
+          "text": "Immediately activate the agent for 100% of global inbound traffic and disable the human escalation queue to force agent adoption.",
+          "isCorrect": false,
+          "coachingFeedback": "Critical antipattern: Forcing traffic without Human-in-the-Loop escape hatches traps frustrated users and severely violates the Well-Architected Trust pillar."
+        }
+      ]
+    },
+    {
+      "stageNumber": 4,
+      "stageName": "Stage 4: Telemetry & Observability",
+      "scenario": "What observability tooling should be configured to monitor agent health, identify intent drift, and measure reasoning quality continuously in production?",
+      "options": [
+        {
+          "id": "st4_a",
+          "text": "Deploy Agentforce Analytics and Session Tracing to audit topic classification accuracy, action call latency, goal completion rates, and human escalation triggers in near real time.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The ADLC Phase 5 (Monitoring & Tuning) focuses on Session Tracing and analytics dashboards to audit decision sequences, track topic drift, and iteratively tune action descriptions."
+        },
+        {
+          "id": "st4_b",
+          "text": "Review random chat transcripts manually at the end of each fiscal quarter.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Manual quarterly transcript review provides zero real-time alerting on hallucination spikes or customer drop-off trends."
+        }
+      ]
+    }
+  ]
+}

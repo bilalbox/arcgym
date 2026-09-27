@@ -1,0 +1,94 @@
+{
+  "id": "AGD-00705",
+  "title": "ETL storage hoarding to Zero-Copy: 4-stage Data Virtualization refactor",
+  "format": "Lesson",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data Architecture & Virtualization",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Cost_Optimization", "Reliability"],
+  "version": 1,
+  "stages": [
+    {
+      "stageNumber": 1,
+      "stageName": "Stage 1: Forensic Diagnosis",
+      "scenario": "An enterprise replicates 50 million legacy ERP billing and invoice line records into custom sObjects via hourly scheduled ETL batch pipelines. The org has exceeded its licensed Salesforce data storage by 140%, resulting in heavy monthly storage overage penalties. Furthermore, batch API jobs frequently fail during peak hours due to 24-hour API limit exhaustion, leaving sales reps with out-of-sync invoice records. What is the fundamental architectural antipattern?",
+      "options": [
+        {
+          "id": "st1_a",
+          "text": "The architecture commits 'ETL Data Hoarding': replicating cold, read-mostly reference data into transactional Salesforce storage instead of querying it at source on demand via Data Virtualization.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! The Salesforce Data Virtualization guide emphasizes that high-volume, read-mostly operational data should not be physically replicated into transactional relational storage, which wastes storage credits and consumes API limits."
+        },
+        {
+          "id": "st1_b",
+          "text": "The custom sObject should be converted into Big Objects to completely eliminate all API usage.",
+          "isCorrect": false,
+          "coachingFeedback": "Misconception: Ingesting data into Big Objects still requires API calls and Async SOQL for complex querying; it does not eliminate ETL pipeline maintenance."
+        },
+        {
+          "id": "st1_c",
+          "text": "Hourly ETL pipelines are required by Salesforce for any external system containing more than 1 million records.",
+          "isCorrect": false,
+          "coachingFeedback": "False: Salesforce encourages Zero-Copy patterns and Data Virtualization via Salesforce Connect and Data Cloud to eliminate unnecessary ETL pipelines."
+        }
+      ]
+    },
+    {
+      "stageNumber": 2,
+      "stageName": "Stage 2: Target Architecture Pattern",
+      "scenario": "To eliminate physical storage overhead while providing seamless real-time access to ERP invoices directly on Account page layouts, what target pattern does the Data Virtualization fundamentals guide recommend?",
+      "options": [
+        {
+          "id": "st2_a",
+          "text": "Deploy Salesforce Connect with External Objects mapped to the data source (OData or Snowflake), configuring Query Pushdown, Indirect Lookups to Account, and dual governance through Named/Per-User Principals.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! According to the Data Virtualization guide, Salesforce Connect with External Objects leverages Query Pushdown to execute filtering at source, renders external data seamlessly in standard UI components, and consumes zero Salesforce relational storage."
+        },
+        {
+          "id": "st2_b",
+          "text": "Build a custom Lightning Web Component that executes synchronous Apex HTTP REST callouts to the ERP system on every page load.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: Ad-hoc Apex callouts in UI components lack native declarative integration (reports, Flow lookups, list views), risk thread exhaustion, and fail to leverage platform query pushdown optimizations."
+        }
+      ]
+    },
+    {
+      "stageNumber": 3,
+      "stageName": "Stage 3: Migration & Cutover Strategy",
+      "scenario": "How should the enterprise safely transition users from the legacy custom sObject to External Objects without disrupting daily sales operations?",
+      "options": [
+        {
+          "id": "st3_a",
+          "text": "Deploy External Objects side-by-side on a dedicated Lightning page tab for a pilot user group, validate source query latency and Indirect Lookup indexing, and then decommission the hourly ETL jobs followed by staged truncation of the legacy custom object records.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Well-Architected migration prescribes side-by-side pilot validation to verify source query pushdown responsiveness before shutting down ETL replication and reclaiming physical storage."
+        },
+        {
+          "id": "st3_b",
+          "text": "Immediately delete all 50 million custom object records with Bulk API Hard Delete before setting up the External Data Source.",
+          "isCorrect": false,
+          "coachingFeedback": "Catastrophic risk: Deleting legacy data before external connectivity and lookups are validated creates severe business downtime if the external connection fails."
+        }
+      ]
+    },
+    {
+      "stageNumber": 4,
+      "stageName": "Stage 4: Telemetry & Observability",
+      "scenario": "What observability mechanism should be implemented to ensure the virtualized data layer maintains high availability and stays within external callout constraints?",
+      "options": [
+        {
+          "id": "st4_a",
+          "text": "Monitor External Data Callout metrics via Event Monitoring, track OData response times and HTTP 429/500 status codes, and set automated alerts on named credential authentication expiration.",
+          "isCorrect": true,
+          "coachingFeedback": "Correct! Real-time telemetry on External Data Callouts ensures architects can monitor source query latencies, detect external rate limits, and proactively refresh credentials before user sessions fail."
+        },
+        {
+          "id": "st4_b",
+          "text": "Assume the external system is always healthy since External Objects do not consume standard SOQL query rows.",
+          "isCorrect": false,
+          "coachingFeedback": "Antipattern: External systems can suffer outages, latency degradation, or credential rotations that break the virtualized UI if unmonitored."
+        }
+      ]
+    }
+  ]
+}
