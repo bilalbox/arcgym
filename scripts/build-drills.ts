@@ -9,7 +9,7 @@ import * as path from 'path';
 import { lintDrillWording } from '../packages/drill-core/src/index.js';
 
 /** When true, wording findings on published drills fail the build; drafts only ever warn. */
-const WORDING_ENFORCE = false;
+const WORDING_ENFORCE = true;
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');

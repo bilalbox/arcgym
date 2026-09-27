@@ -20,31 +20,23 @@ function hitCounts(drills: DrillDefinitionDTO[]): Partial<Record<WordingRuleId, 
   return counts;
 }
 
-/** Update as the corpus rewrite lands; published counts reach zero before WORDING_ENFORCE turns on. */
+/** Update as the draft rewrite lands; build-drills enforces zero findings on published drills. */
 describe('wording findings on content/drills', () => {
   const corpus = loadCorpus();
 
   it('matches the recorded hit counts across all drills', () => {
     expect(hitCounts(corpus)).toEqual({
-      'lesson-min-options': 15,
-      'length-tell': 22,
-      'verdict-prefix': 51,
-      'antipattern-name': 69,
-      'label-echo': 3,
-      'self-refuting-distractor': 8,
-      'long-stem': 2,
+      'lesson-min-options': 12,
+      'length-tell': 18,
+      'verdict-prefix': 42,
+      'antipattern-name': 46,
+      'label-echo': 2,
+      'self-refuting-distractor': 5,
+      'long-stem': 1,
     });
   });
 
-  it('matches the recorded hit counts across published drills', () => {
-    expect(hitCounts(corpus.filter((d) => d.status === 'published'))).toEqual({
-      'lesson-min-options': 3,
-      'length-tell': 4,
-      'verdict-prefix': 9,
-      'antipattern-name': 23,
-      'label-echo': 1,
-      'self-refuting-distractor': 3,
-      'long-stem': 1,
-    });
+  it('has no findings on published drills', () => {
+    expect(hitCounts(corpus.filter((d) => d.status === 'published'))).toEqual({});
   });
 });
