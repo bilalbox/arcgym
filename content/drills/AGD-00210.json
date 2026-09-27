@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00210",
+  "title": "Consumption Credit Governance: Batch vs Streaming Credit Economics",
+  "format": "Rapid_Fire",
+  "domain": "Core Platform & Execution Limits",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Cost_Optimization",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An organization is rapidly exhausting Data Cloud credits. An audit reveals 50 streaming connectors ingesting product catalog updates that change only once a week. What architectural refactor is required?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Transition catalog ingestion from real-time streaming connectors to scheduled daily batch ingestion",
+          "isCorrect": true,
+          "rationale": "Streaming connectors consume continuous compute credits for zero business gain on static data. Scheduled batch ingestion preserves valuable credits for real-time customer behavioral signals.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Purchase 10x more credits without modifying pipeline architecture",
+          "isCorrect": false,
+          "distractorAntipattern": "Throwing money at architectural anti-patterns creates runaway TCO.",
+          "rationale": "Violates Well-Architected Cost Optimization by subsidizing architectural waste.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Disable data encryption to reduce compute costs",
+          "isCorrect": false,
+          "distractorAntipattern": "Disabling encryption destroys Trust and compliance.",
+          "rationale": "Disabling security controls violates fundamental Trust boundaries.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

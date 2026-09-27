@@ -4,11 +4,12 @@
   "private": true,
   "description": "ArcGym: Daily judgment practice for Salesforce Architects",
   "scripts": {
-    "dev": "pnpm --filter @arcgym/lwr dev",
-    "build": "pnpm --recursive run build",
+    "dev": "pnpm --filter @arcgym/web dev",
+    "build": "npx tsx scripts/build-drills.ts && pnpm --recursive run build",
     "test": "pnpm --recursive run test",
     "lint": "pnpm --recursive run lint",
-    "preview": "pnpm --filter @arcgym/lwr preview"
+    "preview": "pnpm --filter @arcgym/web preview",
+    "deploy": "pnpm --filter @arcgym/web run deploy"
   },
   "devDependencies": {
     "typescript": "^5.7.3",

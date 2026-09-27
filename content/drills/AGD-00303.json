@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00303",
+  "title": "Einstein Trust Layer: Prompt Defense, PII Masking & Zero Retention",
+  "format": "Rapid_Fire",
+  "domain": "Security, Sharing & Trust Boundaries",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Trust",
+    "Fairness"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Why is the Einstein Trust Layer zero-retention architecture essential for enterprise healthcare and financial services Salesforce deployments?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Customer data and PII sent to 3rd-party LLMs is masked in-flight, never retained by the LLM vendor, and never used to train foundational models",
+          "isCorrect": true,
+          "rationale": "The Einstein Trust Layer guarantees strict enterprise data boundaries: dynamic data masking, toxic response filtering, zero vendor data retention, and audit logging.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "The Trust Layer speeds up LLM responses by 500%",
+          "isCorrect": false,
+          "distractorAntipattern": "Security layers introduce minor validation latency, not speed increases.",
+          "rationale": "The Trust Layer enforces security and privacy, not raw throughput acceleration.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "The Trust Layer deletes all Salesforce records after 30 days",
+          "isCorrect": false,
+          "distractorAntipattern": "The Trust Layer does not delete CRM records.",
+          "rationale": "Zero retention applies to LLM gateway transit memory, not customer CRM records.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

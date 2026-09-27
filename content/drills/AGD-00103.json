@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00103",
+  "title": "Automation Decision Guide: High-Frequency Bulk Batch Updates",
+  "format": "Rapid_Fire",
+  "domain": "Automation Decision Guide (Flow vs Apex)",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Operational_Excellence",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A nightly integration pushes 200,000 upserts in 1,000-record batches to Invoice__c. Business logic requires complex discount calculations across 5 child objects and partial-rollback on specific row errors. Which automation tool is required?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Record-Triggered Flow (Actions and Related Records)",
+          "isCorrect": false,
+          "distractorAntipattern": "Record-triggered flow iteration on large child batches exceeds CPU limits.",
+          "rationale": "High-frequency bulk batch processing with multi-level child traversals exceeds Flow element iteration limits and CPU thresholds.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/automation"
+        },
+        {
+          "id": "s1_b",
+          "label": "Apex Trigger framework with bulkified collections and Database.insert(records, false)",
+          "isCorrect": true,
+          "rationale": "Apex delivers memory bulkification, strict CPU control, and granular partial success handling via Database methods for large batches.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/automation"
+        },
+        {
+          "id": "s1_c",
+          "label": "Process Builder configured for bulk processing",
+          "isCorrect": false,
+          "distractorAntipattern": "Process Builder is deprecated and unperformant.",
+          "rationale": "Process Builder is deprecated, severely unperformant, and violates Salesforce Well-Architected Operational Excellence.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/automation"
+        }
+      ]
+    }
+  ]
+}

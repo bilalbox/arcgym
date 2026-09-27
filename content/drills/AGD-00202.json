@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00202",
+  "title": "Data Ingestion Architecture: DLO to DMO Canonical Mapping",
+  "format": "Rapid_Fire",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "When ingesting customer order records into Data Cloud from an external ERP, what is the required Well-Architected modeling sequence?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Map source data into a Data Lake Object (DLO) preserving raw fidelity, then map DLO fields to standard CIM Data Model Objects (DMO)",
+          "isCorrect": true,
+          "rationale": "Data Cloud separates immutable raw data ingestion (DLO) from unified business semantics (DMO) aligned with the Cloud Information Model (CIM).",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_b",
+          "label": "Write directly into the Unified Individual DMO, bypassing raw staging",
+          "isCorrect": false,
+          "distractorAntipattern": "Bypassing DLO prevents re-running identity resolution rules.",
+          "rationale": "Unified DMOs are dynamically populated via Identity Resolution rulesets, not direct API ingestion.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_c",
+          "label": "Convert all fields to base64 encrypted strings before mapping to DLO",
+          "isCorrect": false,
+          "distractorAntipattern": "Base64 strings prevent segmentation and indexing.",
+          "rationale": "Arbitrary encryption corrupts indexing, calculated insights, and segmentation query engines.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        }
+      ]
+    }
+  ]
+}

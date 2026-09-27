@@ -3,17 +3,17 @@
         <!-- In-Flight Drill View -->
         <template if:false={isComplete}>
             <!-- Scenario Header -->
-            <div class="scenario-header slds-m-bottom_medium">
-                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_xx-small">
-                    <span class="drill-tag slds-badge slds-theme_inverse">CURRENCY DRILL</span>
-                    <span class="slds-text-body_small slds-text-color_weak">{drillDomain}</span>
+            <div class="scenario-header">
+                <div class="scenario-meta">
+                    <span class="drill-tag">Currency Drill</span>
+                    <span class="drill-domain">{drillDomain}</span>
                 </div>
-                <h2 class="slds-text-heading_medium font-weight-bold slds-m-bottom_x-small">{drillTitle}</h2>
-                <p class="scenario-prompt slds-text-color_weak">{scenarioPrompt}</p>
+                <h2 class="drill-title">{drillTitle}</h2>
+                <p class="scenario-prompt">{scenarioPrompt}</p>
             </div>
 
-            <!-- Sticky Budget Meter -->
-            <div class="meter-sticky-wrapper slds-m-bottom_large">
+            <!-- Sticky Budget Meter (Flush architectural surface) -->
+            <div class="meter-sticky-wrapper">
                 <c-budget-meter
                     total-budget={totalBudget}
                     used-budget={totalAllocatedCost}
@@ -22,13 +22,13 @@
                 </c-budget-meter>
             </div>
 
-            <!-- Configuration Categories -->
-            <div class="categories-container slds-m-bottom_large">
+            <!-- Configuration Categories (0px sharp cards, 1px black hairlines) -->
+            <div class="categories-container">
                 <template for:each={formattedCategories} for:item="cat">
-                    <div key={cat.id} class="category-card slds-box slds-box_small slds-m-bottom_medium">
-                        <div class="category-header slds-m-bottom_small">
-                            <h3 class="category-title font-weight-bold">{cat.title}</h3>
-                            <p class="category-description slds-text-body_small slds-text-color_weak">{cat.description}</p>
+                    <div key={cat.id} class="category-card">
+                        <div class="category-header">
+                            <h3 class="category-title">{cat.title}</h3>
+                            <p class="category-description">{cat.description}</p>
                         </div>
 
                         <!-- Option Cards -->
@@ -44,10 +44,10 @@
                                     aria-checked={opt.isSelected}
                                     tabindex="0"
                                     onkeydown={handleKeyDown}>
-                                    <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_xx-small">
-                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                    <div class="option-header-row">
+                                        <div class="option-left">
                                             <span class="option-marker">{opt.letter}</span>
-                                            <span class="option-name font-weight-bold">{opt.name}</span>
+                                            <span class="option-name">{opt.name}</span>
                                         </div>
                                         <span class={opt.costBadgeClass}>{opt.cost} {unitLabel}</span>
                                     </div>
@@ -59,37 +59,37 @@
                 </template>
             </div>
 
-            <!-- Post-Commit Evaluation Reveal -->
+            <!-- Post-Commit Evaluation Reveal (0px sharp debrief block) -->
             <template if:true={isAnswered}>
                 <div class={feedbackClass} role="alert">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                    <div class="feedback-header">
                         <span class="feedback-badge">{feedbackTitle}</span>
-                        <span class="feedback-points slds-m-left_small">{brierPointsLabel}</span>
+                        <span class="feedback-points">{brierPointsLabel}</span>
                     </div>
                     <p class="feedback-rationale">{evaluationRationale}</p>
                     <template if:true={citationUrl}>
-                        <a href={citationUrl} target="_blank" rel="noopener noreferrer" class="feedback-link slds-m-top_xx-small">
+                        <a href={citationUrl} target="_blank" rel="noopener noreferrer" class="feedback-link">
                             Read Governor & Scalability Guidance on architect.salesforce.com ↗
                         </a>
                     </template>
                 </div>
             </template>
 
-            <!-- Bottom Controls: Confidence Gate & Submit -->
-            <div class="controls-panel slds-border_top slds-p-top_small slds-m-top_medium">
-                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
-                    <div class="slds-size_1-of-1 slds-medium-size_2-of-3">
+            <!-- Bottom Controls: Confidence Gate & Canonical 40px Pill Submit -->
+            <div class="controls-panel">
+                <div class="controls-row">
+                    <div class="controls-gate">
                         <c-confidence-gate
                             selected-confidence={selectedConfidence}
                             disabled={isAnswered}
                             onconfidenceselected={handleConfidenceSelected}>
                         </c-confidence-gate>
                     </div>
-                    <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-text-align_right slds-m-top_small slds-medium-m-top_none">
+                    <div class="controls-action">
                         <template if:false={isAnswered}>
                             <button
                                 type="button"
-                                class="slds-button slds-button_brand commit-btn"
+                                class="sh-commit-btn"
                                 disabled={isCommitDisabled}
                                 onclick={handleCommitConfiguration}>
                                 Commit Architecture
@@ -98,7 +98,7 @@
                         <template if:true={isAnswered}>
                             <button
                                 type="button"
-                                class="slds-button slds-button_brand finish-btn"
+                                class="sh-finish-btn"
                                 onclick={handleFinishDrill}>
                                 View Calibration Summary
                             </button>
@@ -108,35 +108,35 @@
             </div>
         </template>
 
-        <!-- Completed Summary View -->
+        <!-- Completed Summary View (Cardo Display, 0px cells) -->
         <template if:true={isComplete}>
-            <div class="summary-card slds-p-around_large slds-text-align_center">
-                <div class="summary-streak-badge slds-m-bottom_medium">
-                    🔥 <span class="font-weight-bold">{streakDays}</span> Day Streak Achieved!
+            <div class="summary-container">
+                <div class="summary-streak-badge">
+                    🔥 <span class="font-bold">{streakDays}</span> Day Streak Achieved
                 </div>
-                <h2 class="slds-text-heading_large font-weight-bold slds-m-bottom_x-small">Architecture Committed!</h2>
-                <p class="slds-text-color_weak slds-m-bottom_large">
-                    Resource discipline is the hallmark of a Lead Salesforce Architect.
+                <h2 class="summary-title">Architecture Committed.</h2>
+                <p class="summary-subhead">
+                    Resource envelope discipline is the hallmark of a Lead Salesforce Architect.
                 </p>
 
-                <!-- Stats Grid -->
-                <div class="slds-grid slds-wrap stats-grid slds-m-bottom_large">
-                    <div class="stat-box slds-size_1-of-3">
+                <!-- Stats Grid (0px Rectilinear Cells) -->
+                <div class="stats-grid">
+                    <div class="stat-box">
                         <span class="stat-number">{totalAllocatedCost}/{totalBudget}</span>
-                        <span class="stat-label">Budget Used</span>
+                        <span class="stat-label">Budget Allocated</span>
                     </div>
-                    <div class="stat-box slds-size_1-of-3">
+                    <div class="stat-box">
                         <span class="stat-number">{earnedPoints}</span>
-                        <span class="stat-label">Brier Points</span>
+                        <span class="stat-label">Brier Calibration</span>
                     </div>
-                    <div class="stat-box slds-size_1-of-3">
+                    <div class="stat-box">
                         <span class="stat-number stat-quadrant">{quadrantLabel}</span>
                         <span class="stat-label">Metacognition</span>
                     </div>
                 </div>
 
-                <!-- Action Button -->
-                <button type="button" class="slds-button slds-button_neutral" onclick={handleRestart}>
+                <!-- Action Button (40px Pill) -->
+                <button type="button" class="sh-restart-btn" onclick={handleRestart}>
                     Re-Architect Drill
                 </button>
             </div>

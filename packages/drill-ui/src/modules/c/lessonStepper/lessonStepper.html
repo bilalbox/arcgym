@@ -3,16 +3,16 @@
         <!-- In-Flight Drill View -->
         <template if:false={isComplete}>
             <!-- Lesson Header & Progress Indicator -->
-            <div class="lesson-header slds-m-bottom_medium">
-                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_xx-small">
-                    <span class="lesson-tag slds-badge slds-theme_success">LESSON: 4-STAGE REFACTOR</span>
-                    <span class="stage-indicator font-weight-bold">STAGE {currentStageNumber} OF {totalStages}</span>
+            <div class="lesson-header">
+                <div class="lesson-meta">
+                    <span class="lesson-tag">Lesson Drill</span>
+                    <span class="stage-indicator">Stage {currentStageNumber} of {totalStages}</span>
                 </div>
-                <h2 class="slds-text-heading_medium font-weight-bold slds-m-bottom_x-small">{lessonTitle}</h2>
-                <p class="lesson-domain slds-text-color_weak slds-m-bottom_small">{lessonDomain}</p>
+                <h2 class="lesson-title">{lessonTitle}</h2>
+                <p class="lesson-domain">{lessonDomain}</p>
 
-                <!-- Stage Step Wizard -->
-                <div class="stages-wizard slds-grid slds-grid_align-spread slds-m-top_small">
+                <!-- Stage Step Wizard (Architectural Stepped Index) -->
+                <div class="stages-wizard">
                     <template for:each={formattedStages} for:item="stg">
                         <div key={stg.id} class={stg.wizardStepClass}>
                             <span class="wizard-step-circle">{stg.stepNumber}</span>
@@ -22,21 +22,21 @@
                 </div>
             </div>
 
-            <!-- Stage Context & Code/Diagram Inspection Box -->
-            <div class="inspection-card slds-box slds-box_small slds-theme_shade slds-m-bottom_medium">
-                <div class="slds-grid slds-grid_align-spread slds-m-bottom_xx-small">
-                    <span class="inspection-badge font-weight-bold">{currentStage.stageName}</span>
-                    <span class="slds-badge slds-badge_lightest">{currentStage.focusPillar}</span>
+            <!-- Stage Context & Code/Diagram Inspection Box (0px sharp architectural card) -->
+            <div class="inspection-card">
+                <div class="inspection-header">
+                    <span class="inspection-badge">{currentStage.stageName}</span>
+                    <span class="pillar-badge">{currentStage.focusPillar}</span>
                 </div>
-                <h3 class="inspection-title font-weight-bold slds-m-bottom_x-small">{currentStage.prompt}</h3>
+                <h3 class="inspection-title">{currentStage.prompt}</h3>
                 
                 <template if:true={currentStage.codeSnippet}>
-                    <pre class="code-preview slds-m-top_x-small"><code>{currentStage.codeSnippet}</code></pre>
+                    <pre class="code-preview"><code>{currentStage.codeSnippet}</code></pre>
                 </template>
             </div>
 
             <!-- Architectural Options List -->
-            <div class="options-container slds-m-bottom_medium" role="radiogroup" aria-label="Refactoring Options">
+            <div class="options-container" role="radiogroup" aria-label="Refactoring Options">
                 <template for:each={formattedOptions} for:item="opt">
                     <div
                         key={opt.id}
@@ -47,7 +47,7 @@
                         aria-checked={opt.isSelected}
                         tabindex="0"
                         onkeydown={handleKeyDown}>
-                        <div class="slds-grid slds-grid_vertical-align-center">
+                        <div class="option-row">
                             <span class="option-marker">{opt.letter}</span>
                             <span class="option-label">{opt.label}</span>
                         </div>
@@ -55,49 +55,49 @@
                 </template>
             </div>
 
-            <!-- In-Flight Coaching Feedback Callout -->
+            <!-- In-Flight Coaching Feedback Callout (Parchment debrief banner) -->
             <template if:true={showCoachingAlert}>
-                <div class="coaching-banner slds-box slds-box_small slds-m-bottom_medium" role="alert">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                <div class="coaching-banner" role="alert">
+                    <div class="coaching-header">
                         <span class="coaching-icon">💡</span>
-                        <span class="coaching-title font-weight-bold slds-m-left_x-small">Architectural Coaching Note</span>
+                        <span class="coaching-title">Architectural Coaching Note</span>
                     </div>
                     <p class="coaching-text">{coachingMessage}</p>
-                    <p class="coaching-subtext slds-m-top_xx-small">Review the constraints above and select another architectural pattern.</p>
+                    <p class="coaching-subtext">Review the Well-Architected boundary and select another target pattern.</p>
                 </div>
             </template>
 
             <!-- Success Stage Feedback Reveal -->
             <template if:true={isStageSuccess}>
-                <div class="stage-success-banner slds-box slds-box_small slds-m-bottom_medium" role="alert">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
-                        <span class="success-badge font-weight-bold">✓ Target Architectural Pattern Validated</span>
-                        <span class="success-points slds-m-left_small">{stagePointsLabel}</span>
+                <div class="stage-success-banner" role="alert">
+                    <div class="success-header">
+                        <span class="success-badge">✓ Target Architectural Pattern Validated</span>
+                        <span class="success-points">{stagePointsLabel}</span>
                     </div>
                     <p class="success-rationale">{currentStage.successRationale}</p>
                     <template if:true={currentStage.citationUrl}>
-                        <a href={currentStage.citationUrl} target="_blank" rel="noopener noreferrer" class="citation-link slds-m-top_xx-small">
+                        <a href={currentStage.citationUrl} target="_blank" rel="noopener noreferrer" class="citation-link">
                             Read official guidance on architect.salesforce.com ↗
                         </a>
                     </template>
                 </div>
             </template>
 
-            <!-- Bottom Controls: Confidence Gate & Submit -->
-            <div class="controls-panel slds-border_top slds-p-top_small slds-m-top_medium">
-                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
-                    <div class="slds-size_1-of-1 slds-medium-size_2-of-3">
+            <!-- Bottom Controls: Confidence Gate & Canonical 40px Pill Submit -->
+            <div class="controls-panel">
+                <div class="controls-row">
+                    <div class="controls-gate">
                         <c-confidence-gate
                             selected-confidence={selectedConfidence}
                             disabled={isStageSuccess}
                             onconfidenceselected={handleConfidenceSelected}>
                         </c-confidence-gate>
                     </div>
-                    <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-text-align_right slds-m-top_small slds-medium-m-top_none">
+                    <div class="controls-action">
                         <template if:false={isStageSuccess}>
                             <button
                                 type="button"
-                                class="slds-button slds-button_brand submit-btn"
+                                class="sh-submit-btn"
                                 disabled={isSubmitDisabled}
                                 onclick={handleSubmitStageDecision}>
                                 Verify Stage
@@ -106,7 +106,7 @@
                         <template if:true={isStageSuccess}>
                             <button
                                 type="button"
-                                class="slds-button slds-button_brand next-stage-btn"
+                                class="sh-next-stage-btn"
                                 onclick={handleNextStage}>
                                 {nextStageButtonLabel}
                             </button>
@@ -116,35 +116,35 @@
             </div>
         </template>
 
-        <!-- Completed Refactor Summary View -->
+        <!-- Completed Refactor Summary View (Cardo Display, 0px cells) -->
         <template if:true={isComplete}>
-            <div class="summary-card slds-p-around_large slds-text-align_center">
-                <div class="summary-streak-badge slds-m-bottom_medium">
-                    🔥 <span class="font-weight-bold">{streakDays}</span> Day Streak Achieved!
+            <div class="summary-container">
+                <div class="summary-streak-badge">
+                    🔥 <span class="font-bold">{streakDays}</span> Day Streak Achieved
                 </div>
-                <h2 class="slds-text-heading_large font-weight-bold slds-m-bottom_x-small">Refactoring Masterclass Complete!</h2>
-                <p class="slds-text-color_weak slds-m-bottom_large">
-                    You systematically diagnosed root causes, identified decoupled Well-Architected target patterns, governed migration, and established production observability.
+                <h2 class="summary-title">Refactoring Masterclass Complete.</h2>
+                <p class="summary-subhead">
+                    Systematic root cause diagnosis, decoupled Well-Architected target patterns, and governed observability.
                 </p>
 
-                <!-- Stats Grid -->
-                <div class="slds-grid slds-wrap stats-grid slds-m-bottom_large">
-                    <div class="stat-box slds-size_1-of-3">
+                <!-- Stats Grid (0px Rectilinear Cells) -->
+                <div class="stats-grid">
+                    <div class="stat-box">
                         <span class="stat-number">4/4 Stages</span>
                         <span class="stat-label">Refactor Phases</span>
                     </div>
-                    <div class="stat-box slds-size_1-of-3">
+                    <div class="stat-box">
                         <span class="stat-number">{totalBrierPoints}</span>
-                        <span class="stat-label">Brier Points</span>
+                        <span class="stat-label">Brier Calibration</span>
                     </div>
-                    <div class="stat-box slds-size_1-of-3">
+                    <div class="stat-box">
                         <span class="stat-number stat-quadrant">{quadrantLabel}</span>
                         <span class="stat-label">Metacognition</span>
                     </div>
                 </div>
 
-                <!-- Action Button -->
-                <button type="button" class="slds-button slds-button_neutral" onclick={handleRestart}>
+                <!-- Action Button (40px Pill) -->
+                <button type="button" class="sh-restart-btn" onclick={handleRestart}>
                     Practice Another Refactor Drill
                 </button>
             </div>

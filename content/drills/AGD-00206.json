@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00206",
+  "title": "Data Actions: Orchestrating Real-Time Downstream CRM Engagement",
+  "format": "Rapid_Fire",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Operational_Excellence",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "When a Streaming Insight calculates that a VIP customer churn risk exceeds 85%, how does Data Cloud immediately invoke an automated retention workflow in core Salesforce CRM?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Configure a Data Action target publishing a Platform Event or invoking a Salesforce Flow",
+          "isCorrect": true,
+          "rationale": "Data Actions bridge Data Cloud insights to core execution engines by publishing platform events or triggering record-triggered flows near-instantaneously.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        },
+        {
+          "id": "s1_b",
+          "label": "Schedule a nightly Apex job to query the Data Cloud REST API",
+          "isCorrect": false,
+          "distractorAntipattern": "Polling APIs adds delay and wastes API limits.",
+          "rationale": "Polling APIs wastes API allocations and introduces multi-hour delays for time-sensitive churn mitigation.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        },
+        {
+          "id": "s1_c",
+          "label": "Write an external Python daemon that updates Contact records via SOAP API",
+          "isCorrect": false,
+          "distractorAntipattern": "Custom external daemons add unnecessary middleware debt.",
+          "rationale": "Native Data Actions eliminate custom middleware and maintain declarative operational excellence.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        }
+      ]
+    }
+  ]
+}

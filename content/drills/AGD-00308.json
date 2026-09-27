@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00308",
+  "title": "Session Tracing: Auditing Reasoning Steps and Tool Call Latency",
+  "format": "Rapid_Fire",
+  "domain": "Agentforce & Agentic Enterprise",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Operational_Excellence",
+    "Trust"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Which Salesforce observability schema allows architects to inspect the exact reasoning sequence, executed tool parameters, response latency, and token consumption of an Agentforce session?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Session Tracing Data Model (STDM) queried via Data Cloud or Agentforce Analytics",
+          "isCorrect": true,
+          "rationale": "The Session Tracing Data Model (STDM) records step-by-step reasoning trajectories, tool call inputs/outputs, latency breakdowns, and token metrics for comprehensive auditing.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Standard Salesforce Debug Logs with Apex Profiling turned on",
+          "isCorrect": false,
+          "distractorAntipattern": "Debug logs capture Apex code lines, not LLM reasoning steps.",
+          "rationale": "Apex debug logs capture server-side code execution, not distributed LLM reasoning loops or external model latencies.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Browser developer tools Console tab",
+          "isCorrect": false,
+          "distractorAntipattern": "Browser console only has client-side DOM events.",
+          "rationale": "Client browsers cannot inspect server-side LLM trajectories or secure backend action payloads.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

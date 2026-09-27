@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00109",
+  "title": "Multi-Org Federation: Shared Master Data Synchronization",
+  "format": "Rapid_Fire",
+  "domain": "Enterprise Integration & Event-Driven",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Cost_Optimization",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A global enterprise operates 4 separate Salesforce orgs (EMEA, APAC, NA, LATAM). Product catalog master records must be synchronized across all orgs within 5 seconds of update. Which architecture delivers lowest operational overhead and real-time scale?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Publish high-volume Platform Events from Master Org to Salesforce Pub/Sub API bus subscribed by child org listeners",
+          "isCorrect": true,
+          "rationale": "Pub/Sub API provides high-throughput, bidirectionally decoupled event distribution with guaranteed delivery and replay retention across multiple orgs.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        },
+        {
+          "id": "s1_b",
+          "label": "Point-to-point Apex REST callouts chained between all four orgs sequentially",
+          "isCorrect": false,
+          "distractorAntipattern": "Point-to-point mesh creates N^2 brittle interdependencies.",
+          "rationale": "Mesh architectures suffer from compounding failure rates, cascading latency, and fragile authentication maintenance.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        },
+        {
+          "id": "s1_c",
+          "label": "Daily scheduled CSV exports imported via Data Loader into each org",
+          "isCorrect": false,
+          "distractorAntipattern": "Daily batch fails the 5-second freshness requirement.",
+          "rationale": "Fails SLA requirement of sub-5-second availability.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        }
+      ]
+    }
+  ]
+}

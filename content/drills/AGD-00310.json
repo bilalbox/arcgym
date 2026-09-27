@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00310",
+  "title": "Context Window Economics: Semantic Retrieval Pruning vs Raw Chat History",
+  "format": "Rapid_Fire",
+  "domain": "Core Platform & Execution Limits",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Cost_Optimization",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A customer engagement session reaches 40 turns. If the entire uncompressed raw chat transcript is passed on every new prompt, what operational failure occurs and how is it solved?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Context window saturation increases latency and token costs while diluting model attention (\"Lost in the Middle\"); solve via sliding conversational memory and semantic summarization",
+          "isCorrect": true,
+          "rationale": "Uncompressed history balloons token consumption and degrades LLM reasoning. Implementing sliding-window memory and condensed semantic summaries maintains precision while reducing cost.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Salesforce automatically shuts down the customer org after 20 chat turns",
+          "isCorrect": false,
+          "distractorAntipattern": "Orgs are not shut down for long conversations.",
+          "rationale": "The failure is cognitive dilution and token waste, not an abrupt org shutdown.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Pass the conversation history into a base64 encoded URL parameter",
+          "isCorrect": false,
+          "distractorAntipattern": "URL parameters have small browser length limits.",
+          "rationale": "URL parameter size limits cause HTTP 414 Request-URI Too Large errors and do not solve LLM context costs.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

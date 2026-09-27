@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00102",
+  "title": "Large Data Volumes: Eliminating Reporting Timeouts Across 18M Rows",
+  "format": "Rapid_Fire",
+  "domain": "Large Data Volumes & Query Optimization",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A custom object Transaction__c contains 18 million records. Standard reports filtering on Region__c and Fiscal_Quarter__c while sorting by CreatedDate are timing out. How should the architect optimize query performance?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Request a Skinny Table from Salesforce Support containing the filtered and sorted fields",
+          "isCorrect": true,
+          "rationale": "Skinny tables combine standard and custom fields into a flat, unjoined database table, eliminating join overhead for LDV reporting and queries.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_b",
+          "label": "Create a standard formula field concatenating Region and Quarter to filter on",
+          "isCorrect": false,
+          "distractorAntipattern": "Non-deterministic formula fields force full table scans across millions of rows.",
+          "rationale": "Formula fields with dynamic logic or unindexed concatenation force full table scans across millions of rows, worsening timeouts.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_c",
+          "label": "Create a Before-Save Flow to copy the records to an external data warehouse daily",
+          "isCorrect": false,
+          "distractorAntipattern": "Before-save flows do not optimize live in-org CRM reporting.",
+          "rationale": "Before-save flows do not optimize live in-org CRM reporting on existing 18M rows.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        }
+      ]
+    }
+  ]
+}

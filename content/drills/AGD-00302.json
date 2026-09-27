@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00302",
+  "title": "Action Guardrails: Server-Side Limit Checks vs Prompt Promises",
+  "format": "Scenario",
+  "domain": "Agentforce & Agentic Enterprise",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Trust",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An autonomous Agentforce agent handles customer refund requests up to $500. To prevent prompt injection and hallucinations from bypassing financial limits, what is the required Well-Architected governance pattern?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Include instructions in the Agent prompt: \"Please do not ever approve refunds above $500 under any circumstances\"",
+          "isCorrect": false,
+          "distractorAntipattern": "Prompt instructions alone are non-deterministic and susceptible to jailbreaking.",
+          "rationale": "Prompt instructions alone are non-deterministic and susceptible to jailbreaking, adversarial injection, and cognitive drift.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Enforce hard deterministic validation in the invoked Apex/Flow Action or Flow Guardrail with programmatic limit checks",
+          "isCorrect": true,
+          "rationale": "Well-Architected Trust requires deterministic platform boundaries and API guardrails, not stochastic prompt promises.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Rely solely on Einstein Trust Layer toxicity scoring",
+          "isCorrect": false,
+          "distractorAntipattern": "Toxicity filters identify abusive language, not numerical business logic bypasses.",
+          "rationale": "Toxicity filters detect toxic language, not logical policy bypasses.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

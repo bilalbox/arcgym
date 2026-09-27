@@ -1,9 +1,9 @@
 <template>
-    <div class="confidence-gate slds-p-vertical_small">
-        <label class="slds-text-title_caps slds-text-color_weak slds-m-bottom_xx-small gate-label">
-            Say how sure you are (Confidence Calibration):
+    <div class="confidence-gate">
+        <label class="gate-label">
+            Confidence Calibration • Select Conviction Anchor
         </label>
-        <div class="slds-grid slds-wrap chip-container slds-m-top_xx-small" role="group" aria-label="Confidence Calibration Selection">
+        <div class="chip-container" role="group" aria-label="Confidence Calibration Selection">
             <template for:each={anchors} for:item="anchor">
                 <button
                     key={anchor.value}

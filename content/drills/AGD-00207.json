@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00207",
+  "title": "Vector Search & Grounding: Chunking Unstructured Knowledge for RAG",
+  "format": "Rapid_Fire",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Trust",
+    "Cost_Optimization"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "To ground an Agentforce service agent with 10,000 PDF user manuals, what chunking strategy ensures semantic coherence without blowing LLM context window token costs?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Semantic Markdown chunking (250–500 tokens) with 15% sliding overlap and section header metadata preservation",
+          "isCorrect": true,
+          "rationale": "Semantic chunking with moderate overlap prevents fragmentation of technical instructions while keeping individual passage embeddings concise and highly retrievable.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Embed each entire 50-page PDF document as a single vector embedding",
+          "isCorrect": false,
+          "distractorAntipattern": "Embedding entire 50-page PDFs causes semantic dilution and retrieval failure.",
+          "rationale": "Embedding massive documents washes out specific semantic details, resulting in poor cosine similarity retrieval and hallucinated responses.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Split text arbitrarily every 10 characters",
+          "isCorrect": false,
+          "distractorAntipattern": "Character-level splitting breaks words and meaning.",
+          "rationale": "Breaking mid-word destroys lexical and semantic meaning completely.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

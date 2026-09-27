@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00309",
+  "title": "Multi-Agent Decomposition: Specialized Sub-Agents vs Monolithic Architectures",
+  "format": "Rapid_Fire",
+  "domain": "Agentforce & Agentic Enterprise",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An enterprise wants an agent to handle Billing Disputes, Technical Support, and Sales Quoting across 15 business units. Why does Well-Architected advise decomposing into specialized domain agents rather than one monolithic agent?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Specialized agents restrict action schemas and context to their specific domain, dramatically reducing tool-selection confusion, context bloat, and regression blast radius",
+          "isCorrect": true,
+          "rationale": "Decomposing into focused domain agents keeps action definitions lean, prevents LLM tool hallucination, allows independent release cycles, and minimizes context token consumption.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Salesforce licenses prohibit any single agent from having more than 3 actions",
+          "isCorrect": false,
+          "distractorAntipattern": "There is no 3-action platform limit.",
+          "rationale": "This is not a hard license limit, but an architectural best practice for reasoning reliability.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Monolithic agents run 10x faster because all tools are in one file",
+          "isCorrect": false,
+          "distractorAntipattern": "Bloated context slows down reasoning and increases latency.",
+          "rationale": "Monolithic agents suffer from heavy latency and frequent tool selection errors due to overloaded context.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

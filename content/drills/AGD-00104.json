@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00104",
+  "title": "Transaction Boundaries: Uncommitted Work and Callouts in Apex",
+  "format": "Rapid_Fire",
+  "domain": "Core Platform & Execution Limits",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Trust"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An Apex service must update an Account status and immediately call an external credit verification REST API. If the callout occurs after the DML update in the same synchronous execution, what exception occurs and how should it be architected?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Throws System.CalloutException (uncommitted work pending); architect should enqueue a Queueable Apex job or fire Platform Event",
+          "isCorrect": true,
+          "rationale": "Salesforce transactions prohibit synchronous HTTP callouts when open DML mutations exist in the database thread. Decoupling via Queueable or Platform Event resets the transaction boundary.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Throws System.LimitException (too many callouts); architect should increase the callout timeout to 120s",
+          "isCorrect": false,
+          "distractorAntipattern": "Timeout adjustments do not solve transaction sequencing conflicts.",
+          "rationale": "Increasing timeouts does not resolve transactional DML-before-callout boundary restrictions.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Throws System.SecurityException; architect should annotate class with \"without sharing\"",
+          "isCorrect": false,
+          "distractorAntipattern": "Without sharing has no relationship to callout boundaries.",
+          "rationale": "Sharing declarations do not alter transaction execution boundaries.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

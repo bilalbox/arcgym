@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00108",
+  "title": "Concurrency Control: Pessimistic vs Optimistic Locking in Flash Sales",
+  "format": "Rapid_Fire",
+  "domain": "Core Platform & Execution Limits",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "During high-concurrency checkout, multiple orders query the same Product inventory row simultaneously. Which pattern prevents race condition overselling without holding prolonged exclusive database locks?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Optimistic Concurrency Control using a Version/Timestamp field checked at commit time, with automatic client retry",
+          "isCorrect": true,
+          "rationale": "Optimistic concurrency avoids holding prolonged database locks during payment authorization, validating version consistency at the instant of commit.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "SOQL \"FOR UPDATE\" held throughout the entire checkout transaction including credit card callout",
+          "isCorrect": false,
+          "distractorAntipattern": "Holding locks during external callouts causes massive system lock wait timeouts.",
+          "rationale": "Holding pessimistic locks while waiting for 3rd-party payment gateway callouts freezes database rows for all users and causes lock timeouts.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Disable validation rules during checkout to speed up execution",
+          "isCorrect": false,
+          "distractorAntipattern": "Disabling validation compromises data integrity.",
+          "rationale": "Disabling validation creates corrupted business records and violates the Trust pillar.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

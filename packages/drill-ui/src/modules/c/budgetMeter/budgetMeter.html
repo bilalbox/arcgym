@@ -1,34 +1,34 @@
 <template>
-    <div class="budget-meter-container slds-box slds-box_small slds-theme_shade">
+    <div class="budget-meter-container">
         <!-- Header -->
-        <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_xx-small">
-            <div class="slds-grid slds-grid_vertical-align-center">
-                <span class="meter-title font-weight-bold">{title}</span>
-                <span class="slds-m-left_small meter-badge">
+        <div class="meter-header">
+            <div class="meter-header-left">
+                <span class="meter-title">{title}</span>
+                <span class="meter-badge">
                     <span class={statusBadgeClass}>{statusBadgeText}</span>
                 </span>
             </div>
             <div class="meter-readout">
-                <span class="font-weight-bold meter-used-number">{usedBudget}</span>
+                <span class="meter-used-number">{usedBudget}</span>
                 <span class="meter-total-number"> / {totalBudget} {unitLabel}</span>
             </div>
         </div>
 
-        <!-- Progress Bar Track -->
+        <!-- Progress Bar Track (0px sharp architectural gauge) -->
         <div class="meter-track" role="progressbar" aria-valuemin="0" aria-valuemax={totalBudget} aria-valuenow={usedBudget}>
             <div class={meterStatusClass} style={meterFillStyle}></div>
         </div>
 
         <!-- Subtext / Warning -->
-        <div class="slds-grid slds-grid_align-spread slds-m-top_xx-small meter-subtext">
+        <div class="meter-subtext">
             <template if:false={isOverBudget}>
                 <span class="remaining-text">
-                    <span class="font-weight-bold">{remainingBudget}</span> {unitLabel} remaining
+                    <span class="font-bold">{remainingBudget}</span> {unitLabel} remaining
                 </span>
             </template>
             <template if:true={isOverBudget}>
-                <span class="exceeded-text font-weight-bold">
-                    ⚠️ Limit Exceeded by {exceededAmount} {unitLabel}! Architecture will throw runtime exception.
+                <span class="exceeded-text font-bold">
+                    ⚠️ Limit Exceeded by {exceededAmount} {unitLabel}! Architecture violates Well-Architected governor boundary.
                 </span>
             </template>
             <span class="percent-text">{percentUsed}% utilized</span>

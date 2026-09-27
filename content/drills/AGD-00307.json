@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00307",
+  "title": "Agent Development Lifecycle (ADLC): Benchmarking Synthetic Evals",
+  "format": "Rapid_Fire",
+  "domain": "Operational Excellence (Maintainability & Delivery)",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Operational_Excellence",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Before deploying an updated agent prompt or action schema to production, how do architects verify that new changes have not caused regressions on existing capabilities?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Run automated evaluation suites with synthetic and historical golden benchmark test datasets, scoring semantic accuracy, tool selection fidelity, and guardrail resistance",
+          "isCorrect": true,
+          "rationale": "The Agent Development Lifecycle (ADLC) mandates automated evaluation suites against fixed benchmark test cases to mathematically measure drift and regression before deployment.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Have one developer manually chat with the agent in sandbox for 5 minutes",
+          "isCorrect": false,
+          "distractorAntipattern": "Manual ad-hoc testing cannot detect subtle prompt regressions.",
+          "rationale": "Ad-hoc manual testing lacks coverage, repeatability, and statistical confidence.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Deploy directly to 100% of production users and check customer survey ratings next month",
+          "isCorrect": false,
+          "distractorAntipattern": "Testing on production users without validation introduces immense business risk.",
+          "rationale": "Testing in production without automated evals exposes real customers to hallucinations and broken actions.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

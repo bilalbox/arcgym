@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00209",
+  "title": "Data Lineage & Privacy: Handling GDPR Deletions in Data Cloud",
+  "format": "Rapid_Fire",
+  "domain": "Security, Sharing & Trust Boundaries",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Trust",
+    "Fairness"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A customer submits a GDPR \"Right to be Forgotten\" erasure request. How must an architect ensure complete erasure compliance across Data Cloud and connected source systems?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Execute the Data Cloud Consent API (Data Subject Rights / Forget Me request), which purges customer records across DLOs, unified DMOs, and calculated insights",
+          "isCorrect": true,
+          "rationale": "The Data Cloud Consent API coordinates cryptographic erasure across both raw storage and unified model layers, ensuring global regulatory compliance.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Delete the record in core CRM and assume Data Cloud will auto-delete it during the next sync",
+          "isCorrect": false,
+          "distractorAntipattern": "Data Cloud retains historic DLO snapshots unless Consent API is invoked.",
+          "rationale": "Source deletions do not automatically purge historical immutable data lake storage without explicit Data Subject Rights requests.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Change the customer name to \"Deleted User\" in the CRM UI",
+          "isCorrect": false,
+          "distractorAntipattern": "UI pseudonymization leaves unmasked data in underlying lakehouse storage.",
+          "rationale": "Superficial field editing leaves PII unmasked across data lake storage, violating GDPR audit requirements.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

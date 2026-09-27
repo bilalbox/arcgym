@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00107",
+  "title": "Data Skew Mitigation: Account Skew and Lookup Lock Contention",
+  "format": "Rapid_Fire",
+  "domain": "Large Data Volumes & Query Optimization",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Over 80,000 Contact records are assigned to a single \"Unassigned Holding Account\". When integration jobs insert contacts concurrently, transactions fail with UNABLE_TO_LOCK_ROW. What architectural pattern mitigates this Account Skew?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Implement a Pool of Holding Accounts (e.g. 50 holding accounts) and distribute new contacts round-robin",
+          "isCorrect": true,
+          "rationale": "Distributing child records across a pool of parent accounts diffuses lock contention across distinct database rows, eliminating locking serialization bottlenecks.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_b",
+          "label": "Change the Account-Contact relationship from Master-Detail to Lookup",
+          "isCorrect": false,
+          "distractorAntipattern": "Account-Contact is already a standard relationship where parent lock is still acquired on child insert.",
+          "rationale": "Salesforce standard contact inserts still acquire parent row locks on Account regardless of custom lookup configs.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_c",
+          "label": "Increase Apex transaction timeout to 300 seconds",
+          "isCorrect": false,
+          "distractorAntipattern": "Governor limits cannot be increased arbitrarily.",
+          "rationale": "Synchronous Apex timeout is a hard governor limit of 10,000ms CPU and cannot be extended.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        }
+      ]
+    }
+  ]
+}

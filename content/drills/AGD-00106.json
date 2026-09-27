@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00106",
+  "title": "High-Velocity Ingestion: Bulk API 2.0 vs Composite Graph API",
+  "format": "Rapid_Fire",
+  "domain": "Enterprise Integration & Event-Driven",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Reliability",
+    "Cost_Optimization"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An integration job uploads 2 million Account records every weekend. It requires automatic batch chunking, parallel processing, and minimal API call overhead. Which Salesforce API should be implemented?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Bulk API 2.0 (Ingest Job)",
+          "isCorrect": true,
+          "rationale": "Bulk API 2.0 automatically slices data into optimal batches, optimizes thread concurrency on the server, and counts against daily row limits rather than individual API calls.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        },
+        {
+          "id": "s1_b",
+          "label": "Composite Graph API with 500 nodes per request",
+          "isCorrect": false,
+          "distractorAntipattern": "Composite Graph is designed for transactional trees, not 2M row bulk ingestion.",
+          "rationale": "Composite Graph is designed for complex relational parent-child graph transactions under 500 nodes, not multi-million record bulk ingestion.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        },
+        {
+          "id": "s1_c",
+          "label": "Standard REST Collections API in a multi-threaded Python worker",
+          "isCorrect": false,
+          "distractorAntipattern": "Standard REST rapidly exhausts daily API request limits.",
+          "rationale": "Standard REST consumes massive quantities of the 24-hour API call limit and risks connection timeouts.",
+          "citationUrl": "https://architect.salesforce.com/design/decision-guides/event-driven"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00204",
+  "title": "Zero Copy Lakehouse: Apache Iceberg Tables vs JDBC Ingest",
+  "format": "Rapid_Fire",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Cost_Optimization",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A company stores 100TB of telemetry in Databricks. They want Data Cloud to query this telemetry without data copying. Which open table format powers this zero-copy federation?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Apache Iceberg open table metadata standard shared via Delta Sharing or Object Storage catalog",
+          "isCorrect": true,
+          "rationale": "Data Cloud Zero Copy leverages Apache Iceberg and Parquet formats to read and write directly to external cloud data lakes with zero data movement.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "CSV flat files polled over secure FTP hourly",
+          "isCorrect": false,
+          "distractorAntipattern": "CSV FTP is slow and unindexed.",
+          "rationale": "SFTP CSV polling incurs high latency and lacks zero-copy metadata federation.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Direct ODBC socket open connection through enterprise firewall",
+          "isCorrect": false,
+          "distractorAntipattern": "Direct ODBC sockets violate cloud security standards.",
+          "rationale": "Direct ODBC connections violate cloud security boundaries and lack serverless scaling.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

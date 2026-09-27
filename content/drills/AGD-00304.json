@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00304",
+  "title": "Topic Classification: Authoring Disambiguated Natural Language Descriptions",
+  "format": "Rapid_Fire",
+  "domain": "Agentforce & Agentic Enterprise",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Operational_Excellence",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An agent has two topics: \"Order Cancellation\" and \"Subscription Billing\". A customer asks: \"Stop my recurring monthly shipments.\" The agent routes to Order Cancellation and fails. How should the topic descriptions be refined?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Explicitly describe boundaries and negative triggers in each Topic (e.g. \"Use Subscription Billing for recurring plans; do NOT use Order Cancellation for subscription renewals\")",
+          "isCorrect": true,
+          "rationale": "Clear scope boundaries and negative constraint guidance enable the reasoning engine to accurately disambiguate overlapping user intents.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Merge both topics into one giant topic with 80 actions",
+          "isCorrect": false,
+          "distractorAntipattern": "Bloated topics degrade tool-selection accuracy.",
+          "rationale": "Overloading a single topic with dozens of actions degrades reasoning accuracy and exceeds action selection token limits.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Add 500 hardcoded regex pattern rules in an Apex trigger",
+          "isCorrect": false,
+          "distractorAntipattern": "Regex cannot handle linguistic variation.",
+          "rationale": "Hardcoded regex contradicts generative intent classification and breaks on linguistic variations.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

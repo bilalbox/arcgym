@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00306",
+  "title": "Human-in-the-Loop (HITL): Seamless State Handoff to Omni-Channel",
+  "format": "Rapid_Fire",
+  "domain": "Agentforce & Agentic Enterprise",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Fairness",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "When an Agentforce agent detects an emotionally distressed or angry customer requiring escalation, what is the Well-Architected handoff sequence?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Escalate via Omni-Channel routing, passing a synthesized conversation summary and structured intent payload so the human agent has instant context without customer repetition",
+          "isCorrect": true,
+          "rationale": "Well-Architected HITL preserves user dignity and operational velocity by delivering a concise context summary directly into the Service Cloud console.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Abruptly disconnect the chat session and send an automated email apology",
+          "isCorrect": false,
+          "distractorAntipattern": "Abrupt disconnection destroys customer satisfaction.",
+          "rationale": "Abrupt disconnects damage customer trust and brand reputation.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Have the agent repeatedly insist that it is capable of helping",
+          "isCorrect": false,
+          "distractorAntipattern": "Refusing escalation creates severe customer frustration.",
+          "rationale": "Violates the Fairness pillar by trapping the user in an adversarial loop.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

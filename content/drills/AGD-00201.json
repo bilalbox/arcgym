@@ -1,0 +1,44 @@
+{
+  "id": "AGD-00201",
+  "title": "Data Cloud: Zero Copy Federation vs Scheduled Reverse ETL",
+  "format": "Currency",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Cost_Optimization",
+    "Reliability",
+    "Trust"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Marketing leadership wants Snowflake customer behavioral scores available in Salesforce for real-time segmentation without copying 50TB of raw data or incurring API ingest fees. Which architecture is optimal?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Scheduled Reverse ETL pipeline copying 50TB into Custom Big Objects",
+          "isCorrect": false,
+          "distractorAntipattern": "Copying 50TB causes immense data storage bloat and stale cache issues.",
+          "rationale": "Duplicating 50TB causes immense data storage bloat, stale cache synchronization issues, and heavy API ingest overhead.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Data Cloud Zero Copy integration federating Snowflake data shares to Data Model Objects (DMOs)",
+          "isCorrect": true,
+          "rationale": "Data Cloud Zero Copy enables bidirectional access to Snowflake data in place without ETL pipelines or physical data duplication.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Custom External Services REST connector called synchronously on record view",
+          "isCorrect": false,
+          "distractorAntipattern": "Synchronous REST calls degrade page speeds.",
+          "rationale": "Synchronous REST calls on record view degrade page load speeds and rapidly exceed platform callout rate limits.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

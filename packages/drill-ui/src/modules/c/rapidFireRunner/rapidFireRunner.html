@@ -2,10 +2,10 @@
     <div class="runner-container">
         <!-- In-Flight Drill View -->
         <template if:false={isComplete}>
-            <!-- Progress Header -->
-            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_small">
+            <!-- Progress Header (Architectural hairline bar) -->
+            <div class="progress-header">
                 <div>
-                    <span class="step-indicator">DECISION {currentStepNumber} OF {totalSteps}</span>
+                    <span class="step-indicator">Decision {currentStepNumber} of {totalSteps}</span>
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar-fill" style={progressBarStyle}></div>
@@ -21,37 +21,37 @@
                 onoptionselect={handleOptionSelected}>
             </c-rapid-fire-card>
 
-            <!-- Feedback Reveal (After Commit) -->
+            <!-- Feedback Reveal (After Commit: 0px sharp debrief block) -->
             <template if:true={isAnswered}>
                 <div class={feedbackBannerClass} role="alert">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_xx-small">
+                    <div class="feedback-header">
                         <span class="feedback-badge">{feedbackTitle}</span>
-                        <span class="feedback-points slds-m-left_small">{lastBrierPointsLabel}</span>
+                        <span class="feedback-points">{lastBrierPointsLabel}</span>
                     </div>
                     <p class="feedback-rationale">{currentStepRationale}</p>
                     <template if:true={currentStepCitation}>
-                        <a href={currentStepCitation} target="_blank" rel="noopener noreferrer" class="feedback-link slds-m-top_xx-small">
+                        <a href={currentStepCitation} target="_blank" rel="noopener noreferrer" class="feedback-link">
                             Read official guidance on architect.salesforce.com ↗
                         </a>
                     </template>
                 </div>
             </template>
 
-            <!-- Bottom Controls: Confidence Gate & Action Buttons -->
-            <div class="controls-container slds-border_top slds-p-top_small slds-m-top_medium">
-                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-wrap">
-                    <div class="slds-size_1-of-1 slds-medium-size_2-of-3">
+            <!-- Bottom Controls: Confidence Gate & Canonical 40px Pill Action Buttons -->
+            <div class="controls-container">
+                <div class="controls-row">
+                    <div class="controls-gate">
                         <c-confidence-gate
                             selected-confidence={selectedConfidence}
                             disabled={isAnswered}
                             onconfidenceselected={handleConfidenceSelected}>
                         </c-confidence-gate>
                     </div>
-                    <div class="slds-size_1-of-1 slds-medium-size_1-of-3 slds-text-align_right slds-m-top_small slds-medium-m-top_none">
+                    <div class="controls-action">
                         <template if:false={isAnswered}>
                             <button
                                 type="button"
-                                class="slds-button slds-button_brand commit-btn"
+                                class="sh-commit-btn"
                                 disabled={isCommitDisabled}
                                 onclick={handleCommitDecision}>
                                 Commit Decision
@@ -60,7 +60,7 @@
                         <template if:true={isAnswered}>
                             <button
                                 type="button"
-                                class="slds-button slds-button_brand next-btn"
+                                class="sh-next-btn"
                                 onclick={handleNextStep}>
                                 {nextButtonLabel}
                             </button>
@@ -70,35 +70,35 @@
             </div>
         </template>
 
-        <!-- Completed Drill Summary View -->
+        <!-- Completed Drill Summary View (Cardo Display, 0px cells, 40px pill CTA) -->
         <template if:true={isComplete}>
-            <div class="summary-card slds-p-around_large slds-text-align_center">
-                <div class="summary-streak-badge slds-m-bottom_medium">
-                    🔥 <span class="font-weight-bold">{streakDays}</span> Day Streak Achieved!
+            <div class="summary-container">
+                <div class="summary-streak-badge">
+                    🔥 <span class="font-bold">{streakDays}</span> Day Streak Achieved
                 </div>
-                <h2 class="slds-text-heading_large font-weight-bold slds-m-bottom_x-small">Drill Complete!</h2>
-                <p class="slds-text-color_weak slds-m-bottom_large">
-                    Showing up is a win. You just practiced high-stakes Salesforce architectural judgment.
+                <h2 class="summary-title">Drill Complete.</h2>
+                <p class="summary-subhead">
+                    Calibrated architectural practice under high-stakes Salesforce Well-Architected governance.
                 </p>
 
-                <!-- Stats Grid -->
-                <div class="slds-grid slds-wrap stats-grid slds-m-bottom_large">
-                    <div class="stat-box slds-size_1-of-3">
+                <!-- Stats Grid (0px Rectilinear Cells) -->
+                <div class="stats-grid">
+                    <div class="stat-box">
                         <span class="stat-number">{correctCount}/{totalSteps}</span>
                         <span class="stat-label">Accuracy</span>
                     </div>
-                    <div class="stat-box slds-size_1-of-3">
+                    <div class="stat-box">
                         <span class="stat-number">{totalBrierPoints}</span>
-                        <span class="stat-label">Brier Points</span>
+                        <span class="stat-label">Brier Calibration</span>
                     </div>
-                    <div class="stat-box slds-size_1-of-3">
+                    <div class="stat-box">
                         <span class="stat-number stat-quadrant">{quadrantLabel}</span>
                         <span class="stat-label">Metacognition</span>
                     </div>
                 </div>
 
                 <!-- Action Button -->
-                <button type="button" class="slds-button slds-button_neutral" onclick={handleRestart}>
+                <button type="button" class="sh-restart-btn" onclick={handleRestart}>
                     Practice Another Drill
                 </button>
             </div>

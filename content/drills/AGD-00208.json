@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00208",
+  "title": "Segment Activation: Egress Optimization to Cloud Storage",
+  "format": "Rapid_Fire",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Cost_Optimization",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A marketing team activates a 20-million-profile audience segment every morning to Amazon S3 for digital ad targeting. Which activation pattern complies with Well-Architected Cost and Reliability standards?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Direct Cloud Storage Activation Target exporting compressed Parquet/CSV files directly to the S3 bucket",
+          "isCorrect": true,
+          "rationale": "Direct Cloud Storage Activation utilizes high-speed parallel object egress to Amazon S3, avoiding CRM API rate limits.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_b",
+          "label": "Stream 20 million individual REST calls to the Amazon S3 REST API from an Apex trigger",
+          "isCorrect": false,
+          "distractorAntipattern": "Trigger callouts cannot process 20 million records.",
+          "rationale": "Violates daily API limits, CPU limits, and synchronous callout governor limits.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        },
+        {
+          "id": "s1_c",
+          "label": "Export the segment as an email attachment sent to the marketing manager",
+          "isCorrect": false,
+          "distractorAntipattern": "Email attachments exceed size limits and violate Trust privacy.",
+          "rationale": "Email attachments have strict size limits (25MB) and violate data privacy governance.",
+          "citationUrl": "https://architect.salesforce.com/well-architected/principles"
+        }
+      ]
+    }
+  ]
+}

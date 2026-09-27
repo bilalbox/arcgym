@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00105",
+  "title": "Portal Security: High-Volume Sharing Architecture for 500,000 Users",
+  "format": "Rapid_Fire",
+  "domain": "Security, Sharing & Trust Boundaries",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Trust",
+    "Reliability"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An Experience Cloud portal will serve 500,000 Customer Community users who each need read access to their own Cases and sibling account Cases. Which sharing mechanism avoids group maintenance performance degradation?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Manual sharing rules created via Apex for each community user",
+          "isCorrect": false,
+          "distractorAntipattern": "Apex sharing on high volumes causes share table recalculation bloat.",
+          "rationale": "Apex sharing on 500k high-volume users triggers massive recalculation of CaseShare tables and persistent row-lock contention.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_b",
+          "label": "Criteria-Based Sharing Rules shared with Public Groups containing portal users",
+          "isCorrect": false,
+          "distractorAntipattern": "Customer Community licenses cannot belong to Public Groups.",
+          "rationale": "High-Volume Customer Community licenses do not support Public Groups or standard criteria-based sharing rules.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_c",
+          "label": "Sharing Sets and Share Groups designed specifically for high-volume Customer Community licenses",
+          "isCorrect": true,
+          "rationale": "Sharing Sets grant access based on user account/contact matching without writing to physical share tables, scaling seamlessly to millions of users.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        }
+      ]
+    }
+  ]
+}

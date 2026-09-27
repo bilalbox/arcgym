@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00301",
+  "title": "Atlas Reasoning Engine: Autonomous Planning vs Hardcoded Decision Trees",
+  "format": "Rapid_Fire",
+  "domain": "Agentforce & Agentic Enterprise",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "How does the Agentforce Atlas Reasoning Engine differ from traditional chatbot rule-based decision trees when handling multi-intent customer service conversations?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Atlas dynamically evaluates context, generates iterative plans, orchestrates topics, selects tools, and refines execution based on intermediate observation steps",
+          "isCorrect": true,
+          "rationale": "The Atlas Reasoning Engine leverages ReAct (Reasoning + Acting) loops to dynamically interpret complex customer requests and orchestrate actions autonomously.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_b",
+          "label": "Atlas uses an if-else switch statement executed within an Apex trigger",
+          "isCorrect": false,
+          "distractorAntipattern": "Atlas is a modern generative reasoning engine, not a hardcoded script.",
+          "rationale": "Decision trees cannot dynamically adapt to unexpected conversational pivots or ambiguous multi-step user intents.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        },
+        {
+          "id": "s1_c",
+          "label": "Atlas sends all conversation audio to a human operator in real time",
+          "isCorrect": false,
+          "distractorAntipattern": "Atlas is an autonomous LLM reasoning engine.",
+          "rationale": "Atlas operates autonomously using LLM reasoning and platform APIs.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/architecture-basics"
+        }
+      ]
+    }
+  ]
+}

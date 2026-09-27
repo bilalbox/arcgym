@@ -10,3 +10,4 @@ site/
 .DS_Store
 data/chroma/
 .scratch/
+.archive/

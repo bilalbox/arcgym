@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00205",
+  "title": "Calculated Insights vs Streaming Insights: Real-Time Windowing",
+  "format": "Rapid_Fire",
+  "domain": "Data 360 & Data Cloud Zero Copy",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": [
+    "Reliability",
+    "Cost_Optimization"
+  ],
+  "version": 1,
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "To trigger an immediate engagement when an e-commerce customer browses 3 products within a 5-minute sliding window, which Data Cloud feature must be deployed?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Streaming Insights with time-based sliding window aggregations",
+          "isCorrect": true,
+          "rationale": "Streaming Insights compute metric aggregations in real-time as events stream in, enabling instantaneous sub-second action triggers.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_b",
+          "label": "Batch Calculated Insights scheduled to run every 24 hours",
+          "isCorrect": false,
+          "distractorAntipattern": "Batch calculated insights cannot satisfy sub-minute responsiveness.",
+          "rationale": "Batch Calculated Insights run on a scheduled cadence (e.g. daily) for historical trends, missing immediate browse sessions.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        },
+        {
+          "id": "s1_c",
+          "label": "Scheduled Apex Batch executing SOQL count() queries",
+          "isCorrect": false,
+          "distractorAntipattern": "Apex SOQL count queries cannot query Data Cloud streaming engines directly.",
+          "rationale": "Standard Apex cannot query unstructured streaming event telemetry at web scale.",
+          "citationUrl": "https://architect.salesforce.com/fundamentals/data-architecture"
+        }
+      ]
+    }
+  ]
+}
