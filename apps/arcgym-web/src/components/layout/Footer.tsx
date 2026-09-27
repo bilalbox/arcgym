@@ -30,29 +30,20 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
           Zero Personal Data Stored
         </span>
-        <span className="text-slate-300">•</span>
-        {isPrivacyPage ? (
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/');
-            }}
-            className="text-miro-blue hover:text-miro-blueDeep font-medium underline underline-offset-2 transition-colors cursor-pointer"
-          >
-            ← Back to Practice Drills
-          </a>
-        ) : (
-          <a
-            href="/privacy"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/privacy');
-            }}
-            className="text-slate-500 hover:text-miro-primary underline underline-offset-2 transition-colors cursor-pointer"
-          >
-            Privacy Policy
-          </a>
+        {!isPrivacyPage && (
+          <>
+            <span className="text-slate-300">•</span>
+            <a
+              href="/privacy"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/privacy');
+              }}
+              className="text-slate-500 hover:text-miro-primary underline underline-offset-2 transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </a>
+          </>
         )}
       </div>
     </footer>
