@@ -1,6 +1,6 @@
 {
   "id": "AGD-00308",
-  "title": "Session Tracing: Auditing Reasoning Steps and Tool Call Latency",
+  "title": "Agent Session Tracing: Native Trace Model vs Custom Logging",
   "format": "Rapid_Fire",
   "domain": "Ai_And_Automation",
   "difficulty": "Associate_Domain_Architect",
@@ -8,33 +8,40 @@
     "Operational_Excellence",
     "Trust"
   ],
-  "version": 1,
+  "version": 2,
   "status": "draft",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Which Salesforce observability schema allows architects to inspect the exact reasoning sequence, executed tool parameters, response latency, and token consumption of an Agentforce session?",
+      "prompt": "Support engineers must work out why an Agentforce agent chose the wrong action in a given session: they need the reasoning steps, each action's inputs and outputs, and token usage per LLM call. Data 360 is provisioned in the org. Where should the engineers get this data?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Session Tracing Data Model (STDM) queried via Data Cloud or Agentforce Analytics",
+          "label": "Query the Session Tracing Data Model, joining steps to gateway request records",
           "isCorrect": true,
-          "rationale": "The Session Tracing Data Model (STDM) records step-by-step reasoning trajectories, tool call inputs/outputs, latency breakdowns, and token metrics for comprehensive auditing.",
+          "rationale": "Session Tracing stores each session in standard Data 360 objects as a hierarchy of interactions and steps, including the planner's reasoning and each function call. Token and model details sit on the LLM-call records those steps reference, so one join answers all three needs without a parallel telemetry system.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-agentic-patterns.html#agent-observability"
         },
         {
           "id": "s1_b",
-          "label": "Apex Debug Logs configured with FINEST profiling on the automated process user",
+          "label": "Enable Apex debug logs at FINEST level for the agent's running user",
           "isCorrect": false,
-          "distractorAntipattern": "Apex debug logs capture server-side code lines, not generative reasoning steps or token telemetry.",
-          "rationale": "Debug logs capture in-org Apex code execution, not distributed LLM reasoning loops, tool planning decisions, or token usage metrics."
+          "distractorAntipattern": "Debug Log Agent Tracing",
+          "rationale": "Debug logs show the Apex that actions run, not the reasoning engine's planning between actions or the token usage of each LLM call."
         },
         {
           "id": "s1_c",
-          "label": "Event Monitoring Real-Time Event Streams for Lightning URI and API execution events",
+          "label": "Stream Real-Time Event Monitoring API events for the calls the agent's actions make",
           "isCorrect": false,
-          "distractorAntipattern": "Standard Real-Time Event Monitoring streams track user interaction and API calls, not agentic reasoning trajectories.",
-          "rationale": "Standard event monitoring tracks user web logins and API calls, but lacks specialized agentic tracing objects and tool telemetry."
+          "distractorAntipattern": "API Event Proxy Tracing",
+          "rationale": "API events record which calls ran and who made them, but not the reasoning steps that chose the action or the tokens each LLM call used."
+        },
+        {
+          "id": "s1_d",
+          "label": "Have each action write its inputs and outputs to a custom log object",
+          "isCorrect": false,
+          "distractorAntipattern": "Parallel Custom Telemetry",
+          "rationale": "Action-level logs miss the reasoning steps between actions and rebuild telemetry that Session Tracing already captures as interaction steps."
         }
       ]
     }
