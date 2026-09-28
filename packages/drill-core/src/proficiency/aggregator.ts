@@ -9,9 +9,6 @@ import {
   isLessonDrill,
   isRapidFireDrill,
   type ProficiencyDimension,
-  WELL_ARCHITECTED_PILLAR_LABELS,
-  WELL_ARCHITECTED_PILLARS,
-  type WellArchitectedPillar,
 } from '../types/drill.js';
 
 export interface ProficiencyReportData {
@@ -43,20 +40,25 @@ export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
 }
 
 /**
- * Aggregates client-side drill attempts into proficiency data for Architectural Domains or Well-Architected Pillars.
+ * Aggregates client-side drill attempts into proficiency data for the 7 Architectural Domains.
  */
 export function calculateProficiencyReport(
   completedDrills: Record<string, DrillAttemptRecord>,
   allDrills: DrillDefinitionDTO[],
-  dimension: ProficiencyDimension,
-  minQuestionsThreshold = 4,
+  minQuestionsThresholdOrDimension: number | ProficiencyDimension = 4,
+  optionalThreshold = 4,
 ): ProficiencyReportData {
+  const minQuestionsThreshold =
+    typeof minQuestionsThresholdOrDimension === 'number'
+      ? minQuestionsThresholdOrDimension
+      : optionalThreshold;
+
   const drillMap = new Map<string, DrillDefinitionDTO>();
   for (const d of allDrills) {
     drillMap.set(d.id, d);
   }
 
-  // Intermediate accumulator per key
+  // Intermediate accumulator per domain key
   interface StatAcc {
     totalQuestions: number;
     correctQuestions: number;
@@ -66,11 +68,6 @@ export function calculateProficiencyReport(
   const domainStats = new Map<ArchitecturalDomain, StatAcc>();
   for (const dom of ARCHITECTURAL_DOMAINS) {
     domainStats.set(dom, { totalQuestions: 0, correctQuestions: 0, drillsCompleted: 0 });
-  }
-
-  const pillarStats = new Map<WellArchitectedPillar, StatAcc>();
-  for (const pil of WELL_ARCHITECTED_PILLARS) {
-    pillarStats.set(pil, { totalQuestions: 0, correctQuestions: 0, drillsCompleted: 0 });
   }
 
   let totalQuestionsAnswered = 0;
@@ -99,63 +96,26 @@ export function calculateProficiencyReport(
       dStat.correctQuestions += cCount;
       dStat.drillsCompleted += 1;
     }
-
-    // Accumulate for all associated Well-Architected pillars
-    for (const pillar of drill.pillars || []) {
-      const pStat = pillarStats.get(pillar);
-      if (pStat) {
-        pStat.totalQuestions += qCount;
-        pStat.correctQuestions += cCount;
-        pStat.drillsCompleted += 1;
-      }
-    }
   }
 
-  let items: DimensionProficiency[] = [];
-
-  if (dimension === 'domains') {
-    items = ARCHITECTURAL_DOMAINS.map((domain) => {
-      const stat = domainStats.get(domain) ?? {
-        totalQuestions: 0,
-        correctQuestions: 0,
-        drillsCompleted: 0,
-      };
-      const accuracy =
-        stat.totalQuestions > 0
-          ? Math.round((stat.correctQuestions / stat.totalQuestions) * 100)
-          : 0;
-      return {
-        id: domain,
-        label: ARCHITECTURAL_DOMAIN_LABELS[domain],
-        totalQuestions: stat.totalQuestions,
-        correctQuestions: stat.correctQuestions,
-        accuracy,
-        isMeasured: stat.totalQuestions >= minQuestionsThreshold,
-        drillsCompleted: stat.drillsCompleted,
-      };
-    });
-  } else {
-    items = WELL_ARCHITECTED_PILLARS.map((pillar) => {
-      const stat = pillarStats.get(pillar) ?? {
-        totalQuestions: 0,
-        correctQuestions: 0,
-        drillsCompleted: 0,
-      };
-      const accuracy =
-        stat.totalQuestions > 0
-          ? Math.round((stat.correctQuestions / stat.totalQuestions) * 100)
-          : 0;
-      return {
-        id: pillar,
-        label: WELL_ARCHITECTED_PILLAR_LABELS[pillar],
-        totalQuestions: stat.totalQuestions,
-        correctQuestions: stat.correctQuestions,
-        accuracy,
-        isMeasured: stat.totalQuestions >= minQuestionsThreshold,
-        drillsCompleted: stat.drillsCompleted,
-      };
-    });
-  }
+  const items: DimensionProficiency[] = ARCHITECTURAL_DOMAINS.map((domain) => {
+    const stat = domainStats.get(domain) ?? {
+      totalQuestions: 0,
+      correctQuestions: 0,
+      drillsCompleted: 0,
+    };
+    const accuracy =
+      stat.totalQuestions > 0 ? Math.round((stat.correctQuestions / stat.totalQuestions) * 100) : 0;
+    return {
+      id: domain,
+      label: ARCHITECTURAL_DOMAIN_LABELS[domain],
+      totalQuestions: stat.totalQuestions,
+      correctQuestions: stat.correctQuestions,
+      accuracy,
+      isMeasured: stat.totalQuestions >= minQuestionsThreshold,
+      drillsCompleted: stat.drillsCompleted,
+    };
+  });
 
   const measured = items.filter((item) => item.isMeasured);
   const collectingData = items
@@ -173,7 +133,7 @@ export function calculateProficiencyReport(
     .sort((a, b) => b.accuracy - a.accuracy || b.totalQuestions - a.totalQuestions);
 
   return {
-    dimension,
+    dimension: 'domains',
     items,
     whereToStart,
     strengths,

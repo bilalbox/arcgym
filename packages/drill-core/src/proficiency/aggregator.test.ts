@@ -214,7 +214,7 @@ describe('calculateProficiencyReport', () => {
     expect(report.whereToStart.some((w) => w.id === 'Integration_Apis')).toBe(true);
   });
 
-  it('aggregates across Well-Architected pillars', () => {
+  it('aggregates across the 7 Architectural Domains when threshold is passed directly', () => {
     const attempts: Record<string, DrillAttemptRecord> = {
       'DR-001': {
         drillId: 'DR-001',
@@ -234,17 +234,18 @@ describe('calculateProficiencyReport', () => {
       },
     };
 
-    const report = calculateProficiencyReport(attempts, allMockDrills, 'pillars', 4);
-    expect(report.totalCount).toBe(5);
+    const report = calculateProficiencyReport(attempts, allMockDrills, 2);
+    expect(report.totalCount).toBe(7);
+    expect(report.dimension).toBe('domains');
 
-    // Reliability is in both DR-001 (3 questions, 3 correct) and DR-002 (2 questions, 1 correct)
-    const rel = report.items.find((p) => p.id === 'Reliability');
-    expect(rel).toBeDefined();
-    if (!rel) return;
-    expect(rel.totalQuestions).toBe(5);
-    expect(rel.correctQuestions).toBe(4);
-    expect(rel.accuracy).toBe(80);
-    expect(rel.isMeasured).toBe(true);
-    expect(report.strengths).toContainEqual(rel);
+    // Data_Architecture has 3 questions, threshold is 2 -> measured
+    const dataArch = report.items.find((p) => p.id === 'Data_Architecture');
+    expect(dataArch).toBeDefined();
+    if (!dataArch) return;
+    expect(dataArch.totalQuestions).toBe(3);
+    expect(dataArch.correctQuestions).toBe(3);
+    expect(dataArch.accuracy).toBe(100);
+    expect(dataArch.isMeasured).toBe(true);
+    expect(report.strengths).toContainEqual(dataArch);
   });
 });

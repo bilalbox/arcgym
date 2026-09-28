@@ -242,10 +242,10 @@ export interface DrillAttemptRecord {
   steps?: StepAttemptTelemetry[];
 }
 
-export type ProficiencyDimension = 'domains' | 'pillars';
+export type ProficiencyDimension = 'domains';
 
 export interface DimensionProficiency {
-  id: string; // ArchitecturalDomain | WellArchitectedPillar
+  id: string; // ArchitecturalDomain
   label: string;
   totalQuestions: number;
   correctQuestions: number;
