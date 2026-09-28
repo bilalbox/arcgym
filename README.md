@@ -16,6 +16,109 @@ Progress and confidence calibration live in the browser. There is no Salesforce 
 | Hosting & Analytics | Cloudflare Pages + Pages Functions + KV (Wrangler 4) + Cloudflare Web Analytics (cookieless) |
 | Content | JSON drills under `content/drills/`, compiled by `scripts/build-drills.ts` |
 
+## Pipeline Architecture
+
+How ArcGym synthesizes official architecture documentation and real-world practitioner friction into high-stakes practice drills:
+
+```mermaid
+flowchart TD
+    %% Source Ingestion
+    subgraph Sources ["1. Dual Knowledge Sources"]
+        direction LR
+        
+        subgraph OfficialSource ["Official Truth Engine (architect.salesforce.com)"]
+            A1["🌐 architect.salesforce.com<br/><b>Well-Architected Framework</b><br/>• Decision Guides<br/>• Reference Architectures<br/>• Platform Core Fundamentals"]
+            A2["⚙️ Doc Crawler & Chunker<br/><code>crawl_architect.py</code><br/>• Hierarchical markdown slicing<br/>• Well-Architected pillar tagging"]
+            A3[("📚 ChromaDB Vector Store<br/><code>salesforce_architect_docs</code><br/>• Cosine similarity embeddings<br/>• Canonical chunk citation URLs")]
+            A1 --> A2 --> A3
+        end
+
+        subgraph CommunitySource ["Practitioner Field Friction (Trailblazer Community)"]
+            B1["👥 Trailblazer Community<br/><b>Select Architect Groups</b><br/>• <i>Data 360</i> group<br/>• Enterprise Architecture forums<br/>• Integration & Core channels"]
+            B2["⚙️ GraphQL Thread Ingest<br/><code>crawl_trailhead.py</code><br/>• Thread & reply extraction<br/>• SQLite storage (<code>trailhead.db</code>)"]
+            B3["📋 Friction Card Pipeline<br/><code>friction_cards.py</code><br/>• Real-world enterprise bottleneck<br/>• Naive approaches & why they fail<br/>• Human audit & tiering (Tiers A–D)"]
+            B4[("🗂️ Approved Friction Catalog<br/><code>data/friction_cards.json</code><br/>• Approved practitioner cards")]
+            B1 --> B2 --> B3 --> B4
+        end
+    end
+
+    %% RAG Pipeline
+    subgraph RAG ["2. RAG Context Assembly Engine"]
+        C1["🎯 Generation Trigger<br/><code>generate-drill.ts prompt</code><br/>• Flag: <code>--from-card FC-xxx</code> or <code>--topic</code>"]
+        C2["🔍 Semantic Vector Search<br/><code>search_chroma.py</code><br/>• Cosine similarity retrieval<br/>• Extracts Top-K official chunks"]
+        C3["🧩 Context Synthesizer & Prompt Assembler<br/><b>ArcGym Authoring Specification</b><br/>• Injects Well-Architected chunks & URLs<br/>• Injects problem & naive attempts<br/>• Injects strict CTA wording & balance rules"]
+        
+        B4 -->|1. Source card problem & naive attempts| C1
+        C1 -->|2. Card official_doc_query| C2
+        A3 -.->|3. Cosine similarity match| C2
+        C2 -->|4. Official chunks| C3
+    end
+
+    %% Drill Engine & Linter
+    subgraph Engine ["3. Drill Engine & Multi-Tier Validation"]
+        D1["🤖 Coding Agent / LLM<br/><b>Architect Author</b><br/>• Synthesizes architectural trade-offs<br/>• Models distractors on naive failures<br/>• Grounds optimal answer in official chunks"]
+        
+        subgraph Linter ["3-Tier Architect Linter (ingest / build)"]
+            E1["Tier 1: Schema & Format Guard<br/>• Rapid Fire, Lesson, Currency, Scenario<br/>• Step, stage, and ID structure"]
+            E2["Tier 2: Official Citation Verifier<br/>• Enforces exact chunk URL from crawl<br/>• Zero hallucinated documentation"]
+            E3["Tier 3: Wording & Antipattern Linter<br/><code>packages/drill-core/src/lint/wording.ts</code><br/>• ±25% option length balance<br/>• Named distractor antipatterns (2–5 words)<br/>• Purge giveaway words ('always', 'never')<br/>• Scenarios capped at ≤55 words"]
+            E1 --> E2 --> E3
+        end
+
+        D2["💾 Content Draft Store<br/><code>content/drills/AGD-xxxxx.json</code><br/>• Status: <code>draft</code>"]
+        D3["🚀 Build & Distribution Compiler<br/><code>scripts/build-drills.ts</code><br/>• Validates published catalog<br/>• Emits <code>canonicalDrills.json</code><br/>• Seeds Cloudflare KV edge store"]
+
+        C3 --> D1
+        D1 -->|generate-drill.ts ingest| E1
+        E3 -->|Passed| D2
+        E3 -.->|Failed: Automatic Rollback| D1
+        D2 -->|pnpm drill:status --status published| D3
+    end
+
+    %% Learner Experience & Calibration
+    subgraph Delivery ["4. Runtime Delivery & Metacognitive Calibration"]
+        F1["📱 ArcGym Web Platform<br/><b>React 19 + Cloudflare Pages</b>"]
+        
+        subgraph Archetypes ["4 Architectural Formats"]
+            G1["⚡ Rapid Fire<br/>Timed decision under constraint"]
+            G2["🗺️ Lesson<br/>4-Stage progressive refactor"]
+            G3["⚖️ Currency<br/>Resource & budget allocation"]
+            G4["🎭 Scenario<br/>Multi-turn dual-meter trade-offs"]
+        end
+
+        H1["🔒 Universal Pre-Submit Confidence Gate<br/>50% Speculative | 70% Plausible | 85% High Conviction | 95% Axiom"]
+        H2["📊 Brier Calibration Engine<br/><code>@arcgym/drill-core</code><br/>• Calibrated Conviction<br/>• Calibrated Humility<br/>• Hesitant Mastery<br/>• Hazardous Assumption"]
+
+        D3 --> F1
+        F1 --> G1 & G2 & G3 & G4
+        G1 & G2 & G3 & G4 --> H1
+        H1 --> H2
+    end
+
+    %% Styling
+    classDef official fill:#eff6ff,stroke:#0176d3,stroke-width:2px,color:#0f172a
+    classDef friction fill:#fff1f2,stroke:#be123c,stroke-width:2px,color:#0f172a
+    classDef rag fill:#faf5ff,stroke:#6b21a8,stroke-width:2px,color:#0f172a
+    classDef engine fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#0f172a
+    classDef delivery fill:#ecfdf5,stroke:#047857,stroke-width:2px,color:#0f172a
+
+    class A1,A2,A3 official
+    class B1,B2,B3,B4 friction
+    class C1,C2,C3 rag
+    class D1,D2,D3,E1,E2,E3 engine
+    class F1,G1,G2,G3,G4,H1,H2 delivery
+```
+
+### Pipeline Principles & Invariants
+
+| Stage | Component | Technical Role | ArcGym Invariant |
+| :--- | :--- | :--- | :--- |
+| **Official Truth** | [`crawl_architect.py`](./scripts/crawler/crawl_architect.py) & ChromaDB | Slices official documentation into hierarchical chunks tagged by Well-Architected pillar (*Trust*, *Reliability*, *Operational Excellence*, *Cost Optimization*, *Fairness*). | **Well-Architected Grounding**: Official docs are the *sole* authority for correct options. Every correct answer must cite an exact, crawled URL. |
+| **Practitioner Friction** | [`crawl_trailhead.py`](./scripts/crawler/crawl_trailhead.py) & [`friction_cards.py`](./scripts/crawler/friction_cards.py) | Ingests real-world discussions from select groups (such as `* Data 360 *`) into SQLite and synthesizes [Friction Cards](./CONTEXT.md#language). | **Distractor Antipatterns**: Community resolutions are *never* used as official grounding; they strictly source realistic scenario tension and plausible failure modes. |
+| **RAG Retrieval** | [`generate-drill.ts`](./scripts/generator/generate-drill.ts) & [`search_chroma.py`](./scripts/crawler/search_chroma.py) | Executes vector search via `official_doc_query` and builds a constrained prompt pairing official guidance with practitioner friction. | **No Unanchored Prompts**: If Chroma cannot retrieve chunks governing the decision, prompt authoring declines. |
+| **3-Tier Linter** | [`wording.ts`](./packages/drill-core/src/lint/wording.ts) & [`build-drills.ts`](./scripts/build-drills.ts) | Validates schema, citation URLs, option length parity (±25%), concise prompts (≤55 words), and distractor antipattern tags. | **Zero AI Visual Tells**: Prohibits giveaway words (*always*, *never*, *blindly*), verdict prefixes (*Correct!*, *Antipattern:*), and unbalanced answer lengths. |
+| **Learner Practice** | [`apps/arcgym-web`](./apps/arcgym-web) & [`@arcgym/drill-core`](./packages/drill-core) | Delivers 4 interaction formats with the **Universal Pre-Submit Confidence Gate** (50%, 70%, 85%, 95%). | **Metacognitive Calibration**: Tracks Brier scores across four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate architectural blind spots without org dependencies. |
+
 ## Monorepo layout
 
 ```

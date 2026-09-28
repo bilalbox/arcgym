@@ -107,7 +107,7 @@ export const DualMeterScenario: React.FC<{
   if (isCompleted) {
     const isSuccess = trustScore >= 60 && reliabilityScore >= 60;
     return (
-      <Card className="border-miro-hairline bg-white shadow-xs">
+      <Card className="border-miro-hairline bg-miro-card shadow-xs">
         <CardHeader className="text-center pb-4">
           <div
             className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
@@ -119,7 +119,7 @@ export const DualMeterScenario: React.FC<{
           <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">
             {isSuccess ? 'Architectural crisis averted' : 'Technical debt hangover'}
           </h2>
-          <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+          <p className="text-sm text-miro-slate mt-1 leading-relaxed">
             {isSuccess
               ? primaryIsSchedule
                 ? 'You spent schedule where the model demanded it and kept platform reliability above the go-live bar.'
@@ -132,16 +132,16 @@ export const DualMeterScenario: React.FC<{
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-2 gap-4 p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
             <div>
-              <span className="text-xs text-slate-600 font-medium">Final {meterLabels.primary.toLowerCase()}</span>
-              <p className={`text-2xl font-medium mt-0.5 ${trustScore >= 60 ? 'text-emerald-700' : 'text-rose-600'}`}>
+              <span className="text-xs text-miro-slate font-medium">Final {meterLabels.primary.toLowerCase()}</span>
+              <p className={`text-2xl font-medium mt-0.5 ${trustScore >= 60 ? 'text-miro-successText' : 'text-miro-dangerText'}`}>
                 {trustScore}%
               </p>
             </div>
             <div>
-              <span className="text-xs text-slate-600 font-medium">{meterLabels.secondary}</span>
+              <span className="text-xs text-miro-slate font-medium">{meterLabels.secondary}</span>
               <p
                 className={`text-2xl font-medium mt-0.5 ${
-                  reliabilityScore >= 60 ? 'text-miro-blue' : 'text-rose-600'
+                  reliabilityScore >= 60 ? 'text-miro-blue' : 'text-miro-dangerText'
                 }`}
               >
                 {reliabilityScore}%
@@ -150,8 +150,8 @@ export const DualMeterScenario: React.FC<{
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-slate-700">Architectural hangover report:</h4>
-            <div className="p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft space-y-2 text-xs font-mono text-slate-800">
+            <h4 className="text-xs font-semibold text-miro-slate">Architectural hangover report:</h4>
+            <div className="p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft space-y-2 text-xs font-mono text-miro-primary">
               {hangoverLogs.map((log, i) => (
                 <p key={i}>{log}</p>
               ))}
@@ -174,7 +174,7 @@ export const DualMeterScenario: React.FC<{
   }
 
   return (
-    <Card className="border-miro-hairline bg-white shadow-xs">
+    <Card className="border-miro-hairline bg-miro-card shadow-xs">
       <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -185,14 +185,14 @@ export const DualMeterScenario: React.FC<{
               </Badge>
             ))}
             {isReviewMode && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+              <Badge variant="outline" className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder">
                 Review Mode
               </Badge>
             )}
           </div>
           <div className="flex items-center gap-3">
             <DrillFeedbackWidget drillId={drill.id} />
-            <span className="text-xs text-slate-600 font-medium">
+            <span className="text-xs text-miro-slate font-medium">
               Move {currentMove.moveNumber} of {drill.moves.length}
             </span>
           </div>
@@ -201,27 +201,27 @@ export const DualMeterScenario: React.FC<{
         <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-miro-hairlineSoft">
           <div>
             <div className="flex justify-between text-xs font-medium mb-1">
-              <span className="flex items-center gap-1.5 text-slate-700">
+              <span className="flex items-center gap-1.5 text-miro-slate">
                 <PrimaryIcon className="h-3.5 w-3.5 text-miro-blue" /> {meterLabels.primary}
               </span>
               <span className="font-mono text-miro-primary font-semibold">{trustScore}%</span>
             </div>
             <Progress
               value={trustScore}
-              indicatorClassName={trustScore < 40 ? 'bg-rose-500' : trustScore < 70 ? 'bg-amber-500' : 'bg-emerald-600'}
+              indicatorClassName={trustScore < 40 ? 'bg-miro-dangerLight0' : trustScore < 70 ? 'bg-miro-yellowLight0' : 'bg-miro-successText'}
             />
           </div>
 
           <div>
             <div className="flex justify-between text-xs font-medium mb-1">
-              <span className="flex items-center gap-1.5 text-slate-700">
-                <Shield className="h-3.5 w-3.5 text-indigo-600" /> {meterLabels.secondary}
+              <span className="flex items-center gap-1.5 text-miro-slate">
+                <Shield className="h-3.5 w-3.5 text-miro-lavenderText" /> {meterLabels.secondary}
               </span>
               <span className="font-mono text-miro-primary font-semibold">{reliabilityScore}%</span>
             </div>
             <Progress
               value={reliabilityScore}
-              indicatorClassName={reliabilityScore < 40 ? 'bg-rose-500' : 'bg-indigo-600'}
+              indicatorClassName={reliabilityScore < 40 ? 'bg-miro-dangerLight0' : 'bg-miro-lavenderText'}
             />
           </div>
         </div>
@@ -229,27 +229,27 @@ export const DualMeterScenario: React.FC<{
 
       <CardContent className="pt-6 space-y-6">
         <div className="p-5 bg-miro-surface rounded-2xl border border-miro-hairlineSoft space-y-2">
-          <span className="text-xs font-semibold text-slate-800">
+          <span className="text-xs font-semibold text-miro-primary">
             Stakeholder transmission: {currentMove.stakeholderPersona}
           </span>
-          <p className="text-sm font-normal text-slate-700 italic leading-relaxed">{currentMove.dialogueText}</p>
+          <p className="text-sm font-normal text-miro-slate italic leading-relaxed">{currentMove.dialogueText}</p>
         </div>
 
         <div className="space-y-3">
           {orderedOptions.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
-            let containerStyle = 'border-miro-hairline hover:border-slate-400 bg-white text-slate-800';
+            let containerStyle = 'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card text-miro-primary';
 
             if (isSubmitted) {
               if (opt.isOptimal) {
-                containerStyle = 'border-2 border-emerald-600 bg-emerald-50/50 text-slate-900 font-medium';
+                containerStyle = 'border-2 border-miro-successText bg-miro-successLight text-miro-primary font-medium';
               } else if (isSelected && !opt.isOptimal) {
-                containerStyle = 'border-2 border-rose-500 bg-rose-50/60 text-slate-900';
+                containerStyle = 'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
               } else {
-                containerStyle = 'border-miro-hairline opacity-45 bg-white';
+                containerStyle = 'border-miro-hairline opacity-45 bg-miro-card';
               }
             } else if (isSelected) {
-              containerStyle = 'border-2 border-miro-primary bg-slate-50/80 font-medium text-miro-primary';
+              containerStyle = 'border-2 border-miro-primary bg-miro-surfaceSoft font-medium text-miro-primary';
             }
 
             return (
@@ -274,8 +274,8 @@ export const DualMeterScenario: React.FC<{
           />
         ) : (
           <div className="mt-6 rounded-2xl border border-miro-hairline bg-miro-surface p-6 space-y-3">
-            <p className="text-xs font-semibold text-slate-700">Immediate impact on systems:</p>
-            <p className="text-xs text-slate-800 leading-relaxed font-mono">
+            <p className="text-xs font-semibold text-miro-slate">Immediate impact on systems:</p>
+            <p className="text-xs text-miro-primary leading-relaxed font-mono">
               {currentMove.options.find((o) => o.id === selectedOptionId)?.techDebtImpact}
             </p>
             <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">

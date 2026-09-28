@@ -73,13 +73,13 @@ const FORMATS: FormatConfig[] = [
 
 const RouteFallback: React.FC = () => (
   <div className="min-h-screen bg-miro-surface flex items-center justify-center">
-    <p className="text-sm text-slate-600">Loading…</p>
+    <p className="text-sm text-miro-slate">Loading…</p>
   </div>
 );
 
 const PanelFallback: React.FC = () => (
-  <div className="rounded-2xl border border-miro-hairline bg-white p-8 text-center">
-    <p className="text-sm text-slate-600">Loading drill…</p>
+  <div className="rounded-2xl border border-miro-hairline bg-miro-card p-8 text-center">
+    <p className="text-sm text-miro-slate">Loading drill…</p>
   </div>
 );
 
@@ -229,20 +229,20 @@ export const App: React.FC = () => {
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
         <div className="text-center sm:text-left space-y-2">
           {reason === 'daily' && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/60 text-miro-blue text-xs font-medium mb-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-miro-lavenderLight border border-miro-lavenderBorder text-miro-blue text-xs font-medium mb-1">
               <span className="h-1.5 w-1.5 rounded-full bg-miro-blue" />
               Today's architectural practice
             </div>
           )}
           {reason === 'next_uncompleted' && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-medium mb-1">
-              <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-miro-successLight border border-miro-successBorder text-miro-successText text-xs font-medium mb-1">
+              <CheckCircle className="h-3.5 w-3.5 text-miro-successText" />
               Daily drill completed • Next uncompleted practice ({uncompletedCount} remaining)
             </div>
           )}
           {reason === 'review' && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-medium mb-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-miro-yellowLight border border-miro-yellowBorder text-miro-yellowText text-xs font-medium mb-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-miro-yellowLight0" />
               Mastery Review Mode • Spaced repetition practice
             </div>
           )}
@@ -250,7 +250,7 @@ export const App: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
             Architectural judgment practice
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
+          <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
             Trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
           </p>
         </div>
@@ -265,13 +265,13 @@ export const App: React.FC = () => {
                 title={fmt.description}
                 className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? 'border-miro-primary bg-white shadow-xs text-miro-primary'
-                    : 'border-miro-hairline bg-white/70 hover:bg-white hover:border-slate-400 text-slate-600'
+                    ? 'border-miro-primary bg-miro-card shadow-xs text-miro-primary'
+                    : 'border-miro-hairline bg-miro-card/70 hover:bg-miro-card hover:border-miro-hairlineStrong text-miro-slate'
                 }`}
               >
                 <span
                   className={`p-1.5 rounded-lg shrink-0 ${
-                    isActive ? 'bg-miro-surface text-miro-primary' : 'bg-miro-surface text-slate-500'
+                    isActive ? 'bg-miro-surface text-miro-primary' : 'bg-miro-surface text-miro-muted'
                   }`}
                 >
                   {fmt.icon}
@@ -284,15 +284,15 @@ export const App: React.FC = () => {
 
         {/* Architectural Domain filter — only domains with drills in the active Format */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-medium mr-1">
+          <span className="text-[11px] uppercase tracking-wider text-miro-muted font-medium mr-1">
             Domain
           </span>
           <button
             onClick={() => handleDomainChange(undefined)}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
               activeDomain === undefined
-                ? 'bg-miro-primary text-white border-miro-primary'
-                : 'bg-white text-slate-600 border-miro-hairline hover:border-slate-400'
+                ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
+                : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
             }`}
           >
             All
@@ -303,8 +303,8 @@ export const App: React.FC = () => {
               onClick={() => handleDomainChange(domain)}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
                 activeDomain === domain
-                  ? 'bg-miro-primary text-white border-miro-primary'
-                  : 'bg-white text-slate-600 border-miro-hairline hover:border-slate-400'
+                  ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
+                  : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
               }`}
             >
               {ARCHITECTURAL_DOMAIN_LABELS[domain]}
@@ -314,9 +314,9 @@ export const App: React.FC = () => {
 
         <div className="pt-2">
           {!currentDrill && (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center space-y-2">
-              <p className="text-sm font-medium text-slate-700">No drills in this domain yet</p>
-              <p className="text-xs text-slate-600">
+            <div className="rounded-2xl border border-dashed border-miro-hairline bg-miro-card p-8 text-center space-y-2">
+              <p className="text-sm font-medium text-miro-slate">No drills in this domain yet</p>
+              <p className="text-xs text-miro-slate">
                 Pick another Architectural Domain, or choose All, for the active Format.
               </p>
             </div>

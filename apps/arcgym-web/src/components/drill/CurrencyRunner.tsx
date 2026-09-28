@@ -83,7 +83,7 @@ export const CurrencyRunner: React.FC<{
   };
 
   return (
-    <Card className="border-miro-hairline bg-white shadow-xs">
+    <Card className="border-miro-hairline bg-miro-card shadow-xs">
       <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -94,7 +94,7 @@ export const CurrencyRunner: React.FC<{
               </Badge>
             ))}
             {isReviewMode && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+              <Badge variant="outline" className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder">
                 Review Mode
               </Badge>
             )}
@@ -103,7 +103,7 @@ export const CurrencyRunner: React.FC<{
             <DrillFeedbackWidget drillId={drill.id} />
             <div className="flex items-center gap-2 font-mono text-xs">
               <Gauge className="h-4 w-4 text-miro-blue" />
-              <span className={isOverBudget ? 'text-miro-dangerText font-medium' : 'text-slate-700 font-medium'}>
+              <span className={isOverBudget ? 'text-miro-dangerText font-medium' : 'text-miro-slate font-medium'}>
                 Allocated: {allocatedTotal} / {drill.totalPoints} pts
               </span>
             </div>
@@ -113,7 +113,7 @@ export const CurrencyRunner: React.FC<{
           value={Math.min(100, (allocatedTotal / drill.totalPoints) * 100)}
           className="mt-3"
           indicatorClassName={
-            isOverBudget ? 'bg-rose-500' : allocatedTotal / drill.totalPoints > 0.85 ? 'bg-amber-500' : 'bg-miro-primary'
+            isOverBudget ? 'bg-miro-dangerLight0' : allocatedTotal / drill.totalPoints > 0.85 ? 'bg-miro-yellowLight0' : 'bg-miro-primary'
           }
         />
       </CardHeader>
@@ -122,14 +122,14 @@ export const CurrencyRunner: React.FC<{
         <div>
           <h2 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed">{drill.prompt}</h2>
           {drill.detail && (
-            <p className="text-sm text-slate-600 mt-2 leading-relaxed">{drill.detail}</p>
+            <p className="text-sm text-miro-slate mt-2 leading-relaxed">{drill.detail}</p>
           )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
           {drill.categories.map((cat) => (
             <div key={cat.id} className="space-y-2">
-              <div className="flex justify-between text-xs font-medium text-slate-700">
+              <div className="flex justify-between text-xs font-medium text-miro-slate">
                 <span>{cat.label}</span>
                 <span className="font-mono text-miro-primary font-semibold">
                   {allocations[cat.id] ?? cat.defaultPoints} pts
@@ -143,14 +143,14 @@ export const CurrencyRunner: React.FC<{
                 step={cat.step ?? 5}
               />
               {cat.description && (
-                <p className="text-[12px] text-slate-600 leading-normal">{cat.description}</p>
+                <p className="text-[12px] text-miro-slate leading-normal">{cat.description}</p>
               )}
             </div>
           ))}
         </div>
 
         {isOverBudget && (
-          <div className="flex items-center gap-2.5 p-3.5 rounded-xl border border-rose-200 bg-miro-dangerLight text-xs text-miro-dangerText font-medium">
+          <div className="flex items-center gap-2.5 p-3.5 rounded-xl border border-miro-dangerBorder bg-miro-dangerLight text-xs text-miro-dangerText font-medium">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             <span>
               Governor limit exceeded. You exceeded the {drill.totalPoints}-point total capacity by{' '}
@@ -181,7 +181,7 @@ export const CurrencyRunner: React.FC<{
                     <AlertTriangle className="h-3.5 w-3.5" /> Suboptimal governor distribution
                   </Badge>
                 )}
-                <span className="text-xs text-slate-600">Confidence: {selectedConfidence}%</span>
+                <span className="text-xs text-miro-slate">Confidence: {selectedConfidence}%</span>
               </div>
               <span className="text-sm font-mono font-semibold text-miro-primary">
                 Score: {score !== null && score > 0 ? `+${score}` : score} pts
@@ -189,7 +189,7 @@ export const CurrencyRunner: React.FC<{
             </div>
 
             {drill.analysis && (
-              <div className="text-xs sm:text-sm text-slate-700 space-y-1.5">
+              <div className="text-xs sm:text-sm text-miro-slate space-y-1.5">
                 <p className="font-medium text-miro-primary">Well-Architected governor analysis:</p>
                 <p className="leading-relaxed">{drill.analysis}</p>
               </div>

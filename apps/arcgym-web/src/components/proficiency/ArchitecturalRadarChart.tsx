@@ -121,27 +121,27 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
   const activeItem = items.find((i) => i.id === hoveredId);
 
   return (
-    <div className="bg-white border border-miro-hairline rounded-2xl p-4 sm:p-6 shadow-xs relative">
+    <div className="bg-miro-card border border-miro-hairline rounded-2xl p-4 sm:p-6 shadow-xs relative">
       {/* Active tooltip bar */}
       <div className="min-h-7 flex items-center justify-between text-xs px-2 mb-2">
         {activeItem ? (
           <div className="flex items-center gap-2">
             <span className="font-semibold text-miro-primary">{activeItem.label}:</span>
             {activeItem.isMeasured ? (
-              <span className="text-slate-600">
-                <span className="font-medium text-emerald-700">{activeItem.accuracy}%</span> ·{' '}
+              <span className="text-miro-slate">
+                <span className="font-medium text-miro-successText">{activeItem.accuracy}%</span> ·{' '}
                 {activeItem.correctQuestions} of {activeItem.totalQuestions} questions right
               </span>
             ) : (
-              <span className="text-slate-400">
+              <span className="text-miro-muted">
                 {activeItem.totalQuestions} of 4 answered so far (collecting data)
               </span>
             )}
           </div>
         ) : (
-          <span className="text-slate-400">Hover or tap any vertex to view domain rep breakdown</span>
+          <span className="text-miro-muted">Hover or tap any vertex to view domain rep breakdown</span>
         )}
-        <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+        <span className="text-[11px] font-mono text-miro-muted hidden sm:inline">
           {measuredVertices.length} of {N} measured
         </span>
       </div>
@@ -161,7 +161,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             r={r50}
             fill="none"
             stroke="currentColor"
-            className="text-slate-200"
+            className="text-miro-hairline"
             strokeDasharray="3 3"
           />
           <circle
@@ -170,12 +170,12 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             r={R}
             fill="none"
             stroke="currentColor"
-            className="text-slate-300"
+            className="text-miro-hairlineStrong"
           />
-          <text x={cx + 6} y={cy - r50 + 4} fontSize="10" fill="currentColor" className="text-slate-400">
+          <text x={cx + 6} y={cy - r50 + 4} fontSize="10" fill="currentColor" className="text-miro-muted">
             50%
           </text>
-          <text x={cx + 6} y={cy - R + 4} fontSize="10" fill="currentColor" className="text-slate-400">
+          <text x={cx + 6} y={cy - R + 4} fontSize="10" fill="currentColor" className="text-miro-muted">
             100%
           </text>
 
@@ -189,7 +189,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
               y2={v.spokeY}
               stroke="currentColor"
               strokeWidth="1"
-              className={v.item.isMeasured ? 'text-slate-300' : 'text-slate-200'}
+              className={v.item.isMeasured ? 'text-miro-hairlineStrong' : 'text-miro-hairline'}
             />
           ))}
 
@@ -197,8 +197,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
           {hasMeasured && (
             <polygon
               points={widePolygonPoints}
-              fill="rgba(1, 118, 211, 0.16)"
-              stroke="#0176d3"
+              fill="var(--miro-blueFill)"
+              stroke="var(--miro-blue)"
               strokeWidth="2"
               strokeLinejoin="round"
             />
@@ -239,8 +239,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                       cx={v.pointX}
                       cy={v.pointY}
                       r={isHovered ? 7 : 5}
-                      fill="#0176d3"
-                      stroke="#ffffff"
+                      fill="var(--miro-blue)"
+                      stroke="var(--miro-card)"
                       strokeWidth="2"
                       className="transition-all duration-150"
                     />
@@ -252,7 +252,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                     r="4"
                     fill="none"
                     stroke="currentColor"
-                    className="text-slate-300"
+                    className="text-miro-hairlineStrong"
                     strokeDasharray="2 2"
                   />
                 )}
@@ -268,8 +268,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                     v.item.isMeasured
                       ? isHovered
                         ? 'fill-miro-blue'
-                        : 'fill-slate-800'
-                      : 'fill-slate-400'
+                        : 'fill-miro-primary'
+                      : 'fill-miro-muted'
                   }
                 >
                   {lines.map((line, idx) => (
@@ -301,7 +301,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             r={nr50}
             fill="none"
             stroke="currentColor"
-            className="text-slate-200"
+            className="text-miro-hairline"
             strokeDasharray="2 2"
           />
           <circle
@@ -310,12 +310,12 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             r={nR}
             fill="none"
             stroke="currentColor"
-            className="text-slate-300"
+            className="text-miro-hairlineStrong"
           />
-          <text x={ncx + 4} y={ncy - nr50 + 3} fontSize="8" fill="currentColor" className="text-slate-400">
+          <text x={ncx + 4} y={ncy - nr50 + 3} fontSize="8" fill="currentColor" className="text-miro-muted">
             50%
           </text>
-          <text x={ncx + 4} y={ncy - nR + 3} fontSize="8" fill="currentColor" className="text-slate-400">
+          <text x={ncx + 4} y={ncy - nR + 3} fontSize="8" fill="currentColor" className="text-miro-muted">
             100%
           </text>
 
@@ -329,7 +329,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
               y2={v.narrowSpokeY}
               stroke="currentColor"
               strokeWidth="1"
-              className={v.item.isMeasured ? 'text-slate-300' : 'text-slate-200'}
+              className={v.item.isMeasured ? 'text-miro-hairlineStrong' : 'text-miro-hairline'}
             />
           ))}
 
@@ -337,8 +337,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
           {hasMeasured && (
             <polygon
               points={narrowPolygonPoints}
-              fill="rgba(1, 118, 211, 0.16)"
-              stroke="#0176d3"
+              fill="var(--miro-blueFill)"
+              stroke="var(--miro-blue)"
               strokeWidth="1.5"
               strokeLinejoin="round"
             />
@@ -372,8 +372,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                     cx={v.narrowPointX}
                     cy={v.narrowPointY}
                     r={isHovered ? 4.5 : 3.5}
-                    fill="#0176d3"
-                    stroke="#ffffff"
+                    fill="var(--miro-blue)"
+                    stroke="var(--miro-card)"
                     strokeWidth="1.5"
                   />
                 ) : (
@@ -383,7 +383,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                     r="3"
                     fill="none"
                     stroke="currentColor"
-                    className="text-slate-300"
+                    className="text-miro-hairlineStrong"
                     strokeDasharray="2 2"
                   />
                 )}
@@ -397,8 +397,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                     v.item.isMeasured
                       ? isHovered
                         ? 'fill-miro-blue font-medium'
-                        : 'fill-slate-800'
-                      : 'fill-slate-400'
+                        : 'fill-miro-primary'
+                      : 'fill-miro-muted'
                   }
                 >
                   {lines.map((line, idx) => (
@@ -417,8 +417,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
         </svg>
       </div>
 
-      <p className="text-[12.5px] text-slate-600 mt-2 px-1 text-center sm:text-left">
-        <span className="font-medium text-slate-700">How to read this. </span>
+      <p className="text-[12.5px] text-miro-slate mt-2 px-1 text-center sm:text-left">
+        <span className="font-medium text-miro-slate">How to read this. </span>
         Hover or tap any vertex to see your score. Domains and pillars require 4+ answered questions before appearing on the radar polygon.
       </p>
     </div>

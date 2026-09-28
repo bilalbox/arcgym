@@ -1,6 +1,6 @@
 # ArcGym Design System (Miro x Salesforce Technical Craft)
 
-**Specification Version:** `1.0.0-miro`  
+**Specification Version:** `1.1.0-miro`  
 **Archetype Foundation:** [Miro Design System Spec](https://www.shadcn.io/design/miro/raw) adapted for High-Stakes Salesforce Architectural Practice  
 **Core Principle:** Professional restraint. Zero AI-generated visual clutter. High-contrast typography and tactile pill controls.
 
@@ -60,6 +60,43 @@ ArcGym is a daily architectural judgment practice engine for Salesforce Technica
 --tag-danger-bg: #fee2e2;
 --tag-danger-text: #991b1b;
 ```
+
+### Dark Mode: Architect's Night Drafting Slate
+
+Dark mode is a physical drafting slate under low ambient task lighting — not OLED pitch black and not cyber-neon. Runtime tokens live on `:root` / `.dark` in `apps/arcgym-web/src/index.css` and bridge into Tailwind via `@theme` (`bg-miro-*` utilities keep working).
+
+**Naming bridge (code ↔ design.md):**
+| Code utility | Light role | Dark role |
+| :--- | :--- | :--- |
+| `miro-surface` | Page backdrop `#f7f8fa` | Slate base `#0f1115` |
+| `miro-card` | Paper / canvas `#ffffff` | Drafting card `#16181f` |
+| `miro-surfaceSoft` | Sub-panels `#fafbfc` | Nested panels `#1c1f28` |
+| `miro-primary` | Black pill + ink `#1c1c1e` | Dense chalk bone `#eceef2` |
+| `miro-onPrimary` | On-pill text `#ffffff` | Ink on chalk `#0f1115` |
+| `miro-blue` | Salesforce Blue `#0176d3` | Blueprint Blue `#4aa3f0` |
+
+```css
+/* .dark — refined values (desaturated mineral glazes, dense chalk CTA) */
+--miro-surface: #0f1115;
+--miro-card: #16181f;
+--miro-surfaceSoft: #1c1f28;
+--miro-primary: #eceef2;       /* Chalk bone pill — softer than pure invert */
+--miro-onPrimary: #0f1115;
+--miro-slate: #9aa0b0;
+--miro-muted: #6e7486;
+--miro-hairline: #2a2e3a;
+--miro-blue: #4aa3f0;
+
+/* Mineral glazes: low-luminance ground + luminous but non-neon ink */
+--miro-tealLight: #122826;   --miro-tealText: #6bc4b8;
+--miro-roseLight: #2a1822;   --miro-roseText: #e091b0;
+--miro-yellowLight: #262218; --miro-yellowText: #e0c56a;
+--miro-lavenderLight: #1c1b2c; --miro-lavenderText: #b4bce8;
+```
+
+**Theme control:** `useTheme` + Header moon/sun toggle; preference in `localStorage` (`arcgym-theme`). Inline FOUC script in `index.html` applies `.dark` before React mounts. Default preference is `system`.
+
+**Rules:** No neon borders, no pure `#000` canvas, no glow shadows. Sticky chips stay mineral (physical notes), not badges with bloom.
 
 ---
 

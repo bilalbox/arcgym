@@ -6,8 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ArcGym: Architectural Judgment Practice for Salesforce Architects</title>
     <meta name="description" content="Architectural judgment drills grounded in Salesforce Well-Architected." />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('arcgym-theme');
+          var preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var dark = stored === 'dark' || (stored !== 'light' && preferDark);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="min-h-screen bg-miro-surface text-miro-primary antialiased selection:bg-miro-primary selection:text-white">
+  <body class="min-h-screen bg-miro-surface text-miro-primary antialiased selection:bg-miro-primary selection:text-miro-onPrimary">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <!-- CF_ANALYTICS_BEACON -->

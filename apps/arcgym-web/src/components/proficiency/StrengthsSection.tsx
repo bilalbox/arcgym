@@ -14,7 +14,7 @@ export const StrengthsSection: React.FC<StrengthsSectionProps> = ({
 
   return (
     <details id="strengths" className="group border-b border-miro-hairline first:border-t">
-      <summary className="flex items-center gap-3 cursor-pointer list-none py-3.5 min-h-[44px] text-[15px] font-medium text-miro-primary hover:text-slate-600 transition-colors">
+      <summary className="flex items-center gap-3 cursor-pointer list-none py-3.5 min-h-[44px] text-[15px] font-medium text-miro-primary hover:text-miro-slate transition-colors">
         <span
           aria-hidden="true"
           className="text-miro-blue text-[20px] leading-none w-4 text-center shrink-0 transition-transform group-open:rotate-45"
@@ -22,17 +22,17 @@ export const StrengthsSection: React.FC<StrengthsSectionProps> = ({
           +
         </span>
         <span>Your strengths</span>
-        <span className="ml-auto text-[12.5px] font-normal text-slate-400">
+        <span className="ml-auto text-[12.5px] font-normal text-miro-muted">
           {items.length} {items.length === 1 ? dimensionLabel : `${dimensionLabel}s`}
         </span>
       </summary>
 
       <div className="pb-5 pl-7">
-        <p className="text-[12.5px] text-slate-600 mb-3">
+        <p className="text-[12.5px] text-miro-slate mb-3">
           80% or better across at least four questions.
         </p>
 
-        <div className="bg-white border border-miro-hairline rounded-2xl shadow-xs px-4 py-1 max-w-3xl divide-y divide-miro-hairlineSoft">
+        <div className="bg-miro-card border border-miro-hairline rounded-2xl shadow-xs px-4 py-1 max-w-3xl divide-y divide-miro-hairlineSoft">
           {items.map((item) => (
             <div
               key={item.id}
@@ -43,17 +43,17 @@ export const StrengthsSection: React.FC<StrengthsSectionProps> = ({
               </p>
 
               <div className="w-full">
-                <div className="relative h-1.5 rounded-full bg-slate-100 overflow-hidden" aria-hidden="true">
+                <div className="relative h-1.5 rounded-full bg-miro-surface overflow-hidden" aria-hidden="true">
                   <div
-                    className="absolute inset-y-0 left-0 rounded-full bg-emerald-600 transition-all duration-300"
+                    className="absolute inset-y-0 left-0 rounded-full bg-miro-successText transition-all duration-300"
                     style={{ width: `${item.accuracy}%` }}
                   />
                 </div>
               </div>
 
-              <p className="text-[12.5px] whitespace-nowrap text-right sm:text-left text-slate-600">
-                <span className="font-semibold text-emerald-700">{item.accuracy}%</span>{' '}
-                <span className="text-slate-400">
+              <p className="text-[12.5px] whitespace-nowrap text-right sm:text-left text-miro-slate">
+                <span className="font-semibold text-miro-successText">{item.accuracy}%</span>{' '}
+                <span className="text-miro-muted">
                   ({item.correctQuestions}/{item.totalQuestions})
                 </span>
               </p>

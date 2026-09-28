@@ -86,7 +86,7 @@ export const LessonStepper: React.FC<{
 
   if (isCompleted) {
     return (
-      <Card className="border-miro-hairline bg-white shadow-xs">
+      <Card className="border-miro-hairline bg-miro-card shadow-xs">
         <CardHeader className="text-center pb-4">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
             <CheckCircle2 className="h-6 w-6" />
@@ -94,12 +94,12 @@ export const LessonStepper: React.FC<{
           <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-miro-primary">
             {drill.stages.length}-stage refactor complete
           </h2>
-          <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+          <p className="text-sm text-miro-slate mt-1 leading-relaxed">
             You worked through a Well-Architected coaching path grounded in official platform guidance.
           </p>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
-          <div className="p-5 bg-miro-surface rounded-2xl border border-miro-hairlineSoft space-y-2 text-xs text-slate-700">
+          <div className="p-5 bg-miro-surface rounded-2xl border border-miro-hairlineSoft space-y-2 text-xs text-miro-slate">
             <p className="font-medium text-miro-primary">Stages completed:</p>
             {drill.stages.map((s) => (
               <p key={s.stageNumber}>✓ {s.stageName}</p>
@@ -121,7 +121,7 @@ export const LessonStepper: React.FC<{
   }
 
   return (
-    <Card className="border-miro-hairline bg-white shadow-xs">
+    <Card className="border-miro-hairline bg-miro-card shadow-xs">
       <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -132,14 +132,14 @@ export const LessonStepper: React.FC<{
               </Badge>
             ))}
             {isReviewMode && (
-              <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+              <Badge variant="outline" className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder">
                 Review Mode
               </Badge>
             )}
           </div>
           <div className="flex items-center gap-3">
             <DrillFeedbackWidget drillId={drill.id} />
-            <span className="text-xs text-slate-600 font-medium">{currentStage.stageName}</span>
+            <span className="text-xs text-miro-slate font-medium">{currentStage.stageName}</span>
           </div>
         </div>
 
@@ -149,7 +149,7 @@ export const LessonStepper: React.FC<{
               key={s.stageNumber}
               className={`h-1.5 rounded-full transition-all ${
                 idx < currentStageIdx
-                  ? 'bg-emerald-600'
+                  ? 'bg-miro-successText'
                   : idx === currentStageIdx
                     ? 'bg-miro-primary'
                     : 'bg-miro-hairlineSoft'
@@ -169,18 +169,18 @@ export const LessonStepper: React.FC<{
         <div className="space-y-3">
           {orderedOptions.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
-            let borderStyle = 'border-miro-hairline hover:border-slate-400 bg-white text-slate-800';
+            let borderStyle = 'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card text-miro-primary';
 
             if (isSubmitted) {
               if (opt.isCorrect) {
-                borderStyle = 'border-2 border-emerald-600 bg-emerald-50/50 text-slate-900 font-medium';
+                borderStyle = 'border-2 border-miro-successText bg-miro-successLight text-miro-primary font-medium';
               } else if (isSelected && !opt.isCorrect) {
-                borderStyle = 'border-2 border-rose-500 bg-rose-50/60 text-slate-900';
+                borderStyle = 'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
               } else {
-                borderStyle = 'border-miro-hairline opacity-45 bg-white';
+                borderStyle = 'border-miro-hairline opacity-45 bg-miro-card';
               }
             } else if (isSelected) {
-              borderStyle = 'border-2 border-miro-primary bg-slate-50/80 font-medium text-miro-primary';
+              borderStyle = 'border-2 border-miro-primary bg-miro-surfaceSoft font-medium text-miro-primary';
             }
 
             return (
@@ -216,7 +216,7 @@ export const LessonStepper: React.FC<{
                 </Badge>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
+            <p className="text-xs sm:text-sm text-miro-slate leading-relaxed font-normal">
               {chosenOption?.coachingFeedback}
             </p>
             <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">

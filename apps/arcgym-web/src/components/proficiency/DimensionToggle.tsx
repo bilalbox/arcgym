@@ -16,21 +16,21 @@ export const DimensionToggle: React.FC<DimensionToggleProps> = ({
   measuredPillarsCount,
 }) => {
   return (
-    <div className="inline-flex p-1 bg-slate-100 rounded-full border border-miro-hairline">
+    <div className="inline-flex p-1 bg-miro-surface rounded-full border border-miro-hairline">
       <button
         type="button"
         onClick={() => onChange('domains')}
         className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
           value === 'domains'
-            ? 'bg-miro-primary text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900'
+            ? 'bg-miro-primary text-miro-onPrimary shadow-xs'
+            : 'text-miro-slate hover:text-miro-primary'
         }`}
       >
         <LayoutGrid className="h-3.5 w-3.5" />
         <span>Architectural Domains</span>
         <span
           className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-            value === 'domains' ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
+            value === 'domains' ? 'bg-miro-onPrimary/15 text-miro-onPrimary' : 'bg-miro-hairlineSoft text-miro-slate'
           }`}
         >
           {measuredDomainsCount}/7
@@ -42,15 +42,15 @@ export const DimensionToggle: React.FC<DimensionToggleProps> = ({
         onClick={() => onChange('pillars')}
         className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
           value === 'pillars'
-            ? 'bg-miro-primary text-white shadow-xs'
-            : 'text-slate-600 hover:text-slate-900'
+            ? 'bg-miro-primary text-miro-onPrimary shadow-xs'
+            : 'text-miro-slate hover:text-miro-primary'
         }`}
       >
         <ShieldCheck className="h-3.5 w-3.5" />
         <span>Well-Architected Pillars</span>
         <span
           className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-            value === 'pillars' ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-600'
+            value === 'pillars' ? 'bg-miro-onPrimary/15 text-miro-onPrimary' : 'bg-miro-hairlineSoft text-miro-slate'
           }`}
         >
           {measuredPillarsCount}/5

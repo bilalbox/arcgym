@@ -257,8 +257,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
           hasVoted && selectedRating === 'up'
             ? 'text-miro-blue hover:text-blue-700'
             : hasVoted && selectedRating === 'down'
-            ? 'text-rose-600 hover:text-rose-700'
-            : 'text-slate-400 hover:text-miro-primary'
+            ? 'text-miro-dangerText hover:text-miro-dangerText'
+            : 'text-miro-muted hover:text-miro-primary'
         }`}
       >
         <svg
@@ -277,7 +277,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       </button>
 
       <span
-        className="font-data font-mono text-[12px] text-slate-500 select-none tracking-tight"
+        className="font-data font-mono text-[12px] text-miro-muted select-none tracking-tight"
         title={percentageTitle}
       >
         {percentageDisplay}
@@ -288,7 +288,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
           ref={popoverRef}
           role="dialog"
           aria-label="Rate this drill"
-          className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-miro-hairline bg-white p-4 shadow-xl z-50 text-left animate-in fade-in zoom-in-95 duration-150"
+          className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-miro-hairline bg-miro-card p-4 shadow-xl z-50 text-left animate-in fade-in zoom-in-95 duration-150"
         >
           <div className="flex items-center justify-between pb-2 mb-3 border-b border-miro-hairlineSoft">
             <span className="text-xs font-semibold text-miro-primary tracking-tight">
@@ -296,7 +296,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
             </span>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-slate-600 rounded-md p-1 transition-colors"
+              className="text-miro-muted hover:text-miro-slate rounded-md p-1 transition-colors"
               aria-label="Close"
             >
               <X className="h-3.5 w-3.5" />
@@ -305,11 +305,11 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
           {submittedMessage ? (
             <div className="py-4 text-center space-y-1.5">
-              <div className="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-miro-successLight text-miro-successText mx-auto flex items-center justify-center">
                 <Check className="h-4 w-4" />
               </div>
-              <p className="text-xs font-medium text-slate-800">Feedback submitted</p>
-              <p className="text-[11px] text-slate-600">
+              <p className="text-xs font-medium text-miro-primary">Feedback submitted</p>
+              <p className="text-[11px] text-miro-slate">
                 Thank you for helping improve ArcGym drills.
               </p>
             </div>
@@ -324,8 +324,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                     hasVoted ? 'cursor-default' : 'cursor-pointer'
                   } ${
                     selectedRating === 'up'
-                      ? 'bg-miro-primary text-white border-miro-primary shadow-xs'
-                      : 'bg-white text-slate-700 border-miro-hairline hover:border-slate-400'
+                      ? 'bg-miro-primary text-miro-onPrimary border-miro-primary shadow-xs'
+                      : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
                   } disabled:opacity-90`}
                 >
                   <ThumbsUp className="h-3.5 w-3.5" />
@@ -340,8 +340,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                     hasVoted ? 'cursor-default' : 'cursor-pointer'
                   } ${
                     selectedRating === 'down'
-                      ? 'bg-miro-primary text-white border-miro-primary shadow-xs'
-                      : 'bg-white text-slate-700 border-miro-hairline hover:border-slate-400'
+                      ? 'bg-miro-primary text-miro-onPrimary border-miro-primary shadow-xs'
+                      : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
                   } disabled:opacity-90`}
                 >
                   <ThumbsDown className="h-3.5 w-3.5" />
@@ -351,7 +351,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
               {selectedRating === 'up' && (
                 <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-slate-600">
+                  <span className="text-[11px] font-medium text-miro-slate">
                     What stood out? (Optional)
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -367,8 +367,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                             hasVoted ? 'cursor-default' : 'cursor-pointer'
                           } ${
                             active
-                              ? 'bg-blue-50 text-miro-blue border-blue-200'
-                              : 'bg-white text-slate-600 border-miro-hairline hover:border-slate-300'
+                              ? 'bg-miro-lavenderLight text-miro-blue border-miro-lavenderBorder'
+                              : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
                           }`}
                         >
                           {DRILL_LIKED_TAG_LABELS[tag as DrillLikedReason]}
@@ -381,7 +381,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
               {selectedRating === 'down' && (
                 <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-slate-600">
+                  <span className="text-[11px] font-medium text-miro-slate">
                     What could be better? (Optional)
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -397,8 +397,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                             hasVoted ? 'cursor-default' : 'cursor-pointer'
                           } ${
                             active
-                              ? 'bg-rose-50 text-rose-700 border-rose-200'
-                              : 'bg-white text-slate-600 border-miro-hairline hover:border-slate-300'
+                              ? 'bg-miro-dangerLight text-miro-dangerText border-miro-dangerBorder'
+                              : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
                           }`}
                         >
                           {DRILL_DISLIKED_TAG_LABELS[tag as DrillDislikedReason]}
@@ -410,17 +410,17 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
               )}
 
               {submitError && (
-                <p className="text-[11px] text-rose-600" role="alert">
+                <p className="text-[11px] text-miro-dangerText" role="alert">
                   {submitError}
                 </p>
               )}
 
               <div className="pt-2 flex items-center justify-between border-t border-miro-hairlineSoft">
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-miro-muted">
                   Anonymous enum pills • No free text
                 </span>
                 {hasVoted ? (
-                  <span className="text-[11px] font-medium text-slate-600">
+                  <span className="text-[11px] font-medium text-miro-slate">
                     Submitted
                   </span>
                 ) : (
@@ -428,7 +428,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                     type="button"
                     disabled={!selectedRating || isSubmitting}
                     onClick={handleSubmit}
-                    className="rounded-full bg-miro-primary hover:bg-slate-800 disabled:opacity-40 text-white text-xs font-medium px-4 py-1.5 cursor-pointer transition-colors shadow-xs"
+                    className="rounded-full bg-miro-primary hover:bg-miro-charcoal disabled:opacity-40 text-miro-onPrimary text-xs font-medium px-4 py-1.5 cursor-pointer transition-colors shadow-xs"
                   >
                     {isSubmitting ? 'Saving...' : 'Submit'}
                   </button>

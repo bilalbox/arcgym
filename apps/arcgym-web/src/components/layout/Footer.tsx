@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
 interface FooterProps {
   navigate: (to: string) => void;
@@ -11,7 +11,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
 
   return (
     <footer className="pt-8 pb-12 border-t border-miro-hairlineSoft text-center space-y-3">
-      <p className="text-xs text-slate-600 leading-relaxed max-w-2xl mx-auto">
+      <p className="text-xs text-miro-slate leading-relaxed max-w-2xl mx-auto">
         All practice scenarios are strictly grounded in official guidance from{' '}
         <a
           href="https://architect.salesforce.com"
@@ -21,7 +21,8 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
         >
           architect.salesforce.com <ExternalLink className="h-3 w-3" />
         </a>
-        . Note: ArcGym is heavily inspired by{' '}
+              .
+              <p>ArcGym is heavily inspired by{' '}
         <a
           href="https://analystgym.com/"
           target="_blank"
@@ -30,22 +31,21 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
         >
           Analyst Gym <ExternalLink className="h-3 w-3" />
         </a>
-        .
+        .</p>
       </p>
 
-      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-slate-400">
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-miro-muted">
         <span>Powered by Cloudflare Pages</span>
-        <span className="text-slate-300">•</span>
         {!isPrivacyPage && (
           <>
-            <span className="text-slate-300">•</span>
+            <span className="text-miro-hairlineStrong">•</span>
             <a
               href="/privacy"
               onClick={(e) => {
                 e.preventDefault();
                 navigate('/privacy');
               }}
-              className="text-slate-500 hover:text-miro-primary underline underline-offset-2 transition-colors cursor-pointer"
+              className="text-miro-muted hover:text-miro-primary underline underline-offset-2 transition-colors cursor-pointer"
             >
               Privacy Policy
             </a>

@@ -1,54 +1,68 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Class-based dark mode (localStorage / toggle), not prefers-color-scheme alone */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-  --color-border: #e0e2e8;
-  --color-input: #e0e2e8;
-  --color-ring: #0176d3;
-  --color-background: #f7f8fa;
-  --color-foreground: #1c1c1e;
+  /* Bridge Tailwind utilities → runtime CSS vars (flip under .dark) */
+  --color-border: var(--miro-hairline);
+  --color-input: var(--miro-hairline);
+  --color-ring: var(--miro-blue);
+  --color-background: var(--miro-surface);
+  --color-foreground: var(--miro-primary);
 
-  --color-primary: #1c1c1e;
-  --color-primary-foreground: #ffffff;
-  --color-primary-hover: #2c2c34;
+  --color-primary: var(--miro-primary);
+  --color-primary-foreground: var(--miro-onPrimary);
+  --color-primary-hover: var(--miro-charcoal);
 
   --color-secondary: transparent;
-  --color-secondary-foreground: #1c1c1e;
-  --color-secondary-border: #c7cad5;
+  --color-secondary-foreground: var(--miro-primary);
+  --color-secondary-border: var(--miro-hairlineStrong);
 
-  --color-muted: #f7f8fa;
-  --color-muted-foreground: #6b6f7e;
+  --color-muted: var(--miro-surfaceSoft);
+  --color-muted-foreground: var(--miro-muted);
 
-  --color-accent: #eef0f3;
-  --color-accent-foreground: #1c1c1e;
+  --color-accent: var(--miro-hairlineSoft);
+  --color-accent-foreground: var(--miro-primary);
 
-  --color-card: #ffffff;
-  --color-card-foreground: #1c1c1e;
-  --color-card-border: #e0e2e8;
+  --color-card: var(--miro-card);
+  --color-card-foreground: var(--miro-primary);
+  --color-card-border: var(--miro-hairline);
 
-  --color-miro-primary: #1c1c1e;
-  --color-miro-charcoal: #2c2c34;
-  --color-miro-surface: #f7f8fa;
-  --color-miro-surfaceSoft: #fafbfc;
-  --color-miro-hairline: #e0e2e8;
-  --color-miro-hairlineSoft: #eef0f3;
-  --color-miro-hairlineStrong: #c7cad5;
-  --color-miro-blue: #0176d3;
-  --color-miro-blueDeep: #014486;
-  --color-miro-tealLight: #c3faf5;
-  --color-miro-tealText: #187574;
-  --color-miro-roseLight: #ffd8f4;
-  --color-miro-roseText: #9d174d;
-  --color-miro-yellowLight: #fff4c4;
-  --color-miro-yellowText: #746019;
-  --color-miro-lavenderLight: #f5f3ff;
-  --color-miro-lavenderText: #4338ca;
-  --color-miro-successLight: #dcfce7;
-  --color-miro-successText: #15803d;
-  --color-miro-dangerLight: #fee2e2;
-  --color-miro-dangerText: #991b1b;
+  --color-miro-primary: var(--miro-primary);
+  --color-miro-onPrimary: var(--miro-onPrimary);
+  --color-miro-charcoal: var(--miro-charcoal);
+  --color-miro-surface: var(--miro-surface);
+  --color-miro-surfaceSoft: var(--miro-surfaceSoft);
+  --color-miro-card: var(--miro-card);
+  --color-miro-slate: var(--miro-slate);
+  --color-miro-muted: var(--miro-muted);
+  --color-miro-hairline: var(--miro-hairline);
+  --color-miro-hairlineSoft: var(--miro-hairlineSoft);
+  --color-miro-hairlineStrong: var(--miro-hairlineStrong);
+  --color-miro-blue: var(--miro-blue);
+  --color-miro-blueDeep: var(--miro-blueDeep);
+  --color-miro-tealLight: var(--miro-tealLight);
+  --color-miro-tealText: var(--miro-tealText);
+  --color-miro-tealBorder: var(--miro-tealBorder);
+  --color-miro-roseLight: var(--miro-roseLight);
+  --color-miro-roseText: var(--miro-roseText);
+  --color-miro-roseBorder: var(--miro-roseBorder);
+  --color-miro-yellowLight: var(--miro-yellowLight);
+  --color-miro-yellowText: var(--miro-yellowText);
+  --color-miro-yellowBorder: var(--miro-yellowBorder);
+  --color-miro-lavenderLight: var(--miro-lavenderLight);
+  --color-miro-lavenderText: var(--miro-lavenderText);
+  --color-miro-lavenderBorder: var(--miro-lavenderBorder);
+  --color-miro-successLight: var(--miro-successLight);
+  --color-miro-successText: var(--miro-successText);
+  --color-miro-successBorder: var(--miro-successBorder);
+  --color-miro-dangerLight: var(--miro-dangerLight);
+  --color-miro-dangerText: var(--miro-dangerText);
+  --color-miro-dangerBorder: var(--miro-dangerBorder);
 
   --radius-3xl: 28px;
   --radius-xl: 16px;
@@ -61,18 +75,104 @@
 }
 
 @layer base {
+  /*
+   * Architect's Night Drafting Slate — refined from handoff.
+   * Naming matches existing utilities: miro-surface = page backdrop,
+   * miro-card = paper (was bg-white). Primary CTA inverts to dense chalk bone.
+   */
   :root {
-    --background: #f7f8fa;
-    --foreground: #1c1c1e;
-    --border: #e0e2e8;
-    --card: #ffffff;
-    --card-foreground: #1c1c1e;
+    --miro-surface: #f7f8fa;
+    --miro-surfaceSoft: #fafbfc;
+    --miro-card: #ffffff;
+    --miro-primary: #1c1c1e;
+    --miro-onPrimary: #ffffff;
+    --miro-charcoal: #2c2c34;
+    --miro-slate: #555a6a;
+    --miro-muted: #8e91a0;
+    --miro-hairline: #e0e2e8;
+    --miro-hairlineSoft: #eef0f3;
+    --miro-hairlineStrong: #c7cad5;
+    --miro-blue: #0176d3;
+    --miro-blueDeep: #014486;
+    --miro-blueFill: color-mix(in srgb, var(--miro-blue) 16%, transparent);
+
+    --miro-tealLight: #c3faf5;
+    --miro-tealText: #187574;
+    --miro-tealBorder: #99e8e0;
+    --miro-roseLight: #ffd8f4;
+    --miro-roseText: #9d174d;
+    --miro-roseBorder: #f5b8df;
+    --miro-yellowLight: #fff4c4;
+    --miro-yellowText: #746019;
+    --miro-yellowBorder: #f0d98a;
+    --miro-lavenderLight: #f5f3ff;
+    --miro-lavenderText: #4338ca;
+    --miro-lavenderBorder: #c7d2fe;
+    --miro-successLight: #dcfce7;
+    --miro-successText: #15803d;
+    --miro-successBorder: #86efac;
+    --miro-dangerLight: #fee2e2;
+    --miro-dangerText: #991b1b;
+    --miro-dangerBorder: #fecaca;
+
+    --miro-modal-shadow: rgba(5, 0, 56, 0.08) 0px 12px 32px -4px;
+
+    --background: var(--miro-surface);
+    --foreground: var(--miro-primary);
+    --border: var(--miro-hairline);
+    --card: var(--miro-card);
+    --card-foreground: var(--miro-primary);
     --radius: 9999px;
   }
 
+  .dark {
+    color-scheme: dark;
+
+    /* Deep charcoal slate — not OLED #000, avoids text bloom */
+    --miro-surface: #0f1115;
+    --miro-surfaceSoft: #1c1f28;
+    /* Drafting card paper with physical boundary */
+    --miro-card: #16181f;
+    /* Dense chalk bone pill + ink (softer than pure #f4f5f8 invert) */
+    --miro-primary: #eceef2;
+    --miro-onPrimary: #0f1115;
+    --miro-charcoal: #d4d7e0;
+    --miro-slate: #9aa0b0;
+    --miro-muted: #6e7486;
+    --miro-hairline: #2a2e3a;
+    --miro-hairlineSoft: #22252f;
+    --miro-hairlineStrong: #3a3f4e;
+    /* Blueprint blue — elevated for contrast, not neon */
+    --miro-blue: #4aa3f0;
+    --miro-blueDeep: #7bb8f0;
+    --miro-blueFill: color-mix(in srgb, var(--miro-blue) 22%, transparent);
+
+    /* Mineral glazes: low-luminance grounds + luminous but desaturated ink */
+    --miro-tealLight: #122826;
+    --miro-tealText: #6bc4b8;
+    --miro-tealBorder: #1a3d3a;
+    --miro-roseLight: #2a1822;
+    --miro-roseText: #e091b0;
+    --miro-roseBorder: #4a2838;
+    --miro-yellowLight: #262218;
+    --miro-yellowText: #e0c56a;
+    --miro-yellowBorder: #3f3620;
+    --miro-lavenderLight: #1c1b2c;
+    --miro-lavenderText: #b4bce8;
+    --miro-lavenderBorder: #2e2c4a;
+    --miro-successLight: #14261c;
+    --miro-successText: #6bbf8a;
+    --miro-successBorder: #1e3d2a;
+    --miro-dangerLight: #2a1618;
+    --miro-dangerText: #e09090;
+    --miro-dangerBorder: #4a2828;
+
+    --miro-modal-shadow: rgba(0, 0, 0, 0.45) 0px 12px 32px -4px;
+  }
+
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: var(--miro-surface);
+    color: var(--miro-primary);
     font-family: var(--font-sans);
     letter-spacing: -0.01em;
     -webkit-font-smoothing: antialiased;

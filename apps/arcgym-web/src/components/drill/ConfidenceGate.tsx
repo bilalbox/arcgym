@@ -24,7 +24,7 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
   hasSelectedAnswer,
 }) => {
   return (
-    <div className="mt-8 rounded-2xl border border-miro-hairline bg-miro-surface p-6 transition-colors">
+    <div className="mt-8 rounded-2xl border border-miro-hairline bg-miro-surfaceSoft p-6 transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-miro-blue" />
@@ -32,7 +32,7 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
             Confidence
           </span>
         </div>
-        <span className="text-xs text-slate-600">
+        <span className="text-xs text-miro-slate">
           Overconfidence carries a 2.5× penalty
         </span>
       </div>
@@ -48,8 +48,8 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
               onClick={() => onSelectConfidence(level)}
               className={`flex items-center justify-center py-2.5 px-3 rounded-xl border text-sm font-semibold transition-all duration-150 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                 isSelected
-                  ? 'border-miro-primary bg-white shadow-xs ring-1 ring-miro-primary text-miro-primary'
-                  : 'border-miro-hairline bg-white hover:border-slate-300 text-slate-700'
+                  ? 'border-miro-primary bg-miro-card shadow-xs ring-1 ring-miro-primary text-miro-primary'
+                  : 'border-miro-hairline bg-miro-card hover:border-miro-hairlineStrong text-miro-slate'
               }`}
             >
               <span>{level}%</span>
@@ -59,19 +59,19 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-miro-hairlineSoft">
-        <div className="text-xs text-slate-600 flex items-center gap-1.5">
+        <div className="text-xs text-miro-slate flex items-center gap-1.5">
           {!hasSelectedAnswer ? (
             <>
-              <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+              <AlertCircle className="h-3.5 w-3.5 text-miro-yellowText" />
               <span>Select an option first</span>
             </>
           ) : !selectedConfidence ? (
             <>
               <span className="h-2 w-2 rounded-full bg-miro-blue animate-pulse" />
-              <span className="font-medium text-slate-700">Select confidence to continue</span>
+              <span className="font-medium text-miro-slate">Select confidence to continue</span>
             </>
           ) : (
-            <span className="text-emerald-700 font-medium">
+            <span className="text-miro-successText font-medium">
               Ready to submit with {selectedConfidence}% confidence
             </span>
           )}

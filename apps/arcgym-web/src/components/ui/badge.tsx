@@ -8,27 +8,27 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-transparent bg-miro-primary text-white",
+          "border border-transparent bg-miro-primary text-miro-onPrimary",
         secondary:
-          "border border-miro-hairline bg-miro-surface text-slate-700",
+          "border border-miro-hairline bg-miro-surface text-miro-slate",
         outline:
-          "border border-miro-hairline bg-white text-slate-700",
+          "border border-miro-hairline bg-miro-card text-miro-slate",
         pillar:
-          "border border-blue-200/80 bg-blue-50/70 text-blue-900 font-medium",
+          "border border-miro-lavenderBorder bg-miro-lavenderLight text-miro-lavenderText font-medium",
         domain:
-          "border border-miro-hairline bg-white text-slate-700 font-medium",
+          "border border-miro-hairline bg-miro-card text-miro-slate font-medium",
         teal:
-          "border border-teal-200/80 bg-miro-tealLight text-miro-tealText font-medium",
+          "border border-miro-tealBorder bg-miro-tealLight text-miro-tealText font-medium",
         rose:
-          "border border-rose-200/80 bg-miro-roseLight text-miro-roseText font-medium",
+          "border border-miro-roseBorder bg-miro-roseLight text-miro-roseText font-medium",
         yellow:
-          "border border-amber-200/80 bg-miro-yellowLight text-miro-yellowText font-medium",
+          "border border-miro-yellowBorder bg-miro-yellowLight text-miro-yellowText font-medium",
         lavender:
-          "border border-indigo-200/80 bg-miro-lavenderLight text-miro-lavenderText font-medium",
+          "border border-miro-lavenderBorder bg-miro-lavenderLight text-miro-lavenderText font-medium",
         success:
-          "border border-emerald-200/80 bg-miro-successLight text-miro-successText font-medium",
+          "border border-miro-successBorder bg-miro-successLight text-miro-successText font-medium",
         destructive:
-          "border border-rose-200/80 bg-miro-dangerLight text-miro-dangerText font-medium",
+          "border border-miro-dangerBorder bg-miro-dangerLight text-miro-dangerText font-medium",
       },
     },
     defaultVariants: {
