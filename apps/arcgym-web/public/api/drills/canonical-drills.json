@@ -1063,244 +1063,8 @@
     ]
   },
   {
-    "id": "AGD-00705",
-    "title": "ERP invoice replication under storage and API pressure: 4-stage refactor",
-    "format": "Lesson",
-    "domain": "Data_Architecture",
-    "domainLabel": "Data 360 & Data Virtualization",
-    "difficulty": "Lead_CTA",
-    "pillars": [
-      "Cost_Optimization",
-      "Reliability"
-    ],
-    "version": 3,
-    "status": "published",
-    "stages": [
-      {
-        "stageNumber": 1,
-        "stageName": "Stage 1: Forensic Diagnosis",
-        "scenario": "An enterprise copies 50 million ERP invoice lines into custom objects with hourly ETL jobs. Data storage exceeds its allocation by 140%, and the jobs fail at peak hours when the daily API limit runs out, leaving reps with stale invoices. What is the root cause?",
-        "options": [
-          {
-            "id": "st1_b",
-            "text": "The invoice lines sit in standard storage when Big Objects would absorb the volume",
-            "isCorrect": false,
-            "coachingFeedback": "Big Objects would relocate the copies but keep the hourly ETL, so the API exhaustion and stale invoices remain."
-          },
-          {
-            "id": "st1_c",
-            "text": "The hourly jobs use the REST API when Bulk API 2.0 would need far fewer calls",
-            "isCorrect": false,
-            "coachingFeedback": "Bulk API would reduce calls, but the org would still store 50 million copied rows over its allocation, and reps would still see data as old as the last run."
-          },
-          {
-            "id": "st1_a",
-            "text": "Read-mostly reference data is replicated into transactional storage instead of queried at the source",
-            "isCorrect": true,
-            "coachingFeedback": "Replicating high-volume, read-mostly data costs storage for every copied row and API calls for every sync, and the copy is only as fresh as its last run. All three symptoms trace to the copy itself."
-          }
-        ]
-      },
-      {
-        "stageNumber": 2,
-        "stageName": "Stage 2: Target Architecture Pattern",
-        "scenario": "Reps need ERP invoices on Account pages, in reports, and in list views, current to the minute. Which pattern should replace the hourly copy?",
-        "options": [
-          {
-            "id": "st2_a",
-            "text": "A Lightning web component on Account that calls the ERP REST API through Apex",
-            "isCorrect": false,
-            "coachingFeedback": "A custom component shows invoices on one page, but reports and list views cannot use data that exists only inside an Apex callout; request-reply is the suboptimal fit for this need."
-          },
-          {
-            "id": "st2_b",
-            "text": "Keep the ETL but narrow it to invoices from the last 90 days",
-            "isCorrect": false,
-            "coachingFeedback": "A narrower copy reduces storage but keeps the hourly sync, so invoices stay up to an hour old and the jobs still compete for the daily API limit."
-          },
-          {
-            "id": "st2_c",
-            "text": "Salesforce Connect external objects, with an indirect lookup relating invoices to Account",
-            "isCorrect": true,
-            "coachingFeedback": "External objects fetch ERP data live when a page or report uses them and store nothing in Salesforce. They work in page layouts, list views, and reports, and an indirect lookup relates them to Account through a unique External ID field."
-          }
-        ]
-      },
-      {
-        "stageNumber": 3,
-        "stageName": "Stage 3: Migration & Cutover Strategy",
-        "scenario": "The external objects are built. Reps open invoices about 30,000 times a day, and the legacy custom objects hold the only Salesforce-side copy of the data. How should the team cut over?",
-        "options": [
-          {
-            "id": "st3_a",
-            "text": "Switch all users to external objects over a weekend after a full sandbox regression pass",
-            "isCorrect": false,
-            "coachingFeedback": "A sandbox pass cannot reproduce production ERP load at 30,000 invoice views a day, and a single weekend switch leaves no tested fallback if the source struggles."
-          },
-          {
-            "id": "st3_b",
-            "text": "Pilot external objects with one team, then stop the ETL and purge legacy records in stages",
-            "isCorrect": true,
-            "coachingFeedback": "A pilot checks source latency and lookup behavior under real use while the legacy copy still exists as a fallback. Only then should the ETL stop and the legacy records go in stages to reclaim storage."
-          },
-          {
-            "id": "st3_c",
-            "text": "Run external objects and the hourly ETL side by side so reps can use either",
-            "isCorrect": false,
-            "coachingFeedback": "Running both keeps paying for the storage overage and API use the refactor exists to remove, and reps see two versions of each invoice with no exit point."
-          }
-        ]
-      },
-      {
-        "stageNumber": 4,
-        "stageName": "Stage 4: Telemetry & Observability",
-        "scenario": "After cutover, invoice views depend on the ERP's OData endpoint, which throttles above 50 requests per second and uses a credential that rotates every 90 days. What should the team monitor?",
-        "options": [
-          {
-            "id": "st4_a",
-            "text": "Salesforce data storage and daily API usage on the org's System Overview page",
-            "isCorrect": false,
-            "coachingFeedback": "Those were the old ETL's failure signals; external object reads use neither Salesforce storage nor the daily API allocation, so both stay green while the ERP throttles."
-          },
-          {
-            "id": "st4_b",
-            "text": "An hourly synthetic query of one external invoice, alerting if it fails",
-            "isCorrect": false,
-            "coachingFeedback": "An hourly probe catches a full outage, but not throttling at peak between probes or a credential about to expire."
-          },
-          {
-            "id": "st4_c",
-            "text": "OData callout latency, 429 and 500 responses, and upcoming credential expiry",
-            "isCorrect": true,
-            "coachingFeedback": "Once reads depend on the ERP endpoint, its latency, throttling responses, and credential validity are what fail users. Event Monitoring's External OData Callout events expose callout timing, and an expiry alert catches the 90-day rotation first."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "id": "AGD-00706",
-    "title": "Managed Data Kit Upgrades: 4-Stage Collision Refactor",
-    "format": "Lesson",
-    "domain": "Data_Architecture",
-    "domainLabel": "Data Architecture & Virtualization",
-    "difficulty": "Lead_CTA",
-    "pillars": [
-      "Operational_Excellence",
-      "Trust"
-    ],
-    "version": 1,
-    "status": "published",
-    "sourceCardIds": [
-      "FC-0D5KX00000pNzhX0AS",
-      "FC-0D5KX00000pNI7B0AW"
-    ],
-    "stages": [
-      {
-        "stageNumber": 1,
-        "stageName": "Stage 1: Forensic Diagnosis",
-        "scenario": "An enterprise with custom Opportunity-to-DMO mappings enables Marketing Cloud Next. The administrator clicks Deploy Sales Data Kit from the setup wizard. Identity Resolution and Calculated Insights fail across the org within minutes. Debugging confirms custom field values no longer reach unified profiles. What is the root cause?",
-        "options": [
-          {
-            "id": "st1_a",
-            "text": "Marketing Cloud Next requires asynchronous queueable jobs that exceeded the platform daily batch limit.",
-            "isCorrect": false,
-            "coachingFeedback": "Batch limit exhaustion produces queueable failure errors rather than clearing mapped attributes from unified profile records."
-          },
-          {
-            "id": "st1_b",
-            "text": "The setup action reapplied the standard package schema, replacing bespoke mappings with default field relationships.",
-            "isCorrect": true,
-            "coachingFeedback": "Standard data kit deployment forcefully resets existing mapping metadata, replacing customized enterprise entity relationships with package baseline specifications."
-          },
-          {
-            "id": "st1_c",
-            "text": "The platform integration user was suspended during package initialization due to permission set conflicts.",
-            "isCorrect": false,
-            "coachingFeedback": "A suspended integration user halts ingestion entirely, whereas the streams remained active while mappings reverted to defaults."
-          }
-        ]
-      },
-      {
-        "stageNumber": 2,
-        "stageName": "Stage 2: Target Architecture Pattern",
-        "scenario": "The team must configure Marketing Cloud Next streams while safeguarding existing custom data model extensions. Company policy requires all metadata modifications to pass through audited source control pipelines. Which installation pattern should the architect establish?",
-        "options": [
-          {
-            "id": "st2_a",
-            "text": "Deploy the full Sales Data Kit into a secondary data space and build formula fields to replicate mappings.",
-            "isCorrect": false,
-            "coachingFeedback": "Creating formula fields in parallel data spaces adds unnecessary transformation overhead and fails to protect existing core model mappings."
-          },
-          {
-            "id": "st2_b",
-            "text": "Ingest required data kit streams individually through the Data Streams interface and apply field mappings selectively.",
-            "isCorrect": true,
-            "coachingFeedback": "Selective stream ingestion isolates package dependencies, allowing teams to adopt standard messaging fields without overwriting customized enterprise entity mappings."
-          },
-          {
-            "id": "st2_c",
-            "text": "Recreate custom fields directly on standard data lake objects and assign them system administrator permissions.",
-            "isCorrect": false,
-            "coachingFeedback": "Customizing standard lake object fields without governed model mapping does not route data into unified data model entities."
-          }
-        ]
-      },
-      {
-        "stageNumber": 3,
-        "stageName": "Stage 3: Migration & Cutover Strategy",
-        "scenario": "During sandbox testing, all stream field labels defaulted to German because the background Integration User was provisioned with German locale settings. The business requires English metadata labels across all downstream tooling before promoting to production. Which cutover sequence resolves this constraint?",
-        "options": [
-          {
-            "id": "st3_a",
-            "text": "Reprovision the lower environment with English locale settings before package installation and promote verified metadata through version control.",
-            "isCorrect": true,
-            "coachingFeedback": "Integration user locale settings become immutable upon data stream initialization, making pre-installation environment provisioning mandatory for clean label promotion."
-          },
-          {
-            "id": "st3_b",
-            "text": "Update the Integration User locale in company settings and execute an asynchronous schema refresh across all active streams.",
-            "isCorrect": false,
-            "coachingFeedback": "Changing user language in platform settings does not alter established metadata labels on previously initialized data lake objects."
-          },
-          {
-            "id": "st3_c",
-            "text": "Apply custom translation workbench overrides to data lake object fields after deploying the data kit into production.",
-            "isCorrect": false,
-            "coachingFeedback": "The Translation Workbench does not govern internal Data Cloud stream field labels displayed in downstream segmentation builders."
-          }
-        ]
-      },
-      {
-        "stageNumber": 4,
-        "stageName": "Stage 4: Telemetry & Observability",
-        "scenario": "The architect must detect unexpected data stream schema modifications or mapping regressions before they corrupt downstream segmentation and activation jobs. Which observability pattern should the delivery team implement?",
-        "options": [
-          {
-            "id": "st4_a",
-            "text": "Review setup audit trail logs on a weekly basis to identify administrative mapping changes after scheduled deployments.",
-            "isCorrect": false,
-            "coachingFeedback": "Weekly audit reviews allow schema drift to persist for days, corrupting downstream calculated insights and marketing segment populations before discovery."
-          },
-          {
-            "id": "st4_b",
-            "text": "Implement automated CI/CD schema validation tests in pull requests and subscribe alerting webhooks to Data Stream error events.",
-            "isCorrect": true,
-            "coachingFeedback": "Automated pull request validation detects schema drift before deployment, while event webhooks provide immediate notification when ingestion streams encounter mapping faults."
-          },
-          {
-            "id": "st4_c",
-            "text": "Enable comprehensive transaction logging across all platform flows and monitor storage usage via daily administrative reports.",
-            "isCorrect": false,
-            "coachingFeedback": "Monitoring general platform flow logs produces excessive noise without providing targeted visibility into data stream mapping health."
-          }
-        ]
-      }
-    ]
-  },
-  {
     "id": "AGD-00801",
-    "title": "Data 360: Activation Bypass Despite Identity Resolution",
+    "title": "Data 360: Activation Topology for Unified Individuals",
     "format": "Diagram",
     "domain": "Data_Architecture",
     "domainLabel": "Data 360 Architecture",
@@ -1309,187 +1073,39 @@
       "Trust",
       "Reliability"
     ],
-    "version": 2,
+    "version": 3,
     "status": "published",
     "steps": [
       {
         "id": "s1",
-        "mode": "fault",
-        "variant": "wrong_edge",
-        "prompt": "Nightly identity jobs succeed, yet Marketing Cloud still messages the same person once under a CRM key and again under a web key. Click the connection that explains why activation still sees duplicates.",
+        "mode": "compare",
+        "variant": "compare_topology",
+        "prompt": "Nightly identity jobs run, but marketing campaigns are still delivering duplicate messages to the same person under different CRM and web IDs. Which architecture topology ensures activations deliver unified individuals without duplicate channel contacts?",
         "sourceDiagramUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html",
-        "genericMissCopy": "That hop is part of a valid path. It is not what lets duplicate source keys reach the channel.",
-        "graph": {
-          "nodes": [
-            {
-              "id": "dlo",
-              "label": "DLOs",
-              "kind": "component",
-              "layer": "lakehouse"
-            },
-            {
-              "id": "dmo",
-              "label": "Contact DMO",
-              "kind": "component",
-              "layer": "lakehouse"
-            },
-            {
-              "id": "ir",
-              "label": "Identity Resolution",
-              "kind": "component",
-              "layer": "unify"
-            },
-            {
-              "id": "unified",
-              "label": "Unified Individual",
-              "kind": "component",
-              "layer": "unify"
-            },
-            {
-              "id": "segment",
-              "label": "Segment",
-              "kind": "component",
-              "layer": "activation"
-            },
-            {
-              "id": "mc",
-              "label": "Marketing Cloud",
-              "kind": "component",
-              "layer": "activation"
-            }
-          ],
-          "edges": [
-            {
-              "id": "e_dlo_dmo",
-              "source": "dlo",
-              "target": "dmo"
-            },
-            {
-              "id": "e_dmo_ir",
-              "source": "dmo",
-              "target": "ir"
-            },
-            {
-              "id": "e_ir_uni",
-              "source": "ir",
-              "target": "unified"
-            },
-            {
-              "id": "e_uni_seg",
-              "source": "unified",
-              "target": "segment"
-            },
-            {
-              "id": "e_seg_mc",
-              "source": "segment",
-              "target": "mc"
-            },
-            {
-              "id": "e_dmo_mc",
-              "source": "dmo",
-              "target": "mc"
-            }
-          ]
-        },
-        "layout": {
-          "nodes": {
-            "dlo": {
-              "x": 0.1,
-              "y": 0.28
-            },
-            "dmo": {
-              "x": 0.32,
-              "y": 0.28
-            },
-            "ir": {
-              "x": 0.54,
-              "y": 0.28
-            },
-            "unified": {
-              "x": 0.74,
-              "y": 0.28
-            },
-            "segment": {
-              "x": 0.74,
-              "y": 0.62
-            },
-            "mc": {
-              "x": 0.74,
-              "y": 0.88
-            }
-          }
-        },
-        "hotspots": [
-          {
-            "id": "e_dmo_mc",
-            "targetKind": "edge",
-            "isCorrect": true
-          },
-          {
-            "id": "e_seg_mc",
-            "targetKind": "edge",
-            "isCorrect": false,
-            "distractorAntipattern": "Blame Channel Hop",
-            "missRationale": "Segment→Marketing Cloud is the intended activation hop once the segment is built on unified profiles."
-          },
-          {
-            "id": "e_dmo_ir",
-            "targetKind": "edge",
-            "isCorrect": false,
-            "distractorAntipattern": "Break Ingest Mapping",
-            "missRationale": "Contact DMO→Identity Resolution is required. Cutting it would stop unification, not explain duplicates while jobs succeed."
-          },
-          {
-            "id": "ir",
-            "targetKind": "node",
-            "isCorrect": false,
-            "distractorAntipattern": "Delete the Unifier",
-            "missRationale": "Identity Resolution is running successfully in the prompt. The fault is a path that ignores its output."
-          },
-          {
-            "id": "dmo",
-            "targetKind": "node",
-            "isCorrect": false,
-            "distractorAntipattern": "Erase Source DMO",
-            "missRationale": "Mapped Contact DMOs remain necessary inputs. The error is activating from them instead of unified profiles."
-          },
-          {
-            "id": "mc",
-            "targetKind": "node",
-            "isCorrect": false
-          },
-          {
-            "id": "segment",
-            "targetKind": "node",
-            "isCorrect": false
-          },
-          {
-            "id": "e_uni_seg",
-            "targetKind": "edge",
-            "isCorrect": false
-          }
-        ],
         "options": [
           {
             "id": "s1_a",
-            "label": "Remove the Contact DMO→Marketing Cloud path; activate only from unified segments",
+            "label": "Unified Individual Segment Activation",
+            "diagramUrl": "/diagrams/agd-00801-unified-activation.svg",
             "isCorrect": true,
-            "rationale": "A direct DMO activation bypasses Unified Individual, so channel keys stay fragmented even when Identity Resolution jobs succeed.",
+            "rationale": "Activations built on segments of the Unified Individual data model object guarantee that deduplicated enterprise identities govern channel reach, eliminating source-key duplicates.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
           },
           {
             "id": "s1_b",
-            "label": "Disable Identity Resolution and dedupe inside Marketing Cloud journeys",
+            "label": "Direct Source DMO Activation",
+            "diagramUrl": "/diagrams/agd-00801-direct-dmo.svg",
             "isCorrect": false,
-            "distractorAntipattern": "Channel-Side Dedup",
-            "rationale": "Channel cleanup cannot restore an enterprise identity graph or consistent suppression across every activation target."
+            "distractorAntipattern": "Identity Resolution Bypass",
+            "rationale": "Directly activating from source Contact DMOs completely bypasses the Identity Resolution engine and Unified Individual profiles, causing channel activations to treat CRM and web records as separate individuals."
           },
           {
             "id": "s1_c",
-            "label": "Delete the Contact DMO and activate only from raw DLOs",
+            "label": "Raw Data Lake Ingest Push",
+            "diagramUrl": "/diagrams/agd-00801-raw-ingest.svg",
             "isCorrect": false,
-            "distractorAntipattern": "Raw Lake Activation",
-            "rationale": "Raw DLOs are less harmonized than mapped DMOs; skipping both mapping and unification worsens duplicate keys."
+            "distractorAntipattern": "Raw Ingest Activation",
+            "rationale": "Skipping both data model harmonization and identity resolution delivers raw, unharmonized lake records directly to marketing channels, compounding fragmentation and schema errors."
           }
         ]
       }

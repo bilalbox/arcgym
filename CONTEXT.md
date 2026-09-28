@@ -25,27 +25,27 @@ A design tension evaluated across the Salesforce Well-Architected Framework pill
 _Avoid_: Feature preference, single right answer
 
 **Drill Format**:
-One of three distinct interaction archetypes: Lesson, Rapid Fire, or Diagram. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
-_Avoid_: Question type, quiz mode, Currency, Scenario
+One of two distinct interaction archetypes: Rapid Fire or Diagram. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
+_Avoid_: Question type, quiz mode, Currency, Scenario, Lesson
 
 **Rapid Fire Drill**:
 A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 5 decision reps (drills), requiring completion of all 5 reps to achieve that day's practice streak.
 _Avoid_: Single-question rapid fire, partial streak award, flashcard round
 
 **Diagram Drill**:
-A spatial judgment format: the learner inspects an ArcGym-redrawn topology derived from official Architect documentation, clicks the missing or incorrect hotspot (node, edge, or compose slot), then commits a constrained MCQ repair. Modes in v1 are `fault` and `compose` only. Diagrams are graph JSON with a separate normalized (0–1) layout; official Salesforce diagram binaries are never shipped. Dual learner-facing grounding: `sourceDiagramUrl` for topology provenance plus correct-option `citationUrl`.
-_Avoid_: Drag-and-drop rearrange, embedded Lucid/PNG from Salesforce, Currency/Scenario revival
+A visual and spatial judgment format training architectural topology evaluation derived from official Architect documentation. Supports two modes: (1) Hotspot Diagnose (`fault` / `compose`): inspect an ArcGym-redrawn topology, click the missing or incorrect hotspot (node, edge, or slot), select the constrained MCQ repair, and commit with a single confidence rating; (2) Comparative Topology (`compare`): evaluate 3–4 distinct candidate architecture diagrams with lightbox zoom, select the valid architectural solution, and commit with a single confidence rating. official Salesforce diagram binaries are never shipped as authoritative sources; dual learner-facing grounding provides `sourceDiagramUrl` for topology provenance plus correct-option `citationUrl`.
+_Avoid_: Drag-and-drop rearrange, Currency/Scenario/Lesson revival
 
 **Diagram Variant**:
-An intentionally incomplete or incorrect graph state derived from an official reference topology (`missing_node`, `wrong_edge`, `misplaced_component`, `missing_edge`, and similar), used so fault/compose drills have a visual problem to localize.
-_Avoid_: Corrupting official image pixels, quiz on a pristine unmodified reference picture only (annotation-only is allowed as a rare exception, not the default)
+An intentionally incomplete, incorrect, or comparative graph state derived from an official reference topology (`missing_node`, `wrong_edge`, `misplaced_component`, `missing_edge`, `compare_topology`), used so visual drills have an architectural problem to evaluate.
+_Avoid_: Corrupting official image pixels, quiz on a pristine unmodified reference picture only
 
 **Well-Architected Grounding**:
 The architectural rationale, citations, and decision trees anchored directly in official documentation from architect.salesforce.com.
 _Avoid_: Opinion, editorializing
 
 **Universal Pre-Submit Gate**:
-The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across all drill formats. On Diagram drills the gate fires before the hotspot commit and again before the MCQ when the hotspot was correct.
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across all drill formats. On Diagram drills a single gate commits the compound diagnosis and repair (or comparative choice).
 _Avoid_: Feedback prompt, post-quiz survey
 
 **Hybrid Document Pattern**:

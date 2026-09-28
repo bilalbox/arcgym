@@ -43,7 +43,7 @@ export function useDrillRecommendation(
     },
   );
 
-  // Active recommendation state (single drill for Diagram / Lesson, or primary drill for Rapid Fire)
+  // Active recommendation state (single drill for Diagram, or primary drill for Rapid Fire)
   const [activeRecommendation, setActiveRecommendation] = useState<RecommendationResult | null>(
     () => {
       if (format === 'Rapid_Fire') {

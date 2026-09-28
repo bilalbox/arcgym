@@ -1,7 +1,6 @@
 import type { DrillDefinitionDTO, DrillFormat } from '../types/drill.js';
 
 export type WordingRuleId =
-  | 'lesson-min-options'
   | 'length-tell'
   | 'verdict-prefix'
   | 'antipattern-name'
@@ -15,7 +14,7 @@ export interface WordingFinding {
   message: string;
 }
 
-type FeedbackField = 'rationale' | 'coachingFeedback';
+type FeedbackField = 'rationale';
 
 /** One option as a learner sees it, whatever the drill format calls its fields. */
 interface Choice {
@@ -28,7 +27,7 @@ interface Choice {
   antipattern?: string;
 }
 
-/** One decision point: a Rapid Fire / Diagram step, or a Lesson stage. */
+/** One decision point: a Rapid Fire or Diagram step. */
 interface Question {
   format: DrillFormat;
   where: string;
@@ -64,19 +63,6 @@ function questionsOf(drill: DrillDefinitionDTO): Question[] {
           feedbackField: 'rationale',
           feedback: o.rationale,
           antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
-        })),
-      }));
-    case 'Lesson':
-      return drill.stages.map((stage) => ({
-        format: drill.format,
-        where: `stage ${stage.stageNumber}`,
-        stem: stage.scenario,
-        choices: stage.options.map((o) => ({
-          id: o.id,
-          text: o.text,
-          isCorrect: o.isCorrect,
-          feedbackField: 'coachingFeedback',
-          feedback: o.coachingFeedback,
         })),
       }));
   }
@@ -140,14 +126,6 @@ function lintQuestion(question: Question): WordingFinding[] {
       ruleId: 'long-stem',
       where,
       message: `question text has ${stemWords} words (max ${MAX_STEM_WORDS}); cut sentences no option depends on`,
-    });
-  }
-
-  if (question.format === 'Lesson' && choices.length < 3) {
-    findings.push({
-      ruleId: 'lesson-min-options',
-      where,
-      message: `has ${choices.length} options; Lesson stages need at least 3`,
     });
   }
 

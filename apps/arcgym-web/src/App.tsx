@@ -4,11 +4,10 @@ import {
   type ArchitecturalDomain,
   type DrillFormat,
   isDiagramDrill,
-  isLessonDrill,
   isRapidFireDrill,
   type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
-import { GraduationCap, Network, Zap } from 'lucide-react';
+import { Network, Zap } from 'lucide-react';
 import type React from 'react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
@@ -20,9 +19,6 @@ import { useVisitorProgress } from '@/hooks/useVisitorProgress';
 
 const DiagramRunner = lazy(() =>
   import('@/components/drill/DiagramRunner').then((m) => ({ default: m.DiagramRunner })),
-);
-const LessonStepper = lazy(() =>
-  import('@/components/drill/LessonStepper').then((m) => ({ default: m.LessonStepper })),
 );
 const ProgressDialog = lazy(() =>
   import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog })),
@@ -53,13 +49,7 @@ const FORMATS: FormatConfig[] = [
     label: 'Diagram',
     icon: <Network className="h-4 w-4" />,
     description:
-      'Locate the missing or wrong element on a topology, then commit the Well-Architected repair.',
-  },
-  {
-    id: 'Lesson',
-    label: 'Lesson',
-    icon: <GraduationCap className="h-4 w-4" />,
-    description: 'Multi-stage coaching path from forensic diagnosis to operational observability.',
+      'Locate the missing or wrong element on a topology, or evaluate competing architectures.',
   },
 ];
 
@@ -251,7 +241,7 @@ export const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5 pt-2">
+        <div className="grid grid-cols-2 gap-2.5 pt-2">
           {FORMATS.map((fmt) => {
             const isActive = activeFormat === fmt.id;
             return (
@@ -340,14 +330,6 @@ export const App: React.FC = () => {
                 drill={currentDrill}
                 isReviewMode={isReviewMode}
                 previousAttempt={previousAttempt}
-                onDrillComplete={handleDrillComplete}
-                onNextDrill={advanceToNextDrill}
-              />
-            )}
-            {currentDrill && isLessonDrill(currentDrill) && (
-              <LessonStepper
-                drill={currentDrill}
-                isReviewMode={isReviewMode}
                 onDrillComplete={handleDrillComplete}
                 onNextDrill={advanceToNextDrill}
               />

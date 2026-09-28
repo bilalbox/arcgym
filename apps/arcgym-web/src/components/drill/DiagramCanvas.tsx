@@ -12,9 +12,20 @@ export const DiagramCanvas: React.FC<{
   layout: DiagramLayoutDTO;
   hotspots: DiagramHotspotDTO[];
   selectedHotspotId: string | null;
+  correctHotspotId?: string | null;
+  isSubmitted?: boolean;
   interactive: boolean;
   onSelectHotspot: (id: string) => void;
-}> = ({ graph, layout, hotspots, selectedHotspotId, interactive, onSelectHotspot }) => {
+}> = ({
+  graph,
+  layout,
+  hotspots,
+  selectedHotspotId,
+  correctHotspotId,
+  isSubmitted = false,
+  interactive,
+  onSelectHotspot,
+}) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const paperRef = useRef<dia.Paper | null>(null);
   const graphRef = useRef<dia.Graph | null>(null);
@@ -111,6 +122,24 @@ export const DiagramCanvas: React.FC<{
       const isSlot = node.kind === 'slot';
       const isHotspot = hotspotIds.has(node.id);
       const selected = selectedHotspotId === node.id;
+      const isCorrect = correctHotspotId === node.id;
+
+      let stroke = selected ? '#1c1c1e' : isSlot ? '#8e91a0' : '#e0e2e8';
+      let strokeWidth = selected ? 2.5 : isSlot ? 1.5 : 1;
+      let fill = isSlot ? '#fafbfc' : '#ffffff';
+
+      if (isSubmitted) {
+        if (isCorrect) {
+          stroke = '#16a34a';
+          strokeWidth = 3;
+          fill = '#f0fdf4';
+        } else if (selected) {
+          stroke = '#dc2626';
+          strokeWidth = 3;
+          fill = '#fef2f2';
+        }
+      }
+
       cells.push(
         new shapes.standard.Rectangle({
           id: node.id,
@@ -121,9 +150,9 @@ export const DiagramCanvas: React.FC<{
           size: { width: NODE_W, height: NODE_H },
           attrs: {
             body: {
-              fill: isSlot ? '#fafbfc' : '#ffffff',
-              stroke: selected ? '#1c1c1e' : isSlot ? '#8e91a0' : '#e0e2e8',
-              strokeWidth: selected ? 2.5 : isSlot ? 1.5 : 1,
+              fill,
+              stroke,
+              strokeWidth,
               strokeDasharray: isSlot ? '5 4' : '0',
               rx: 10,
               ry: 10,
@@ -144,17 +173,31 @@ export const DiagramCanvas: React.FC<{
     for (const edge of graph.edges) {
       const isHotspot = hotspotIds.has(edge.id);
       const selected = selectedHotspotId === edge.id;
-      const stroke = selected ? '#1c1c1e' : '#c7cad5';
+      const isCorrect = correctHotspotId === edge.id;
+
+      let stroke = selected ? '#1c1c1e' : '#c7cad5';
+      let strokeWidth = selected ? 3.5 : 2.5;
+
+      if (isSubmitted) {
+        if (isCorrect) {
+          stroke = '#16a34a';
+          strokeWidth = 4;
+        } else if (selected) {
+          stroke = '#dc2626';
+          strokeWidth = 4;
+        }
+      }
+
       cells.push(
         new shapes.standard.Link({
           id: edge.id,
           source: { id: edge.source },
           target: { id: edge.target },
-          z: selected ? 2 : 1,
+          z: selected || (isSubmitted && (isCorrect || selected)) ? 2 : 1,
           attrs: {
             line: {
               stroke,
-              strokeWidth: selected ? 3.5 : 2.5,
+              strokeWidth,
               targetMarker: {
                 type: 'path',
                 d: 'M 8 -4 0 0 8 4 Z',
@@ -183,7 +226,7 @@ export const DiagramCanvas: React.FC<{
     }
 
     jointGraph.resetCells(cells);
-  }, [graph, layout, hotspots, selectedHotspotId, interactive]);
+  }, [graph, layout, hotspots, selectedHotspotId, correctHotspotId, isSubmitted, interactive]);
 
   const zoom = (delta: number) => {
     const paper = paperRef.current;
@@ -215,7 +258,7 @@ export const DiagramCanvas: React.FC<{
       </div>
       <div ref={hostRef} className="w-full touch-none" style={{ height: VIEW_H }} />
       <p className="px-3 py-2 text-[11px] text-miro-muted border-t border-miro-hairlineSoft">
-        Drag the background to pan. Click a node or edge after setting confidence
+        Drag the canvas to pan. Click a node, connection, or placeholder to select it
         {graph.nodes.some((n) => n.kind === 'slot')
           ? ' — dashed boxes are identical compose slots.'
           : '.'}

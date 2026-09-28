@@ -14,11 +14,6 @@ function renderedDecisions(drill: DrillDefinitionDTO): [string, boolean[]][] {
         optionSeed(drill.id, s.id),
         s.options.map((o) => o.isCorrect),
       ]);
-    case 'Lesson':
-      return drill.stages.map((s) => [
-        optionSeed(drill.id, s.stageNumber),
-        s.options.map((o) => o.isCorrect),
-      ]);
   }
 }
 

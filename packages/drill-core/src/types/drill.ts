@@ -1,6 +1,6 @@
 export type ConfidenceAnchor = 0.5 | 0.7 | 0.85 | 0.95;
 
-export type DrillFormat = 'Lesson' | 'Rapid_Fire' | 'Diagram';
+export type DrillFormat = 'Rapid_Fire' | 'Diagram';
 
 /** Practice category from Salesforce Architect Fundamentals. Orthogonal to Well-Architected pillars. */
 export type ArchitecturalDomain =
@@ -77,13 +77,14 @@ export interface RapidFireStepDTO {
   options: DrillOptionDTO[];
 }
 
-export type DiagramMode = 'fault' | 'compose';
+export type DiagramMode = 'fault' | 'compose' | 'compare';
 
 export type DiagramVariantKind =
   | 'missing_node'
   | 'wrong_edge'
   | 'misplaced_component'
-  | 'missing_edge';
+  | 'missing_edge'
+  | 'compare_topology';
 
 export type DiagramNodeKind = 'component' | 'slot';
 
@@ -132,9 +133,9 @@ export interface DiagramHotspotDTO {
   missRationale?: string;
 }
 
-export interface DiagramStepDTO {
+export interface DiagramHotspotStepDTO {
   id: string;
-  mode: DiagramMode;
+  mode: 'fault' | 'compose';
   prompt: string;
   /** Official Architect page whose topology was redrawn (learner-facing provenance). */
   sourceDiagramUrl: string;
@@ -142,24 +143,37 @@ export interface DiagramStepDTO {
   graph: DiagramGraphDTO;
   layout: DiagramLayoutDTO;
   hotspots: DiagramHotspotDTO[];
-  /** MCQ shown only after the correct hotspot is committed. */
+  /** MCQ shown to choose the repair. */
   options: DrillOptionDTO[];
   /** Miss copy when a filler hotspot (no distractorAntipattern) is clicked. */
   genericMissCopy?: string;
 }
 
-export interface LessonOptionDTO {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-  coachingFeedback: string;
+export interface DiagramCompareOptionDTO extends DrillOptionDTO {
+  /** SVG/image URL (or inline data URI / SVG path) of the candidate architecture diagram. */
+  diagramUrl: string;
+  /** Optional inline SVG string if embedded directly. */
+  diagramSvg?: string;
 }
 
-export interface LessonStageDTO {
-  stageNumber: number;
-  stageName: string;
-  scenario: string;
-  options: LessonOptionDTO[];
+export interface DiagramCompareStepDTO {
+  id: string;
+  mode: 'compare';
+  prompt: string;
+  /** Official Architect page whose topology was redrawn (learner-facing provenance). */
+  sourceDiagramUrl: string;
+  variant?: DiagramVariantKind;
+  options: DiagramCompareOptionDTO[];
+}
+
+export type DiagramStepDTO = DiagramHotspotStepDTO | DiagramCompareStepDTO;
+
+export function isDiagramHotspotStep(step: DiagramStepDTO): step is DiagramHotspotStepDTO {
+  return step.mode === 'fault' || step.mode === 'compose';
+}
+
+export function isDiagramCompareStep(step: DiagramStepDTO): step is DiagramCompareStepDTO {
+  return step.mode === 'compare';
 }
 
 /** Editorial lifecycle — drafts stay in content/ but are excluded from the live catalog. */
@@ -192,15 +206,7 @@ export interface DiagramDrillDefinition extends DrillDefinitionBase {
   steps: DiagramStepDTO[];
 }
 
-export interface LessonDrillDefinition extends DrillDefinitionBase {
-  format: 'Lesson';
-  stages: LessonStageDTO[];
-}
-
-export type DrillDefinitionDTO =
-  | RapidFireDrillDefinition
-  | DiagramDrillDefinition
-  | LessonDrillDefinition;
+export type DrillDefinitionDTO = RapidFireDrillDefinition | DiagramDrillDefinition;
 
 export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefinition {
   return d.format === 'Rapid_Fire';
@@ -208,10 +214,6 @@ export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefi
 
 export function isDiagramDrill(d: DrillDefinitionDTO): d is DiagramDrillDefinition {
   return d.format === 'Diagram';
-}
-
-export function isLessonDrill(d: DrillDefinitionDTO): d is LessonDrillDefinition {
-  return d.format === 'Lesson';
 }
 
 export interface AttemptSubmissionDTO {

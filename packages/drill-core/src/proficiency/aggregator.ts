@@ -6,7 +6,6 @@ import {
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
   isDiagramDrill,
-  isLessonDrill,
   isRapidFireDrill,
   type ProficiencyDimension,
 } from '../types/drill.js';
@@ -29,12 +28,9 @@ export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
   if (isRapidFireDrill(drill)) {
     return drill.steps?.length || 1;
   }
-  if (isLessonDrill(drill)) {
-    return drill.stages?.length || 1;
-  }
   if (isDiagramDrill(drill)) {
-    // Hotspot commit + optional MCQ on the success path.
-    return (drill.steps?.length || 1) * 2;
+    // Single calibrated decision per step
+    return drill.steps?.length || 1;
   }
   return 1;
 }

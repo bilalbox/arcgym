@@ -3,7 +3,6 @@ import type {
   DiagramDrillDefinition,
   DrillAttemptRecord,
   DrillDefinitionDTO,
-  LessonDrillDefinition,
   RapidFireDrillDefinition,
 } from '../types/drill.js';
 import { calculateProficiencyReport, getDrillQuestionCount } from './aggregator.js';
@@ -46,28 +45,56 @@ const mockRapidFireDrill: RapidFireDrillDefinition = {
   ],
 };
 
-const mockLessonDrill: LessonDrillDefinition = {
+const mockDiagramDrill2: DiagramDrillDefinition = {
   id: 'DR-002',
   title: 'Platform Event Architecture',
-  format: 'Lesson',
+  format: 'Diagram',
   domain: 'Integration_Apis',
   domainLabel: 'Integration',
   difficulty: 'Lead_CTA',
   pillars: ['Reliability', 'Trust'],
   version: 1,
   status: 'published',
-  stages: [
+  steps: [
     {
-      stageNumber: 1,
-      stageName: 'Stage 1',
-      scenario: 'Scen 1',
-      options: [{ id: 'opt1', text: 'Text 1', isCorrect: true, coachingFeedback: 'fb1' }],
+      id: 's1',
+      mode: 'compare',
+      prompt: 'Which event delivery architecture avoids duplicate triggers?',
+      sourceDiagramUrl:
+        'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
+      options: [
+        {
+          id: 'o1',
+          label: 'Architecture A',
+          diagramUrl: '/diagrams/event-bus-a.svg',
+          isCorrect: true,
+          rationale: 'Pub-sub pattern with replay ID.',
+        },
+        {
+          id: 'o2',
+          label: 'Architecture B',
+          diagramUrl: '/diagrams/event-bus-b.svg',
+          isCorrect: false,
+          rationale: 'Lacks idempotency token.',
+          distractorAntipattern: 'Missing Idempotency',
+        },
+      ],
     },
     {
-      stageNumber: 2,
-      stageName: 'Stage 2',
-      scenario: 'Scen 2',
-      options: [{ id: 'opt2', text: 'Text 2', isCorrect: false, coachingFeedback: 'fb2' }],
+      id: 's2',
+      mode: 'compare',
+      prompt: 'Step 2',
+      sourceDiagramUrl:
+        'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
+      options: [
+        {
+          id: 'o3',
+          label: 'Architecture C',
+          diagramUrl: '/diagrams/event-bus-c.svg',
+          isCorrect: true,
+          rationale: 'Fine',
+        },
+      ],
     },
   ],
 };
@@ -123,13 +150,17 @@ const mockDiagramDrill: DiagramDrillDefinition = {
   ],
 };
 
-const allMockDrills: DrillDefinitionDTO[] = [mockRapidFireDrill, mockLessonDrill, mockDiagramDrill];
+const allMockDrills: DrillDefinitionDTO[] = [
+  mockRapidFireDrill,
+  mockDiagramDrill2,
+  mockDiagramDrill,
+];
 
 describe('getDrillQuestionCount', () => {
-  it('correctly counts steps/stages and diagram dual commits', () => {
+  it('correctly counts steps for Rapid Fire and Diagram drills', () => {
     expect(getDrillQuestionCount(mockRapidFireDrill)).toBe(3);
-    expect(getDrillQuestionCount(mockLessonDrill)).toBe(2);
-    expect(getDrillQuestionCount(mockDiagramDrill)).toBe(2);
+    expect(getDrillQuestionCount(mockDiagramDrill2)).toBe(2);
+    expect(getDrillQuestionCount(mockDiagramDrill)).toBe(1);
   });
 });
 
@@ -189,7 +220,7 @@ describe('calculateProficiencyReport', () => {
       },
       'DR-002': {
         drillId: 'DR-002',
-        format: 'Lesson',
+        format: 'Diagram',
         completedAt: '2026-09-27T00:00:00Z',
         score: 50,
         accuracy: 0.5,
@@ -226,7 +257,7 @@ describe('calculateProficiencyReport', () => {
       },
       'DR-002': {
         drillId: 'DR-002',
-        format: 'Lesson',
+        format: 'Diagram',
         completedAt: '2026-09-27T00:00:00Z',
         score: 50,
         accuracy: 0.5, // 1/2 right

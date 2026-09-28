@@ -9,7 +9,6 @@ import * as path from 'node:path';
 import {
   type DiagramDrillDefinition,
   type DrillDefinitionDTO,
-  type LessonDrillDefinition,
   lintDrillWording,
   type RapidFireDrillDefinition,
 } from '../packages/drill-core/src/index.js';
@@ -33,7 +32,7 @@ const ARCHITECTURAL_DOMAINS = new Set([
   'Devops_Lifecycle',
 ]);
 
-const FORMATS = new Set(['Lesson', 'Rapid_Fire', 'Diagram']);
+const FORMATS = new Set(['Rapid_Fire', 'Diagram']);
 const STATUSES = new Set(['draft', 'published']);
 const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
 const PILLARS = new Set([
@@ -169,8 +168,14 @@ function validateDiagram(file: string, drill: DiagramDrillDefinition) {
     err(file, 'Diagram requires non-empty steps');
     return;
   }
-  const modes = new Set(['fault', 'compose']);
-  const variants = new Set(['missing_node', 'wrong_edge', 'misplaced_component', 'missing_edge']);
+  const modes = new Set(['fault', 'compose', 'compare']);
+  const variants = new Set([
+    'missing_node',
+    'wrong_edge',
+    'misplaced_component',
+    'missing_edge',
+    'compare_topology',
+  ]);
   const nodeKinds = new Set(['component', 'slot']);
   const targetKinds = new Set(['node', 'edge', 'slot']);
 
@@ -180,9 +185,9 @@ function validateDiagram(file: string, drill: DiagramDrillDefinition) {
       continue;
     }
     if (!modes.has(step.mode)) {
-      err(file, `step ${step.id} invalid mode ${step.mode} (expected fault|compose)`);
+      err(file, `step ${step.id} invalid mode ${step.mode} (expected fault|compose|compare)`);
     }
-    if (!variants.has(step.variant)) {
+    if (step.variant && !variants.has(step.variant)) {
       err(file, `step ${step.id} invalid variant ${step.variant}`);
     }
     if (!isOfficialSourceDiagram(step.sourceDiagramUrl)) {
@@ -191,6 +196,41 @@ function validateDiagram(file: string, drill: DiagramDrillDefinition) {
         `step ${step.id} sourceDiagramUrl must be https on architect.salesforce.com or developer.salesforce.com`,
       );
     }
+
+    if (step.mode === 'compare') {
+      if (!Array.isArray(step.options) || step.options.length < 2) {
+        err(file, `step ${step.id} compare mode requires at least 2 options[]`);
+        continue;
+      }
+      const correctCount = step.options.filter((o) => o.isCorrect).length;
+      if (correctCount !== 1) {
+        err(file, `step ${step.id} compare mode must have exactly one correct option`);
+      }
+      validateOptionIds(file, `step ${step.id}`, step.options);
+      for (const option of step.options) {
+        const compareOpt = option as { diagramUrl?: unknown; diagramSvg?: unknown };
+        if (
+          typeof compareOpt.diagramUrl !== 'string' &&
+          typeof compareOpt.diagramSvg !== 'string'
+        ) {
+          err(file, `compare option ${option.id} missing valid diagramUrl or diagramSvg`);
+        }
+        if (!option.rationale) {
+          err(file, `option ${option.id} is missing rationale`);
+        }
+        if (!option.isCorrect && !option.distractorAntipattern) {
+          err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
+        }
+        if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
+          err(
+            file,
+            `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
+          );
+        }
+      }
+      continue;
+    }
+
     if (!step.graph || !Array.isArray(step.graph.nodes) || !Array.isArray(step.graph.edges)) {
       err(file, `step ${step.id} requires graph.nodes[] and graph.edges[]`);
       continue;
@@ -314,29 +354,6 @@ function validateDiagram(file: string, drill: DiagramDrillDefinition) {
   }
 }
 
-function validateLesson(file: string, drill: LessonDrillDefinition) {
-  if (!Array.isArray(drill.stages) || drill.stages.length === 0) {
-    err(file, 'Lesson requires non-empty stages');
-    return;
-  }
-  for (const stage of drill.stages) {
-    if (!stage.scenario || !Array.isArray(stage.options)) {
-      err(file, `stage ${stage.stageNumber} missing scenario or options`);
-    }
-    if (!stage.options?.some((o) => o.isCorrect)) {
-      err(file, `stage ${stage.stageNumber} has no correct option`);
-    }
-    if (Array.isArray(stage.options)) {
-      validateOptionIds(file, `stage ${stage.stageNumber}`, stage.options);
-      for (const option of stage.options) {
-        if (!option.coachingFeedback) {
-          err(file, `stage ${stage.stageNumber} option ${option.id} is missing coachingFeedback`);
-        }
-      }
-    }
-  }
-}
-
 for (const file of drillFiles) {
   const filePath = path.join(DRILLS_DIR, file);
   try {
@@ -377,9 +394,6 @@ for (const file of drillFiles) {
         break;
       case 'Diagram':
         validateDiagram(file, drill as DiagramDrillDefinition);
-        break;
-      case 'Lesson':
-        validateLesson(file, drill as LessonDrillDefinition);
         break;
     }
 

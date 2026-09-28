@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   type DrillOptionDTO,
-  type LessonDrillDefinition,
-  type LessonOptionDTO,
   lintDrillWording,
   type RapidFireDrillDefinition,
   type WordingRuleId,
@@ -18,43 +16,6 @@ const BASE = {
   version: 1,
   status: 'draft',
 } as const;
-
-function lesson(options: LessonOptionDTO[]): LessonDrillDefinition {
-  return {
-    ...BASE,
-    format: 'Lesson',
-    stages: [
-      {
-        stageNumber: 1,
-        stageName: 'Stage 1: Forensic Diagnosis',
-        scenario: 'Nightly sync fails at 2 AM. What is the root cause?',
-        options,
-      },
-    ],
-  };
-}
-
-const LESSON_OPTIONS: LessonOptionDTO[] = [
-  {
-    id: 'st1_a',
-    text: 'Row lock contention on the parent account',
-    isCorrect: true,
-    coachingFeedback:
-      'Parallel batches update children of one parent, so each waits on the same lock.',
-  },
-  {
-    id: 'st1_b',
-    text: 'Heap size exhaustion inside the batch job',
-    isCorrect: false,
-    coachingFeedback: 'Heap errors would name the limit; this failure is a lock timeout.',
-  },
-  {
-    id: 'st1_c',
-    text: 'Expired session token on the integration user',
-    isCorrect: false,
-    coachingFeedback: 'An expired token fails every call, not only the concurrent ones.',
-  },
-];
 
 function rapidFire(
   options: DrillOptionDTO[],
@@ -90,26 +51,12 @@ const RAPID_FIRE_OPTIONS: DrillOptionDTO[] = [
 const ruleIds = (findings: { ruleId: WordingRuleId }[]) => findings.map((f) => f.ruleId);
 
 describe('lintDrillWording', () => {
-  describe('lesson-min-options', () => {
-    it('accepts a stage with three options', () => {
-      expect(ruleIds(lintDrillWording(lesson(LESSON_OPTIONS)))).not.toContain('lesson-min-options');
-    });
-
-    it('flags a stage with two options', () => {
-      const findings = lintDrillWording(lesson(LESSON_OPTIONS.slice(0, 2)));
-      expect(findings).toContainEqual(
-        expect.objectContaining({ ruleId: 'lesson-min-options', where: 'stage 1' }),
-      );
-    });
-  });
-
   describe('length-tell', () => {
     const padded = (text: string) =>
       `${text}, then document the decision in the integration runbook for the team`;
 
     it('accepts options of comparable length', () => {
       expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS)))).not.toContain('length-tell');
-      expect(ruleIds(lintDrillWording(lesson(LESSON_OPTIONS)))).not.toContain('length-tell');
     });
 
     it('flags a Rapid Fire correct option far longer than its distractors', () => {
@@ -121,17 +68,6 @@ describe('lintDrillWording', () => {
         expect.objectContaining({ ruleId: 'length-tell', where: 'step s1' }),
       );
     });
-
-    it('flags a long correct option in a Lesson stage', () => {
-      const [lessonCorrect, ...lessonRest] = LESSON_OPTIONS;
-      expect(
-        ruleIds(
-          lintDrillWording(
-            lesson([{ ...lessonCorrect, text: padded(lessonCorrect.text) }, ...lessonRest]),
-          ),
-        ),
-      ).toContain('length-tell');
-    });
   });
 
   describe('verdict-prefix', () => {
@@ -139,26 +75,11 @@ describe('lintDrillWording', () => {
       expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS)))).not.toContain(
         'verdict-prefix',
       );
-      expect(ruleIds(lintDrillWording(lesson(LESSON_OPTIONS)))).not.toContain('verdict-prefix');
     });
 
-    it('flags verdict prefixes in coachingFeedback and rationale', () => {
-      const [lessonCorrect, ...lessonRest] = LESSON_OPTIONS;
+    it('flags verdict prefixes in rationale', () => {
       const [rfCorrect, rfWrong, ...rfRest] = RAPID_FIRE_OPTIONS;
 
-      expect(
-        lintDrillWording(
-          lesson([
-            { ...lessonCorrect, coachingFeedback: 'Correct! Parallel batches contend.' },
-            ...lessonRest,
-          ]),
-        ),
-      ).toContainEqual(
-        expect.objectContaining({
-          ruleId: 'verdict-prefix',
-          where: 'stage 1 option st1_a coachingFeedback',
-        }),
-      );
       expect(
         lintDrillWording(
           rapidFire([
