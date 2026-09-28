@@ -1,0 +1,101 @@
+{
+  "id": "AGD-00402",
+  "title": "Data Cloud Data Kit Promotion and Connector Decoupling",
+  "format": "Rapid_Fire",
+  "domain": "Devops_Lifecycle",
+  "domainLabel": "DevOps & Governance",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Operational_Excellence",
+    "Reliability"
+  ],
+  "version": 1,
+  "status": "published",
+  "sourceCardIds": [
+    "FC-0D5KX00000j9Gcu0AE",
+    "FC-0D5KX00000jAK6N0AW"
+  ],
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A delivery team promotes Data Cloud assets across environments using Data Kits. In sandbox, ingestion streams bind to an external Redshift connector named RedshiftDEV, whereas production runs RedshiftPROD. After deploying the kit to production, data streams fail to connect. Which deployment practice prevents this configuration failure?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Package the production connection credentials inside the Data Kit metadata archive before deployment.",
+          "isCorrect": false,
+          "distractorAntipattern": "Packaged Secret Exposure",
+          "rationale": "Data Kits package metadata definitions rather than connection credentials, and bundling credentials exposes environment secrets."
+        },
+        {
+          "id": "s1_b",
+          "label": "Enforce matching connector developer names across all environments and pre-provision target endpoints before deploying the Data Kit.",
+          "isCorrect": true,
+          "rationale": "Uniform connector naming enables automated metadata binding during promotion, decoupling transport schema definitions from physical environment endpoints.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-360-connector-framework"
+        },
+        {
+          "id": "s1_c",
+          "label": "Manually edit the ingested Data Stream definition in production to re-point its schema toward RedshiftPROD.",
+          "isCorrect": false,
+          "distractorAntipattern": "Production Manual Configuration",
+          "rationale": "Modifying stream connectors manually in production introduces configuration drift and breaks automated release reproducibility."
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "prompt": "A pipeline deploys data transforms utilizing custom Python code extensions between environments. The practitioner adds the extension metadata to a Data Kit and installs it in UAT. The extension objects import, but transforms fail to run. Which mechanism explains this deployment outcome?",
+      "options": [
+        {
+          "id": "s2_a",
+          "label": "Data Kits require an accompanying change set to activate Python runtime containers within the target environment.",
+          "isCorrect": false,
+          "distractorAntipattern": "Change Set Conflation",
+          "rationale": "Change sets do not manage Data Cloud container runtimes, and mixing deployment mechanisms fails to provision runtime dependencies."
+        },
+        {
+          "id": "s2_b",
+          "label": "Data Kits transfer metadata references only, requiring container environments and dependencies to be provisioned through automated pipeline tasks.",
+          "isCorrect": true,
+          "rationale": "Executable environments operate outside metadata packaging boundaries, requiring external deployment scripts to configure runtime libraries and credentials.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-360-connector-framework"
+        },
+        {
+          "id": "s2_c",
+          "label": "Python extensions remain in inactive status until the Data Cloud admin user executes a manual schema compile.",
+          "isCorrect": false,
+          "distractorAntipattern": "Manual Lifecycle Gate",
+          "rationale": "Execution failures stem from missing runtime environments rather than an uncompiled schema state in the target org."
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "prompt": "An enterprise with 12 development sandboxes must support developers writing Apex queries against Data Model Objects. Data Cloud credit usage is pooled across all sandboxes and production. Which environment strategy controls credit burn while enabling developer unit testing?",
+      "options": [
+        {
+          "id": "s3_a",
+          "label": "Enable full Data Cloud ingestion in every developer sandbox with scheduled hourly batch synchronization.",
+          "isCorrect": false,
+          "distractorAntipattern": "Unbounded Sandbox Ingestion",
+          "rationale": "Enabling full data pipelines in every lower sandbox rapidly exhausts enterprise credit allotments through redundant compute cycles."
+        },
+        {
+          "id": "s3_b",
+          "label": "Provision Data Cloud in a dedicated integration sandbox with sampled datasets while developers use mock Apex interfaces locally.",
+          "isCorrect": true,
+          "rationale": "Centralizing Data Cloud testing in one shared lower environment preserves pooled credits while interfaces allow isolated test execution.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-devops-patterns.html#sandbox-strategy"
+        },
+        {
+          "id": "s3_c",
+          "label": "Configure Data Cloud directly in production and grant developers administrative access to test query performance.",
+          "isCorrect": false,
+          "distractorAntipattern": "Production Environment Testing",
+          "rationale": "Authoring and testing unverified queries in production threatens tenant performance and breaches enterprise governance guardrails."
+        }
+      ]
+    }
+  ]
+}

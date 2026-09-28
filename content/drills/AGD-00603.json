@@ -1,0 +1,116 @@
+{
+  "id": "AGD-00603",
+  "title": "Multi-Org Data Cloud: Topology, Residency, and Ingestion",
+  "format": "Scenario",
+  "domain": "Infrastructure",
+  "domainLabel": "Infrastructure",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Cost_Optimization",
+    "Trust",
+    "Operational_Excellence"
+  ],
+  "version": 1,
+  "status": "published",
+  "sourceCardIds": [
+    "FC-0D54V00007cm9v5SAA",
+    "FC-0D5KX00000jA7qw0AC"
+  ],
+  "initialTrust": 60,
+  "initialReliability": 65,
+  "moves": [
+    {
+      "moveNumber": 1,
+      "stakeholderPersona": "Chief Information Officer (CIO)",
+      "dialogueText": "We operate three independent Salesforce CRM orgs for Sales, Service, and B2B Commerce. The enterprise architecture group wants to provision a separate Data Cloud license in each org and synchronize unified customer profiles using Platform Events. Can we justify this multi-instance approach?",
+      "options": [
+        {
+          "id": "m1_a",
+          "text": "Provision independent Data Cloud instances per CRM org and connect them through scheduled bulk data exports.",
+          "trustDelta": -10,
+          "reliabilityDelta": -15,
+          "techDebtImpact": "Creates redundant compute costs and introduces profile synchronization lag across three isolated customer models.",
+          "isOptimal": false
+        },
+        {
+          "id": "m1_b",
+          "text": "Establish a central Data Cloud Home Org and connect the remaining orgs as Companions using Data Cloud One.",
+          "trustDelta": 15,
+          "reliabilityDelta": 20,
+          "techDebtImpact": "Establishes a single customer source of truth with zero-copy metadata sharing while avoiding triple licensing costs.",
+          "isOptimal": true
+        },
+        {
+          "id": "m1_c",
+          "text": "Merge the three Salesforce CRM orgs into a single production org before deploying Data Cloud capabilities.",
+          "trustDelta": -15,
+          "reliabilityDelta": 5,
+          "techDebtImpact": "Forces a multi-year consolidation program that delays business value when metadata federation solves the unification requirement.",
+          "isOptimal": false
+        }
+      ]
+    },
+    {
+      "moveNumber": 2,
+      "stakeholderPersona": "Chief Privacy Officer (CPO)",
+      "dialogueText": "Our European subsidiary legally requires customer personal data to remain within European Union boundaries. The corporate Home Org is hosted in North America. If we use Data Cloud One across all orgs, will we violate regional data residency regulations?",
+      "options": [
+        {
+          "id": "m2_a",
+          "text": "Rely on Data Cloud One cross-org federation because zero-copy metadata links do not physically move CRM data across borders.",
+          "trustDelta": -25,
+          "reliabilityDelta": -10,
+          "techDebtImpact": "Violates EU residency rules because home org identity resolution processes and stores customer data in North American infrastructure.",
+          "isOptimal": false
+        },
+        {
+          "id": "m2_b",
+          "text": "Provision an independent EU Data Cloud instance and utilize Data Cloud to Data Cloud zero-copy data sharing for governed cross-region sharing.",
+          "trustDelta": 20,
+          "reliabilityDelta": 15,
+          "techDebtImpact": "Satisfies legal residency constraints through regional processing while enabling controlled object federation without custom pipelines.",
+          "isOptimal": true
+        },
+        {
+          "id": "m2_c",
+          "text": "Route EU customer data through an on-premise proxy that masks all personal attributes before streaming to the North American Home Org.",
+          "trustDelta": -5,
+          "reliabilityDelta": -15,
+          "techDebtImpact": "Introduces complex external proxy maintenance and degrades identity resolution accuracy on obfuscated customer identifiers.",
+          "isOptimal": false
+        }
+      ]
+    },
+    {
+      "moveNumber": 3,
+      "stakeholderPersona": "VP of Release Engineering",
+      "dialogueText": "Our delivery teams in companion orgs are attempting to build Copy Field enrichments and ingest local CRM streams directly from companion sandboxes. Their deployments are failing with permission errors. How must our multi-org deployment model be restructured?",
+      "options": [
+        {
+          "id": "m3_a",
+          "text": "Centralize all ingestion configuration and field-level enrichments in the Home Org, federating unified outputs to companion orgs via metadata.",
+          "trustDelta": 15,
+          "reliabilityDelta": 15,
+          "techDebtImpact": "Aligns with platform architecture where ingestion and enrichments originate in the home org, preventing invalid companion deployments.",
+          "isOptimal": true
+        },
+        {
+          "id": "m3_b",
+          "text": "Grant Companion Org administrators delegated system privileges on the Home Org to create remote streams directly.",
+          "trustDelta": -20,
+          "reliabilityDelta": -10,
+          "techDebtImpact": "Weakens enterprise security by bypassing home org governance boundaries without resolving companion org architectural constraints.",
+          "isOptimal": false
+        },
+        {
+          "id": "m3_c",
+          "text": "Build custom apex callouts in companion orgs to pull unified profile fields via Data Cloud Query REST APIs on record load.",
+          "trustDelta": -10,
+          "reliabilityDelta": -15,
+          "techDebtImpact": "Consumes excessive API governor limits and adds synchronous latency to standard CRM page views.",
+          "isOptimal": false
+        }
+      ]
+    }
+  ]
+}
