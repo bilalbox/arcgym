@@ -74,9 +74,15 @@ export const DiagramRunner: React.FC<{
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [decisionResults, setDecisionResults] = useState<DecisionResult[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [lightboxDiagram, setLightboxDiagram] = useState<{ url: string; title: string } | null>(
-    null,
-  );
+  const [lightboxDiagram, setLightboxDiagram] = useState<{
+    url: string;
+    title: string;
+    isSubmitted?: boolean;
+    isCorrect?: boolean;
+    distractorAntipattern?: string;
+    rationale?: string;
+    isSelected?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     setCurrentStepIndex(0);
@@ -541,11 +547,11 @@ export const DiagramRunner: React.FC<{
                     'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
                   if (submitted) {
                     if (opt.isCorrect) {
-                      cardBorder = 'border-2 border-miro-successText bg-miro-successLight';
+                      cardBorder = 'border-2 border-miro-successText bg-miro-successLight/30';
                     } else if (isSelected && !opt.isCorrect) {
-                      cardBorder = 'border-2 border-miro-dangerText bg-miro-dangerLight';
+                      cardBorder = 'border-2 border-miro-dangerText bg-miro-dangerLight/30';
                     } else {
-                      cardBorder = 'border-miro-hairline opacity-45 bg-miro-card';
+                      cardBorder = 'border-miro-hairline opacity-65 bg-miro-card';
                     }
                   } else if (isSelected) {
                     cardBorder = 'border-2 border-miro-primary bg-miro-surfaceSoft shadow-xs';
@@ -590,24 +596,89 @@ export const DiagramRunner: React.FC<{
                             Valid Architecture
                           </Badge>
                         )}
-                        {submitted && isSelected && !opt.isCorrect && (
-                          <Badge variant="destructive">
+                        {submitted && !opt.isCorrect && (
+                          <Badge
+                            variant={isSelected ? 'destructive' : 'outline'}
+                            className={
+                              !isSelected
+                                ? 'bg-miro-surface text-miro-slate border-miro-hairline'
+                                : ''
+                            }
+                          >
                             {opt.distractorAntipattern ?? 'Invalid Pattern'}
                           </Badge>
                         )}
                       </div>
 
-                      <div className="relative group my-3 rounded-xl overflow-hidden border border-miro-hairline bg-white flex items-center justify-center min-h-[170px]">
+                      {/* SVG Diagram with Superimposed Feedback (only after submission) */}
+                      <div
+                        className={`relative group my-3 rounded-xl overflow-hidden border flex items-center justify-center min-h-[170px] ${
+                          submitted
+                            ? opt.isCorrect
+                              ? 'border-emerald-300/80 bg-emerald-50/20'
+                              : isSelected
+                                ? 'border-red-300/80 bg-red-50/20'
+                                : 'border-miro-hairline bg-slate-50/40'
+                            : 'border-miro-hairline bg-white'
+                        }`}
+                      >
                         <img
                           src={opt.diagramUrl}
                           alt={opt.label}
                           className="max-h-48 w-full object-contain p-2"
                         />
+
+                        {/* Superimposed Feedback Badge over SVG (Visible ONLY after submission) */}
+                        {submitted && (
+                          <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+                            {opt.isCorrect ? (
+                              <div className="flex items-center gap-1.5 bg-emerald-600 text-white text-xs font-semibold px-2.5 py-1 rounded-md shadow-sm backdrop-blur-xs">
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                <span>Well-Architected</span>
+                              </div>
+                            ) : (
+                              <div
+                                className={`flex items-center gap-1.5 ${
+                                  isSelected ? 'bg-red-600' : 'bg-slate-700/90'
+                                } text-white text-xs font-semibold px-2.5 py-1 rounded-md shadow-sm backdrop-blur-xs`}
+                              >
+                                <XCircle className="h-3.5 w-3.5 shrink-0" />
+                                <span>
+                                  Antipattern: {opt.distractorAntipattern ?? 'Invalid Pattern'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Superimposed Selection Tag over SVG (Visible ONLY after submission) */}
+                        {submitted && isSelected && (
+                          <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                            <span
+                              className={`text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-md shadow-xs ${
+                                opt.isCorrect
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : 'bg-red-100 text-red-800 border border-red-300'
+                              }`}
+                            >
+                              Your Choice
+                            </span>
+                          </div>
+                        )}
+
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setLightboxDiagram({ url: opt.diagramUrl, title: opt.label });
+                            setLightboxDiagram({
+                              url: opt.diagramUrl,
+                              title: opt.label,
+                              isSubmitted: submitted,
+                              isCorrect: opt.isCorrect,
+                              distractorAntipattern: opt.distractorAntipattern,
+                              rationale: opt.rationale,
+                              isSelected,
+                            });
                           }}
                           className="absolute bottom-2 right-2 flex items-center gap-1.5 text-xs font-medium bg-miro-card/95 hover:bg-white text-miro-primary px-2.5 py-1 rounded-lg border border-miro-hairline shadow-xs cursor-pointer z-10"
                         >
@@ -683,7 +754,25 @@ export const DiagramRunner: React.FC<{
           />
           <div className="relative z-10 max-w-5xl w-full max-h-[92vh] bg-white rounded-2xl p-5 shadow-2xl flex flex-col">
             <div className="flex items-center justify-between pb-3 border-b border-miro-hairlineSoft">
-              <h3 className="text-sm font-semibold text-miro-primary">{lightboxDiagram.title}</h3>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-sm font-semibold text-miro-primary">{lightboxDiagram.title}</h3>
+                {lightboxDiagram.isSubmitted && lightboxDiagram.isCorrect && (
+                  <Badge
+                    variant="outline"
+                    className="bg-miro-successLight text-miro-successText border-miro-successText/40"
+                  >
+                    Valid Architecture
+                  </Badge>
+                )}
+                {lightboxDiagram.isSubmitted && !lightboxDiagram.isCorrect && (
+                  <Badge variant={lightboxDiagram.isSelected ? 'destructive' : 'outline'}>
+                    {lightboxDiagram.distractorAntipattern ?? 'Invalid Pattern'}
+                  </Badge>
+                )}
+                {lightboxDiagram.isSubmitted && lightboxDiagram.isSelected && (
+                  <span className="text-xs text-miro-slate font-medium">(Your Selection)</span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setLightboxDiagram(null)}
@@ -693,13 +782,40 @@ export const DiagramRunner: React.FC<{
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-miro-surface/40 rounded-xl mt-3">
+            <div className="relative flex-1 overflow-auto flex items-center justify-center p-4 bg-miro-surface/40 rounded-xl mt-3">
               <img
                 src={lightboxDiagram.url}
                 alt={lightboxDiagram.title}
-                className="max-h-[75vh] max-w-full object-contain"
+                className="max-h-[65vh] max-w-full object-contain"
               />
+              {lightboxDiagram.isSubmitted && (
+                <div className="absolute top-4 left-4 z-10 pointer-events-none">
+                  {lightboxDiagram.isCorrect ? (
+                    <div className="flex items-center gap-2 bg-emerald-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md backdrop-blur-xs">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Well-Architected Pattern</span>
+                    </div>
+                  ) : (
+                    <div
+                      className={`flex items-center gap-2 ${
+                        lightboxDiagram.isSelected ? 'bg-red-600' : 'bg-slate-800/90'
+                      } text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-md backdrop-blur-xs`}
+                    >
+                      <XCircle className="h-4 w-4" />
+                      <span>
+                        Antipattern: {lightboxDiagram.distractorAntipattern ?? 'Invalid Pattern'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+            {lightboxDiagram.isSubmitted && lightboxDiagram.rationale && (
+              <div className="mt-3 p-3 rounded-xl bg-miro-surface border border-miro-hairlineSoft text-xs text-miro-slate leading-relaxed">
+                <span className="font-semibold text-miro-primary mr-1">Architectural Review:</span>
+                {lightboxDiagram.rationale}
+              </div>
+            )}
           </div>
         </div>
       )}
