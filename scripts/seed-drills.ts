@@ -9,21 +9,21 @@
  *   npx tsx scripts/seed-drills.ts
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 const ROOT_DIR = process.cwd();
 const WEB_PUBLIC_DRILLS = path.join(
   ROOT_DIR,
-  'apps/arcgym-web/public/api/drills/canonical-drills.json'
+  'apps/arcgym-web/public/api/drills/canonical-drills.json',
 );
 const KV_PAYLOAD_PATH = path.join(ROOT_DIR, '.scratch/kv_drills.json');
 const KV_NAMESPACE_ID = 'c1f903c9221b40c086115dd7fc7f43d7';
 
 if (!fs.existsSync(WEB_PUBLIC_DRILLS)) {
   console.error(
-    `Missing ${WEB_PUBLIC_DRILLS}\nRun \`pnpm build\` (or \`npx tsx scripts/build-drills.ts\`) first.`
+    `Missing ${WEB_PUBLIC_DRILLS}\nRun \`pnpm build\` (or \`npx tsx scripts/build-drills.ts\`) first.`,
   );
   process.exit(1);
 }
@@ -67,7 +67,7 @@ try {
   console.log(`Pushing drills to Cloudflare KV (namespace ${KV_NAMESPACE_ID})...`);
   execSync(
     `pnpm --filter @arcgym/web exec wrangler kv bulk put "${KV_PAYLOAD_PATH}" --namespace-id=${KV_NAMESPACE_ID} --remote`,
-    { stdio: 'inherit' }
+    { stdio: 'inherit' },
   );
   console.log('Cloudflare KV populated.');
 } catch (e: unknown) {
@@ -77,10 +77,8 @@ try {
 
 const grounded = drills.filter((d) =>
   (d.steps ?? []).some((s) =>
-    (s.options ?? []).some(
-      (o) => o.citationUrl && o.citationUrl.includes('architect.salesforce.com')
-    )
-  )
+    (s.options ?? []).some((o) => o.citationUrl?.includes('architect.salesforce.com')),
+  ),
 ).length;
 
 console.log('\n--- Grounding ---');

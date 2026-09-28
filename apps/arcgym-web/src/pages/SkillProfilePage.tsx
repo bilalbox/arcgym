@@ -1,18 +1,19 @@
-import React, { useMemo, useState } from 'react';
 import {
   calculateProficiencyReport,
-  DrillAttemptRecord,
-  DrillDefinitionDTO,
-  ProficiencyDimension,
+  calculateTotalPoints,
+  type DrillAttemptRecord,
+  type DrillDefinitionDTO,
+  type ProficiencyDimension,
 } from '@arcgym/drill-core';
-import { DimensionToggle } from '@/components/proficiency/DimensionToggle';
-import { ArchitecturalRadarChart } from '@/components/proficiency/ArchitecturalRadarChart';
-import { WhereToStartSection } from '@/components/proficiency/WhereToStartSection';
-import { StrengthsSection } from '@/components/proficiency/StrengthsSection';
-import { CollectingDataSection } from '@/components/proficiency/CollectingDataSection';
+import { Award, CheckCircle2, Trophy, Zap } from 'lucide-react';
+import type React from 'react';
+import { useMemo, useState } from 'react';
 import { Footer } from '@/components/layout/Footer';
-import { Award, Zap, CheckCircle2, Trophy } from 'lucide-react';
-import { calculateTotalPoints } from '@arcgym/drill-core';
+import { ArchitecturalRadarChart } from '@/components/proficiency/ArchitecturalRadarChart';
+import { CollectingDataSection } from '@/components/proficiency/CollectingDataSection';
+import { DimensionToggle } from '@/components/proficiency/DimensionToggle';
+import { StrengthsSection } from '@/components/proficiency/StrengthsSection';
+import { WhereToStartSection } from '@/components/proficiency/WhereToStartSection';
 
 interface SkillProfilePageProps {
   completedDrills: Record<string, DrillAttemptRecord>;
@@ -38,12 +39,12 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
   // Compute reports for both dimensions
   const domainReport = useMemo(
     () => calculateProficiencyReport(completedDrills, allDrills, 'domains', 4),
-    [completedDrills, allDrills]
+    [completedDrills, allDrills],
   );
 
   const pillarReport = useMemo(
     () => calculateProficiencyReport(completedDrills, allDrills, 'pillars', 4),
-    [completedDrills, allDrills]
+    [completedDrills, allDrills],
   );
 
   const activeReport = dimension === 'domains' ? domainReport : pillarReport;
@@ -70,7 +71,8 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
           Your architectural skill profile
         </h1>
         <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
-          We score drill questions across 7 Architectural Domains and 5 Well-Architected Pillars. Each decision rep counts toward your proficiency. Here's where you stand.
+          We score drill questions across 7 Architectural Domains and 5 Well-Architected Pillars.
+          Each decision rep counts toward your proficiency. Here's where you stand.
         </p>
       </div>
 
@@ -99,7 +101,8 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
               Total Points
             </span>
             <span className="text-base sm:text-lg font-semibold text-miro-primary">
-              {totalPoints.toLocaleString()} <span className="text-xs font-normal text-miro-muted">pts</span>
+              {totalPoints.toLocaleString()}{' '}
+              <span className="text-xs font-normal text-miro-muted">pts</span>
             </span>
           </div>
         </div>
@@ -147,10 +150,7 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
           onReviewDrills={handleReviewDrills}
         />
 
-        <StrengthsSection
-          items={activeReport.strengths}
-          dimensionLabel={dimensionNoun}
-        />
+        <StrengthsSection items={activeReport.strengths} dimensionLabel={dimensionNoun} />
 
         <CollectingDataSection
           items={activeReport.collectingData}

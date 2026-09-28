@@ -1,4 +1,4 @@
-import { DrillAttemptRecord } from '../types/drill.js';
+import type { DrillAttemptRecord } from '../types/drill.js';
 
 /**
  * Returns a YYYY-MM-DD string representation of a date in local calendar time.
@@ -31,7 +31,7 @@ export const RAPID_FIRE_REPS_PER_DRILL = 5;
  */
 export function isRapidFireStreakRequirementMet(
   completedRepsCount: number,
-  requiredReps: number = RAPID_FIRE_REPS_PER_DRILL
+  requiredReps: number = RAPID_FIRE_REPS_PER_DRILL,
 ): boolean {
   return completedRepsCount >= requiredReps;
 }
@@ -47,7 +47,7 @@ export function computeNewStreak(
   currentStreak: number,
   lastActiveDate: string | undefined,
   today: string = getTodayString(),
-  yesterday: string = getYesterdayString()
+  yesterday: string = getYesterdayString(),
 ): number {
   if (!lastActiveDate) {
     return 1;
@@ -73,7 +73,7 @@ export function calculateActiveStreak(
   lastActiveDate: string | undefined,
   completedCount: number,
   today: string = getTodayString(),
-  yesterday: string = getYesterdayString()
+  yesterday: string = getYesterdayString(),
 ): number {
   if (completedCount === 0 || !lastActiveDate || streakDays <= 0) {
     return 0;
@@ -88,7 +88,7 @@ export function calculateActiveStreak(
  * Calculates total points achieved across all completed drills.
  */
 export function calculateTotalPoints(
-  completedDrills: Record<string, Pick<DrillAttemptRecord, 'score'>>
+  completedDrills: Record<string, Pick<DrillAttemptRecord, 'score'>>,
 ): number {
   return Object.values(completedDrills).reduce((total, attempt) => {
     return total + (attempt.score || 0);

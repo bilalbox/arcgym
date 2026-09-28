@@ -1,20 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
 import {
   ArcGymScoringEngine,
-  ConfidenceAnchor,
-  RapidFireDrillDefinition,
-  DrillFormat,
-  DrillAttemptRecord,
-  safeCitationHref,
-  orderOptions,
+  type ConfidenceAnchor,
+  type DrillAttemptRecord,
+  type DrillFormat,
   optionSeed,
+  orderOptions,
+  type RapidFireDrillDefinition,
+  safeCitationHref,
 } from '@arcgym/drill-core';
-import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ExternalLink, RotateCcw, XCircle } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 interface StepResult {
@@ -96,6 +97,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     return drill?.id ?? 'default';
   }, [drills, drill]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset state when sessionKey changes
   useEffect(() => {
     setCurrentStepIndex(0);
     setSelectedOptionId(null);
@@ -112,14 +114,15 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const orderedOptions = useMemo(() => {
     if (!activeDrill || !currentStep) return [];
     return orderOptions(currentStep.options, optionSeed(activeDrill.id, currentStep.id));
-  }, [activeDrill?.id, currentStep]);
+  }, [activeDrill?.id, currentStep, activeDrill]);
 
-  const progressPercent = repList.length > 0
-    ? Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / repList.length) * 100)
-    : 0;
+  const progressPercent =
+    repList.length > 0
+      ? Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / repList.length) * 100)
+      : 0;
 
   const correctCitationHref = safeCitationHref(
-    currentStep?.options.find((o) => o.isCorrect)?.citationUrl
+    currentStep?.options.find((o) => o.isCorrect)?.citationUrl,
   );
 
   if (!activeDrill || !currentStep) {
@@ -182,7 +185,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   selectedOptionId: r.selectedOptionId,
                   distractorAntipattern: r.isCorrect
                     ? undefined
-                    : rep.step.options.find((o) => o.id === r.selectedOptionId)?.distractorAntipattern,
+                    : rep.step.options.find((o) => o.id === r.selectedOptionId)
+                        ?.distractorAntipattern,
                 },
               ]
             : [],
@@ -211,7 +215,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           selectedOptionId: r.selectedOptionId,
           distractorAntipattern: r.isCorrect
             ? undefined
-            : repList[idx]?.step.options.find((o) => o.id === r.selectedOptionId)?.distractorAntipattern,
+            : repList[idx]?.step.options.find((o) => o.id === r.selectedOptionId)
+                ?.distractorAntipattern,
         })),
       });
     }
@@ -235,7 +240,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-medium text-miro-primary">Rapid Fire completed</h2>
+          <h2 className="text-xl sm:text-2xl font-medium text-miro-primary">
+            Rapid Fire completed
+          </h2>
           <p className="text-sm text-miro-slate mt-1">
             You committed all {repList.length} architectural decision reps for today.
           </p>
@@ -256,7 +263,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
               <span className="text-xs text-miro-slate font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-miro-primary mt-0.5">
                 {stepResults.length > 0
-                  ? Math.round(stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length)
+                  ? Math.round(
+                      stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length,
+                    )
                   : 0}
                 %
               </p>
@@ -264,7 +273,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           </div>
 
           <div className="space-y-2.5">
-            <h4 className="text-xs font-semibold text-miro-slate">Decision breakdown ({repList.length} reps)</h4>
+            <h4 className="text-xs font-semibold text-miro-slate">
+              Decision breakdown ({repList.length} reps)
+            </h4>
             {stepResults.map((r, i) => {
               const rep = repList[i];
               return (
@@ -280,16 +291,16 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                     )}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-miro-primary text-xs shrink-0">Rep {i + 1}</span>
+                        <span className="font-semibold text-miro-primary text-xs shrink-0">
+                          Rep {i + 1}
+                        </span>
                         {rep?.drill.domainLabel && (
                           <Badge variant="domain" className="text-[10px] py-0 px-2 shrink-0">
                             {rep.drill.domainLabel}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-miro-slate truncate mt-0.5">
-                        {rep?.drill.title}
-                      </p>
+                      <p className="text-xs text-miro-slate truncate mt-0.5">{rep?.drill.title}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
@@ -311,7 +322,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
 
           {isReviewMode && previousAttempt && (
             <div className="p-3 bg-miro-yellowLight border border-miro-yellowBorder rounded-xl text-xs text-miro-yellowText flex items-center justify-between">
-              <span>Review Practice: Previously mastered on {new Date(previousAttempt.completedAt).toLocaleDateString()}</span>
+              <span>
+                Review Practice: Previously mastered on{' '}
+                {new Date(previousAttempt.completedAt).toLocaleDateString()}
+              </span>
               <span className="font-semibold">Prior score: +{previousAttempt.score} pts</span>
             </div>
           )}
@@ -351,7 +365,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
               </Badge>
             ))}
             {isReviewMode && (
-              <Badge variant="outline" className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder">
+              <Badge
+                variant="outline"
+                className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder"
+              >
                 Review Mode
               </Badge>
             )}
@@ -362,7 +379,11 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             </span>
           </div>
         </div>
-        <Progress value={progressPercent} className="mt-3 h-1 bg-miro-hairlineSoft" indicatorClassName="bg-miro-primary" />
+        <Progress
+          value={progressPercent}
+          className="mt-3 h-1 bg-miro-hairlineSoft"
+          indicatorClassName="bg-miro-primary"
+        />
       </CardHeader>
 
       <CardContent className="pt-6">
@@ -378,13 +399,16 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
         <div className="space-y-3 mb-6">
           {orderedOptions.map((opt, index) => {
             const isSelected = selectedOptionId === opt.id;
-            let containerStyle = 'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
+            let containerStyle =
+              'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
 
             if (isSubmitted) {
               if (opt.isCorrect) {
-                containerStyle = 'border-2 border-miro-successText bg-miro-successLight text-miro-primary';
+                containerStyle =
+                  'border-2 border-miro-successText bg-miro-successLight text-miro-primary';
               } else if (isSelected && !opt.isCorrect) {
-                containerStyle = 'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
+                containerStyle =
+                  'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
               } else {
                 containerStyle = 'border-miro-hairline opacity-45 bg-miro-card';
               }
@@ -393,10 +417,11 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             }
 
             return (
-              <div
+              <button
+                type="button"
                 key={opt.id}
                 onClick={() => handleSelectOption(opt.id)}
-                className={`p-4 rounded-xl border transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 ${containerStyle}`}
+                className={`w-full text-left p-4 rounded-xl border transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 ${containerStyle}`}
               >
                 <div className="mt-0.5 shrink-0">
                   {isSubmitted && opt.isCorrect ? (
@@ -406,7 +431,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   ) : (
                     <div
                       className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs font-semibold ${
-                        isSelected ? 'border-miro-primary bg-miro-primary text-miro-onPrimary' : 'border-miro-hairlineStrong text-miro-muted'
+                        isSelected
+                          ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
+                          : 'border-miro-hairlineStrong text-miro-muted'
                       }`}
                     >
                       {String.fromCharCode(65 + index)}
@@ -418,13 +445,16 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   {isSubmitted && opt.distractorAntipattern && (
                     <div className="mt-2.5 text-xs text-miro-dangerText bg-miro-dangerLight border border-miro-dangerBorder p-2.5 rounded-lg space-y-1.5">
                       <p>
-                        <span className="font-semibold">Antipattern risk:</span> {opt.distractorAntipattern}
+                        <span className="font-semibold">Antipattern risk:</span>{' '}
+                        {opt.distractorAntipattern}
                       </p>
-                      {isSelected && <p className="text-xs sm:text-sm leading-relaxed">{opt.rationale}</p>}
+                      {isSelected && (
+                        <p className="text-xs sm:text-sm leading-relaxed">{opt.rationale}</p>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -451,9 +481,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                     <XCircle className="h-3.5 w-3.5" /> Antipattern Detected
                   </Badge>
                 )}
-                <span className="text-xs text-miro-slate">
-                  Confidence: {selectedConfidence}%
-                </span>
+                <span className="text-xs text-miro-slate">Confidence: {selectedConfidence}%</span>
               </div>
               <span className="text-sm font-mono font-semibold text-miro-primary">
                 Score: {stepResults[stepResults.length - 1]?.score > 0 ? '+' : ''}
@@ -483,7 +511,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
               <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
                 {currentStepIndex + 1 < repList.length ? (
                   <>
-                    Next rep ({currentStepIndex + 2} of {repList.length}) <ArrowRight className="h-4 w-4" />
+                    Next rep ({currentStepIndex + 2} of {repList.length}){' '}
+                    <ArrowRight className="h-4 w-4" />
                   </>
                 ) : (
                   <>

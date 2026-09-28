@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * ArcGym RAG Drill Generator CLI
  *
@@ -12,16 +13,22 @@
  *   npx tsx scripts/generator/generate-drill.ts ingest /tmp/AGD-00402.json [--force]
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { execFileSync } from 'child_process';
-import { lintDrillWording } from '../../packages/drill-core/src/index.js';
+import { execFileSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { type DrillDefinitionDTO, lintDrillWording } from '../../packages/drill-core/src/index.js';
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const CHROMA_SEARCH_SCRIPT = path.join(ROOT_DIR, 'scripts/crawler/search_chroma.py');
 const FRICTION_CARDS_PATH = path.join(ROOT_DIR, 'data/friction_cards.json');
-const WELL_ARCHITECTED_PILLARS = ['Trust', 'Reliability', 'Operational_Excellence', 'Cost_Optimization', 'Fairness'];
+const WELL_ARCHITECTED_PILLARS = [
+  'Trust',
+  'Reliability',
+  'Operational_Excellence',
+  'Cost_Optimization',
+  'Fairness',
+];
 const SUPPORTED_FORMATS = ['Rapid_Fire', 'Lesson'] as const;
 const DIFFICULTIES = ['Associate_Domain_Architect', 'Lead_CTA'] as const;
 
@@ -93,12 +100,14 @@ function parsePromptArgs(args: string[]): PromptArgs {
     } else if (arg === '--pillar' && value) {
       result.pillar = args[++i];
     } else if (arg === '--format' && value) {
-      if (!SUPPORTED_FORMATS.includes(value as any)) {
-        fail(`--format must be one of ${SUPPORTED_FORMATS.join('|')} (Diagram drills are authored by hand)`);
+      if (!SUPPORTED_FORMATS.includes(value as (typeof SUPPORTED_FORMATS)[number])) {
+        fail(
+          `--format must be one of ${SUPPORTED_FORMATS.join('|')} (Diagram drills are authored by hand)`,
+        );
       }
       result.format = args[++i] as PromptArgs['format'];
     } else if (arg === '--difficulty' && value) {
-      if (!DIFFICULTIES.includes(value as any)) {
+      if (!DIFFICULTIES.includes(value as (typeof DIFFICULTIES)[number])) {
         fail(`--difficulty must be one of ${DIFFICULTIES.join('|')}`);
       }
       result.difficulty = args[++i] as PromptArgs['difficulty'];
@@ -122,7 +131,9 @@ function parsePromptArgs(args: string[]): PromptArgs {
 
 function loadFrictionCards(): FrictionCard[] {
   if (!fs.existsSync(FRICTION_CARDS_PATH)) {
-    fail(`${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`);
+    fail(
+      `${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`,
+    );
   }
   return JSON.parse(fs.readFileSync(FRICTION_CARDS_PATH, 'utf-8')).cards as FrictionCard[];
 }
@@ -130,7 +141,9 @@ function loadFrictionCards(): FrictionCard[] {
 function loadFrictionCard(cardId: string): FrictionCard {
   const card = loadFrictionCards().find((c) => c.card_id === cardId);
   if (!card) {
-    fail(`Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`);
+    fail(
+      `Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`,
+    );
   }
   return card;
 }
@@ -151,21 +164,44 @@ function getNextDrillId(format: PromptArgs['format']): string {
 function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[] {
   console.error(`[RAG] Searching ChromaDB for: "${query}" (top ${topK})...`);
   try {
-    const cmdArgs = ['run', '--with', 'chromadb', 'python', CHROMA_SEARCH_SCRIPT, query, '--top-k', String(topK), '--json'];
+    const cmdArgs = [
+      'run',
+      '--with',
+      'chromadb',
+      'python',
+      CHROMA_SEARCH_SCRIPT,
+      query,
+      '--top-k',
+      String(topK),
+      '--json',
+    ];
     if (pillar) {
       cmdArgs.push('--pillar', pillar);
     }
-    const output = execFileSync('uv', cmdArgs, { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
+    const output = execFileSync('uv', cmdArgs, {
+      cwd: ROOT_DIR,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
     return JSON.parse(output.trim()) as ChromaChunk[];
-  } catch (err: any) {
-    console.error(`[WARN] Chroma search failed (${err.message}). Falling back to flat JSON data if available.`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[WARN] Chroma search failed (${msg}). Falling back to flat JSON data if available.`,
+    );
     const fallbackPath = path.join(ROOT_DIR, 'data/architect_chunks.json');
     if (!fs.existsSync(fallbackPath)) return [];
-    const allChunks: { document: string; metadata: ChromaChunk['metadata'] }[] = JSON.parse(fs.readFileSync(fallbackPath, 'utf-8'));
+    const allChunks: { document: string; metadata: ChromaChunk['metadata'] }[] = JSON.parse(
+      fs.readFileSync(fallbackPath, 'utf-8'),
+    );
     const queryLower = query.toLowerCase();
     return allChunks
       .filter((c) => !pillar || c.metadata.pillar === pillar)
-      .filter((c) => c.document.toLowerCase().includes(queryLower) || c.metadata.section_title.toLowerCase().includes(queryLower))
+      .filter(
+        (c) =>
+          c.document.toLowerCase().includes(queryLower) ||
+          c.metadata.section_title.toLowerCase().includes(queryLower),
+      )
       .slice(0, topK)
       .map((c) => ({
         content: c.document,
@@ -188,7 +224,8 @@ const DOMAIN_LABELS: Record<string, string> = {
 function inferDomain(category?: string, pillar?: string): string {
   if (pillar === 'Agentforce' || category?.includes('agent')) return 'Ai_And_Automation';
   if (pillar === 'Data_360' || category?.includes('data')) return 'Data_Architecture';
-  if (category === 'decision-guides' || category?.includes('integration')) return 'Integration_Apis';
+  if (category === 'decision-guides' || category?.includes('integration'))
+    return 'Integration_Apis';
   if (pillar === 'Trust' || category?.includes('security')) return 'Security_And_Access';
   if (category === 'devops' || category?.includes('devops')) return 'Devops_Lifecycle';
   return 'Platform_Core';
@@ -197,13 +234,19 @@ function inferDomain(category?: string, pillar?: string): string {
 /** Chunk `pillar` metadata mixes product areas (Core_Platform, Data_360) with Well-Architected pillars. */
 function resolvePillars(chunks: ChromaChunk[], card?: FrictionCard): string[] {
   if (card?.pillars.length) return card.pillars;
-  return Array.from(new Set(chunks.map((c) => c.metadata.pillar).filter((p) => WELL_ARCHITECTED_PILLARS.includes(p))));
+  return Array.from(
+    new Set(
+      chunks.map((c) => c.metadata.pillar).filter((p) => WELL_ARCHITECTED_PILLARS.includes(p)),
+    ),
+  );
 }
 
 function buildFrictionSection(card?: FrictionCard): string {
   if (!card) return '';
   const approaches = card.naive_approaches.length
-    ? card.naive_approaches.map((a, i) => `${i + 1}. ${a.approach}\n   Why it fails: ${a.why_it_fails}`).join('\n')
+    ? card.naive_approaches
+        .map((a, i) => `${i + 1}. ${a.approach}\n   Why it fails: ${a.why_it_fails}`)
+        .join('\n')
     : '(none recorded; derive distractors from the official chunks)';
   return `
 ### Practitioner Friction (Trailblazer Community, human-reviewed paraphrase)
@@ -229,7 +272,12 @@ const WORDING_RULES = `### Wording Rules (ingest rejects drills that break the c
 - Feedback text (rationale, coachingFeedback): no verdict prefixes ("Correct!", "Antipattern:", "Risky!"); the UI already shows the verdict.
 `;
 
-function buildPrompt(chunks: ChromaChunk[], args: PromptArgs, drillId: string, card?: FrictionCard): string {
+function buildPrompt(
+  chunks: ChromaChunk[],
+  args: PromptArgs,
+  drillId: string,
+  card?: FrictionCard,
+): string {
   const frictionSection = buildFrictionSection(card);
   const contextText = chunks
     .map(
@@ -240,11 +288,12 @@ function buildPrompt(chunks: ChromaChunk[], args: PromptArgs, drillId: string, c
 - Citation URL: ${c.metadata.url}
 - Excerpt:
 ${c.content}
-`
+`,
     )
     .join('\n');
 
-  const domain = args.domain || inferDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
+  const domain =
+    args.domain || inferDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
   const domainLabel = DOMAIN_LABELS[domain] ?? domain;
   const pillars = resolvePillars(chunks, card);
   const pillarSpec = pillars.length
@@ -474,26 +523,38 @@ function runPrompt(argv: string[]) {
   }
   const drillId = args.id || getNextDrillId(args.format);
 
-  console.error(`[Generator] ${drillId} | ${args.format} | ${args.difficulty} | topic: ${args.topic}`);
-  if (card) console.error(`[Generator] Card ${card.card_id} (${card.naive_approaches.length} naive approaches)`);
+  console.error(
+    `[Generator] ${drillId} | ${args.format} | ${args.difficulty} | topic: ${args.topic}`,
+  );
+  if (card)
+    console.error(
+      `[Generator] Card ${card.card_id} (${card.naive_approaches.length} naive approaches)`,
+    );
 
-  const chunks = queryChroma(args.query ?? card?.official_doc_query ?? args.topic, args.topK, args.pillar);
+  const chunks = queryChroma(
+    args.query ?? card?.official_doc_query ?? args.topic,
+    args.topK,
+    args.pillar,
+  );
   if (chunks.length === 0) {
     fail('No official chunks retrieved. Retry with --query "<better doc search>".');
   }
   for (const c of chunks) {
-    console.error(`  ${c.cosine_similarity.toFixed(2)}  ${c.metadata.doc_title} > ${c.metadata.section_title}`);
+    console.error(
+      `  ${c.cosine_similarity.toFixed(2)}  ${c.metadata.doc_title} > ${c.metadata.section_title}`,
+    );
   }
 
   process.stdout.write(buildPrompt(chunks, args, drillId, card));
 }
 
-function parseDrillResponse(raw: string): any {
+function parseDrillResponse(raw: string): Record<string, unknown> {
   const fenced = raw.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
   try {
     return JSON.parse(fenced ? fenced[1] : raw);
-  } catch (e: any) {
-    fail(`Response is not valid JSON: ${e.message}`);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    fail(`Response is not valid JSON: ${msg}`);
   }
 }
 
@@ -506,7 +567,9 @@ function runIngest(argv: string[]) {
 
   const drill = parseDrillResponse(fs.readFileSync(file, 'utf-8'));
   if (drill.error) {
-    fail(`The drill author declined: ${drill.error}\nRetry the prompt with --query "<better doc search>", or fix the card's doc query in \`friction_cards.py review\` and re-export.`);
+    fail(
+      `The drill author declined: ${drill.error}\nRetry the prompt with --query "<better doc search>", or fix the card's doc query in \`friction_cards.py review\` and re-export.`,
+    );
   }
   if (typeof drill.id !== 'string' || !/^AGD-\d{5}$/.test(drill.id)) {
     fail(`id must look like AGD-00000 (got ${drill.id})`);
@@ -522,11 +585,13 @@ function runIngest(argv: string[]) {
   const outPath = path.join(DRILLS_DIR, `${drill.id}.json`);
   const previous = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf-8') : null;
   if (previous !== null && !force) {
-    fail(`${outPath} already exists. Pass --force to overwrite, or regenerate the prompt for a fresh id.`);
+    fail(
+      `${outPath} already exists. Pass --force to overwrite, or regenerate the prompt for a fresh id.`,
+    );
   }
 
   drill.status = 'draft';
-  fs.writeFileSync(outPath, JSON.stringify(drill, null, 2) + '\n', 'utf-8');
+  fs.writeFileSync(outPath, `${JSON.stringify(drill, null, 2)}\n`, 'utf-8');
   const rollBack = (reason: string): never => {
     if (previous === null) {
       fs.unlinkSync(outPath);
@@ -542,7 +607,7 @@ function runIngest(argv: string[]) {
     rollBack('Validation failed');
   }
 
-  const wordingFindings = lintDrillWording(drill);
+  const wordingFindings = lintDrillWording(drill as unknown as DrillDefinitionDTO);
   if (wordingFindings.length > 0) {
     for (const f of wordingFindings) {
       console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
@@ -558,5 +623,7 @@ if (command === 'prompt') {
 } else if (command === 'ingest') {
   runIngest(rest);
 } else {
-  fail('Usage: generate-drill.ts prompt [--from-card FC-… | --topic "…"] [options] | ingest <drill.json> [--force]');
+  fail(
+    'Usage: generate-drill.ts prompt [--from-card FC-… | --topic "…"] [options] | ingest <drill.json> [--force]',
+  );
 }

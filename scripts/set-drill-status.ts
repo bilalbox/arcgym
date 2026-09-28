@@ -8,8 +8,8 @@
  *   npx tsx scripts/set-drill-status.ts --status published --domain-label "Data 360"
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { lintDrillWording } from '../packages/drill-core/src/index.js';
 
 const ROOT_DIR = process.cwd();
@@ -101,7 +101,8 @@ function main() {
       const findings = lintDrillWording(drill);
       if (findings.length > 0) {
         console.error(`  block ${drill.id}: ${findings.length} wording finding(s)`);
-        for (const f of findings) console.error(`    [WORDING] ${f.ruleId} @ ${f.where}: ${f.message}`);
+        for (const f of findings)
+          console.error(`    [WORDING] ${f.ruleId} @ ${f.where}: ${f.message}`);
         blocked++;
         continue;
       }

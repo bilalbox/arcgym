@@ -1,10 +1,16 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import {
+  type DrillFormat,
+  type LessonDrillDefinition,
+  optionSeed,
+  orderOptions,
+} from '@arcgym/drill-core';
+import { AlertTriangle, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
-import { DrillFormat, LessonDrillDefinition, orderOptions, optionSeed } from '@arcgym/drill-core';
-import { CheckCircle2, ArrowRight, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 export const LessonStepper: React.FC<{
@@ -33,12 +39,12 @@ export const LessonStepper: React.FC<{
     setIsSubmitted(false);
     setIsCompleted(false);
     setStageCorrect([]);
-  }, [drill.id]);
+  }, []);
 
   const currentStage = drill.stages[currentStageIdx];
   const orderedOptions = useMemo(
     () => orderOptions(currentStage.options, optionSeed(drill.id, currentStage.stageNumber)),
-    [drill.id, currentStage]
+    [drill.id, currentStage],
   );
   const chosenOption = currentStage.options.find((o) => o.id === selectedOptionId);
 
@@ -95,7 +101,8 @@ export const LessonStepper: React.FC<{
             {drill.stages.length}-stage refactor complete
           </h2>
           <p className="text-sm text-miro-slate mt-1 leading-relaxed">
-            You worked through a Well-Architected coaching path grounded in official platform guidance.
+            You worked through a Well-Architected coaching path grounded in official platform
+            guidance.
           </p>
         </CardHeader>
         <CardContent className="space-y-4 pt-0">
@@ -133,7 +140,10 @@ export const LessonStepper: React.FC<{
               </Badge>
             ))}
             {isReviewMode && (
-              <Badge variant="outline" className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder">
+              <Badge
+                variant="outline"
+                className="bg-miro-yellowLight text-miro-yellowText border-miro-yellowBorder"
+              >
                 Review Mode
               </Badge>
             )}
@@ -143,7 +153,10 @@ export const LessonStepper: React.FC<{
           </div>
         </div>
 
-        <div className="grid gap-2 mt-4" style={{ gridTemplateColumns: `repeat(${drill.stages.length}, minmax(0, 1fr))` }}>
+        <div
+          className="grid gap-2 mt-4"
+          style={{ gridTemplateColumns: `repeat(${drill.stages.length}, minmax(0, 1fr))` }}
+        >
           {drill.stages.map((s, idx) => (
             <div
               key={s.stageNumber}
@@ -169,28 +182,33 @@ export const LessonStepper: React.FC<{
         <div className="space-y-3">
           {orderedOptions.map((opt) => {
             const isSelected = selectedOptionId === opt.id;
-            let borderStyle = 'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card text-miro-primary';
+            let borderStyle =
+              'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card text-miro-primary';
 
             if (isSubmitted) {
               if (opt.isCorrect) {
-                borderStyle = 'border-2 border-miro-successText bg-miro-successLight text-miro-primary font-medium';
+                borderStyle =
+                  'border-2 border-miro-successText bg-miro-successLight text-miro-primary font-medium';
               } else if (isSelected && !opt.isCorrect) {
-                borderStyle = 'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
+                borderStyle =
+                  'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
               } else {
                 borderStyle = 'border-miro-hairline opacity-45 bg-miro-card';
               }
             } else if (isSelected) {
-              borderStyle = 'border-2 border-miro-primary bg-miro-surfaceSoft font-medium text-miro-primary';
+              borderStyle =
+                'border-2 border-miro-primary bg-miro-surfaceSoft font-medium text-miro-primary';
             }
 
             return (
-              <div
+              <button
+                type="button"
                 key={opt.id}
                 onClick={() => !isSubmitted && setSelectedOptionId(opt.id)}
-                className={`p-4 rounded-xl border text-sm transition-all duration-150 cursor-pointer leading-normal ${borderStyle}`}
+                className={`w-full text-left p-4 rounded-xl border text-sm transition-all duration-150 cursor-pointer leading-normal ${borderStyle}`}
               >
                 <p>{opt.text}</p>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -220,7 +238,9 @@ export const LessonStepper: React.FC<{
               {chosenOption?.coachingFeedback}
             </p>
             <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
-              {currentStageIdx + 1 < drill.stages.length ? 'Advance to next stage' : 'Finish lesson'}{' '}
+              {currentStageIdx + 1 < drill.stages.length
+                ? 'Advance to next stage'
+                : 'Finish lesson'}{' '}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>

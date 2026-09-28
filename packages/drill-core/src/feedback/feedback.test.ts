@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  calculateRatingStats,
-  MIN_RATING_THRESHOLD,
-  DRILL_LIKED_TAG_LABELS,
-  DRILL_DISLIKED_TAG_LABELS,
-  ALL_LIKED_TAGS,
   ALL_DISLIKED_TAGS,
+  ALL_LIKED_TAGS,
+  calculateRatingStats,
+  DRILL_DISLIKED_TAG_LABELS,
+  DRILL_LIKED_TAG_LABELS,
+  MIN_RATING_THRESHOLD,
   sanitizeFeedbackTags,
 } from '../index.js';
 
@@ -34,7 +34,9 @@ describe('Drill Feedback Domain Logic', () => {
     expect(DRILL_DISLIKED_TAG_LABELS.ambiguous_question).toBe('Question was ambiguous');
     expect(DRILL_DISLIKED_TAG_LABELS.felt_like_trick).toBe('Felt like a trick');
     expect(DRILL_DISLIKED_TAG_LABELS.doesnt_match_experience).toBe("Doesn't match my experience");
-    expect(DRILL_DISLIKED_TAG_LABELS.explanation_didnt_resonate).toBe("Explanation didn't resonate");
+    expect(DRILL_DISLIKED_TAG_LABELS.explanation_didnt_resonate).toBe(
+      "Explanation didn't resonate",
+    );
   });
 
   it('returns null percentage when total votes are below minimum threshold', () => {
@@ -75,7 +77,12 @@ describe('Drill Feedback Domain Logic', () => {
 
   it('sanitizes feedback tags and normalizes legacy tags', () => {
     // Normalizes legacy tags for 'up'
-    const upTags = sanitizeFeedbackTags('up', ['realistic', 'useful', 'hit_at_work', 'invalid_tag']);
+    const upTags = sanitizeFeedbackTags('up', [
+      'realistic',
+      'useful',
+      'hit_at_work',
+      'invalid_tag',
+    ]);
     expect(upTags).toEqual(['hit_at_work', 'clear_explanation']);
 
     // Normalizes legacy tags for 'down'
@@ -85,6 +92,10 @@ describe('Drill Feedback Domain Logic', () => {
       'disagree_with_answer',
       'bad_tag',
     ]);
-    expect(downTags).toEqual(['doesnt_match_experience', 'ambiguous_question', 'disagree_with_answer']);
+    expect(downTags).toEqual([
+      'doesnt_match_experience',
+      'ambiguous_question',
+      'disagree_with_answer',
+    ]);
   });
 });

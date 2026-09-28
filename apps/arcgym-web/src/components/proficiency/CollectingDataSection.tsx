@@ -1,15 +1,15 @@
-import React from 'react';
-import { DimensionProficiency } from '@arcgym/drill-core';
+import type { DimensionProficiency } from '@arcgym/drill-core';
+import type React from 'react';
 
 interface CollectingDataSectionProps {
   items: DimensionProficiency[];
-  dimensionLabel: string;
+  dimensionLabel?: string;
   onReviewDrills: (id: string) => void;
 }
 
 export const CollectingDataSection: React.FC<CollectingDataSectionProps> = ({
   items,
-  dimensionLabel,
+  dimensionLabel = 'domain',
   onReviewDrills,
 }) => {
   if (items.length === 0) return null;
@@ -31,7 +31,8 @@ export const CollectingDataSection: React.FC<CollectingDataSectionProps> = ({
 
       <div className="pb-5 pl-7">
         <p className="text-[12.5px] text-miro-slate mb-3">
-          You've answered fewer than four questions, so no scores are showing yet. Complete drills in these areas to activate on your radar.
+          You've answered fewer than four questions, so no scores are showing yet. Complete drills
+          in these areas to activate on your radar.
         </p>
 
         <div className="bg-miro-card border border-miro-hairline rounded-2xl shadow-xs px-4 py-1 divide-y divide-miro-hairlineSoft">

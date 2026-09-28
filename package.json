@@ -5,18 +5,23 @@
   "description": "ArcGym: Daily judgment practice for Salesforce Architects (Cloudflare Pages + React)",
   "scripts": {
     "dev": "pnpm --filter @arcgym/web dev",
-    "build": "npx tsx scripts/build-drills.ts && pnpm --recursive run build",
+    "typecheck": "tsc --noEmit && pnpm --recursive run typecheck",
+    "check": "biome check --error-on-warnings",
+    "check:fix": "biome check --write",
+    "lint": "biome check",
+    "format": "biome format --write",
+    "build": "npx tsx scripts/build-drills.ts && pnpm typecheck && pnpm check && pnpm --recursive run build",
     "build:drills": "npx tsx scripts/build-drills.ts",
     "drill:status": "npx tsx scripts/set-drill-status.ts",
     "seed": "npx tsx scripts/seed-drills.ts",
     "feedback:report": "npx tsx scripts/feedback-report.ts",
     "feedback:pull": "npx tsx scripts/feedback-report.ts --pull",
     "test": "pnpm --recursive run test",
-    "lint": "pnpm --recursive run lint",
     "preview": "pnpm --filter @arcgym/web preview",
-    "deploy": "pnpm --filter @arcgym/web run deploy"
+    "deploy": "pnpm typecheck && pnpm check && pnpm build && pnpm --filter @arcgym/web run deploy:pages"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
     "@types/node": "^24.19.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

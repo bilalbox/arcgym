@@ -1,6 +1,6 @@
-import React from 'react';
+import { AlertCircle, ShieldCheck } from 'lucide-react';
+import type React from 'react';
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, AlertCircle } from 'lucide-react';
 
 export type ConfidenceLevel = 50 | 70 | 85 | 95;
 

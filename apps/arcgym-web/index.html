@@ -7,13 +7,13 @@
     <title>ArcGym: Architectural Judgment Practice for Salesforce Architects</title>
     <meta name="description" content="Architectural judgment drills grounded in Salesforce Well-Architected." />
     <script>
-      (function () {
+      (() => {
         try {
-          var stored = localStorage.getItem('arcgym-theme');
-          var preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var dark = stored === 'dark' || (stored !== 'light' && preferDark);
+          const stored = localStorage.getItem('arcgym-theme');
+          const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const dark = stored === 'dark' || (stored !== 'light' && preferDark);
           if (dark) document.documentElement.classList.add('dark');
-        } catch (e) {}
+        } catch (_e) {}
       })();
     </script>
   </head>

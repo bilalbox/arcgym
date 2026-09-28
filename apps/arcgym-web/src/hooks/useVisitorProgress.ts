@@ -1,14 +1,14 @@
-import { useState, useCallback, useMemo } from 'react';
 import {
-  VisitorProgressState,
-  DrillAttemptRecord,
-  DrillFormat,
-  computeNewStreak,
   calculateActiveStreak,
   calculateTotalPoints,
+  computeNewStreak,
+  type DrillAttemptRecord,
+  type DrillFormat,
   getTodayString,
   getYesterdayString,
+  type VisitorProgressState,
 } from '@arcgym/drill-core';
+import { useCallback, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
@@ -39,7 +39,7 @@ function initializeState(): VisitorProgressState {
         const activeStreak = calculateActiveStreak(
           parsed.streakDays,
           parsed.lastActiveDate,
-          completedCount
+          completedCount,
         );
         return {
           ...parsed,
@@ -56,7 +56,7 @@ function initializeState(): VisitorProgressState {
         const active = calculateActiveStreak(
           Number(parsedLegacy.streakDays) || 0,
           parsedLegacy.lastActiveDate.slice(0, 10),
-          1 // assume at least 1 drill completed if legacy streak was set
+          1, // assume at least 1 drill completed if legacy streak was set
         );
         defaultState.streakDays = active;
         defaultState.lastActiveDate = active > 0 ? parsedLegacy.lastActiveDate.slice(0, 10) : '';
@@ -79,7 +79,10 @@ export function useVisitorProgress() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
       localStorage.setItem(
         LEGACY_STREAK_KEY,
-        JSON.stringify({ streakDays: newState.streakDays, lastActiveDate: newState.lastActiveDate })
+        JSON.stringify({
+          streakDays: newState.streakDays,
+          lastActiveDate: newState.lastActiveDate,
+        }),
       );
     } catch (e) {
       console.error('Failed to save visitor progress to localStorage', e);
@@ -99,12 +102,7 @@ export function useVisitorProgress() {
       const yesterday = getYesterdayString();
 
       setState((prev) => {
-        const newStreak = computeNewStreak(
-          prev.streakDays,
-          prev.lastActiveDate,
-          today,
-          yesterday
-        );
+        const newStreak = computeNewStreak(prev.streakDays, prev.lastActiveDate, today, yesterday);
 
         const existingRecord = prev.completedDrills[params.drillId];
         const newRecord: DrillAttemptRecord = {
@@ -131,7 +129,10 @@ export function useVisitorProgress() {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           localStorage.setItem(
             LEGACY_STREAK_KEY,
-            JSON.stringify({ streakDays: updated.streakDays, lastActiveDate: updated.lastActiveDate })
+            JSON.stringify({
+              streakDays: updated.streakDays,
+              lastActiveDate: updated.lastActiveDate,
+            }),
           );
         } catch (e) {
           console.error('Failed to persist progress', e);
@@ -140,7 +141,7 @@ export function useVisitorProgress() {
         return updated;
       });
     },
-    []
+    [],
   );
 
   // Record completion of all reps in a Rapid Fire drill set to achieve that day's streak
@@ -152,18 +153,13 @@ export function useVisitorProgress() {
         score: number;
         accuracy: number;
         steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
-      }>
+      }>,
     ) => {
       const today = getTodayString();
       const yesterday = getYesterdayString();
 
       setState((prev) => {
-        const newStreak = computeNewStreak(
-          prev.streakDays,
-          prev.lastActiveDate,
-          today,
-          yesterday
-        );
+        const newStreak = computeNewStreak(prev.streakDays, prev.lastActiveDate, today, yesterday);
 
         const updatedCompleted = { ...prev.completedDrills };
         const now = new Date().toISOString();
@@ -192,7 +188,10 @@ export function useVisitorProgress() {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           localStorage.setItem(
             LEGACY_STREAK_KEY,
-            JSON.stringify({ streakDays: updated.streakDays, lastActiveDate: updated.lastActiveDate })
+            JSON.stringify({
+              streakDays: updated.streakDays,
+              lastActiveDate: updated.lastActiveDate,
+            }),
           );
         } catch (e) {
           console.error('Failed to persist progress', e);
@@ -201,7 +200,7 @@ export function useVisitorProgress() {
         return updated;
       });
     },
-    []
+    [],
   );
 
   // Reset progress history
@@ -217,7 +216,7 @@ export function useVisitorProgress() {
 
   const isDrillCompleted = useCallback(
     (drillId: string) => Boolean(state.completedDrills[drillId]),
-    [state.completedDrills]
+    [state.completedDrills],
   );
 
   const totalCompleted = Object.keys(state.completedDrills).length;

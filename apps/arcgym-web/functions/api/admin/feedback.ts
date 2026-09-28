@@ -1,17 +1,14 @@
+import { isValidDrillId } from '@arcgym/drill-core';
+import { requireAdminAuth } from '../../_shared/adminAuth';
 import {
   configErrorResponse,
-  Env,
+  type Env,
   jsonResponse,
   opaqueError,
   requireKv,
 } from '../../_shared/env';
-import { requireAdminAuth } from '../../_shared/adminAuth';
-import { isValidDrillId } from '@arcgym/drill-core';
 
-export async function onRequestGet(context: {
-  request: Request;
-  env: Env;
-}) {
+export async function onRequestGet(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
   try {
@@ -33,8 +30,7 @@ export async function onRequestGet(context: {
 
       const stats = await kv.get(`drill:rating:${drillIdFilter}`, 'json');
       const index: string[] =
-        ((await kv.get(`drill:feedback_index:${drillIdFilter}`, 'json')) as string[]) ||
-        [];
+        ((await kv.get(`drill:feedback_index:${drillIdFilter}`, 'json')) as string[]) || [];
 
       const records = [];
       for (const recId of index.slice(0, 50)) {

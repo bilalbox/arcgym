@@ -4,18 +4,9 @@
 
 /** Minimal KV binding surface (avoids a hard dependency on workers-types). */
 export interface DrillKvNamespace {
-  get(
-    key: string,
-    type?: 'text' | 'json' | 'arrayBuffer' | 'stream'
-  ): Promise<unknown>;
-  put(
-    key: string,
-    value: string,
-    options?: { expirationTtl?: number }
-  ): Promise<void>;
-  list(options?: {
-    prefix?: string;
-  }): Promise<{ keys: Array<{ name: string }> }>;
+  get(key: string, type?: 'text' | 'json' | 'arrayBuffer' | 'stream'): Promise<unknown>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  list(options?: { prefix?: string }): Promise<{ keys: Array<{ name: string }> }>;
 }
 
 export interface Env {
@@ -28,17 +19,14 @@ export interface Env {
   ARCGYM_VOTE_HMAC_SECRET?: string;
 }
 
-export type SecretName =
-  | 'ARCGYM_HMAC_SECRET'
-  | 'ARCGYM_ADMIN_KEY'
-  | 'ARCGYM_VOTE_HMAC_SECRET';
+export type SecretName = 'ARCGYM_HMAC_SECRET' | 'ARCGYM_ADMIN_KEY' | 'ARCGYM_VOTE_HMAC_SECRET';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
 
 export function jsonResponse(
   body: unknown,
   status = 200,
-  extraHeaders?: Record<string, string>
+  extraHeaders?: Record<string, string>,
 ): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -104,7 +92,7 @@ export function timingSafeEqualString(a: string, b: string): boolean {
 
 export async function readJsonBody(
   request: Request,
-  maxBytes: number
+  maxBytes: number,
 ): Promise<{ ok: true; text: string; json: unknown } | { ok: false; response: Response }> {
   const contentLength = request.headers.get('content-length');
   if (contentLength && Number(contentLength) > maxBytes) {

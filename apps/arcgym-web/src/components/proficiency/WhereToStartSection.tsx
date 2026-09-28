@@ -1,16 +1,16 @@
-import React from 'react';
-import { DimensionProficiency } from '@arcgym/drill-core';
+import type { DimensionProficiency } from '@arcgym/drill-core';
 import { ArrowRight } from 'lucide-react';
+import type React from 'react';
 
 interface WhereToStartSectionProps {
   items: DimensionProficiency[];
-  dimensionLabel: string;
+  dimensionLabel?: string;
   onReviewDrills: (id: string) => void;
 }
 
 export const WhereToStartSection: React.FC<WhereToStartSectionProps> = ({
   items,
-  dimensionLabel,
+  dimensionLabel = 'domain',
   onReviewDrills,
 }) => {
   if (items.length === 0) return null;
@@ -53,7 +53,10 @@ export const WhereToStartSection: React.FC<WhereToStartSectionProps> = ({
                 </p>
 
                 {/* Meter Bar */}
-                <div className="relative h-1.5 rounded-full bg-miro-surface overflow-hidden" aria-hidden="true">
+                <div
+                  className="relative h-1.5 rounded-full bg-miro-surface overflow-hidden"
+                  aria-hidden="true"
+                >
                   <div
                     className="absolute inset-y-0 left-0 rounded-full bg-miro-blue transition-all duration-300"
                     style={{ width: `${item.accuracy}%` }}

@@ -1,36 +1,37 @@
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
-import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
-import { useVisitorProgress } from '@/hooks/useVisitorProgress';
-import { useRouter } from '@/hooks/useRouter';
-import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import {
-  ArchitecturalDomain,
-  ARCHITECTURAL_DOMAINS,
   ARCHITECTURAL_DOMAIN_LABELS,
-  DrillFormat,
+  ARCHITECTURAL_DOMAINS,
+  type ArchitecturalDomain,
+  type DrillFormat,
   isDiagramDrill,
   isLessonDrill,
   isRapidFireDrill,
-  StepAttemptTelemetry,
+  type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
-import { Zap, Network, GraduationCap } from 'lucide-react';
+import { GraduationCap, Network, Zap } from 'lucide-react';
+import type React from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
+import { Footer } from '@/components/layout/Footer';
+import { Header } from '@/components/layout/Header';
+import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
+import { useRouter } from '@/hooks/useRouter';
+import { useVisitorProgress } from '@/hooks/useVisitorProgress';
 
 const DiagramRunner = lazy(() =>
-  import('@/components/drill/DiagramRunner').then((m) => ({ default: m.DiagramRunner }))
+  import('@/components/drill/DiagramRunner').then((m) => ({ default: m.DiagramRunner })),
 );
 const LessonStepper = lazy(() =>
-  import('@/components/drill/LessonStepper').then((m) => ({ default: m.LessonStepper }))
+  import('@/components/drill/LessonStepper').then((m) => ({ default: m.LessonStepper })),
 );
 const ProgressDialog = lazy(() =>
-  import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog }))
+  import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog })),
 );
 const PrivacyPage = lazy(() =>
-  import('@/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage }))
+  import('@/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
 );
 const SkillProfilePage = lazy(() =>
-  import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage }))
+  import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage })),
 );
 
 interface FormatConfig {
@@ -51,7 +52,8 @@ const FORMATS: FormatConfig[] = [
     id: 'Diagram',
     label: 'Diagram',
     icon: <Network className="h-4 w-4" />,
-    description: 'Locate the missing or wrong element on a topology, then commit the Well-Architected repair.',
+    description:
+      'Locate the missing or wrong element on a topology, then commit the Well-Architected repair.',
   },
   {
     id: 'Lesson',
@@ -104,10 +106,10 @@ export const App: React.FC = () => {
 
   const domainsForFormat = useMemo(() => {
     const present = new Set(
-      ALL_DRILLS.filter((d) => d.format === activeFormat).map((d) => d.domain)
+      ALL_DRILLS.filter((d) => d.format === activeFormat).map((d) => d.domain),
     );
     return (Object.keys(ARCHITECTURAL_DOMAIN_LABELS) as ArchitecturalDomain[]).filter((d) =>
-      present.has(d)
+      present.has(d),
     );
   }, [activeFormat]);
 
@@ -124,7 +126,7 @@ export const App: React.FC = () => {
     setActiveFormat(fmt);
     // Drop domain if it would empty the Format ∩ Domain pool
     const stillValid = ALL_DRILLS.some(
-      (d) => d.format === fmt && (!activeDomain || d.domain === activeDomain)
+      (d) => d.format === fmt && (!activeDomain || d.domain === activeDomain),
     );
     if (!stillValid) {
       setActiveDomain(undefined);
@@ -254,6 +256,7 @@ export const App: React.FC = () => {
             const isActive = activeFormat === fmt.id;
             return (
               <button
+                type="button"
                 key={fmt.id}
                 onClick={() => handleFormatChange(fmt.id)}
                 title={fmt.description}
@@ -265,7 +268,9 @@ export const App: React.FC = () => {
               >
                 <span
                   className={`p-1.5 rounded-lg shrink-0 ${
-                    isActive ? 'bg-miro-surface text-miro-primary' : 'bg-miro-surface text-miro-muted'
+                    isActive
+                      ? 'bg-miro-surface text-miro-primary'
+                      : 'bg-miro-surface text-miro-muted'
                   }`}
                 >
                   {fmt.icon}
@@ -282,6 +287,7 @@ export const App: React.FC = () => {
             Domain
           </span>
           <button
+            type="button"
             onClick={() => handleDomainChange(undefined)}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
               activeDomain === undefined
@@ -293,6 +299,7 @@ export const App: React.FC = () => {
           </button>
           {domainsForFormat.map((domain) => (
             <button
+              type="button"
               key={domain}
               onClick={() => handleDomainChange(domain)}
               className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${

@@ -1,10 +1,5 @@
-import {
-  configErrorResponse,
-  Env,
-  jsonResponse,
-  opaqueError,
-} from '../../../_shared/env';
 import { calculateRatingStats, isValidDrillId } from '@arcgym/drill-core';
+import { configErrorResponse, type Env, jsonResponse, opaqueError } from '../../../_shared/env';
 
 export async function onRequestGet(context: {
   request: Request;
@@ -35,7 +30,7 @@ export async function onRequestGet(context: {
       stored?.upVotes || 0,
       stored?.downVotes || 0,
       stored?.tagCounts,
-      stored?.lastUpdated
+      stored?.lastUpdated,
     );
 
     return jsonResponse(stats, 200, {

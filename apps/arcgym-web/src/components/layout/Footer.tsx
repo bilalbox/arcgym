@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 
 interface FooterProps {
   navigate: (to: string) => void;
@@ -19,8 +19,8 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
           className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
         >
           architect.salesforce.com
-        </a>
-              {' '}and discussions in the{' '}
+        </a>{' '}
+        and discussions in the{' '}
         <a
           href="https://trailhead.salesforce.com/trailblazer-community/groups"
           target="_blank"
@@ -28,17 +28,20 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
           className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
         >
           Trailblazer Community
-        </a>.
-              <p>ArcGym is heavily inspired by{' '}
-        <a
-          href="https://analystgym.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
-        >
-          Analyst Gym
         </a>
-        .</p>
+        .
+        <p>
+          ArcGym is heavily inspired by{' '}
+          <a
+            href="https://analystgym.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
+          >
+            Analyst Gym
+          </a>
+          .
+        </p>
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-miro-muted">

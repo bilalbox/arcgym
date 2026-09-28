@@ -1,6 +1,6 @@
-import React from 'react';
+import { Flame, Moon, Sun, Target, Zap } from 'lucide-react';
+import type React from 'react';
 import { useTheme } from '@/hooks/useTheme';
-import { Target, Flame, Moon, Sun, Zap } from 'lucide-react';
 
 interface HeaderProps {
   pathname: string;
@@ -32,6 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4 sm:gap-6">
           <button
+            type="button"
             onClick={() => navigate('/')}
             className="flex items-center gap-3 group text-left cursor-pointer"
             aria-label="ArcGym home"
@@ -49,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
             <button
+              type="button"
               onClick={() => navigate('/')}
               className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
                 isHome
@@ -59,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
               Home
             </button>
             <button
+              type="button"
               onClick={() => navigate('/skills')}
               className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
                 isSkills
@@ -73,6 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="flex items-center gap-2 sm:gap-2.5">
           <button
+            type="button"
             onClick={onOpenProgressModal}
             className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-surface hover:bg-miro-hairlineSoft border border-miro-hairline text-miro-slate text-xs font-medium transition-colors cursor-pointer"
             title="Click to view practice history and completed drills"
@@ -85,6 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {totalPoints > 0 && (
             <button
+              type="button"
               onClick={onOpenProgressModal}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-lavenderLight hover:bg-miro-lavenderLight/80 border border-miro-lavenderBorder text-miro-blue text-xs font-semibold transition-colors cursor-pointer"
               title="Total points achieved across all drills. Click to view history."

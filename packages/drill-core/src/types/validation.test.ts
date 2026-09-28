@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  isValidDrillId,
   isAllowedCitationUrl,
+  isValidDrillId,
   safeCitationHref,
   sanitizeFeedbackTags,
 } from '../index.js';
@@ -19,32 +19,26 @@ describe('validation helpers', () => {
 
   it('allows https citation urls on Salesforce doc hosts only', () => {
     expect(
-      isAllowedCitationUrl(
-        'https://architect.salesforce.com/design/decision-guides/event-driven'
-      )
+      isAllowedCitationUrl('https://architect.salesforce.com/design/decision-guides/event-driven'),
     ).toBe(true);
-    expect(
-      isAllowedCitationUrl('https://help.salesforce.com/s/articleView?id=000')
-    ).toBe(true);
+    expect(isAllowedCitationUrl('https://help.salesforce.com/s/articleView?id=000')).toBe(true);
     expect(isAllowedCitationUrl('https://evil.example/phish')).toBe(false);
     expect(isAllowedCitationUrl('javascript:alert(1)')).toBe(false);
     expect(isAllowedCitationUrl('http://architect.salesforce.com/x')).toBe(false);
-    expect(
-      isAllowedCitationUrl('https://user:pass@architect.salesforce.com/x')
-    ).toBe(false);
+    expect(isAllowedCitationUrl('https://user:pass@architect.salesforce.com/x')).toBe(false);
     expect(safeCitationHref('javascript:alert(1)')).toBeUndefined();
-    expect(
-      safeCitationHref('https://architect.salesforce.com/docs')
-    ).toBe('https://architect.salesforce.com/docs');
+    expect(safeCitationHref('https://architect.salesforce.com/docs')).toBe(
+      'https://architect.salesforce.com/docs',
+    );
   });
 
   it('sanitizes feedback tags by rating polarity', () => {
     expect(sanitizeFeedbackTags('up', ['hit_at_work', 'disagree_with_answer', 'nope'])).toEqual([
       'hit_at_work',
     ]);
-    expect(sanitizeFeedbackTags('down', ['felt_like_trick', 'clear_explanation', 'felt_like_trick'])).toEqual([
-      'felt_like_trick',
-    ]);
+    expect(
+      sanitizeFeedbackTags('down', ['felt_like_trick', 'clear_explanation', 'felt_like_trick']),
+    ).toEqual(['felt_like_trick']);
     expect(sanitizeFeedbackTags('up', 'hit_at_work')).toEqual([]);
   });
 });

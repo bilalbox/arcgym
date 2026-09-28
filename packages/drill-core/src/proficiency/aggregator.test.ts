@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { calculateProficiencyReport, getDrillQuestionCount } from './aggregator.js';
-import {
-  DrillDefinitionDTO,
-  DrillAttemptRecord,
-  RapidFireDrillDefinition,
-  LessonDrillDefinition,
+import { describe, expect, it } from 'vitest';
+import type {
   DiagramDrillDefinition,
+  DrillAttemptRecord,
+  DrillDefinitionDTO,
+  LessonDrillDefinition,
+  RapidFireDrillDefinition,
 } from '../types/drill.js';
+import { calculateProficiencyReport, getDrillQuestionCount } from './aggregator.js';
 
 const mockRapidFireDrill: RapidFireDrillDefinition = {
   id: 'DR-001',
@@ -24,22 +24,24 @@ const mockRapidFireDrill: RapidFireDrillDefinition = {
       prompt: 'Step 1',
       options: [
         { id: 'o1', label: 'Option 1', isCorrect: true, rationale: 'r1' },
-        { id: 'o2', label: 'Option 2', isCorrect: false, rationale: 'r2', distractorAntipattern: 'a2' },
+        {
+          id: 'o2',
+          label: 'Option 2',
+          isCorrect: false,
+          rationale: 'r2',
+          distractorAntipattern: 'a2',
+        },
       ],
     },
     {
       id: 's2',
       prompt: 'Step 2',
-      options: [
-        { id: 'o3', label: 'Option 3', isCorrect: true, rationale: 'r3' },
-      ],
+      options: [{ id: 'o3', label: 'Option 3', isCorrect: true, rationale: 'r3' }],
     },
     {
       id: 's3',
       prompt: 'Step 3',
-      options: [
-        { id: 'o4', label: 'Option 4', isCorrect: true, rationale: 'r4' },
-      ],
+      options: [{ id: 'o4', label: 'Option 4', isCorrect: true, rationale: 'r4' }],
     },
   ],
 };
@@ -85,7 +87,8 @@ const mockDiagramDrill: DiagramDrillDefinition = {
       id: 's1',
       mode: 'fault',
       prompt: 'Which missing component breaks unified profiles?',
-      sourceDiagramUrl: 'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
+      sourceDiagramUrl:
+        'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
       variant: 'missing_node',
       graph: {
         nodes: [
@@ -120,11 +123,7 @@ const mockDiagramDrill: DiagramDrillDefinition = {
   ],
 };
 
-const allMockDrills: DrillDefinitionDTO[] = [
-  mockRapidFireDrill,
-  mockLessonDrill,
-  mockDiagramDrill,
-];
+const allMockDrills: DrillDefinitionDTO[] = [mockRapidFireDrill, mockLessonDrill, mockDiagramDrill];
 
 describe('getDrillQuestionCount', () => {
   it('correctly counts steps/stages and diagram dual commits', () => {
@@ -161,7 +160,9 @@ describe('calculateProficiencyReport', () => {
     const report = calculateProficiencyReport(attempts, allMockDrills, 'domains', 4);
     expect(report.totalQuestionsAnswered).toBe(3);
     // Data_Architecture has 3 questions, threshold is 4 -> still collecting data
-    const dataArch = report.items.find((i) => i.id === 'Data_Architecture')!;
+    const dataArch = report.items.find((i) => i.id === 'Data_Architecture');
+    expect(dataArch).toBeDefined();
+    if (!dataArch) return;
     expect(dataArch.totalQuestions).toBe(3);
     expect(dataArch.correctQuestions).toBe(2);
     expect(dataArch.accuracy).toBe(67);
@@ -237,8 +238,9 @@ describe('calculateProficiencyReport', () => {
     expect(report.totalCount).toBe(5);
 
     // Reliability is in both DR-001 (3 questions, 3 correct) and DR-002 (2 questions, 1 correct)
-    // Total for Reliability = 3 + 2 = 5 questions, 3 + 1 = 4 correct (80%) -> measured!
-    const rel = report.items.find((p) => p.id === 'Reliability')!;
+    const rel = report.items.find((p) => p.id === 'Reliability');
+    expect(rel).toBeDefined();
+    if (!rel) return;
     expect(rel.totalQuestions).toBe(5);
     expect(rel.correctQuestions).toBe(4);
     expect(rel.accuracy).toBe(80);

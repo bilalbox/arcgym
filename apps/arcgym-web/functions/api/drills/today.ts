@@ -1,6 +1,6 @@
 import {
   configErrorResponse,
-  Env,
+  type Env,
   jsonResponse,
   opaqueError,
   requireKv,
@@ -27,8 +27,7 @@ const FALLBACK_DRILL = {
           isCorrect: false,
           rationale:
             'CDC publishes raw schema deltas and does not support custom Apex transformation or business filtering prior to external event egress.',
-          citationUrl:
-            'https://architect.salesforce.com/design/decision-guides/event-driven',
+          citationUrl: 'https://architect.salesforce.com/design/decision-guides/event-driven',
         },
         {
           id: 's1_b',
@@ -37,8 +36,7 @@ const FALLBACK_DRILL = {
           isCorrect: true,
           rationale:
             'Platform Events decouple systems asynchronously, support custom payloads, and allow Apex trigger filtering and enrichment before event egress.',
-          citationUrl:
-            'https://architect.salesforce.com/design/decision-guides/event-driven',
+          citationUrl: 'https://architect.salesforce.com/design/decision-guides/event-driven',
         },
         {
           id: 's1_c',
@@ -46,8 +44,7 @@ const FALLBACK_DRILL = {
           isCorrect: false,
           rationale:
             'Synchronous callouts inside triggers block database transactions, risk uncommitted work exceptions, and violate platform scalability standards.',
-          citationUrl:
-            'https://architect.salesforce.com/design/decision-guides/event-driven',
+          citationUrl: 'https://architect.salesforce.com/design/decision-guides/event-driven',
         },
       ],
     },

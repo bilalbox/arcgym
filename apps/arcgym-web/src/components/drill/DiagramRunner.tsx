@@ -1,23 +1,24 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ConfidenceGate, ConfidenceLevel } from './ConfidenceGate';
 import {
   ArcGymScoringEngine,
-  ConfidenceAnchor,
-  DiagramDrillDefinition,
-  DiagramHotspotDTO,
-  DrillFormat,
-  DrillAttemptRecord,
-  safeCitationHref,
-  orderOptions,
+  type ConfidenceAnchor,
+  type DiagramDrillDefinition,
+  type DiagramHotspotDTO,
+  type DrillAttemptRecord,
+  type DrillFormat,
   optionSeed,
+  orderOptions,
+  safeCitationHref,
 } from '@arcgym/drill-core';
-import { CheckCircle2, XCircle, ExternalLink, ArrowRight, RotateCcw } from 'lucide-react';
-import { DrillFeedbackWidget } from './DrillFeedbackWidget';
+import { ArrowRight, CheckCircle2, ExternalLink, RotateCcw, XCircle } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DiagramCanvas } from './DiagramCanvas';
+import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 type Phase = 'hotspot_gate' | 'hotspot_pick' | 'hotspot_miss' | 'mcq_pick' | 'mcq_result';
 
@@ -64,21 +65,21 @@ export const DiagramRunner: React.FC<{
     setMissedHotspot(null);
     setDecisionResults([]);
     setIsCompleted(false);
-  }, [drill.id]);
+  }, []);
 
   const currentStep = drill.steps[currentStepIndex];
   const orderedOptions = useMemo(
     () => orderOptions(currentStep.options, optionSeed(drill.id, currentStep.id)),
-    [drill.id, currentStep]
+    [drill.id, currentStep],
   );
   const correctCitationHref = safeCitationHref(
-    currentStep.options.find((o) => o.isCorrect)?.citationUrl
+    currentStep.options.find((o) => o.isCorrect)?.citationUrl,
   );
   const sourceHref = safeCitationHref(currentStep.sourceDiagramUrl);
   const progressPercent = Math.round(
     ((currentStepIndex + (phase === 'mcq_result' || phase === 'hotspot_miss' ? 1 : 0)) /
       drill.steps.length) *
-      100
+      100,
   );
 
   const hotspotById = useMemo(() => {
@@ -139,7 +140,7 @@ export const DiagramRunner: React.FC<{
       score: brier.pointsAwarded,
       distractorAntipattern: isCorrect
         ? undefined
-        : hotspot.distractorAntipattern ?? 'Off-Target Hotspot',
+        : (hotspot.distractorAntipattern ?? 'Off-Target Hotspot'),
     };
     const nextResults = [...decisionResults, hotspotResult];
     setDecisionResults(nextResults);
@@ -216,7 +217,8 @@ export const DiagramRunner: React.FC<{
               <span className="text-xs text-miro-slate font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-miro-primary mt-0.5">
                 {Math.round(
-                  decisionResults.reduce((acc, r) => acc + r.confidence, 0) / decisionResults.length
+                  decisionResults.reduce((acc, r) => acc + r.confidence, 0) /
+                    decisionResults.length,
                 )}
                 %
               </p>
@@ -370,7 +372,8 @@ export const DiagramRunner: React.FC<{
             {orderedOptions.map((opt, index) => {
               const isSelected = selectedOptionId === opt.id;
               const submitted = phase === 'mcq_result';
-              let containerStyle = 'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
+              let containerStyle =
+                'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
               if (submitted) {
                 if (opt.isCorrect) {
                   containerStyle =
@@ -382,16 +385,19 @@ export const DiagramRunner: React.FC<{
                   containerStyle = 'border-miro-hairline opacity-45 bg-miro-card';
                 }
               } else if (isSelected) {
-                containerStyle = 'border-2 border-miro-primary bg-miro-surfaceSoft text-miro-primary';
+                containerStyle =
+                  'border-2 border-miro-primary bg-miro-surfaceSoft text-miro-primary';
               }
               return (
-                <div
+                <button
+                  type="button"
                   key={opt.id}
+                  disabled={phase !== 'mcq_pick'}
                   onClick={() => {
                     if (phase !== 'mcq_pick') return;
                     setSelectedOptionId(opt.id);
                   }}
-                  className={`p-4 rounded-xl border transition-all duration-150 text-sm leading-normal flex items-start gap-3.5 ${containerStyle} ${
+                  className={`w-full text-left p-4 rounded-xl border transition-all duration-150 text-sm leading-normal flex items-start gap-3.5 ${containerStyle} ${
                     phase === 'mcq_pick' ? 'cursor-pointer' : ''
                   }`}
                 >
@@ -415,7 +421,7 @@ export const DiagramRunner: React.FC<{
                       </Badge>
                     )}
                   </div>
-                </div>
+                </button>
               );
             })}
 

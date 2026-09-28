@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { ArcGymScoringEngine } from './brier.js';
 
 describe('ArcGymScoringEngine', () => {
@@ -20,7 +20,7 @@ describe('ArcGymScoringEngine', () => {
   });
 
   it('rewards humble uncertainty even when wrong', () => {
-    const result = ArcGymScoringEngine.calculateDecisionScore(0.50, false);
+    const result = ArcGymScoringEngine.calculateDecisionScore(0.5, false);
     // loss = 2.5 * 0.25 = 0.625
     // points = 100 * (1 - 0.625) = +38
     expect(result.pointsAwarded).toBe(38);
@@ -33,7 +33,7 @@ describe('ArcGymScoringEngine', () => {
       { confidence: 0.85, isCorrect: true },
       { confidence: 0.85, isCorrect: true },
       { confidence: 0.85, isCorrect: false },
-      { confidence: 0.50, isCorrect: true }
+      { confidence: 0.5, isCorrect: true },
     ];
     const ece = ArcGymScoringEngine.calculateECE(predictions);
     expect(ece).toBeGreaterThanOrEqual(0);

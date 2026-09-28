@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
 import {
-  FeedbackRating,
-  DrillLikedReason,
-  DrillDislikedReason,
-  DrillFeedbackTag,
-  DRILL_LIKED_TAG_LABELS,
-  DRILL_DISLIKED_TAG_LABELS,
-  ALL_LIKED_TAGS,
   ALL_DISLIKED_TAGS,
-  DrillRatingStats,
+  ALL_LIKED_TAGS,
   calculateRatingStats,
+  DRILL_DISLIKED_TAG_LABELS,
+  DRILL_LIKED_TAG_LABELS,
+  type DrillDislikedReason,
+  type DrillFeedbackTag,
+  type DrillLikedReason,
+  type DrillRatingStats,
+  type FeedbackRating,
 } from '@arcgym/drill-core';
 import { Check } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 
 interface LocalVoteRecord {
   rating: FeedbackRating;
@@ -72,8 +73,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       initialStats?.upVotes || 0,
       initialStats?.downVotes || 0,
       initialStats?.tagCounts,
-      initialStats?.lastUpdated
-    )
+      initialStats?.lastUpdated,
+    ),
   );
 
   const [selectedRating, setSelectedRating] = useState<FeedbackRating | null>(null);
@@ -217,7 +218,8 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
           </div>
           {stats.likePercentage !== null && (
             <span className="text-xs font-mono text-miro-muted">
-              {stats.likePercentage}% liked ({stats.totalVotes} review{stats.totalVotes === 1 ? '' : 's'})
+              {stats.likePercentage}% liked ({stats.totalVotes} review
+              {stats.totalVotes === 1 ? '' : 's'})
             </span>
           )}
         </div>
@@ -259,9 +261,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
           {selectedRating === 'up' && (
             <div className="space-y-2 pt-1 animate-in fade-in duration-200">
-              <span className="text-xs font-medium text-miro-slate">
-                What worked?
-              </span>
+              <span className="text-xs font-medium text-miro-slate">What worked?</span>
               <div className="flex flex-wrap gap-1.5">
                 {ALL_LIKED_TAGS.map((tag) => {
                   const active = selectedTags.has(tag);
@@ -286,9 +286,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
 
           {selectedRating === 'down' && (
             <div className="space-y-2 pt-1 animate-in fade-in duration-200">
-              <span className="text-xs font-medium text-miro-slate">
-                What missed?
-              </span>
+              <span className="text-xs font-medium text-miro-slate">What missed?</span>
               <div className="flex flex-wrap gap-1.5">
                 {ALL_DISLIKED_TAGS.map((tag) => {
                   const active = selectedTags.has(tag);

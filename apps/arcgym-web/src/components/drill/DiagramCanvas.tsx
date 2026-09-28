@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { dia, shapes } from '@joint/core';
 import type { DiagramGraphDTO, DiagramHotspotDTO, DiagramLayoutDTO } from '@arcgym/drill-core';
+import { dia, shapes } from '@joint/core';
+import type React from 'react';
+import { useEffect, useRef } from 'react';
 
 const VIEW_H = 400;
 const NODE_W = 132;
@@ -136,7 +137,7 @@ export const DiagramCanvas: React.FC<{
               fontFamily: 'Geist Sans, system-ui, sans-serif',
             },
           },
-        })
+        }),
       );
     }
 
@@ -177,7 +178,7 @@ export const DiagramCanvas: React.FC<{
                 },
               ]
             : [],
-        })
+        }),
       );
     }
 

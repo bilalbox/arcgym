@@ -1,17 +1,17 @@
 import {
-  ArchitecturalDomain,
-  ARCHITECTURAL_DOMAINS,
   ARCHITECTURAL_DOMAIN_LABELS,
-  DimensionProficiency,
-  DrillAttemptRecord,
-  DrillDefinitionDTO,
+  ARCHITECTURAL_DOMAINS,
+  type ArchitecturalDomain,
+  type DimensionProficiency,
+  type DrillAttemptRecord,
+  type DrillDefinitionDTO,
   isDiagramDrill,
   isLessonDrill,
   isRapidFireDrill,
-  ProficiencyDimension,
-  WellArchitectedPillar,
-  WELL_ARCHITECTED_PILLARS,
+  type ProficiencyDimension,
   WELL_ARCHITECTED_PILLAR_LABELS,
+  WELL_ARCHITECTED_PILLARS,
+  type WellArchitectedPillar,
 } from '../types/drill.js';
 
 export interface ProficiencyReportData {
@@ -49,7 +49,7 @@ export function calculateProficiencyReport(
   completedDrills: Record<string, DrillAttemptRecord>,
   allDrills: DrillDefinitionDTO[],
   dimension: ProficiencyDimension,
-  minQuestionsThreshold = 4
+  minQuestionsThreshold = 4,
 ): ProficiencyReportData {
   const drillMap = new Map<string, DrillDefinitionDTO>();
   for (const d of allDrills) {
@@ -115,7 +115,11 @@ export function calculateProficiencyReport(
 
   if (dimension === 'domains') {
     items = ARCHITECTURAL_DOMAINS.map((domain) => {
-      const stat = domainStats.get(domain)!;
+      const stat = domainStats.get(domain) ?? {
+        totalQuestions: 0,
+        correctQuestions: 0,
+        drillsCompleted: 0,
+      };
       const accuracy =
         stat.totalQuestions > 0
           ? Math.round((stat.correctQuestions / stat.totalQuestions) * 100)
@@ -132,7 +136,11 @@ export function calculateProficiencyReport(
     });
   } else {
     items = WELL_ARCHITECTED_PILLARS.map((pillar) => {
-      const stat = pillarStats.get(pillar)!;
+      const stat = pillarStats.get(pillar) ?? {
+        totalQuestions: 0,
+        correctQuestions: 0,
+        drillsCompleted: 0,
+      };
       const accuracy =
         stat.totalQuestions > 0
           ? Math.round((stat.correctQuestions / stat.totalQuestions) * 100)

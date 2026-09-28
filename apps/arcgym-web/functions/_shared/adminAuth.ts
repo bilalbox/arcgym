@@ -1,9 +1,4 @@
-import {
-  Env,
-  opaqueError,
-  requireSecret,
-  timingSafeEqualString,
-} from './env';
+import { type Env, opaqueError, requireSecret, timingSafeEqualString } from './env';
 
 /**
  * Header-only admin auth. Never accept secrets via query string.

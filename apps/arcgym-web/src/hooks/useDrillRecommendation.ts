@@ -1,15 +1,15 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
-  ArchitecturalDomain,
-  DrillDefinitionDTO,
-  DrillFormat,
-  DrillAttemptRecord,
+  type ArchitecturalDomain,
+  type DrillAttemptRecord,
+  type DrillDefinitionDTO,
+  type DrillFormat,
+  type RapidFireDrillDefinition,
+  type RapidFireSetRecommendation,
+  type RecommendationResult,
   selectRecommendedDrill,
   selectRecommendedRapidFireSet,
-  RecommendationResult,
-  RapidFireSetRecommendation,
-  RapidFireDrillDefinition,
 } from '@arcgym/drill-core';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import rawCanonicalDrills from '../data/canonicalDrills.json';
 
 const ALL_DRILLS = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
@@ -17,7 +17,7 @@ const ALL_DRILLS = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
 export function useDrillRecommendation(
   format: DrillFormat,
   completedDrills: Record<string, DrillAttemptRecord>,
-  domain?: ArchitecturalDomain
+  domain?: ArchitecturalDomain,
 ) {
   const [, setSessionSkipCount] = useState<number>(0);
 
@@ -27,53 +27,57 @@ export function useDrillRecommendation(
   completedDrillsRef.current = completedDrills;
 
   // Active Rapid Fire set (5 drills)
-  const [activeRapidFireSet, setActiveRapidFireSet] = useState<RapidFireSetRecommendation | null>(() => {
-    if (format === 'Rapid_Fire') {
-      return selectRecommendedRapidFireSet({
-        drills: ALL_DRILLS,
-        completedDrills,
-        todayDateStr: new Date().toISOString().slice(0, 10),
-        domain,
-        sessionSkipCount: 0,
-        setCount: 5,
-      });
-    }
-    return null;
-  });
-
-  // Active recommendation state (single drill for Diagram / Lesson, or primary drill for Rapid Fire)
-  const [activeRecommendation, setActiveRecommendation] = useState<RecommendationResult | null>(() => {
-    if (format === 'Rapid_Fire') {
-      const rfSet = selectRecommendedRapidFireSet({
-        drills: ALL_DRILLS,
-        completedDrills,
-        todayDateStr: new Date().toISOString().slice(0, 10),
-        domain,
-        sessionSkipCount: 0,
-        setCount: 5,
-      });
-      if (rfSet && rfSet.drills.length > 0) {
-        return {
-          drill: rfSet.drills[0],
-          reason: rfSet.reason,
-          isDaily: rfSet.isDaily,
-          uncompletedCount: rfSet.uncompletedCount,
-          totalCount: rfSet.totalCount,
-          completionPercentage: rfSet.completionPercentage,
-        };
+  const [activeRapidFireSet, setActiveRapidFireSet] = useState<RapidFireSetRecommendation | null>(
+    () => {
+      if (format === 'Rapid_Fire') {
+        return selectRecommendedRapidFireSet({
+          drills: ALL_DRILLS,
+          completedDrills,
+          todayDateStr: new Date().toISOString().slice(0, 10),
+          domain,
+          sessionSkipCount: 0,
+          setCount: 5,
+        });
       }
       return null;
-    }
+    },
+  );
 
-    return selectRecommendedDrill({
-      drills: ALL_DRILLS,
-      completedDrills,
-      todayDateStr: new Date().toISOString().slice(0, 10),
-      format,
-      domain,
-      sessionSkipCount: 0,
-    });
-  });
+  // Active recommendation state (single drill for Diagram / Lesson, or primary drill for Rapid Fire)
+  const [activeRecommendation, setActiveRecommendation] = useState<RecommendationResult | null>(
+    () => {
+      if (format === 'Rapid_Fire') {
+        const rfSet = selectRecommendedRapidFireSet({
+          drills: ALL_DRILLS,
+          completedDrills,
+          todayDateStr: new Date().toISOString().slice(0, 10),
+          domain,
+          sessionSkipCount: 0,
+          setCount: 5,
+        });
+        if (rfSet && rfSet.drills.length > 0) {
+          return {
+            drill: rfSet.drills[0],
+            reason: rfSet.reason,
+            isDaily: rfSet.isDaily,
+            uncompletedCount: rfSet.uncompletedCount,
+            totalCount: rfSet.totalCount,
+            completionPercentage: rfSet.completionPercentage,
+          };
+        }
+        return null;
+      }
+
+      return selectRecommendedDrill({
+        drills: ALL_DRILLS,
+        completedDrills,
+        todayDateStr: new Date().toISOString().slice(0, 10),
+        format,
+        domain,
+        sessionSkipCount: 0,
+      });
+    },
+  );
 
   // When format or domain filter changes, pick the new recommended drill/set
   useEffect(() => {
@@ -207,9 +211,7 @@ export function useDrillRecommendation(
   }, [candidateDrills, completedDrills]);
 
   const completionPercentage =
-    totalCount > 0
-      ? Math.round(((totalCount - uncompletedCount) / totalCount) * 100)
-      : 0;
+    totalCount > 0 ? Math.round(((totalCount - uncompletedCount) / totalCount) * 100) : 0;
 
   return {
     recommendation: activeRecommendation,

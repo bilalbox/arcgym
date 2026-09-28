@@ -1,16 +1,9 @@
-import React from 'react';
-import {
-  ShieldCheck,
-  EyeOff,
-  Database,
-  BarChart3,
-  Compass,
-  ThumbsUp,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { BarChart3, Compass, Database, EyeOff, ShieldCheck, ThumbsUp } from 'lucide-react';
+import type React from 'react';
 import { Footer } from '@/components/layout/Footer';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface PrivacyPageProps {
   navigate: (to: string) => void;
@@ -24,6 +17,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => navigate('/')}
               className="flex items-center gap-3 group text-left cursor-pointer"
               aria-label="ArcGym home"
@@ -73,7 +67,10 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
           </h1>
 
           <p className="text-base text-miro-slate max-w-2xl leading-relaxed">
-            ArcGym is engineered for Salesforce Technical Architects and enterprise technology leaders. We do not run user accounts, collect emails, or store practice scores on our servers. Practice history stays in your browser. Optional anonymous drill ratings use enum pills only—no free-text comments.
+            ArcGym is engineered for Salesforce Technical Architects and enterprise technology
+            leaders. We do not run user accounts, collect emails, or store practice scores on our
+            servers. Practice history stays in your browser. Optional anonymous drill ratings use
+            enum pills only—no free-text comments.
           </p>
 
           <p className="text-xs text-miro-muted">
@@ -91,7 +88,8 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
               No Accounts or Identity
             </h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              No user accounts, passwords, email collection, or cross-site advertising profiles. We do not ask you to identify yourself.
+              No user accounts, passwords, email collection, or cross-site advertising profiles. We
+              do not ask you to identify yourself.
             </p>
           </Card>
 
@@ -103,7 +101,8 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
               Client-Side Sovereignty
             </h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              Your practice streaks and drill scores reside strictly in your browser’s local storage. They never leave your device.
+              Your practice streaks and drill scores reside strictly in your browser’s local
+              storage. They never leave your device.
             </p>
           </Card>
 
@@ -115,7 +114,8 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
               Cookieless Web Analytics
             </h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              Powered by Cloudflare Web Analytics. No tracking cookies, no cross-site profiling, and no IP address storage.
+              Powered by Cloudflare Web Analytics. No tracking cookies, no cross-site profiling, and
+              no IP address storage.
             </p>
           </Card>
         </div>
@@ -129,15 +129,36 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             <span>Anonymous Drill Feedback</span>
           </div>
           <p className="text-sm text-miro-slate leading-relaxed">
-            Learners can rate drills with enum pills (e.g. <em>Realistic</em>, <em>Useful</em>, <em>Good challenge</em>, <em>Unrealistic</em>, <em>Unclear</em>, <em>Too easy</em>, or <em>Too hard</em>). Designed to avoid collecting corporate or personal free-text:
+            Learners can rate drills with enum pills (e.g. <em>Realistic</em>, <em>Useful</em>,{' '}
+            <em>Good challenge</em>, <em>Unrealistic</em>, <em>Unclear</em>, <em>Too easy</em>, or{' '}
+            <em>Too hard</em>). Designed to avoid collecting corporate or personal free-text:
           </p>
           <ul className="text-xs text-miro-slate space-y-2 list-disc list-inside leading-relaxed pl-1">
-            <li><strong>No free-text input</strong>: Submissions are limited to pre-defined enum pills. We do not collect comments or open text fields, which reduces accidental transmission of emails, credentials, or Salesforce Org IDs.</li>
-            <li><strong>Ephemeral anti-sybil deduplication</strong>: To limit ballot-stuffing, the Cloudflare edge briefly uses your connection IP (via <code className="font-mono bg-miro-surface px-1 py-0.5 rounded text-[11px]">CF-Connecting-IP</code>) as an input to <code className="font-mono bg-miro-surface px-1 py-0.5 rounded text-[11px]">HMAC-SHA256(Secret, Date + DrillId + IP)</code>. The raw IP is not written to feedback records. Only the opaque HMAC marker is stored in KV and expires after 24 hours.</li>
-            <li><strong>What we store</strong>: Each accepted vote stores drill id, up/down rating, selected pill tags, and a timestamp. Aggregates (counts and percentages) are public. Feedback is decoupled from your local practice scores and streaks.</li>
+            <li>
+              <strong>No free-text input</strong>: Submissions are limited to pre-defined enum
+              pills. We do not collect comments or open text fields, which reduces accidental
+              transmission of emails, credentials, or Salesforce Org IDs.
+            </li>
+            <li>
+              <strong>Ephemeral anti-sybil deduplication</strong>: To limit ballot-stuffing, the
+              Cloudflare edge briefly uses your connection IP (via{' '}
+              <code className="font-mono bg-miro-surface px-1 py-0.5 rounded text-[11px]">
+                CF-Connecting-IP
+              </code>
+              ) as an input to{' '}
+              <code className="font-mono bg-miro-surface px-1 py-0.5 rounded text-[11px]">
+                HMAC-SHA256(Secret, Date + DrillId + IP)
+              </code>
+              . The raw IP is not written to feedback records. Only the opaque HMAC marker is stored
+              in KV and expires after 24 hours.
+            </li>
+            <li>
+              <strong>What we store</strong>: Each accepted vote stores drill id, up/down rating,
+              selected pill tags, and a timestamp. Aggregates (counts and percentages) are public.
+              Feedback is decoupled from your local practice scores and streaks.
+            </li>
           </ul>
         </Card>
-
 
         {/* Back to practice CTA card */}
         <div className="rounded-3xl border border-miro-hairline bg-miro-card p-8 text-center space-y-4 shadow-xs">
@@ -145,13 +166,10 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             Ready to practice your architectural judgment?
           </h2>
           <p className="text-sm text-miro-slate max-w-md mx-auto">
-            Test your trade-off analysis across Integration, Data Cloud, Security, and Agentforce — practice history stays on your device.
+            Test your trade-off analysis across Integration, Data Cloud, Security, and Agentforce —
+            practice history stays on your device.
           </p>
-          <Button
-            size="lg"
-            onClick={() => navigate('/')}
-            className="cursor-pointer"
-          >
+          <Button size="lg" onClick={() => navigate('/')} className="cursor-pointer">
             ← Return to Practice Drills
           </Button>
         </div>

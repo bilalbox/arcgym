@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /**
  * ArcGym Drill Feedback Triage CLI
  *
@@ -10,15 +11,15 @@
  *   pnpm feedback:pull                   # Snapshot remote KV to data/feedback.json
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
-  DRILL_LIKED_TAG_LABELS,
   DRILL_DISLIKED_TAG_LABELS,
+  DRILL_LIKED_TAG_LABELS,
+  type DrillFeedbackRecord,
+  type DrillRatingStats,
   LEGACY_TAG_ALIASES,
-  DrillRatingStats,
-  DrillFeedbackRecord,
 } from '../packages/drill-core/src/index.js';
 
 const ROOT_DIR = process.cwd();
@@ -68,7 +69,7 @@ function pullFromCloudflare(): FeedbackSnapshot {
   try {
     const listRaw = execSync(
       `pnpm --filter @arcgym/web exec wrangler kv key list --namespace-id=${KV_NAMESPACE_ID} --prefix="drill:rating:" --remote`,
-      { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' }
+      { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' },
     );
     const keys = JSON.parse(listRaw) as Array<{ name: string }>;
 
@@ -76,10 +77,10 @@ function pullFromCloudflare(): FeedbackSnapshot {
       try {
         const valRaw = execSync(
           `pnpm --filter @arcgym/web exec wrangler kv key get --namespace-id=${KV_NAMESPACE_ID} "${key.name}" --remote`,
-          { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' }
+          { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' },
         );
         const stats = JSON.parse(valRaw) as DrillRatingStats;
-        if (stats && stats.drillId) {
+        if (stats?.drillId) {
           snapshot.ratings[stats.drillId] = stats;
         }
       } catch {
@@ -88,9 +89,12 @@ function pullFromCloudflare(): FeedbackSnapshot {
     }
 
     saveLocalFeedback(snapshot);
-    console.log(`Synced ${Object.keys(snapshot.ratings).length} drill rating stats → data/feedback.json\n`);
-  } catch (error: any) {
-    console.warn(`Wrangler KV pull skipped (${error.message || 'offline'}). Using local cache if available.\n`);
+    console.log(
+      `Synced ${Object.keys(snapshot.ratings).length} drill rating stats → data/feedback.json\n`,
+    );
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'offline';
+    console.warn(`Wrangler KV pull skipped (${msg}). Using local cache if available.\n`);
   }
 
   return snapshot;
@@ -119,7 +123,7 @@ function renderReport(drillFilter?: string) {
     console.log(`Thumbs Up:       ${stats.upVotes}`);
     console.log(`Thumbs Down:     ${stats.downVotes}`);
     console.log(
-      `Approval Rate:   ${stats.likePercentage !== null ? `${stats.likePercentage}%` : '— (insufficient votes)'}`
+      `Approval Rate:   ${stats.likePercentage !== null ? `${stats.likePercentage}%` : '— (insufficient votes)'}`,
     );
     console.log(`Last Updated:    ${stats.lastUpdated || 'Unknown'}\n`);
 
@@ -136,7 +140,7 @@ function renderReport(drillFilter?: string) {
           console.log(`  • 👍 ${label.padEnd(20)}: ${count}`);
         }
       }
-      console.log('\nDidn\'t Like Pills:');
+      console.log("\nDidn't Like Pills:");
       for (const [key, label] of Object.entries(DRILL_DISLIKED_TAG_LABELS)) {
         const count = counts[key as keyof typeof counts] || 0;
         if (count > 0) {
@@ -154,7 +158,9 @@ function renderReport(drillFilter?: string) {
 
   if (ratingsList.length === 0) {
     console.log('No drill ratings recorded yet.');
-    console.log('Tip: Once feedback is submitted on drills, run `pnpm feedback:report` to inspect.');
+    console.log(
+      'Tip: Once feedback is submitted on drills, run `pnpm feedback:report` to inspect.',
+    );
     console.log('     Or run `pnpm feedback:pull` to sync from Cloudflare KV.\n');
     return;
   }
@@ -167,7 +173,9 @@ function renderReport(drillFilter?: string) {
   });
 
   console.log(' Drill ID    | Up Votes | Down Votes | Total | Approval | Top Feedback Pills');
-  console.log('-------------+----------+------------+-------+----------+-----------------------------------');
+  console.log(
+    '-------------+----------+------------+-------+----------+-----------------------------------',
+  );
 
   for (const stats of ratingsList) {
     const id = stats.drillId.padEnd(11);
@@ -183,8 +191,8 @@ function renderReport(drillFilter?: string) {
       .map(([k, count]) => {
         const resolvedKey = LEGACY_TAG_ALIASES[k] || k;
         const label =
-          (DRILL_LIKED_TAG_LABELS as any)[resolvedKey] ||
-          (DRILL_DISLIKED_TAG_LABELS as any)[resolvedKey] ||
+          (DRILL_LIKED_TAG_LABELS as Record<string, string>)[resolvedKey] ||
+          (DRILL_DISLIKED_TAG_LABELS as Record<string, string>)[resolvedKey] ||
           k;
         return `${label} (${count})`;
       })

@@ -1,15 +1,11 @@
 import {
   DRILL_STATUSES,
-  DrillFormat,
+  type DrillFormat,
   isAllowedCitationUrl,
   isValidDrillId,
 } from '@arcgym/drill-core';
 
-const ALLOWED_FORMATS = new Set<DrillFormat>([
-  'Lesson',
-  'Rapid_Fire',
-  'Diagram',
-]);
+const ALLOWED_FORMATS = new Set<DrillFormat>(['Lesson', 'Rapid_Fire', 'Diagram']);
 
 const MAX_STRING = 8_000;
 const MAX_TITLE = 300;
@@ -35,7 +31,11 @@ export function validatePublishDrillPayload(raw: unknown): DrillValidationResult
     return { ok: false, error: 'Invalid or missing drill id' };
   }
 
-  if (typeof drill.title !== 'string' || drill.title.length === 0 || drill.title.length > MAX_TITLE) {
+  if (
+    typeof drill.title !== 'string' ||
+    drill.title.length === 0 ||
+    drill.title.length > MAX_TITLE
+  ) {
     return { ok: false, error: 'Invalid or missing title' };
   }
 

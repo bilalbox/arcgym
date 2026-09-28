@@ -1,20 +1,20 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import type {
+  ArchitecturalDomain,
+  DrillAttemptRecord,
+  DrillDefinitionDTO,
+} from '../types/drill.js';
 import {
-  hashDateString,
   getDailyDrillIndex,
+  hashDateString,
   selectRecommendedDrill,
   selectRecommendedRapidFireSet,
 } from './engine.js';
-import {
-  ArchitecturalDomain,
-  DrillDefinitionDTO,
-  DrillAttemptRecord,
-} from '../types/drill.js';
 
 function mockDrill(
   id: string,
   domain: ArchitecturalDomain,
-  domainLabel = domain
+  domainLabel = domain,
 ): DrillDefinitionDTO {
   return {
     id,
@@ -247,11 +247,46 @@ describe('Recommendation Engine', () => {
 
     it('fills remaining slots from review mode when uncompleted drills are fewer than 5', () => {
       const completed: Record<string, DrillAttemptRecord> = {
-        'RF-1': { drillId: 'RF-1', format: 'Rapid_Fire', completedAt: '2026-09-20', score: 100, accuracy: 1, attemptsCount: 1 },
-        'RF-2': { drillId: 'RF-2', format: 'Rapid_Fire', completedAt: '2026-09-21', score: 80, accuracy: 1, attemptsCount: 1 },
-        'RF-3': { drillId: 'RF-3', format: 'Rapid_Fire', completedAt: '2026-09-22', score: 90, accuracy: 1, attemptsCount: 1 },
-        'RF-4': { drillId: 'RF-4', format: 'Rapid_Fire', completedAt: '2026-09-23', score: 70, accuracy: 1, attemptsCount: 1 },
-        'RF-5': { drillId: 'RF-5', format: 'Rapid_Fire', completedAt: '2026-09-24', score: 95, accuracy: 1, attemptsCount: 1 },
+        'RF-1': {
+          drillId: 'RF-1',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-20',
+          score: 100,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+        'RF-2': {
+          drillId: 'RF-2',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-21',
+          score: 80,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+        'RF-3': {
+          drillId: 'RF-3',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-22',
+          score: 90,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+        'RF-4': {
+          drillId: 'RF-4',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-23',
+          score: 70,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+        'RF-5': {
+          drillId: 'RF-5',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-24',
+          score: 95,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
       };
       // RF-6 and RF-7 uncompleted (2 uncompleted)
       const result = selectRecommendedRapidFireSet({

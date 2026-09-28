@@ -1,6 +1,7 @@
+import { validatePublishDrillPayload } from '../../_shared/drillValidation';
 import {
   configErrorResponse,
-  Env,
+  type Env,
   jsonResponse,
   opaqueError,
   readJsonBody,
@@ -8,7 +9,6 @@ import {
   requireSecret,
 } from '../../_shared/env';
 import { verifyHmacSha256Hex } from '../../_shared/hmac';
-import { validatePublishDrillPayload } from '../../_shared/drillValidation';
 
 const MAX_WEBHOOK_BODY_BYTES = 256 * 1024;
 

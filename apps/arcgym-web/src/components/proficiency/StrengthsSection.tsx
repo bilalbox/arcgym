@@ -1,14 +1,14 @@
-import React from 'react';
-import { DimensionProficiency } from '@arcgym/drill-core';
+import type { DimensionProficiency } from '@arcgym/drill-core';
+import type React from 'react';
 
 interface StrengthsSectionProps {
   items: DimensionProficiency[];
-  dimensionLabel: string;
+  dimensionLabel?: string;
 }
 
 export const StrengthsSection: React.FC<StrengthsSectionProps> = ({
   items,
-  dimensionLabel,
+  dimensionLabel = 'domain',
 }) => {
   if (items.length === 0) return null;
 
@@ -43,7 +43,10 @@ export const StrengthsSection: React.FC<StrengthsSectionProps> = ({
               </p>
 
               <div className="w-full">
-                <div className="relative h-1.5 rounded-full bg-miro-surface overflow-hidden" aria-hidden="true">
+                <div
+                  className="relative h-1.5 rounded-full bg-miro-surface overflow-hidden"
+                  aria-hidden="true"
+                >
                   <div
                     className="absolute inset-y-0 left-0 rounded-full bg-miro-successText transition-all duration-300"
                     style={{ width: `${item.accuracy}%` }}

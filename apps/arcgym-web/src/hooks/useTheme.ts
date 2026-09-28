@@ -33,9 +33,7 @@ export function readStoredTheme(): ThemePreference {
  */
 export function useTheme() {
   const [preference, setPreferenceState] = useState<ThemePreference>(() => readStoredTheme());
-  const [resolved, setResolved] = useState<'light' | 'dark'>(() =>
-    resolveTheme(readStoredTheme())
-  );
+  const [resolved, setResolved] = useState<'light' | 'dark'>(() => resolveTheme(readStoredTheme()));
 
   const setPreference = useCallback((next: ThemePreference) => {
     setPreferenceState(next);

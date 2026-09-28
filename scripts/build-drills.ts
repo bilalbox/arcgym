@@ -4,9 +4,15 @@
  * and compiles them for the React frontend and Cloudflare API endpoints.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { lintDrillWording } from '../packages/drill-core/src/index.js';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import {
+  type DiagramDrillDefinition,
+  type DrillDefinitionDTO,
+  type LessonDrillDefinition,
+  lintDrillWording,
+  type RapidFireDrillDefinition,
+} from '../packages/drill-core/src/index.js';
 
 /** When true, wording findings on published drills fail the build; drafts only ever warn. */
 const WORDING_ENFORCE = true;
@@ -30,7 +36,13 @@ const ARCHITECTURAL_DOMAINS = new Set([
 const FORMATS = new Set(['Lesson', 'Rapid_Fire', 'Diagram']);
 const STATUSES = new Set(['draft', 'published']);
 const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
-const PILLARS = new Set(['Trust', 'Reliability', 'Operational_Excellence', 'Cost_Optimization', 'Fairness']);
+const PILLARS = new Set([
+  'Trust',
+  'Reliability',
+  'Operational_Excellence',
+  'Cost_Optimization',
+  'Fairness',
+]);
 const CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
@@ -46,8 +58,8 @@ console.log('======================================================\n');
 const drillFiles = fs.readdirSync(DRILLS_DIR).filter((f) => f.endsWith('.json'));
 console.log(`Found ${drillFiles.length} drill JSON files in ${DRILLS_DIR}`);
 
-const allDrills: any[] = [];
-const draftDrills: any[] = [];
+const allDrills: DrillDefinitionDTO[] = [];
+const draftDrills: DrillDefinitionDTO[] = [];
 let errorCount = 0;
 let wordingWarningCount = 0;
 
@@ -56,7 +68,7 @@ function err(file: string, message: string) {
   errorCount++;
 }
 
-function lintWording(file: string, drill: any) {
+function lintWording(file: string, drill: DrillDefinitionDTO) {
   const enforced = WORDING_ENFORCE && drill.status === 'published';
   for (const finding of lintDrillWording(drill)) {
     const message = `wording ${finding.ruleId} at ${finding.where}: ${finding.message}`;
@@ -70,7 +82,9 @@ function lintWording(file: string, drill: any) {
 }
 
 const crawledCitationUrls = new Set<string>(
-  JSON.parse(fs.readFileSync(ARCHITECT_CHUNKS_PATH, 'utf-8')).map((c: any) => c.metadata.url),
+  JSON.parse(fs.readFileSync(ARCHITECT_CHUNKS_PATH, 'utf-8')).map(
+    (c: { metadata: { url: string } }) => c.metadata.url,
+  ),
 );
 
 /** A citation must be the exact (anchored) URL of a crawled chunk, so learners land on the governing section. */
@@ -78,14 +92,14 @@ function isOfficialCitation(url: unknown): boolean {
   return typeof url === 'string' && crawledCitationUrls.has(url);
 }
 
-function validateOptionIds(file: string, where: string, options: any[]) {
+function validateOptionIds(file: string, where: string, options: Array<{ id: string }>) {
   const ids = options.map((o) => o.id);
   if (new Set(ids).size !== ids.length) {
     err(file, `${where} has duplicate option ids`);
   }
 }
 
-function validateMetadata(file: string, drill: any) {
+function validateMetadata(file: string, drill: DrillDefinitionDTO) {
   if (!DIFFICULTIES.has(drill.difficulty)) {
     err(file, `invalid difficulty: ${drill.difficulty} (expected ${[...DIFFICULTIES].join('|')})`);
   }
@@ -98,14 +112,18 @@ function validateMetadata(file: string, drill: any) {
     }
   }
   if (drill.sourceCardIds !== undefined) {
-    const valid = Array.isArray(drill.sourceCardIds) && drill.sourceCardIds.every((id: unknown) => typeof id === 'string' && CARD_ID_PATTERN.test(id));
+    const valid =
+      Array.isArray(drill.sourceCardIds) &&
+      drill.sourceCardIds.every(
+        (id: unknown) => typeof id === 'string' && CARD_ID_PATTERN.test(id),
+      );
     if (!valid) {
       err(file, 'sourceCardIds must be an array of Friction Card ids (FC-<discussion_id>)');
     }
   }
 }
 
-function validateRapidFire(file: string, drill: any) {
+function validateRapidFire(file: string, drill: RapidFireDrillDefinition) {
   if (!Array.isArray(drill.steps) || drill.steps.length === 0) {
     err(file, 'Rapid_Fire requires non-empty steps');
     return;
@@ -115,7 +133,7 @@ function validateRapidFire(file: string, drill: any) {
       err(file, `step ${step.id} has invalid prompt or options`);
       continue;
     }
-    if (!step.options.some((o: any) => o.isCorrect)) {
+    if (!step.options.some((o) => o.isCorrect)) {
       err(file, `step ${step.id} has NO correct option marked`);
     }
     validateOptionIds(file, `step ${step.id}`, step.options);
@@ -127,7 +145,10 @@ function validateRapidFire(file: string, drill: any) {
         err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
       }
       if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
-        err(file, `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`);
+        err(
+          file,
+          `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
+        );
       }
     }
   }
@@ -143,7 +164,7 @@ function isOfficialSourceDiagram(url: unknown): boolean {
   }
 }
 
-function validateDiagram(file: string, drill: any) {
+function validateDiagram(file: string, drill: DiagramDrillDefinition) {
   if (!Array.isArray(drill.steps) || drill.steps.length === 0) {
     err(file, 'Diagram requires non-empty steps');
     return;
@@ -165,7 +186,10 @@ function validateDiagram(file: string, drill: any) {
       err(file, `step ${step.id} invalid variant ${step.variant}`);
     }
     if (!isOfficialSourceDiagram(step.sourceDiagramUrl)) {
-      err(file, `step ${step.id} sourceDiagramUrl must be https on architect.salesforce.com or developer.salesforce.com`);
+      err(
+        file,
+        `step ${step.id} sourceDiagramUrl must be https on architect.salesforce.com or developer.salesforce.com`,
+      );
     }
     if (!step.graph || !Array.isArray(step.graph.nodes) || !Array.isArray(step.graph.edges)) {
       err(file, `step ${step.id} requires graph.nodes[] and graph.edges[]`);
@@ -221,7 +245,7 @@ function validateDiagram(file: string, drill: any) {
       err(file, `step ${step.id} requires hotspots[]`);
       continue;
     }
-    const correctHotspots = step.hotspots.filter((h: any) => h.isCorrect);
+    const correctHotspots = step.hotspots.filter((h) => h.isCorrect);
     if (correctHotspots.length !== 1) {
       err(file, `step ${step.id} must have exactly one correct hotspot`);
     }
@@ -237,20 +261,30 @@ function validateDiagram(file: string, drill: any) {
       hotspotIds.add(hotspot.id);
       const inGraph =
         (hotspot.targetKind === 'edge' && edgeIds.has(hotspot.id)) ||
-        ((hotspot.targetKind === 'node' || hotspot.targetKind === 'slot') && nodeIds.has(hotspot.id));
+        ((hotspot.targetKind === 'node' || hotspot.targetKind === 'slot') &&
+          nodeIds.has(hotspot.id));
       if (!inGraph) {
-        err(file, `step ${step.id} hotspot ${hotspot.id} not found in graph for targetKind ${hotspot.targetKind}`);
+        err(
+          file,
+          `step ${step.id} hotspot ${hotspot.id} not found in graph for targetKind ${hotspot.targetKind}`,
+        );
       }
       if (hotspot.targetKind === 'slot') {
-        const node = step.graph.nodes.find((n: any) => n.id === hotspot.id);
+        const node = step.graph.nodes.find((n) => n.id === hotspot.id);
         if (node && node.kind !== 'slot') {
-          err(file, `step ${step.id} hotspot ${hotspot.id} targetKind slot but node.kind is ${node.kind}`);
+          err(
+            file,
+            `step ${step.id} hotspot ${hotspot.id} targetKind slot but node.kind is ${node.kind}`,
+          );
         }
       }
       if (!hotspot.isCorrect && hotspot.distractorAntipattern) {
         const words = String(hotspot.distractorAntipattern).split(/\s+/).filter(Boolean);
         if (words.length < 2 || words.length > 5) {
-          err(file, `step ${step.id} hotspot ${hotspot.id} distractorAntipattern must be 2–5 words`);
+          err(
+            file,
+            `step ${step.id} hotspot ${hotspot.id} distractorAntipattern must be 2–5 words`,
+          );
         }
       }
     }
@@ -259,7 +293,7 @@ function validateDiagram(file: string, drill: any) {
       err(file, `step ${step.id} requires options[] (MCQ after correct hotspot)`);
       continue;
     }
-    if (!step.options.some((o: any) => o.isCorrect)) {
+    if (!step.options.some((o) => o.isCorrect)) {
       err(file, `step ${step.id} has NO correct option marked`);
     }
     validateOptionIds(file, `step ${step.id}`, step.options);
@@ -271,13 +305,16 @@ function validateDiagram(file: string, drill: any) {
         err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
       }
       if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
-        err(file, `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`);
+        err(
+          file,
+          `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
+        );
       }
     }
   }
 }
 
-function validateLesson(file: string, drill: any) {
+function validateLesson(file: string, drill: LessonDrillDefinition) {
   if (!Array.isArray(drill.stages) || drill.stages.length === 0) {
     err(file, 'Lesson requires non-empty stages');
     return;
@@ -286,7 +323,7 @@ function validateLesson(file: string, drill: any) {
     if (!stage.scenario || !Array.isArray(stage.options)) {
       err(file, `stage ${stage.stageNumber} missing scenario or options`);
     }
-    if (!stage.options?.some((o: any) => o.isCorrect)) {
+    if (!stage.options?.some((o) => o.isCorrect)) {
       err(file, `stage ${stage.stageNumber} has no correct option`);
     }
     if (Array.isArray(stage.options)) {
@@ -306,7 +343,13 @@ for (const file of drillFiles) {
     const raw = fs.readFileSync(filePath, 'utf-8');
     const drill = JSON.parse(raw);
 
-    if (!drill.id || !drill.title || !drill.domain || !drill.domainLabel || !Array.isArray(drill.pillars)) {
+    if (
+      !drill.id ||
+      !drill.title ||
+      !drill.domain ||
+      !drill.domainLabel ||
+      !Array.isArray(drill.pillars)
+    ) {
       err(file, 'missing required metadata (id, title, domain, domainLabel, pillars)');
       continue;
     }
@@ -330,13 +373,13 @@ for (const file of drillFiles) {
 
     switch (drill.format) {
       case 'Rapid_Fire':
-        validateRapidFire(file, drill);
+        validateRapidFire(file, drill as RapidFireDrillDefinition);
         break;
       case 'Diagram':
-        validateDiagram(file, drill);
+        validateDiagram(file, drill as DiagramDrillDefinition);
         break;
       case 'Lesson':
-        validateLesson(file, drill);
+        validateLesson(file, drill as LessonDrillDefinition);
         break;
     }
 
@@ -347,8 +390,9 @@ for (const file of drillFiles) {
     } else {
       draftDrills.push(drill);
     }
-  } catch (e: any) {
-    err(file, `Failed to parse: ${e.message}`);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    err(file, `Failed to parse: ${msg}`);
   }
 }
 

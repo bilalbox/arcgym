@@ -1,14 +1,14 @@
 import {
   calculateRatingStats,
-  isValidDrillId,
-  sanitizeFeedbackTags,
-  type FeedbackRating,
   type DrillFeedbackRecord,
   type DrillRatingStats,
+  type FeedbackRating,
+  isValidDrillId,
+  sanitizeFeedbackTags,
 } from '@arcgym/drill-core';
 import {
   configErrorResponse,
-  Env,
+  type Env,
   jsonResponse,
   opaqueError,
   readJsonBody,
@@ -56,7 +56,7 @@ export async function onRequestPost(context: {
 
     const sanitizedTags = sanitizeFeedbackTags(
       rating as FeedbackRating,
-      (body as { tags?: unknown }).tags
+      (body as { tags?: unknown }).tags,
     );
 
     const today = new Date().toISOString().slice(0, 10);
@@ -77,9 +77,10 @@ export async function onRequestPost(context: {
     // Soft aggregate metrics: KV has no CAS. Concurrent votes may undercount.
     // Order: persist stats/record first, then dedup — so a failed write does not
     // burn the day's vote token.
-    const existing = (await kv.get(`drill:rating:${drillId}`, 'json')) as
-      | Partial<DrillRatingStats>
-      | null;
+    const existing = (await kv.get(
+      `drill:rating:${drillId}`,
+      'json',
+    )) as Partial<DrillRatingStats> | null;
 
     const prevUp = Number(existing?.upVotes) || 0;
     const prevDown = Number(existing?.downVotes) || 0;
@@ -97,7 +98,7 @@ export async function onRequestPost(context: {
       nextUp,
       nextDown,
       tagCounts,
-      new Date().toISOString()
+      new Date().toISOString(),
     );
 
     const recordId = `fb_${crypto.randomUUID()}`;
@@ -110,10 +111,7 @@ export async function onRequestPost(context: {
     };
 
     await kv.put(`drill:rating:${drillId}`, JSON.stringify(stats));
-    await kv.put(
-      `drill:feedback:${drillId}:${recordId}`,
-      JSON.stringify(feedbackRecord)
-    );
+    await kv.put(`drill:feedback:${drillId}:${recordId}`, JSON.stringify(feedbackRecord));
 
     let index: string[] =
       ((await kv.get(`drill:feedback_index:${drillId}`, 'json')) as string[]) || [];

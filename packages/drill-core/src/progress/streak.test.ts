@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  computeNewStreak,
   calculateActiveStreak,
   calculateTotalPoints,
-  RAPID_FIRE_REPS_PER_DRILL,
+  computeNewStreak,
   isRapidFireStreakRequirementMet,
+  RAPID_FIRE_REPS_PER_DRILL,
 } from './streak.js';
 
 describe('Streak calculation engine', () => {

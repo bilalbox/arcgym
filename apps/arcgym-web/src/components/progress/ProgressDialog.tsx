@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
+import type { DrillAttemptRecord, DrillDefinitionDTO } from '@arcgym/drill-core';
+import {
+  AlertTriangle,
+  Award,
+  Calendar,
+  CheckCircle2,
+  Flame,
+  RotateCcw,
+  Target,
+  Zap,
+} from 'lucide-react';
+import type React from 'react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { DrillAttemptRecord, DrillDefinitionDTO } from '@arcgym/drill-core';
-import { CheckCircle2, RotateCcw, AlertTriangle, Calendar, Award, Zap, Target, Flame } from 'lucide-react';
 
 interface ProgressDialogProps {
   open: boolean;
@@ -53,10 +63,13 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      setConfirmReset(false);
-      onOpenChange(val);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        setConfirmReset(false);
+        onOpenChange(val);
+      }}
+    >
       <DialogContent className="max-w-xl max-h-[85vh] flex flex-col p-6 overflow-hidden">
         <DialogHeader className="pb-2">
           <div className="flex items-center gap-2">
@@ -66,7 +79,8 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
             </DialogTitle>
           </div>
           <DialogDescription className="text-sm text-miro-slate">
-            Track your completed Well-Architected drills and cumulative decision points across all domains.
+            Track your completed Well-Architected drills and cumulative decision points across all
+            domains.
           </DialogDescription>
         </DialogHeader>
 
@@ -91,7 +105,9 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               </div>
               <p className="text-sm sm:text-base font-semibold text-miro-primary">
                 {completedCount}{' '}
-                <span className="text-[11px] font-normal text-miro-muted">/ {totalDrillsCount}</span>
+                <span className="text-[11px] font-normal text-miro-muted">
+                  / {totalDrillsCount}
+                </span>
               </p>
             </div>
 
@@ -120,10 +136,13 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               <span>Catalog Completion</span>
               <span className="font-semibold text-miro-primary">{percent}%</span>
             </div>
-            <Progress value={percent} className="h-2 bg-miro-surface" indicatorClassName="bg-miro-blue" />
+            <Progress
+              value={percent}
+              className="h-2 bg-miro-surface"
+              indicatorClassName="bg-miro-blue"
+            />
           </div>
         </div>
-
 
         {/* Scrollable List of Completed Drills */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 my-2">
@@ -132,7 +151,8 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               <CheckCircle2 className="h-8 w-8 text-miro-hairlineStrong mx-auto mb-2" />
               <p className="text-sm font-medium text-miro-slate">No drills completed yet</p>
               <p className="text-xs text-miro-muted mt-1 max-w-xs mx-auto">
-                Complete today's daily exercise to kick off your streak and track your architectural judgment reps.
+                Complete today's daily exercise to kick off your streak and track your architectural
+                judgment reps.
               </p>
             </div>
           ) : (
@@ -155,7 +175,9 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                   >
                     <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] text-miro-muted">{attempt.drillId}</span>
+                        <span className="font-mono text-[10px] text-miro-muted">
+                          {attempt.drillId}
+                        </span>
                         <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-normal">
                           {domain}
                         </Badge>

@@ -1,6 +1,6 @@
-import React from 'react';
-import { ProficiencyDimension } from '@arcgym/drill-core';
+import type { ProficiencyDimension } from '@arcgym/drill-core';
 import { LayoutGrid, ShieldCheck } from 'lucide-react';
+import type React from 'react';
 
 interface DimensionToggleProps {
   value: ProficiencyDimension;
@@ -30,7 +30,9 @@ export const DimensionToggle: React.FC<DimensionToggleProps> = ({
         <span>Architectural Domains</span>
         <span
           className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-            value === 'domains' ? 'bg-miro-onPrimary/15 text-miro-onPrimary' : 'bg-miro-hairlineSoft text-miro-slate'
+            value === 'domains'
+              ? 'bg-miro-onPrimary/15 text-miro-onPrimary'
+              : 'bg-miro-hairlineSoft text-miro-slate'
           }`}
         >
           {measuredDomainsCount}/7
@@ -50,7 +52,9 @@ export const DimensionToggle: React.FC<DimensionToggleProps> = ({
         <span>Well-Architected Pillars</span>
         <span
           className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-            value === 'pillars' ? 'bg-miro-onPrimary/15 text-miro-onPrimary' : 'bg-miro-hairlineSoft text-miro-slate'
+            value === 'pillars'
+              ? 'bg-miro-onPrimary/15 text-miro-onPrimary'
+              : 'bg-miro-hairlineSoft text-miro-slate'
           }`}
         >
           {measuredPillarsCount}/5

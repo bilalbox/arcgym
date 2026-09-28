@@ -1,10 +1,10 @@
 import {
-  ArchitecturalDomain,
-  DrillDefinitionDTO,
-  DrillFormat,
-  DrillAttemptRecord,
-  RapidFireDrillDefinition,
+  type ArchitecturalDomain,
+  type DrillAttemptRecord,
+  type DrillDefinitionDTO,
+  type DrillFormat,
   isRapidFireDrill,
+  type RapidFireDrillDefinition,
 } from '../types/drill.js';
 
 export type RecommendationReason = 'daily' | 'next_uncompleted' | 'review';
@@ -63,14 +63,7 @@ export function selectRecommendedDrill(params: {
   domain?: ArchitecturalDomain;
   sessionSkipCount?: number;
 }): RecommendationResult | null {
-  const {
-    drills,
-    completedDrills,
-    todayDateStr,
-    format,
-    domain,
-    sessionSkipCount = 0,
-  } = params;
+  const { drills, completedDrills, todayDateStr, format, domain, sessionSkipCount = 0 } = params;
 
   const candidateDrills = drills.filter((d) => {
     if (format && d.format !== format) return false;
@@ -85,9 +78,7 @@ export function selectRecommendedDrill(params: {
   const totalCount = candidateDrills.length;
   const uncompleted = candidateDrills.filter((d) => !completedDrills[d.id]);
   const uncompletedCount = uncompleted.length;
-  const completionPercentage = Math.round(
-    ((totalCount - uncompletedCount) / totalCount) * 100
-  );
+  const completionPercentage = Math.round(((totalCount - uncompletedCount) / totalCount) * 100);
 
   const dailyIndex = getDailyDrillIndex(todayDateStr, totalCount);
   const todayDrill = candidateDrills[dailyIndex];
@@ -186,9 +177,7 @@ export function selectRecommendedRapidFireSet(params: {
   const totalCount = candidateDrills.length;
   const uncompleted = candidateDrills.filter((d) => !completedDrills[d.id]);
   const uncompletedCount = uncompleted.length;
-  const completionPercentage = Math.round(
-    ((totalCount - uncompletedCount) / totalCount) * 100
-  );
+  const completionPercentage = Math.round(((totalCount - uncompletedCount) / totalCount) * 100);
 
   const dailyIndex = getDailyDrillIndex(todayDateStr, totalCount);
   const todayDrill = candidateDrills[dailyIndex];

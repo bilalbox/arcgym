@@ -88,14 +88,37 @@ const VERDICT_PREFIX = /^[A-Z][A-Za-z ]{0,24}[!:]\s/;
 const SELF_REFUTING = /\b(entirely|blindly|immediately|always|never|directly to production)\b/i;
 
 const LABEL_ECHO_JACCARD = 0.4;
-const STOPWORDS = new Set(['a', 'an', 'the', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'is', 'are', 'be', 'and', 'or']);
+const STOPWORDS = new Set([
+  'a',
+  'an',
+  'the',
+  'of',
+  'in',
+  'on',
+  'at',
+  'to',
+  'for',
+  'with',
+  'by',
+  'from',
+  'is',
+  'are',
+  'be',
+  'and',
+  'or',
+]);
 
 function wordCount(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
 function contentWords(text: string): Set<string> {
-  return new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w && !STOPWORDS.has(w)));
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w && !STOPWORDS.has(w)),
+  );
 }
 
 /** Shared content words over distinct content words across both strings. */
@@ -113,16 +136,25 @@ function lintQuestion(question: Question): WordingFinding[] {
 
   const stemWords = wordCount(question.stem);
   if (stemWords > MAX_STEM_WORDS) {
-    findings.push({ ruleId: 'long-stem', where, message: `question text has ${stemWords} words (max ${MAX_STEM_WORDS}); cut sentences no option depends on` });
+    findings.push({
+      ruleId: 'long-stem',
+      where,
+      message: `question text has ${stemWords} words (max ${MAX_STEM_WORDS}); cut sentences no option depends on`,
+    });
   }
 
   if (question.format === 'Lesson' && choices.length < 3) {
-    findings.push({ ruleId: 'lesson-min-options', where, message: `has ${choices.length} options; Lesson stages need at least 3` });
+    findings.push({
+      ruleId: 'lesson-min-options',
+      where,
+      message: `has ${choices.length} options; Lesson stages need at least 3`,
+    });
   }
 
   const distractors = choices.filter((c) => !c.isCorrect);
   if (distractors.length > 0) {
-    const meanDistractorWords = distractors.reduce((sum, c) => sum + wordCount(c.text), 0) / distractors.length;
+    const meanDistractorWords =
+      distractors.reduce((sum, c) => sum + wordCount(c.text), 0) / distractors.length;
     for (const correct of choices.filter((c) => c.isCorrect)) {
       const words = wordCount(correct.text);
       if (words > LENGTH_TELL_RATIO * meanDistractorWords) {

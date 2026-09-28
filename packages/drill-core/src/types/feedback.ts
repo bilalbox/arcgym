@@ -60,10 +60,7 @@ const DISLIKED_TAG_SET = new Set<string>(ALL_DISLIKED_TAGS);
  * Normalizes legacy tag strings if present.
  * Unknown / wrong-polarity tags are dropped (never accepted).
  */
-export function sanitizeFeedbackTags(
-  rating: FeedbackRating,
-  tags: unknown
-): DrillFeedbackTag[] {
+export function sanitizeFeedbackTags(rating: FeedbackRating, tags: unknown): DrillFeedbackTag[] {
   if (!Array.isArray(tags)) return [];
   const allowed = rating === 'up' ? LIKED_TAG_SET : DISLIKED_TAG_SET;
   const out: DrillFeedbackTag[] = [];
@@ -112,16 +109,14 @@ export function calculateRatingStats(
   upVotes: number,
   downVotes: number,
   tagCounts?: Partial<Record<DrillFeedbackTag, number>>,
-  lastUpdated?: string
+  lastUpdated?: string,
 ): DrillRatingStats {
   const safeUp = Math.max(0, Math.floor(upVotes || 0));
   const safeDown = Math.max(0, Math.floor(downVotes || 0));
   const totalVotes = safeUp + safeDown;
 
   const likePercentage =
-    totalVotes >= MIN_RATING_THRESHOLD
-      ? Math.round((safeUp / totalVotes) * 100)
-      : null;
+    totalVotes >= MIN_RATING_THRESHOLD ? Math.round((safeUp / totalVotes) * 100) : null;
 
   return {
     drillId,

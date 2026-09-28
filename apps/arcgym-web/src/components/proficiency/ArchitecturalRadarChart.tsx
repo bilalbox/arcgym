@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { DimensionProficiency } from '@arcgym/drill-core';
+import type { DimensionProficiency } from '@arcgym/drill-core';
+import type React from 'react';
+import { useState } from 'react';
 
 interface ArchitecturalRadarChartProps {
   items: DimensionProficiency[];
@@ -139,7 +140,9 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             )}
           </div>
         ) : (
-          <span className="text-miro-muted">Hover or tap any vertex to view domain rep breakdown</span>
+          <span className="text-miro-muted">
+            Hover or tap any vertex to view domain rep breakdown
+          </span>
         )}
         <span className="text-[11px] font-mono text-miro-muted hidden sm:inline">
           {measuredVertices.length} of {N} measured
@@ -172,10 +175,22 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             stroke="currentColor"
             className="text-miro-hairlineStrong"
           />
-          <text x={cx + 6} y={cy - r50 + 4} fontSize="10" fill="currentColor" className="text-miro-muted">
+          <text
+            x={cx + 6}
+            y={cy - r50 + 4}
+            fontSize="10"
+            fill="currentColor"
+            className="text-miro-muted"
+          >
             50%
           </text>
-          <text x={cx + 6} y={cy - R + 4} fontSize="10" fill="currentColor" className="text-miro-muted">
+          <text
+            x={cx + 6}
+            y={cy - R + 4}
+            fontSize="10"
+            fill="currentColor"
+            className="text-miro-muted"
+          >
             100%
           </text>
 
@@ -210,6 +225,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             const isHovered = hoveredId === v.item.id;
 
             return (
+              /* biome-ignore lint/a11y/useSemanticElements: SVG g cannot be replaced with HTML button */
               <g
                 key={`vertex-${v.item.id}`}
                 role="button"
@@ -234,17 +250,15 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
 
                 {/* Point */}
                 {v.item.isMeasured ? (
-                  <>
-                    <circle
-                      cx={v.pointX}
-                      cy={v.pointY}
-                      r={isHovered ? 7 : 5}
-                      fill="var(--miro-blue)"
-                      stroke="var(--miro-card)"
-                      strokeWidth="2"
-                      className="transition-all duration-150"
-                    />
-                  </>
+                  <circle
+                    cx={v.pointX}
+                    cy={v.pointY}
+                    r={isHovered ? 7 : 5}
+                    fill="var(--miro-blue)"
+                    stroke="var(--miro-card)"
+                    strokeWidth="2"
+                    className="transition-all duration-150"
+                  />
                 ) : (
                   <circle
                     cx={v.spokeX}
@@ -272,11 +286,11 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                       : 'fill-miro-muted'
                   }
                 >
-                  {lines.map((line, idx) => (
+                  {lines.map((line) => (
                     <tspan
-                      key={idx}
+                      key={`${v.item.id}-l-${line}`}
                       x={v.labelX}
-                      dy={idx === 0 ? `-${(lines.length - 1) * 0.5}em` : '1.15em'}
+                      dy={lines.indexOf(line) === 0 ? `-${(lines.length - 1) * 0.5}em` : '1.15em'}
                     >
                       {line}
                     </tspan>
@@ -312,10 +326,22 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             stroke="currentColor"
             className="text-miro-hairlineStrong"
           />
-          <text x={ncx + 4} y={ncy - nr50 + 3} fontSize="8" fill="currentColor" className="text-miro-muted">
+          <text
+            x={ncx + 4}
+            y={ncy - nr50 + 3}
+            fontSize="8"
+            fill="currentColor"
+            className="text-miro-muted"
+          >
             50%
           </text>
-          <text x={ncx + 4} y={ncy - nR + 3} fontSize="8" fill="currentColor" className="text-miro-muted">
+          <text
+            x={ncx + 4}
+            y={ncy - nR + 3}
+            fontSize="8"
+            fill="currentColor"
+            className="text-miro-muted"
+          >
             100%
           </text>
 
@@ -350,6 +376,7 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
             const isHovered = hoveredId === v.item.id;
 
             return (
+              /* biome-ignore lint/a11y/useSemanticElements: SVG g cannot be replaced with HTML button */
               <g
                 key={`nvertex-${v.item.id}`}
                 role="button"
@@ -401,11 +428,11 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
                       : 'fill-miro-muted'
                   }
                 >
-                  {lines.map((line, idx) => (
+                  {lines.map((line) => (
                     <tspan
-                      key={idx}
+                      key={`${v.item.id}-nl-${line}`}
                       x={v.narrowLabelX}
-                      dy={idx === 0 ? `-${(lines.length - 1) * 0.4}em` : '1.1em'}
+                      dy={lines.indexOf(line) === 0 ? `-${(lines.length - 1) * 0.4}em` : '1.1em'}
                     >
                       {line}
                     </tspan>
@@ -419,7 +446,8 @@ export const ArchitecturalRadarChart: React.FC<ArchitecturalRadarChartProps> = (
 
       <p className="text-[12.5px] text-miro-slate mt-2 px-1 text-center sm:text-left">
         <span className="font-medium text-miro-slate">How to read this. </span>
-        Hover or tap any vertex to see your score. Domains and pillars require 4+ answered questions before appearing on the radar polygon.
+        Hover or tap any vertex to see your score. Domains require 4+ answered questions before
+        appearing on the radar polygon.
       </p>
     </div>
   );

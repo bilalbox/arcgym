@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "deploy": "wrangler pages deploy dist --project-name=arcgym"
+    "deploy": "pnpm --filter arcgym-monorepo deploy",
+    "deploy:pages": "wrangler pages deploy dist --project-name=arcgym"
   },
   "dependencies": {
     "@arcgym/drill-core": "workspace:*",

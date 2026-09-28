@@ -27,7 +27,7 @@ export function isAllowedCitationUrl(url: unknown): boolean {
     if (parsed.username || parsed.password) return false;
     const host = parsed.hostname.toLowerCase();
     return ALLOWED_CITATION_HOSTS.some(
-      (allowed) => host === allowed || host.endsWith(`.${allowed}`)
+      (allowed) => host === allowed || host.endsWith(`.${allowed}`),
     );
   } catch {
     return false;

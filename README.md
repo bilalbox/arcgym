@@ -145,7 +145,17 @@ pnpm install
 # Local UI (Vite on :3000)
 pnpm dev
 
-# Compile drills → web data/public, then build packages + web
+# Run typechecks across workspace packages and scripts
+pnpm typecheck
+
+# Run Biome checks (fails on any error or warning)
+pnpm check
+
+# Run Biome checks with auto-fixes / formatting
+pnpm check:fix
+pnpm format
+
+# Compile drills → web data/public, typecheck, Biome check, then build packages + web
 pnpm build
 
 # Unit tests (drill-core)
@@ -154,7 +164,7 @@ pnpm test
 # Preview production build
 pnpm preview
 
-# Deploy to Cloudflare Pages
+# Automatically runs typecheck, Biome checks, and build before deploying to Cloudflare Pages
 pnpm deploy
 
 # Push compiled drills into KV (after build)

@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { orderOptions, optionSeed, type DrillDefinitionDTO } from '../index.js';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { type DrillDefinitionDTO, optionSeed, orderOptions } from '../index.js';
 
 const DRILLS_DIR = path.resolve(import.meta.dirname, '../../../../content/drills');
 
@@ -10,9 +10,15 @@ function renderedDecisions(drill: DrillDefinitionDTO): [string, boolean[]][] {
   switch (drill.format) {
     case 'Rapid_Fire':
     case 'Diagram':
-      return drill.steps.map((s) => [optionSeed(drill.id, s.id), s.options.map((o) => o.isCorrect)]);
+      return drill.steps.map((s) => [
+        optionSeed(drill.id, s.id),
+        s.options.map((o) => o.isCorrect),
+      ]);
     case 'Lesson':
-      return drill.stages.map((s) => [optionSeed(drill.id, s.stageNumber), s.options.map((o) => o.isCorrect)]);
+      return drill.stages.map((s) => [
+        optionSeed(drill.id, s.stageNumber),
+        s.options.map((o) => o.isCorrect),
+      ]);
   }
 }
 

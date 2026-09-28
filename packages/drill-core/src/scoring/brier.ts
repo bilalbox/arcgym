@@ -1,4 +1,4 @@
-import { ConfidenceAnchor, MetacognitiveQuadrant } from '../types/drill.js';
+import type { ConfidenceAnchor, MetacognitiveQuadrant } from '../types/drill.js';
 
 export interface BrierScoreResult {
   loss: number;
@@ -7,6 +7,7 @@ export interface BrierScoreResult {
   overconfidencePenaltyApplied: boolean;
 }
 
+// biome-ignore lint/complexity/noStaticOnlyClass: Canonical scoring engine API namespace
 export class ArcGymScoringEngine {
   public static readonly OVERCONFIDENCE_MULTIPLIER = 2.5;
 
@@ -15,16 +16,19 @@ export class ArcGymScoringEngine {
    * Loss = (1 - p)^2 if correct; Loss = alpha * p^2 if incorrect.
    * Points = Math.round(100 * (1 - Loss)).
    */
-  public static calculateDecisionScore(confidence: ConfidenceAnchor, isCorrect: boolean): BrierScoreResult {
+  public static calculateDecisionScore(
+    confidence: ConfidenceAnchor,
+    isCorrect: boolean,
+  ): BrierScoreResult {
     const p = confidence;
     const y = isCorrect ? 1 : 0;
     let loss: number;
     let overconfidencePenaltyApplied = false;
 
     if (y === 1) {
-      loss = Math.pow(1 - p, 2);
+      loss = (1 - p) ** 2;
     } else {
-      loss = this.OVERCONFIDENCE_MULTIPLIER * Math.pow(p, 2);
+      loss = ArcGymScoringEngine.OVERCONFIDENCE_MULTIPLIER * p ** 2;
       if (p >= 0.85) {
         overconfidencePenaltyApplied = true;
       }
@@ -43,16 +47,18 @@ export class ArcGymScoringEngine {
       loss,
       pointsAwarded,
       quadrant,
-      overconfidencePenaltyApplied
+      overconfidencePenaltyApplied,
     };
   }
 
   /**
    * Calculates rolling Expected Calibration Error (ECE).
    */
-  public static calculateECE(predictions: Array<{ confidence: number; isCorrect: boolean }>): number {
+  public static calculateECE(
+    predictions: Array<{ confidence: number; isCorrect: boolean }>,
+  ): number {
     if (predictions.length === 0) return 0;
-    
+
     // Group into 4 discrete bins: [0.50, 0.70, 0.85, 0.95]
     const bins = new Map<number, { count: number; correctCount: number }>();
     for (const pred of predictions) {
