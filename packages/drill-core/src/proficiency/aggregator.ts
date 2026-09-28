@@ -5,10 +5,9 @@ import {
   DimensionProficiency,
   DrillAttemptRecord,
   DrillDefinitionDTO,
-  isCurrencyDrill,
+  isDiagramDrill,
   isLessonDrill,
   isRapidFireDrill,
-  isScenarioDrill,
   ProficiencyDimension,
   WellArchitectedPillar,
   WELL_ARCHITECTED_PILLARS,
@@ -36,11 +35,9 @@ export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
   if (isLessonDrill(drill)) {
     return drill.stages?.length || 1;
   }
-  if (isScenarioDrill(drill)) {
-    return drill.moves?.length || 1;
-  }
-  if (isCurrencyDrill(drill)) {
-    return 1;
+  if (isDiagramDrill(drill)) {
+    // Hotspot commit + optional MCQ on the success path.
+    return (drill.steps?.length || 1) * 2;
   }
   return 1;
 }

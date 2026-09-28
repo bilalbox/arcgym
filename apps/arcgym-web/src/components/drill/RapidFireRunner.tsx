@@ -106,18 +106,6 @@ export const RapidFireRunner: React.FC<{
       setIsSubmitted(false);
     } else {
       setIsCompleted(true);
-
-      let nextStreak = 1;
-      try {
-        const raw = localStorage.getItem('arcgym_streak');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          nextStreak = (parsed.streakDays || 0) + 1;
-        }
-      } catch (e) {
-        // Fallback
-      }
-
       const totalPts = stepResults.reduce((acc, r) => acc + r.score, 0);
       const correctCount = stepResults.filter((r) => r.isCorrect).length;
       const accuracy = stepResults.length > 0 ? correctCount / stepResults.length : 0;
@@ -127,7 +115,7 @@ export const RapidFireRunner: React.FC<{
         format: 'Rapid_Fire',
         score: totalPts,
         accuracy,
-        streakDays: nextStreak,
+        streakDays: 1,
         steps: stepResults.map((r) => ({
           stepId: r.stepId,
           confidence: (r.confidence / 100) as ConfidenceAnchor,

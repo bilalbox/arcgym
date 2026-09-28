@@ -59,7 +59,7 @@ flowchart TD
         D1["🤖 Coding Agent / LLM<br/><b>Architect Author</b><br/>• Synthesizes architectural trade-offs<br/>• Models distractors on naive failures<br/>• Grounds optimal answer in official chunks"]
         
         subgraph Linter ["3-Tier Architect Linter (ingest / build)"]
-            E1["Tier 1: Schema & Format Guard<br/>• Rapid Fire, Lesson, Currency, Scenario<br/>• Step, stage, and ID structure"]
+            E1["Tier 1: Schema & Format Guard<br/>• Rapid Fire, Lesson, Diagram<br/>• Step, stage, graph, and ID structure"]
             E2["Tier 2: Official Citation Verifier<br/>• Enforces exact chunk URL from crawl<br/>• Zero hallucinated documentation"]
             E3["Tier 3: Wording & Antipattern Linter<br/><code>packages/drill-core/src/lint/wording.ts</code><br/>• ±25% option length balance<br/>• Named distractor antipatterns (2–5 words)<br/>• Purge giveaway words ('always', 'never')<br/>• Scenarios capped at ≤55 words"]
             E1 --> E2 --> E3
@@ -79,19 +79,18 @@ flowchart TD
     subgraph Delivery ["4. Runtime Delivery & Metacognitive Calibration"]
         F1["📱 ArcGym Web Platform<br/><b>React 19 + Cloudflare Pages</b>"]
         
-        subgraph Archetypes ["4 Architectural Formats"]
+        subgraph Archetypes ["3 Architectural Formats"]
             G1["⚡ Rapid Fire<br/>Timed decision under constraint"]
-            G2["🗺️ Lesson<br/>4-Stage progressive refactor"]
-            G3["⚖️ Currency<br/>Resource & budget allocation"]
-            G4["🎭 Scenario<br/>Multi-turn dual-meter trade-offs"]
+            G2["🗺️ Diagram<br/>Hotspot topology + MCQ repair"]
+            G3["🎓 Lesson<br/>Multi-stage forensic walkthrough"]
         end
 
         H1["🔒 Universal Pre-Submit Confidence Gate<br/>50% Speculative | 70% Plausible | 85% High Conviction | 95% Axiom"]
         H2["📊 Brier Calibration Engine<br/><code>@arcgym/drill-core</code><br/>• Calibrated Conviction<br/>• Calibrated Humility<br/>• Hesitant Mastery<br/>• Hazardous Assumption"]
 
         D3 --> F1
-        F1 --> G1 & G2 & G3 & G4
-        G1 & G2 & G3 & G4 --> H1
+        F1 --> G1 & G2 & G3
+        G1 & G2 & G3 --> H1
         H1 --> H2
     end
 
@@ -106,7 +105,7 @@ flowchart TD
     class B1,B2,B3,B4 friction
     class C1,C2,C3 rag
     class D1,D2,D3,E1,E2,E3 engine
-    class F1,G1,G2,G3,G4,H1,H2 delivery
+    class F1,G1,G2,G3,H1,H2 delivery
 ```
 
 ### Pipeline Principles & Invariants
@@ -199,8 +198,7 @@ python scripts/crawler/analyze_trailhead_patterns.py
 ## Drill formats
 
 - **Rapid Fire** — timed MCQ with confidence gate
-- **Currency** — allocate a constrained architect budget across competing architectural requirements
-- **Scenario** — multi-turn dual-meter decision simulation (stakeholder trust × Well-Architected integrity)
+- **Diagram** — hotspot localization on an ArcGym-redrawn topology, then MCQ repair (fault / compose), with dual confidence gates and official diagram provenance
 - **Lesson** — multi-stage forensic refactor walkthrough grounded in official architect fundamentals
 
 Every format uses the universal pre-submit **confidence gate** (50%, 70%, 85%, 95%) for Brier score calibration telemetry.

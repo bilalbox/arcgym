@@ -10,19 +10,15 @@ import {
   ARCHITECTURAL_DOMAINS,
   ARCHITECTURAL_DOMAIN_LABELS,
   DrillFormat,
-  isCurrencyDrill,
+  isDiagramDrill,
   isLessonDrill,
   isRapidFireDrill,
-  isScenarioDrill,
   StepAttemptTelemetry,
 } from '@arcgym/drill-core';
-import { Zap, Coins, Users2, GraduationCap, CheckCircle } from 'lucide-react';
+import { Zap, Network, GraduationCap, CheckCircle } from 'lucide-react';
 
-const CurrencyRunner = lazy(() =>
-  import('@/components/drill/CurrencyRunner').then((m) => ({ default: m.CurrencyRunner }))
-);
-const DualMeterScenario = lazy(() =>
-  import('@/components/drill/DualMeterScenario').then((m) => ({ default: m.DualMeterScenario }))
+const DiagramRunner = lazy(() =>
+  import('@/components/drill/DiagramRunner').then((m) => ({ default: m.DiagramRunner }))
 );
 const LessonStepper = lazy(() =>
   import('@/components/drill/LessonStepper').then((m) => ({ default: m.LessonStepper }))
@@ -52,16 +48,10 @@ const FORMATS: FormatConfig[] = [
     description: 'High-velocity decision reps across Integration, Data, Security, and Agentic AI.',
   },
   {
-    id: 'Currency',
-    label: 'Currency',
-    icon: <Coins className="h-4 w-4" />,
-    description: 'Architect Budget discipline: allocate constrained capacity under concurrency pressure.',
-  },
-  {
-    id: 'Scenario',
-    label: 'Scenario',
-    icon: <Users2 className="h-4 w-4" />,
-    description: 'Balance Stakeholder Standing against Well-Architected integrity under C-suite pressure.',
+    id: 'Diagram',
+    label: 'Diagram',
+    icon: <Network className="h-4 w-4" />,
+    description: 'Locate the missing or wrong element on a topology, then commit the Well-Architected repair.',
   },
   {
     id: 'Lesson',
@@ -92,6 +82,7 @@ export const App: React.FC = () => {
 
   const {
     streakDays,
+    totalPoints,
     completedDrills,
     totalCompleted,
     recordDrillCompletion,
@@ -174,6 +165,8 @@ export const App: React.FC = () => {
         onOpenChange={setIsProgressModalOpen}
         completedDrills={completedDrills}
         totalDrillsCount={ALL_DRILLS.length}
+        totalPoints={totalPoints}
+        streakDays={streakDays}
         allDrills={ALL_DRILLS}
         onResetProgress={resetProgress}
       />
@@ -199,11 +192,13 @@ export const App: React.FC = () => {
           totalCompleted={totalCompleted}
           totalDrillsCount={ALL_DRILLS.length}
           streakDays={streakDays}
+          totalPoints={totalPoints}
           onOpenProgressModal={openProgressModal}
         />
         <Suspense fallback={<RouteFallback />}>
           <SkillProfilePage
             completedDrills={completedDrills}
+            totalPoints={totalPoints}
             allDrills={ALL_DRILLS}
             navigate={navigate}
             pathname={pathname}
@@ -223,6 +218,7 @@ export const App: React.FC = () => {
         totalCompleted={totalCompleted}
         totalDrillsCount={ALL_DRILLS.length}
         streakDays={streakDays}
+        totalPoints={totalPoints}
         onOpenProgressModal={openProgressModal}
       />
 
@@ -255,7 +251,7 @@ export const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
+        <div className="grid grid-cols-3 gap-2.5 pt-2">
           {FORMATS.map((fmt) => {
             const isActive = activeFormat === fmt.id;
             return (
@@ -332,18 +328,11 @@ export const App: React.FC = () => {
             />
           )}
           <Suspense fallback={<PanelFallback />}>
-            {currentDrill && isCurrencyDrill(currentDrill) && (
-              <CurrencyRunner
+            {currentDrill && isDiagramDrill(currentDrill) && (
+              <DiagramRunner
                 drill={currentDrill}
                 isReviewMode={isReviewMode}
-                onDrillComplete={handleDrillComplete}
-                onNextDrill={advanceToNextDrill}
-              />
-            )}
-            {currentDrill && isScenarioDrill(currentDrill) && (
-              <DualMeterScenario
-                drill={currentDrill}
-                isReviewMode={isReviewMode}
+                previousAttempt={previousAttempt}
                 onDrillComplete={handleDrillComplete}
                 onNextDrill={advanceToNextDrill}
               />

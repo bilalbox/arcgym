@@ -11,11 +11,13 @@ import { WhereToStartSection } from '@/components/proficiency/WhereToStartSectio
 import { StrengthsSection } from '@/components/proficiency/StrengthsSection';
 import { CollectingDataSection } from '@/components/proficiency/CollectingDataSection';
 import { Footer } from '@/components/layout/Footer';
-import { Award, Zap, CheckCircle2 } from 'lucide-react';
+import { Award, Zap, CheckCircle2, Trophy } from 'lucide-react';
+import { calculateTotalPoints } from '@arcgym/drill-core';
 
 interface SkillProfilePageProps {
   completedDrills: Record<string, DrillAttemptRecord>;
   allDrills: DrillDefinitionDTO[];
+  totalPoints?: number;
   navigate: (to: string) => void;
   pathname: string;
 }
@@ -23,10 +25,15 @@ interface SkillProfilePageProps {
 export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
   completedDrills,
   allDrills,
+  totalPoints: propTotalPoints,
   navigate,
   pathname,
 }) => {
   const [dimension, setDimension] = useState<ProficiencyDimension>('domains');
+
+  const totalPoints = useMemo(() => {
+    return propTotalPoints !== undefined ? propTotalPoints : calculateTotalPoints(completedDrills);
+  }, [propTotalPoints, completedDrills]);
 
   // Compute reports for both dimensions
   const domainReport = useMemo(
@@ -68,7 +75,7 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
       </div>
 
       {/* Overview Stat Badges */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 bg-miro-card rounded-2xl border border-miro-hairline shadow-xs">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-miro-card rounded-2xl border border-miro-hairline shadow-xs">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-xl bg-miro-lavenderLight flex items-center justify-center text-miro-blue shrink-0">
             <Zap className="h-4 w-4" />
@@ -79,6 +86,20 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
             </span>
             <span className="text-base sm:text-lg font-semibold text-miro-primary">
               {activeReport.totalQuestionsAnswered} reps
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-miro-yellowLight flex items-center justify-center text-miro-yellowText shrink-0">
+            <Trophy className="h-4 w-4" />
+          </div>
+          <div>
+            <span className="text-[11px] text-miro-muted uppercase tracking-wider font-medium block">
+              Total Points
+            </span>
+            <span className="text-base sm:text-lg font-semibold text-miro-primary">
+              {totalPoints.toLocaleString()} <span className="text-xs font-normal text-miro-muted">pts</span>
             </span>
           </div>
         </div>
@@ -97,7 +118,7 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
           </div>
         </div>
 
-        <div className="col-span-2 sm:col-span-1 flex items-center justify-end">
+        <div className="col-span-2 md:col-span-1 flex items-center justify-end">
           <DimensionToggle
             value={dimension}
             onChange={setDimension}

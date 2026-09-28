@@ -1,25 +1,23 @@
-import { useState, useCallback } from 'react';
-import { VisitorProgressState, DrillAttemptRecord, DrillFormat } from '@arcgym/drill-core';
+import { useState, useCallback, useMemo } from 'react';
+import {
+  VisitorProgressState,
+  DrillAttemptRecord,
+  DrillFormat,
+  computeNewStreak,
+  calculateActiveStreak,
+  calculateTotalPoints,
+  getTodayString,
+  getYesterdayString,
+} from '@arcgym/drill-core';
 
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
 
-function getTodayString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getYesterdayString(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
 function initializeState(): VisitorProgressState {
-  const today = getTodayString();
   const defaultState: VisitorProgressState = {
     version: 1,
-    streakDays: 1,
-    lastActiveDate: today,
+    streakDays: 0,
+    lastActiveDate: '',
     completedDrills: {},
   };
 
@@ -30,16 +28,38 @@ function initializeState(): VisitorProgressState {
     if (raw) {
       const parsed = JSON.parse(raw) as VisitorProgressState;
       if (parsed && typeof parsed.completedDrills === 'object') {
-        return parsed;
+        const completedCount = Object.keys(parsed.completedDrills).length;
+        if (completedCount === 0) {
+          return {
+            ...parsed,
+            streakDays: 0,
+            lastActiveDate: '',
+          };
+        }
+        const activeStreak = calculateActiveStreak(
+          parsed.streakDays,
+          parsed.lastActiveDate,
+          completedCount
+        );
+        return {
+          ...parsed,
+          streakDays: activeStreak,
+        };
       }
     }
 
-    // Attempt migration from legacy arcgym_streak
+    // Attempt migration from legacy arcgym_streak only if streak was non-zero
     const legacy = localStorage.getItem(LEGACY_STREAK_KEY);
     if (legacy) {
       const parsedLegacy = JSON.parse(legacy);
-      if (parsedLegacy?.streakDays) {
-        defaultState.streakDays = Number(parsedLegacy.streakDays) || 1;
+      if (parsedLegacy?.streakDays && parsedLegacy?.lastActiveDate) {
+        const active = calculateActiveStreak(
+          Number(parsedLegacy.streakDays) || 0,
+          parsedLegacy.lastActiveDate.slice(0, 10),
+          1 // assume at least 1 drill completed if legacy streak was set
+        );
+        defaultState.streakDays = active;
+        defaultState.lastActiveDate = active > 0 ? parsedLegacy.lastActiveDate.slice(0, 10) : '';
       }
     }
   } catch (err) {
@@ -79,13 +99,12 @@ export function useVisitorProgress() {
       const yesterday = getYesterdayString();
 
       setState((prev) => {
-        let newStreak = prev.streakDays;
-        if (prev.lastActiveDate === yesterday) {
-          newStreak += 1;
-        } else if (prev.lastActiveDate !== today) {
-          // If missed more than 1 day
-          newStreak = 1;
-        }
+        const newStreak = computeNewStreak(
+          prev.streakDays,
+          prev.lastActiveDate,
+          today,
+          yesterday
+        );
 
         const existingRecord = prev.completedDrills[params.drillId];
         const newRecord: DrillAttemptRecord = {
@@ -126,11 +145,10 @@ export function useVisitorProgress() {
 
   // Reset progress history
   const resetProgress = useCallback(() => {
-    const today = getTodayString();
     const cleanState: VisitorProgressState = {
       version: 1,
-      streakDays: 1,
-      lastActiveDate: today,
+      streakDays: 0,
+      lastActiveDate: '',
       completedDrills: {},
     };
     saveState(cleanState);
@@ -143,9 +161,18 @@ export function useVisitorProgress() {
 
   const totalCompleted = Object.keys(state.completedDrills).length;
 
+  const activeStreak = useMemo(() => {
+    return calculateActiveStreak(state.streakDays, state.lastActiveDate, totalCompleted);
+  }, [state.streakDays, state.lastActiveDate, totalCompleted]);
+
+  const totalPoints = useMemo(() => {
+    return calculateTotalPoints(state.completedDrills);
+  }, [state.completedDrills]);
+
   return {
     progress: state,
-    streakDays: state.streakDays,
+    streakDays: activeStreak,
+    totalPoints,
     completedDrills: state.completedDrills,
     totalCompleted,
     isDrillCompleted,

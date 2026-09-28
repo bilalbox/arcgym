@@ -8,8 +8,7 @@ import {
 const ALLOWED_FORMATS = new Set<DrillFormat>([
   'Lesson',
   'Rapid_Fire',
-  'Currency',
-  'Scenario',
+  'Diagram',
 ]);
 
 const MAX_STRING = 8_000;

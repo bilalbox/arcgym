@@ -25,28 +25,24 @@ A design tension evaluated across the Salesforce Well-Architected Framework pill
 _Avoid_: Feature preference, single right answer
 
 **Drill Format**:
-One of four distinct interaction archetypes: Lesson, Rapid Fire, Currency, or Scenario. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
-_Avoid_: Question type, quiz mode
+One of three distinct interaction archetypes: Lesson, Rapid Fire, or Diagram. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
+_Avoid_: Question type, quiz mode, Currency, Scenario
 
-**Architect Budget**:
-A constrained resource allocation in a Currency drill (such as Governor limits, API callouts, Data Cloud consumption credits, or technical debt points).
-_Avoid_: Score, currency tokens
+**Diagram Drill**:
+A spatial judgment format: the learner inspects an ArcGym-redrawn topology derived from official Architect documentation, clicks the missing or incorrect hotspot (node, edge, or compose slot), then commits a constrained MCQ repair. Modes in v1 are `fault` and `compose` only. Diagrams are graph JSON with a separate normalized (0–1) layout; official Salesforce diagram binaries are never shipped. Dual learner-facing grounding: `sourceDiagramUrl` for topology provenance plus correct-option `citationUrl`.
+_Avoid_: Drag-and-drop rearrange, embedded Lucid/PNG from Salesforce, Currency/Scenario revival
 
-**Stakeholder Standing**:
-A dynamic metric (0–100) tracking a stakeholder persona's trust and organizational alignment in a multi-turn Scenario drill.
-_Avoid_: Sentiment, user score
+**Diagram Variant**:
+An intentionally incomplete or incorrect graph state derived from an official reference topology (`missing_node`, `wrong_edge`, `misplaced_component`, `missing_edge`, and similar), used so fault/compose drills have a visual problem to localize.
+_Avoid_: Corrupting official image pixels, quiz on a pristine unmodified reference picture only (annotation-only is allowed as a rare exception, not the default)
 
 **Well-Architected Grounding**:
 The architectural rationale, citations, and decision trees anchored directly in official documentation from architect.salesforce.com.
 _Avoid_: Opinion, editorializing
 
 **Universal Pre-Submit Gate**:
-The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across all drill formats.
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across all drill formats. On Diagram drills the gate fires before the hotspot commit and again before the MCQ when the hotspot was correct.
 _Avoid_: Feedback prompt, post-quiz survey
-
-**Dual-Meter Tracking**:
-A Scenario drill visualization tracking Stakeholder Trust and Well-Architected Integrity simultaneously to surface technical debt trade-offs.
-_Avoid_: Win/loss meter, single score
 
 **Hybrid Document Pattern**:
 An architectural storage design combining indexed relational metadata fields on a custom object with a single compressed JSON document payload for complex sub-structures to avoid governor limits and record sprawl.
@@ -65,7 +61,7 @@ Editorial lifecycle on a Drill source file: `draft` (in `content/drills/`, exclu
 _Avoid_: Featured-day webhook "publish", soft-delete, archive
 
 **Antipattern Distractor**:
-An incorrect drill choice deliberately modeled after a documented, real-world architectural antipattern to test an architect's discernment of technical debt and scalability boundaries.
+An incorrect drill choice deliberately modeled after a documented, real-world architectural antipattern to test an architect's discernment of technical debt and scalability boundaries. On Diagram drills, plausible decoy hotspots carry the same short antipattern names; filler nodes may use generic miss copy.
 _Avoid_: Wrong answer, trick option
 
 **Friction Card**:

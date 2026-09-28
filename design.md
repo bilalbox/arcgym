@@ -167,3 +167,6 @@ To eliminate "AI-generated" visual tells:
 * **Micro-Transitions:** Strictly capped at `150ms ease-out`. Never use bouncy spring physics or delayed stagger fades.
 * **Zero Confetti:** Confetti is completely removed across all drills and completions to maintain professional architectural restraint.
 * **Hover Effects:** Subtle border color shift (`border-slate-200` -> `border-slate-400`), zero hover translateY or scale zooms.
+
+### Diagram format exception
+Diagram drills may use a richer canvas motion and rendering lane (pan/zoom, hotspot pulse, experimental graph engines) without loosening the rest of the app. Keep Miro craft tokens for chrome; do not import Salesforce kit-of-parts clones or official diagram binaries.

@@ -15,7 +15,7 @@ export interface WordingFinding {
   message: string;
 }
 
-type FeedbackField = 'rationale' | 'coachingFeedback' | 'techDebtImpact';
+type FeedbackField = 'rationale' | 'coachingFeedback';
 
 /** One option as a learner sees it, whatever the drill format calls its fields. */
 interface Choice {
@@ -28,7 +28,7 @@ interface Choice {
   antipattern?: string;
 }
 
-/** One decision point: a Rapid Fire step, a Lesson stage, or a Scenario move. */
+/** One decision point: a Rapid Fire / Diagram step, or a Lesson stage. */
 interface Question {
   format: DrillFormat;
   where: string;
@@ -39,6 +39,20 @@ interface Question {
 function questionsOf(drill: DrillDefinitionDTO): Question[] {
   switch (drill.format) {
     case 'Rapid_Fire':
+      return drill.steps.map((step) => ({
+        format: drill.format,
+        where: `step ${step.id}`,
+        stem: step.prompt,
+        choices: step.options.map((o) => ({
+          id: o.id,
+          text: o.label,
+          isCorrect: o.isCorrect,
+          feedbackField: 'rationale',
+          feedback: o.rationale,
+          antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
+        })),
+      }));
+    case 'Diagram':
       return drill.steps.map((step) => ({
         format: drill.format,
         where: `step ${step.id}`,
@@ -65,21 +79,6 @@ function questionsOf(drill: DrillDefinitionDTO): Question[] {
           feedback: o.coachingFeedback,
         })),
       }));
-    case 'Scenario':
-      return drill.moves.map((move) => ({
-        format: drill.format,
-        where: `move ${move.moveNumber}`,
-        stem: move.dialogueText,
-        choices: move.options.map((o) => ({
-          id: o.id,
-          text: o.text,
-          isCorrect: o.isOptimal,
-          feedbackField: 'techDebtImpact',
-          feedback: o.techDebtImpact,
-        })),
-      }));
-    case 'Currency':
-      return [];
   }
 }
 

@@ -11,13 +11,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { DrillAttemptRecord, DrillDefinitionDTO } from '@arcgym/drill-core';
-import { CheckCircle2, RotateCcw, AlertTriangle, Calendar, Award } from 'lucide-react';
+import { CheckCircle2, RotateCcw, AlertTriangle, Calendar, Award, Zap, Target, Flame } from 'lucide-react';
 
 interface ProgressDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   completedDrills: Record<string, DrillAttemptRecord>;
   totalDrillsCount: number;
+  totalPoints?: number;
+  streakDays?: number;
   allDrills: DrillDefinitionDTO[];
   onResetProgress: () => void;
 }
@@ -27,6 +29,8 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   onOpenChange,
   completedDrills,
   totalDrillsCount,
+  totalPoints = 0,
+  streakDays = 0,
   allDrills,
   onResetProgress,
 }) => {
@@ -62,20 +66,64 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
             </DialogTitle>
           </div>
           <DialogDescription className="text-sm text-miro-slate">
-            Track your completed Well-Architected drills across all domains.
+            Track your completed Well-Architected drills and cumulative decision points across all domains.
           </DialogDescription>
         </DialogHeader>
 
         {/* Overview Stats */}
         <div className="space-y-3 py-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-miro-slate">Catalog Completion</span>
-            <span className="font-semibold text-miro-primary">
-              {completedCount} of {totalDrillsCount} Drills ({percent}%)
-            </span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
+            <div className="p-2.5 sm:p-3 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
+              <div className="flex items-center gap-1.5 text-miro-muted text-[10px] sm:text-[11px] font-medium uppercase tracking-wider mb-1">
+                <Zap className="h-3.5 w-3.5 text-miro-blue" />
+                <span>Points</span>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-miro-primary">
+                {totalPoints.toLocaleString()}{' '}
+                <span className="text-[11px] font-normal text-miro-muted">pts</span>
+              </p>
+            </div>
+
+            <div className="p-2.5 sm:p-3 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
+              <div className="flex items-center gap-1.5 text-miro-muted text-[10px] sm:text-[11px] font-medium uppercase tracking-wider mb-1">
+                <Target className="h-3.5 w-3.5 text-miro-blue" />
+                <span>Mastered</span>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-miro-primary">
+                {completedCount}{' '}
+                <span className="text-[11px] font-normal text-miro-muted">/ {totalDrillsCount}</span>
+              </p>
+            </div>
+
+            <div className="p-2.5 sm:p-3 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
+              <div className="flex items-center gap-1.5 text-miro-muted text-[10px] sm:text-[11px] font-medium uppercase tracking-wider mb-1">
+                <Flame className="h-3.5 w-3.5 text-miro-yellowText" />
+                <span>Streak</span>
+              </div>
+              <p className="text-sm sm:text-base font-semibold text-miro-primary">
+                {streakDays > 0 ? (
+                  <>
+                    {streakDays}{' '}
+                    <span className="text-[11px] font-normal text-miro-muted">
+                      day{streakDays === 1 ? '' : 's'}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-[11px] font-normal text-miro-muted">0 days</span>
+                )}
+              </p>
+            </div>
           </div>
-          <Progress value={percent} className="h-2 bg-miro-surface" indicatorClassName="bg-miro-blue" />
+
+          <div className="space-y-1.5 pt-0.5">
+            <div className="flex items-center justify-between text-xs text-miro-slate">
+              <span>Catalog Completion</span>
+              <span className="font-semibold text-miro-primary">{percent}%</span>
+            </div>
+            <Progress value={percent} className="h-2 bg-miro-surface" indicatorClassName="bg-miro-blue" />
+          </div>
         </div>
+
 
         {/* Scrollable List of Completed Drills */}
         <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 my-2">

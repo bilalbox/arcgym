@@ -1,0 +1,118 @@
+{
+  "id": "AGD-00803",
+  "title": "Identity Path: Component That Does Not Belong",
+  "format": "Diagram",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data 360 Identity",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Trust", "Operational_Excellence"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "mode": "fault",
+      "variant": "misplaced_component",
+      "prompt": "Match and reconcile rules are configured, yet Unified Link and Unified Individual tables stay empty after every run. Click the component that does not belong on the identity path.",
+      "sourceDiagramUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html",
+      "genericMissCopy": "That element can be valid elsewhere in Data 360. It is not the intruder blocking identity outputs.",
+      "graph": {
+        "nodes": [
+          { "id": "dlo", "label": "DLOs", "kind": "component" },
+          { "id": "dmo", "label": "Party DMOs", "kind": "component" },
+          { "id": "intruder", "label": "Data Action", "kind": "component" },
+          { "id": "unified", "label": "Unified Individual", "kind": "component" },
+          { "id": "segment", "label": "Segment", "kind": "component" },
+          { "id": "ci", "label": "Calculated Insight", "kind": "component" }
+        ],
+        "edges": [
+          { "id": "e_dlo_dmo", "source": "dlo", "target": "dmo" },
+          { "id": "e_dmo_int", "source": "dmo", "target": "intruder" },
+          { "id": "e_int_uni", "source": "intruder", "target": "unified" },
+          { "id": "e_uni_seg", "source": "unified", "target": "segment" },
+          { "id": "e_uni_ci", "source": "unified", "target": "ci" }
+        ]
+      },
+      "layout": {
+        "nodes": {
+          "dlo": { "x": 0.1, "y": 0.45 },
+          "dmo": { "x": 0.3, "y": 0.45 },
+          "intruder": { "x": 0.52, "y": 0.45 },
+          "unified": { "x": 0.74, "y": 0.45 },
+          "segment": { "x": 0.9, "y": 0.22 },
+          "ci": { "x": 0.9, "y": 0.7 }
+        }
+      },
+      "hotspots": [
+        {
+          "id": "intruder",
+          "targetKind": "node",
+          "isCorrect": true
+        },
+        {
+          "id": "ci",
+          "targetKind": "node",
+          "isCorrect": false,
+          "distractorAntipattern": "Blame the Insight",
+          "missRationale": "Calculated Insights consume unified profiles. They are downstream of identity, not a substitute for it."
+        },
+        {
+          "id": "segment",
+          "targetKind": "node",
+          "isCorrect": false,
+          "distractorAntipattern": "Blame Segmentation",
+          "missRationale": "Segments also sit after unified profiles. Empty Unified Individual tables mean identity never produced output."
+        },
+        {
+          "id": "dmo",
+          "targetKind": "node",
+          "isCorrect": false,
+          "distractorAntipattern": "Scrap Party Model",
+          "missRationale": "Party DMOs are the normal mapped inputs to Identity Resolution, not the reason unify tables stay empty."
+        },
+        {
+          "id": "unified",
+          "targetKind": "node",
+          "isCorrect": false,
+          "distractorAntipattern": "Delete the Output",
+          "missRationale": "Unified Individual is the missing product of identity, not the intruder on the path."
+        },
+        {
+          "id": "e_dmo_int",
+          "targetKind": "edge",
+          "isCorrect": false,
+          "distractorAntipattern": "Cut Input Only",
+          "missRationale": "The edge is wrong because of what it points at. The misplaced Data Action node is the component to remove from this path."
+        },
+        {
+          "id": "dlo",
+          "targetKind": "node",
+          "isCorrect": false
+        }
+      ],
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Replace Data Action with Identity Resolution before Unified Individual",
+          "isCorrect": true,
+          "rationale": "Identity Resolution match and reconcile produces Unified Individual and Unified Link records. Data Actions push events after profiles exist—they cannot create those tables.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#identity-resolution"
+        },
+        {
+          "id": "s1_b",
+          "label": "Keep Data Action and add a Calculated Insight to fabricate unified keys",
+          "isCorrect": false,
+          "distractorAntipattern": "Insight as Identity",
+          "rationale": "Calculated Insights aggregate attributes; they do not run match/reconcile or populate Unified Link graphs."
+        },
+        {
+          "id": "s1_c",
+          "label": "Move segmentation ahead of Unified Individual to force profile creation",
+          "isCorrect": false,
+          "distractorAntipattern": "Segment-First Identity",
+          "rationale": "Segments require resolvable profile keys. Reordering activation steps cannot substitute for Identity Resolution."
+        }
+      ]
+    }
+  ]
+}

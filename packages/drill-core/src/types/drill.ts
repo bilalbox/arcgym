@@ -1,6 +1,6 @@
 export type ConfidenceAnchor = 0.5 | 0.7 | 0.85 | 0.95;
 
-export type DrillFormat = 'Lesson' | 'Rapid_Fire' | 'Currency' | 'Scenario';
+export type DrillFormat = 'Lesson' | 'Rapid_Fire' | 'Diagram';
 
 /** Practice category from Salesforce Architect Fundamentals. Orthogonal to Well-Architected pillars. */
 export type ArchitecturalDomain =
@@ -77,37 +77,75 @@ export interface RapidFireStepDTO {
   options: DrillOptionDTO[];
 }
 
-export interface CurrencyCategoryDTO {
+export type DiagramMode = 'fault' | 'compose';
+
+export type DiagramVariantKind =
+  | 'missing_node'
+  | 'wrong_edge'
+  | 'misplaced_component'
+  | 'missing_edge';
+
+export type DiagramNodeKind = 'component' | 'slot';
+
+export type DiagramHotspotTargetKind = 'node' | 'edge' | 'slot';
+
+/** Normalized canvas point; renderer scales to pixels. */
+export interface DiagramLayoutPoint {
+  x: number;
+  y: number;
+}
+
+export interface DiagramNodeDTO {
   id: string;
   label: string;
-  description?: string;
-  defaultPoints: number;
-  maxPoints: number;
-  step?: number;
+  kind: DiagramNodeKind;
+  /** Optional layer/role hint for styling (e.g. ingest, lakehouse, activation). */
+  layer?: string;
 }
 
-export type BudgetRuleOp = 'lte' | 'gte';
-
-export interface BudgetOptimalRuleDTO {
-  categoryId: string;
-  op: BudgetRuleOp;
-  value: number;
-}
-
-export interface ScenarioOptionDTO {
+export interface DiagramEdgeDTO {
   id: string;
-  text: string;
-  trustDelta: number;
-  reliabilityDelta: number;
-  techDebtImpact: string;
-  isOptimal: boolean;
+  source: string;
+  target: string;
+  label?: string;
 }
 
-export interface ScenarioMoveDTO {
-  moveNumber: number;
-  stakeholderPersona: string;
-  dialogueText: string;
-  options: ScenarioOptionDTO[];
+export interface DiagramGraphDTO {
+  nodes: DiagramNodeDTO[];
+  edges: DiagramEdgeDTO[];
+}
+
+/** Presentation layout, separated from topology so renderers can swap. */
+export interface DiagramLayoutDTO {
+  nodes: Record<string, DiagramLayoutPoint>;
+  edges?: Record<string, DiagramLayoutPoint[]>;
+}
+
+export interface DiagramHotspotDTO {
+  /** Matches a node id or edge id in the step graph. */
+  id: string;
+  targetKind: DiagramHotspotTargetKind;
+  isCorrect: boolean;
+  /** Plausible decoys: short antipattern name (2–5 words). Filler decoys omit this. */
+  distractorAntipattern?: string;
+  /** Optional richer miss copy for authored decoys. */
+  missRationale?: string;
+}
+
+export interface DiagramStepDTO {
+  id: string;
+  mode: DiagramMode;
+  prompt: string;
+  /** Official Architect page whose topology was redrawn (learner-facing provenance). */
+  sourceDiagramUrl: string;
+  variant: DiagramVariantKind;
+  graph: DiagramGraphDTO;
+  layout: DiagramLayoutDTO;
+  hotspots: DiagramHotspotDTO[];
+  /** MCQ shown only after the correct hotspot is committed. */
+  options: DrillOptionDTO[];
+  /** Miss copy when a filler hotspot (no distractorAntipattern) is clicked. */
+  genericMissCopy?: string;
 }
 
 export interface LessonOptionDTO {
@@ -149,37 +187,9 @@ export interface RapidFireDrillDefinition extends DrillDefinitionBase {
   steps: RapidFireStepDTO[];
 }
 
-export interface CurrencyDrillDefinition extends DrillDefinitionBase {
-  format: 'Currency';
-  prompt: string;
-  detail?: string;
-  totalPoints: number;
-  categories: CurrencyCategoryDTO[];
-  optimalRules: BudgetOptimalRuleDTO[];
-  analysis?: string;
-  citationUrl?: string;
-}
-
-/**
- * Dual-meter axis labels. Defaults preserve the original Scenario framing
- * (stakeholder trust vs platform reliability). Data / delivery scenarios can
- * relabel the left meter to schedule/scope/effort while keeping field names
- * (`initialTrust`, `trustDelta`) for backward compatibility.
- */
-export interface ScenarioMeterLabels {
-  /** Left meter (backed by initialTrust / trustDelta). */
-  primary: string;
-  /** Right meter (backed by initialReliability / reliabilityDelta). */
-  secondary: string;
-}
-
-export interface ScenarioDrillDefinition extends DrillDefinitionBase {
-  format: 'Scenario';
-  initialTrust: number;
-  initialReliability: number;
-  /** Optional display labels for the two meters. */
-  meterLabels?: ScenarioMeterLabels;
-  moves: ScenarioMoveDTO[];
+export interface DiagramDrillDefinition extends DrillDefinitionBase {
+  format: 'Diagram';
+  steps: DiagramStepDTO[];
 }
 
 export interface LessonDrillDefinition extends DrillDefinitionBase {
@@ -189,20 +199,15 @@ export interface LessonDrillDefinition extends DrillDefinitionBase {
 
 export type DrillDefinitionDTO =
   | RapidFireDrillDefinition
-  | CurrencyDrillDefinition
-  | ScenarioDrillDefinition
+  | DiagramDrillDefinition
   | LessonDrillDefinition;
 
 export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefinition {
   return d.format === 'Rapid_Fire';
 }
 
-export function isCurrencyDrill(d: DrillDefinitionDTO): d is CurrencyDrillDefinition {
-  return d.format === 'Currency';
-}
-
-export function isScenarioDrill(d: DrillDefinitionDTO): d is ScenarioDrillDefinition {
-  return d.format === 'Scenario';
+export function isDiagramDrill(d: DrillDefinitionDTO): d is DiagramDrillDefinition {
+  return d.format === 'Diagram';
 }
 
 export function isLessonDrill(d: DrillDefinitionDTO): d is LessonDrillDefinition {

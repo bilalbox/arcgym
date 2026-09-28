@@ -5,7 +5,7 @@ import {
   DrillAttemptRecord,
   RapidFireDrillDefinition,
   LessonDrillDefinition,
-  CurrencyDrillDefinition,
+  DiagramDrillDefinition,
 } from '../types/drill.js';
 
 const mockRapidFireDrill: RapidFireDrillDefinition = {
@@ -70,33 +70,67 @@ const mockLessonDrill: LessonDrillDefinition = {
   ],
 };
 
-const mockCurrencyDrill: CurrencyDrillDefinition = {
+const mockDiagramDrill: DiagramDrillDefinition = {
   id: 'DR-003',
-  title: 'Governor Limits Allocation',
-  format: 'Currency',
-  domain: 'Platform_Core',
-  domainLabel: 'Platform Core',
+  title: 'Missing Identity Resolution',
+  format: 'Diagram',
+  domain: 'Data_Architecture',
+  domainLabel: 'Data 360',
   difficulty: 'Lead_CTA',
-  pillars: ['Operational_Excellence'],
+  pillars: ['Trust'],
   version: 1,
   status: 'published',
-  prompt: 'Allocate limits',
-  totalPoints: 100,
-  categories: [{ id: 'c1', label: 'Cat 1', defaultPoints: 50, maxPoints: 100 }],
-  optimalRules: [{ categoryId: 'c1', op: 'lte', value: 50 }],
+  steps: [
+    {
+      id: 's1',
+      mode: 'fault',
+      prompt: 'Which missing component breaks unified profiles?',
+      sourceDiagramUrl: 'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
+      variant: 'missing_node',
+      graph: {
+        nodes: [
+          { id: 'dlo', label: 'DLO', kind: 'component' },
+          { id: 'slot_ir', label: '?', kind: 'slot' },
+        ],
+        edges: [{ id: 'e1', source: 'dlo', target: 'slot_ir' }],
+      },
+      layout: { nodes: { dlo: { x: 0.2, y: 0.5 }, slot_ir: { x: 0.7, y: 0.5 } } },
+      hotspots: [
+        { id: 'slot_ir', targetKind: 'slot', isCorrect: true },
+        { id: 'dlo', targetKind: 'node', isCorrect: false },
+      ],
+      options: [
+        {
+          id: 'o1',
+          label: 'Identity Resolution',
+          isCorrect: true,
+          rationale: 'IR unifies profiles before activation.',
+          citationUrl:
+            'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#identity-resolution',
+        },
+        {
+          id: 'o2',
+          label: 'Data Action',
+          isCorrect: false,
+          rationale: 'Actions fire after profiles exist.',
+          distractorAntipattern: 'Activation Before Unification',
+        },
+      ],
+    },
+  ],
 };
 
 const allMockDrills: DrillDefinitionDTO[] = [
   mockRapidFireDrill,
   mockLessonDrill,
-  mockCurrencyDrill,
+  mockDiagramDrill,
 ];
 
 describe('getDrillQuestionCount', () => {
-  it('correctly counts steps/stages/moves', () => {
+  it('correctly counts steps/stages and diagram dual commits', () => {
     expect(getDrillQuestionCount(mockRapidFireDrill)).toBe(3);
     expect(getDrillQuestionCount(mockLessonDrill)).toBe(2);
-    expect(getDrillQuestionCount(mockCurrencyDrill)).toBe(1);
+    expect(getDrillQuestionCount(mockDiagramDrill)).toBe(2);
   });
 });
 

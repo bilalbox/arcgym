@@ -1,0 +1,122 @@
+{
+  "id": "AGD-00801",
+  "title": "Data 360: Activation Bypass Despite Identity Resolution",
+  "format": "Diagram",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data 360 Architecture",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Trust", "Reliability"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "mode": "fault",
+      "variant": "wrong_edge",
+      "prompt": "Nightly identity jobs succeed, yet Marketing Cloud still messages the same person once under a CRM key and again under a web key. Click the connection that explains why activation still sees duplicates.",
+      "sourceDiagramUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html",
+      "genericMissCopy": "That hop is part of a valid path. It is not what lets duplicate source keys reach the channel.",
+      "graph": {
+        "nodes": [
+          { "id": "dlo", "label": "DLOs", "kind": "component", "layer": "lakehouse" },
+          { "id": "dmo", "label": "Contact DMO", "kind": "component", "layer": "lakehouse" },
+          { "id": "ir", "label": "Identity Resolution", "kind": "component", "layer": "unify" },
+          { "id": "unified", "label": "Unified Individual", "kind": "component", "layer": "unify" },
+          { "id": "segment", "label": "Segment", "kind": "component", "layer": "activation" },
+          { "id": "mc", "label": "Marketing Cloud", "kind": "component", "layer": "activation" }
+        ],
+        "edges": [
+          { "id": "e_dlo_dmo", "source": "dlo", "target": "dmo" },
+          { "id": "e_dmo_ir", "source": "dmo", "target": "ir" },
+          { "id": "e_ir_uni", "source": "ir", "target": "unified" },
+          { "id": "e_uni_seg", "source": "unified", "target": "segment" },
+          { "id": "e_seg_mc", "source": "segment", "target": "mc" },
+          { "id": "e_dmo_mc", "source": "dmo", "target": "mc" }
+        ]
+      },
+      "layout": {
+        "nodes": {
+          "dlo": { "x": 0.1, "y": 0.28 },
+          "dmo": { "x": 0.32, "y": 0.28 },
+          "ir": { "x": 0.54, "y": 0.28 },
+          "unified": { "x": 0.74, "y": 0.28 },
+          "segment": { "x": 0.74, "y": 0.62 },
+          "mc": { "x": 0.74, "y": 0.88 }
+        }
+      },
+      "hotspots": [
+        {
+          "id": "e_dmo_mc",
+          "targetKind": "edge",
+          "isCorrect": true
+        },
+        {
+          "id": "e_seg_mc",
+          "targetKind": "edge",
+          "isCorrect": false,
+          "distractorAntipattern": "Blame Channel Hop",
+          "missRationale": "Segment→Marketing Cloud is the intended activation hop once the segment is built on unified profiles."
+        },
+        {
+          "id": "e_dmo_ir",
+          "targetKind": "edge",
+          "isCorrect": false,
+          "distractorAntipattern": "Break Ingest Mapping",
+          "missRationale": "Contact DMO→Identity Resolution is required. Cutting it would stop unification, not explain duplicates while jobs succeed."
+        },
+        {
+          "id": "ir",
+          "targetKind": "node",
+          "isCorrect": false,
+          "distractorAntipattern": "Delete the Unifier",
+          "missRationale": "Identity Resolution is running successfully in the prompt. The fault is a path that ignores its output."
+        },
+        {
+          "id": "dmo",
+          "targetKind": "node",
+          "isCorrect": false,
+          "distractorAntipattern": "Erase Source DMO",
+          "missRationale": "Mapped Contact DMOs remain necessary inputs. The error is activating from them instead of unified profiles."
+        },
+        {
+          "id": "mc",
+          "targetKind": "node",
+          "isCorrect": false
+        },
+        {
+          "id": "segment",
+          "targetKind": "node",
+          "isCorrect": false
+        },
+        {
+          "id": "e_uni_seg",
+          "targetKind": "edge",
+          "isCorrect": false
+        }
+      ],
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Remove the Contact DMO→Marketing Cloud path; activate only from unified segments",
+          "isCorrect": true,
+          "rationale": "A direct DMO activation bypasses Unified Individual, so channel keys stay fragmented even when Identity Resolution jobs succeed.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+        },
+        {
+          "id": "s1_b",
+          "label": "Disable Identity Resolution and dedupe inside Marketing Cloud journeys",
+          "isCorrect": false,
+          "distractorAntipattern": "Channel-Side Dedup",
+          "rationale": "Channel cleanup cannot restore an enterprise identity graph or consistent suppression across every activation target."
+        },
+        {
+          "id": "s1_c",
+          "label": "Delete the Contact DMO and activate only from raw DLOs",
+          "isCorrect": false,
+          "distractorAntipattern": "Raw Lake Activation",
+          "rationale": "Raw DLOs are less harmonized than mapped DMOs; skipping both mapping and unification worsens duplicate keys."
+        }
+      ]
+    }
+  ]
+}

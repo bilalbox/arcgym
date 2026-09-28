@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTheme } from '@/hooks/useTheme';
-import { Target, Flame, Moon, Sun } from 'lucide-react';
+import { Target, Flame, Moon, Sun, Zap } from 'lucide-react';
 
 interface HeaderProps {
   pathname: string;
@@ -8,6 +8,7 @@ interface HeaderProps {
   totalCompleted: number;
   totalDrillsCount: number;
   streakDays: number;
+  totalPoints?: number;
   onOpenProgressModal: () => void;
 }
 
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   totalCompleted,
   totalDrillsCount,
   streakDays,
+  totalPoints = 0,
   onOpenProgressModal,
 }) => {
   const isHome = pathname === '/' || pathname === '';
@@ -67,10 +69,10 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <button
             onClick={onOpenProgressModal}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-miro-surface hover:bg-miro-hairlineSoft border border-miro-hairline text-miro-slate text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-surface hover:bg-miro-hairlineSoft border border-miro-hairline text-miro-slate text-xs font-medium transition-colors cursor-pointer"
             title="Click to view practice history and completed drills"
           >
             <Target className="h-3.5 w-3.5 text-miro-blue" />
@@ -79,10 +81,26 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
 
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-miro-yellowLight border border-miro-yellowBorder text-miro-yellowText text-xs font-medium">
-            <Flame className="h-3.5 w-3.5 text-miro-yellowText fill-miro-yellowText" />
-            <span>{streakDays} day streak</span>
-          </div>
+          {totalPoints > 0 && (
+            <button
+              onClick={onOpenProgressModal}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-lavenderLight hover:bg-miro-lavenderLight/80 border border-miro-lavenderBorder text-miro-blue text-xs font-semibold transition-colors cursor-pointer"
+              title="Total points achieved across all drills. Click to view history."
+            >
+              <Zap className="h-3.5 w-3.5 text-miro-blue fill-miro-blue" />
+              <span>{totalPoints.toLocaleString()} pts</span>
+            </button>
+          )}
+
+          {streakDays > 0 && (
+            <div
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-yellowLight border border-miro-yellowBorder text-miro-yellowText text-xs font-medium animate-in fade-in duration-200"
+              title={`${streakDays} day practice streak`}
+            >
+              <Flame className="h-3.5 w-3.5 text-miro-yellowText fill-miro-yellowText" />
+              <span>{streakDays} day streak</span>
+            </div>
+          )}
 
           <button
             type="button"
