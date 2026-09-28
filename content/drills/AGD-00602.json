@@ -1,7 +1,7 @@
 {
   "id": "AGD-00602",
   "title": "B2B ABM Go-Live: Relationship-Grain Activation Under a Deadline",
-  "format": "Scenario",
+  "format": "Rapid_Fire",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 & Data Cloud Zero Copy",
   "difficulty": "Lead_CTA",
@@ -9,7 +9,7 @@
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 4,
+  "version": 5,
   "status": "published",
   "sourceCardIds": [
     "FC-0D54V00007bLMAFSA4",
@@ -18,125 +18,139 @@
     "FC-0D5KX00000jAOxu0AG",
     "FC-0D54V00007er4NUSAY"
   ],
-  "meterLabels": {
-    "primary": "Schedule headroom",
-    "secondary": "Platform reliability"
-  },
-  "initialTrust": 78,
-  "initialReliability": 64,
-  "moves": [
+  "steps": [
     {
-      "moveNumber": 1,
-      "stakeholderPersona": "CRM Data Architect",
-      "dialogueText": "\"ABM goes live in two weeks, and buying committees put one Contact on several Accounts. Mapping a real Account Contact relationship costs a day of harmonization we do not have. Can we map Account Contact straight from Contact and keep moving?\"",
+      "id": "s1",
+      "prompt": "An Account-Based Marketing rollout launches in two weeks, where buyers associate one Contact with multiple Accounts. Mapping a true Account-Contact relationship requires data harmonization effort. The CRM architect asks whether mapping Account Contact directly from Contact is sufficient. What should the architect decide?",
       "options": [
         {
-          "id": "m1_b",
-          "text": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
-          "trustDelta": -12,
-          "reliabilityDelta": 16,
-          "techDebtImpact": "Costs a day of harmonization now, but each Contact–Account pair gets its own row, which later activations can use as their membership grain.",
-          "isOptimal": true
+          "id": "s1_a",
+          "label": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
+          "isCorrect": true,
+          "rationale": "Harmonizing the relationship entity establishes a distinct row for each account-person pairing. Downstream segmentations can then target contacts within their specific organizational roles without losing multi-account context.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/reference-diagrams/guide/data-model-notation.html#relationships"
         },
         {
-          "id": "m1_a",
-          "text": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
-          "trustDelta": 10,
-          "reliabilityDelta": -26,
-          "techDebtImpact": "Saves a day now, but one row per Contact cannot represent a Contact on several Accounts, so later activations lose which Account each row belongs to.",
-          "isOptimal": false
+          "id": "s1_b",
+          "label": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
+          "isCorrect": false,
+          "distractorAntipattern": "Flattened Relationship Model",
+          "rationale": "Collapsing multiple account associations into a single contact record discards the many-to-many junction grain, making it impossible for marketing activations to determine which account attributes govern each touchpoint."
+        },
+        {
+          "id": "s1_c",
+          "label": "Duplicate each Contact record across each Account directly inside the CRM source before ingestion.",
+          "isCorrect": false,
+          "distractorAntipattern": "Source Data Duplication",
+          "rationale": "Cloning contact rows in core CRM corrupts data hygiene, inflates platform storage, and complicates identity resolution across duplicate external records."
         }
       ]
     },
     {
-      "moveNumber": 2,
-      "stakeholderPersona": "Data 360 Admin",
-      "dialogueText": "\"The junction DMO is still in the Other category. Moving it to Profile means recreating or transforming it and re-testing its relationships, about half a sprint. Can we leave it as Other and still use it for Activation Membership?\"",
+      "id": "s2",
+      "prompt": "A custom Account-Contact junction DMO is assigned to the Other category. Recreating it in the Profile category requires rebuilding relationships and re-testing. The admin asks if the junction can remain categorized as Other while being used for Activation Membership. How should the architect guide them?",
       "options": [
         {
-          "id": "m2_a",
-          "text": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
-          "trustDelta": 12,
-          "reliabilityDelta": -24,
-          "techDebtImpact": "Saves half a sprint now, but only Profile-category DMOs can define activation members, so marketing falls back to Contact membership.",
-          "isOptimal": false
+          "id": "s2_a",
+          "label": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
+          "isCorrect": false,
+          "distractorAntipattern": "Category Constraint Bypass",
+          "rationale": "The activation engine ignores relationship links when determining eligible membership objects, preventing any DMO in the Other category from serving as an activation anchor."
         },
         {
-          "id": "m2_b",
-          "text": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
-          "trustDelta": -14,
-          "reliabilityDelta": 18,
-          "techDebtImpact": "Costs half a sprint now, but Profile is the category Activation Membership requires, so the junction becomes selectable.",
-          "isOptimal": true
+          "id": "s2_b",
+          "label": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
+          "isCorrect": true,
+          "rationale": "The platform segmentation and activation engine strictly requires membership entities to belong to the Profile category. Transitioning the junction allows marketing to select it directly as the target activation grain.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#source-profile-linking"
+        },
+        {
+          "id": "s2_c",
+          "label": "Change the junction category to Engagement to enable streaming event activations to Marketing Cloud.",
+          "isCorrect": false,
+          "distractorAntipattern": "Mismatched Entity Semantics",
+          "rationale": "Engagement category objects represent time-stamped interaction records rather than persistent entity associations, making them unsuitable for defining membership cohorts."
         }
       ]
     },
     {
-      "moveNumber": 3,
-      "stakeholderPersona": "Marketing Operations Lead",
-      "dialogueText": "\"In the dry run, a Contact on two Accounts came out as one Data Extension row, and the second Account's attributes were missing. Re-segmenting on the junction and changing membership takes another build day. Leadership says keep Contact membership and let Marketing Cloud sort it out. Do we?\"",
+      "id": "s3",
+      "prompt": "In an activation dry run, a Contact associated with two Accounts produced only one Data Extension row, dropping the second Account's attributes. Re-segmenting on the junction takes an additional build day. Leadership proposes keeping Contact membership and resolving context inside Marketing Cloud. How should the architect respond?",
       "options": [
         {
-          "id": "m3_a",
-          "text": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
-          "trustDelta": 11,
-          "reliabilityDelta": -30,
-          "techDebtImpact": "Saves a build day now, but Contact membership outputs one row per Contact, so every journey must rebuild the Account context the activation dropped.",
-          "isOptimal": false
+          "id": "s3_a",
+          "label": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
+          "isCorrect": false,
+          "distractorAntipattern": "Downstream Context Reconstruction",
+          "rationale": "Delegating relationship reconstruction to Marketing Cloud journey activities introduces complex script queries, increases journey latency, and fails when contacts have ambiguous active accounts."
         },
         {
-          "id": "m3_b",
-          "text": "Segment on the junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
-          "trustDelta": -12,
-          "reliabilityDelta": 20,
-          "techDebtImpact": "Costs a build day now, but membership on the junction outputs one row per Account–Contact pair, each carrying its own Account attributes.",
-          "isOptimal": true
+          "id": "s3_b",
+          "label": "Segment on junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
+          "isCorrect": true,
+          "rationale": "Anchoring membership on the junction outputs an independent row for every Account-Contact pairing, preserving distinct company attributes for each relationship when records land in Marketing Cloud.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+        },
+        {
+          "id": "s3_c",
+          "label": "Combine multiple Account names into a delimited text string attribute on the unified Contact profile.",
+          "isCorrect": false,
+          "distractorAntipattern": "Delimited Attribute Packing",
+          "rationale": "Merging distinct structural values into delimited text fields breaks automated journey personalization and prevents targeted filtering on discrete company parameters."
         }
       ]
     },
     {
-      "moveNumber": 4,
-      "stakeholderPersona": "SFMC Admin",
-      "dialogueText": "\"Compliance wants every Contact Point Email in the Data Extension, but Max # of Attribute Values is locked at 1. A fan-out transform plus a new segment and activation is a multi-day track. Can we raise the attribute limit instead?\"",
+      "id": "s4",
+      "prompt": "Compliance requires every Contact Point Email for an Individual to be present in the Marketing Cloud Data Extension, but Max Attribute Values is capped at 1. Building a fan-out transform requires multiple days. The team asks if raising the attribute limit resolves the requirement. How should the architect advise?",
       "options": [
         {
-          "id": "m4_b",
-          "text": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
-          "trustDelta": -15,
-          "reliabilityDelta": 17,
-          "techDebtImpact": "Costs several days of transform and activation work, but each email becomes its own Data Extension row that Marketing Cloud can address.",
-          "isOptimal": true
+          "id": "s4_a",
+          "label": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
+          "isCorrect": true,
+          "rationale": "Generating an unpivoted dataset with one record per address ensures each email address receives a dedicated Data Extension row that Marketing Cloud can individually target.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
         },
         {
-          "id": "m4_a",
-          "text": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
-          "trustDelta": 13,
-          "reliabilityDelta": -26,
-          "techDebtImpact": "Saves several days now, but a higher limit packs the extra emails onto the same Individual row, which Marketing Cloud cannot send to.",
-          "isOptimal": false
+          "id": "s4_b",
+          "label": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
+          "isCorrect": false,
+          "distractorAntipattern": "Attribute Fan-Out Assumption",
+          "rationale": "Increasing attribute value limits packs additional email values as comma-separated entries into a single row, which journey builder cannot parse as distinct recipient targets."
+        },
+        {
+          "id": "s4_c",
+          "label": "Configure a scheduled script in Marketing Cloud to split comma-separated emails after every activation sync.",
+          "isCorrect": false,
+          "distractorAntipattern": "Post-Processing Pipeline Dependency",
+          "rationale": "Relying on external SQL queries or scripts to reshape incoming data introduces operational fragility, scheduling delays, and synchronicity gaps between Data Cloud and journey execution."
         }
       ]
     },
     {
-      "moveNumber": 5,
-      "stakeholderPersona": "Integration Lead",
-      "dialogueText": "\"Activation fails because three attributes named Id collide across Individual, Contact Point Email, and the Redshift DMO. I can give them preferred activation names this afternoon, or we rebuild the Redshift DMO with non-overlapping field names first—three days, past go-live. Which do we do?\"",
+      "id": "s5",
+      "prompt": "Activation fails because three attributes named Id collide across Individual, Contact Point Email, and a Redshift DMO. The integration lead can assign preferred activation names this afternoon, or spend three days rebuilding the Redshift DMO with unique schema fields past go-live. Which approach should the architect direct?",
       "options": [
         {
-          "id": "m5_a",
-          "text": "Assign preferred activation names to the three colliding Id attributes and re-run the activation today.",
-          "trustDelta": 8,
-          "reliabilityDelta": 16,
-          "techDebtImpact": "Saves three days now at no later cost: the collision lives in the activation payload, so distinct names fix the Data Extension columns without touching the model.",
-          "isOptimal": true
+          "id": "s5_a",
+          "label": "Assign preferred activation names to colliding Id attributes and re-run the activation today.",
+          "isCorrect": true,
+          "rationale": "Preferred activation names disambiguate field aliases directly within the destination payload without altering underlying data lake schema definitions or jeopardizing delivery milestones.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
         },
         {
-          "id": "m5_b",
-          "text": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
-          "trustDelta": -14,
-          "reliabilityDelta": 4,
-          "techDebtImpact": "Buys a tidier source model, but spends three days past go-live on a collision that payload names already resolve.",
-          "isOptimal": false
+          "id": "s5_b",
+          "label": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
+          "isCorrect": false,
+          "distractorAntipattern": "Unnecessary Upstream Refactoring",
+          "rationale": "Rebuilding underlying data model objects causes significant schedule slippage and invalidates existing mapping dependencies to fix a naming conflict that target-layer alias configuration easily solves."
+        },
+        {
+          "id": "s5_c",
+          "label": "Drop conflicting Id attributes from the activation payload and pass only person names.",
+          "isCorrect": false,
+          "distractorAntipattern": "Identifier Stripping Compromise",
+          "rationale": "Omitting primary and foreign identifiers prevents downstream systems from reliably matching and synchronizing profile records back to source platforms."
         }
       ]
     }

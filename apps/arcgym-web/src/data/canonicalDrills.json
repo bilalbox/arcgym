@@ -706,9 +706,106 @@
     ]
   },
   {
+    "id": "AGD-00601",
+    "title": "Dreamforce Agentforce demo: keynote deadline vs. agent guardrails",
+    "format": "Rapid_Fire",
+    "domain": "Ai_And_Automation",
+    "domainLabel": "Agentic Enterprise Governance",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Trust",
+      "Reliability"
+    ],
+    "version": 3,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "With 48 hours until the Dreamforce keynote, the CEO wants an Agentforce agent to approve refunds up to $5,000 autonomously on stage. Full guardrail testing on the refund action requires two days. How should the architect balance the keynote timeline with production safety?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Skip the guardrail tests and rely on the Trust Layer's built-in prompt defense during the live demo.",
+            "isCorrect": false,
+            "distractorAntipattern": "Unguarded Execution Delegation",
+            "rationale": "Prompt defense inspects inputs for known injection attacks, but does not enforce transactional limits or validate business logic. An unexpected prompt variation on stage could execute an unauthorized large refund."
+          },
+          {
+            "id": "s1_b",
+            "label": "Cap autonomous refunds at finance's approved range, escalate larger ones through Omni-Channel, and test that boundary.",
+            "isCorrect": true,
+            "rationale": "Establishing an automated boundary restricts financial exposure and narrows the testing scope to a verifiable limit within two days. Any amount above the threshold safely routes to human operators through Omni-Channel.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/trust-agentic-patterns.html#human-in-the-loop"
+          },
+          {
+            "id": "s1_c",
+            "label": "Swap the refund demo for a read-only order-status agent and ship refunds after Dreamforce.",
+            "isCorrect": false,
+            "distractorAntipattern": "Premature Scope Surrender",
+            "rationale": "Abandoning autonomous capabilities eliminates keynote risk entirely, but discards executive goals when establishing a human-in-the-loop boundary safely satisfies both timeline and governance requirements."
+          }
+        ]
+      },
+      {
+        "id": "s2",
+        "prompt": "An Agentforce agent experiences multi-second latency retrieving customer history. Its grounding action queries a 20-million-row order history object filtered only by status. The development team proposes a two-week Data 360 Calculated Insights build before the keynote in two days. What should the architect recommend?",
+        "options": [
+          {
+            "id": "s2_a",
+            "label": "Start the two-week Data 360 build and demo with one customer whose short history loads quickly.",
+            "isCorrect": false,
+            "distractorAntipattern": "Premature Architecture Migration",
+            "rationale": "Beginning a multi-week data pipeline overhaul introduces high project overhead and misses the delivery window, while masking an unselective table scan that simple query indexing resolves."
+          },
+          {
+            "id": "s2_b",
+            "label": "Add the customer's Account lookup to the action's query filter so it uses an index.",
+            "isCorrect": true,
+            "rationale": "Filtering on the Account lookup leverages standard index selectivity, restricting table scans to rows for that specific customer. This resolves latency without deferring delivery for a complex two-week analytics migration.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/platform-multitenant-architecture.html#indexes"
+          },
+          {
+            "id": "s2_c",
+            "label": "Increase the SOQL query timeout setting in the grounding action configuration to allow full table scans.",
+            "isCorrect": false,
+            "distractorAntipattern": "Governor Limit Masking",
+            "rationale": "Extending query timeouts fails to solve underlying full table scans on 20-million-row datasets, increasing risk of thread starvation and degraded conversational response times under stage concurrency."
+          }
+        ]
+      },
+      {
+        "id": "s3",
+        "prompt": "Trust Layer audit data reveals customer Social Security numbers and payment card numbers from Case records appearing in prompts sent to the model. The security auditor threatens to revoke agent deployment unless this exposure is halted. What is the architect's remediation plan?",
+        "options": [
+          {
+            "id": "s3_a",
+            "label": "Remove SSN and card fields from grounding actions while keeping Trust Layer masking as a backstop.",
+            "isCorrect": true,
+            "rationale": "Defense in depth begins by stripping sensitive fields at the data retrieval boundary so confidential values never enter prompt assembly. Platform masking provides secondary protection against unexpected free-text user inputs.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/trust-agentic-patterns.html#einstein-trust-layer"
+          },
+          {
+            "id": "s3_b",
+            "label": "Keep the full record context and rely on Trust Layer data masking to strip SSNs and card numbers.",
+            "isCorrect": false,
+            "distractorAntipattern": "Sole Control Reliance",
+            "rationale": "Pattern-based masking handles known structures, but unstructured notes or non-standard number formats can bypass detection rules. Trusting masking as the only control leaves enterprise data vulnerable during inference."
+          },
+          {
+            "id": "s3_c",
+            "label": "Show the auditor the zero data retention agreement with the model provider as the proof.",
+            "isCorrect": false,
+            "distractorAntipattern": "Contractual Compliance Substitute",
+            "rationale": "Zero retention contracts govern external vendor storage post-request, but do not satisfy data minimization principles preventing confidential identifiers from transmitting across cloud boundaries."
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "AGD-00602",
     "title": "B2B ABM Go-Live: Relationship-Grain Activation Under a Deadline",
-    "format": "Scenario",
+    "format": "Rapid_Fire",
     "domain": "Data_Architecture",
     "domainLabel": "Data 360 & Data Cloud Zero Copy",
     "difficulty": "Lead_CTA",
@@ -716,7 +813,7 @@
       "Reliability",
       "Operational_Excellence"
     ],
-    "version": 4,
+    "version": 5,
     "status": "published",
     "sourceCardIds": [
       "FC-0D54V00007bLMAFSA4",
@@ -725,125 +822,139 @@
       "FC-0D5KX00000jAOxu0AG",
       "FC-0D54V00007er4NUSAY"
     ],
-    "meterLabels": {
-      "primary": "Schedule headroom",
-      "secondary": "Platform reliability"
-    },
-    "initialTrust": 78,
-    "initialReliability": 64,
-    "moves": [
+    "steps": [
       {
-        "moveNumber": 1,
-        "stakeholderPersona": "CRM Data Architect",
-        "dialogueText": "\"ABM goes live in two weeks, and buying committees put one Contact on several Accounts. Mapping a real Account Contact relationship costs a day of harmonization we do not have. Can we map Account Contact straight from Contact and keep moving?\"",
+        "id": "s1",
+        "prompt": "An Account-Based Marketing rollout launches in two weeks, where buyers associate one Contact with multiple Accounts. Mapping a true Account-Contact relationship requires data harmonization effort. The CRM architect asks whether mapping Account Contact directly from Contact is sufficient. What should the architect decide?",
         "options": [
           {
-            "id": "m1_b",
-            "text": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
-            "trustDelta": -12,
-            "reliabilityDelta": 16,
-            "techDebtImpact": "Costs a day of harmonization now, but each Contact–Account pair gets its own row, which later activations can use as their membership grain.",
-            "isOptimal": true
+            "id": "s1_a",
+            "label": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
+            "isCorrect": true,
+            "rationale": "Harmonizing the relationship entity establishes a distinct row for each account-person pairing. Downstream segmentations can then target contacts within their specific organizational roles without losing multi-account context.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/reference-diagrams/guide/data-model-notation.html#relationships"
           },
           {
-            "id": "m1_a",
-            "text": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
-            "trustDelta": 10,
-            "reliabilityDelta": -26,
-            "techDebtImpact": "Saves a day now, but one row per Contact cannot represent a Contact on several Accounts, so later activations lose which Account each row belongs to.",
-            "isOptimal": false
+            "id": "s1_b",
+            "label": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
+            "isCorrect": false,
+            "distractorAntipattern": "Flattened Relationship Model",
+            "rationale": "Collapsing multiple account associations into a single contact record discards the many-to-many junction grain, making it impossible for marketing activations to determine which account attributes govern each touchpoint."
+          },
+          {
+            "id": "s1_c",
+            "label": "Duplicate each Contact record across each Account directly inside the CRM source before ingestion.",
+            "isCorrect": false,
+            "distractorAntipattern": "Source Data Duplication",
+            "rationale": "Cloning contact rows in core CRM corrupts data hygiene, inflates platform storage, and complicates identity resolution across duplicate external records."
           }
         ]
       },
       {
-        "moveNumber": 2,
-        "stakeholderPersona": "Data 360 Admin",
-        "dialogueText": "\"The junction DMO is still in the Other category. Moving it to Profile means recreating or transforming it and re-testing its relationships, about half a sprint. Can we leave it as Other and still use it for Activation Membership?\"",
+        "id": "s2",
+        "prompt": "A custom Account-Contact junction DMO is assigned to the Other category. Recreating it in the Profile category requires rebuilding relationships and re-testing. The admin asks if the junction can remain categorized as Other while being used for Activation Membership. How should the architect guide them?",
         "options": [
           {
-            "id": "m2_a",
-            "text": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
-            "trustDelta": 12,
-            "reliabilityDelta": -24,
-            "techDebtImpact": "Saves half a sprint now, but only Profile-category DMOs can define activation members, so marketing falls back to Contact membership.",
-            "isOptimal": false
+            "id": "s2_a",
+            "label": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
+            "isCorrect": false,
+            "distractorAntipattern": "Category Constraint Bypass",
+            "rationale": "The activation engine ignores relationship links when determining eligible membership objects, preventing any DMO in the Other category from serving as an activation anchor."
           },
           {
-            "id": "m2_b",
-            "text": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
-            "trustDelta": -14,
-            "reliabilityDelta": 18,
-            "techDebtImpact": "Costs half a sprint now, but Profile is the category Activation Membership requires, so the junction becomes selectable.",
-            "isOptimal": true
+            "id": "s2_b",
+            "label": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
+            "isCorrect": true,
+            "rationale": "The platform segmentation and activation engine strictly requires membership entities to belong to the Profile category. Transitioning the junction allows marketing to select it directly as the target activation grain.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#source-profile-linking"
+          },
+          {
+            "id": "s2_c",
+            "label": "Change the junction category to Engagement to enable streaming event activations to Marketing Cloud.",
+            "isCorrect": false,
+            "distractorAntipattern": "Mismatched Entity Semantics",
+            "rationale": "Engagement category objects represent time-stamped interaction records rather than persistent entity associations, making them unsuitable for defining membership cohorts."
           }
         ]
       },
       {
-        "moveNumber": 3,
-        "stakeholderPersona": "Marketing Operations Lead",
-        "dialogueText": "\"In the dry run, a Contact on two Accounts came out as one Data Extension row, and the second Account's attributes were missing. Re-segmenting on the junction and changing membership takes another build day. Leadership says keep Contact membership and let Marketing Cloud sort it out. Do we?\"",
+        "id": "s3",
+        "prompt": "In an activation dry run, a Contact associated with two Accounts produced only one Data Extension row, dropping the second Account's attributes. Re-segmenting on the junction takes an additional build day. Leadership proposes keeping Contact membership and resolving context inside Marketing Cloud. How should the architect respond?",
         "options": [
           {
-            "id": "m3_a",
-            "text": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
-            "trustDelta": 11,
-            "reliabilityDelta": -30,
-            "techDebtImpact": "Saves a build day now, but Contact membership outputs one row per Contact, so every journey must rebuild the Account context the activation dropped.",
-            "isOptimal": false
+            "id": "s3_a",
+            "label": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
+            "isCorrect": false,
+            "distractorAntipattern": "Downstream Context Reconstruction",
+            "rationale": "Delegating relationship reconstruction to Marketing Cloud journey activities introduces complex script queries, increases journey latency, and fails when contacts have ambiguous active accounts."
           },
           {
-            "id": "m3_b",
-            "text": "Segment on the junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
-            "trustDelta": -12,
-            "reliabilityDelta": 20,
-            "techDebtImpact": "Costs a build day now, but membership on the junction outputs one row per Account–Contact pair, each carrying its own Account attributes.",
-            "isOptimal": true
+            "id": "s3_b",
+            "label": "Segment on junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
+            "isCorrect": true,
+            "rationale": "Anchoring membership on the junction outputs an independent row for every Account-Contact pairing, preserving distinct company attributes for each relationship when records land in Marketing Cloud.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+          },
+          {
+            "id": "s3_c",
+            "label": "Combine multiple Account names into a delimited text string attribute on the unified Contact profile.",
+            "isCorrect": false,
+            "distractorAntipattern": "Delimited Attribute Packing",
+            "rationale": "Merging distinct structural values into delimited text fields breaks automated journey personalization and prevents targeted filtering on discrete company parameters."
           }
         ]
       },
       {
-        "moveNumber": 4,
-        "stakeholderPersona": "SFMC Admin",
-        "dialogueText": "\"Compliance wants every Contact Point Email in the Data Extension, but Max # of Attribute Values is locked at 1. A fan-out transform plus a new segment and activation is a multi-day track. Can we raise the attribute limit instead?\"",
+        "id": "s4",
+        "prompt": "Compliance requires every Contact Point Email for an Individual to be present in the Marketing Cloud Data Extension, but Max Attribute Values is capped at 1. Building a fan-out transform requires multiple days. The team asks if raising the attribute limit resolves the requirement. How should the architect advise?",
         "options": [
           {
-            "id": "m4_b",
-            "text": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
-            "trustDelta": -15,
-            "reliabilityDelta": 17,
-            "techDebtImpact": "Costs several days of transform and activation work, but each email becomes its own Data Extension row that Marketing Cloud can address.",
-            "isOptimal": true
+            "id": "s4_a",
+            "label": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
+            "isCorrect": true,
+            "rationale": "Generating an unpivoted dataset with one record per address ensures each email address receives a dedicated Data Extension row that Marketing Cloud can individually target.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
           },
           {
-            "id": "m4_a",
-            "text": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
-            "trustDelta": 13,
-            "reliabilityDelta": -26,
-            "techDebtImpact": "Saves several days now, but a higher limit packs the extra emails onto the same Individual row, which Marketing Cloud cannot send to.",
-            "isOptimal": false
+            "id": "s4_b",
+            "label": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
+            "isCorrect": false,
+            "distractorAntipattern": "Attribute Fan-Out Assumption",
+            "rationale": "Increasing attribute value limits packs additional email values as comma-separated entries into a single row, which journey builder cannot parse as distinct recipient targets."
+          },
+          {
+            "id": "s4_c",
+            "label": "Configure a scheduled script in Marketing Cloud to split comma-separated emails after every activation sync.",
+            "isCorrect": false,
+            "distractorAntipattern": "Post-Processing Pipeline Dependency",
+            "rationale": "Relying on external SQL queries or scripts to reshape incoming data introduces operational fragility, scheduling delays, and synchronicity gaps between Data Cloud and journey execution."
           }
         ]
       },
       {
-        "moveNumber": 5,
-        "stakeholderPersona": "Integration Lead",
-        "dialogueText": "\"Activation fails because three attributes named Id collide across Individual, Contact Point Email, and the Redshift DMO. I can give them preferred activation names this afternoon, or we rebuild the Redshift DMO with non-overlapping field names first—three days, past go-live. Which do we do?\"",
+        "id": "s5",
+        "prompt": "Activation fails because three attributes named Id collide across Individual, Contact Point Email, and a Redshift DMO. The integration lead can assign preferred activation names this afternoon, or spend three days rebuilding the Redshift DMO with unique schema fields past go-live. Which approach should the architect direct?",
         "options": [
           {
-            "id": "m5_a",
-            "text": "Assign preferred activation names to the three colliding Id attributes and re-run the activation today.",
-            "trustDelta": 8,
-            "reliabilityDelta": 16,
-            "techDebtImpact": "Saves three days now at no later cost: the collision lives in the activation payload, so distinct names fix the Data Extension columns without touching the model.",
-            "isOptimal": true
+            "id": "s5_a",
+            "label": "Assign preferred activation names to colliding Id attributes and re-run the activation today.",
+            "isCorrect": true,
+            "rationale": "Preferred activation names disambiguate field aliases directly within the destination payload without altering underlying data lake schema definitions or jeopardizing delivery milestones.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
           },
           {
-            "id": "m5_b",
-            "text": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
-            "trustDelta": -14,
-            "reliabilityDelta": 4,
-            "techDebtImpact": "Buys a tidier source model, but spends three days past go-live on a collision that payload names already resolve.",
-            "isOptimal": false
+            "id": "s5_b",
+            "label": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
+            "isCorrect": false,
+            "distractorAntipattern": "Unnecessary Upstream Refactoring",
+            "rationale": "Rebuilding underlying data model objects causes significant schedule slippage and invalidates existing mapping dependencies to fix a naming conflict that target-layer alias configuration easily solves."
+          },
+          {
+            "id": "s5_c",
+            "label": "Drop conflicting Id attributes from the activation payload and pass only person names.",
+            "isCorrect": false,
+            "distractorAntipattern": "Identifier Stripping Compromise",
+            "rationale": "Omitting primary and foreign identifiers prevents downstream systems from reliably matching and synchronizing profile records back to source platforms."
           }
         ]
       }
@@ -852,7 +963,7 @@
   {
     "id": "AGD-00603",
     "title": "Multi-Org Data Cloud: Topology, Residency, and Ingestion",
-    "format": "Scenario",
+    "format": "Rapid_Fire",
     "domain": "Infrastructure",
     "domainLabel": "Infrastructure",
     "difficulty": "Lead_CTA",
@@ -861,105 +972,91 @@
       "Trust",
       "Operational_Excellence"
     ],
-    "version": 1,
+    "version": 2,
     "status": "published",
     "sourceCardIds": [
       "FC-0D54V00007cm9v5SAA",
       "FC-0D5KX00000jA7qw0AC"
     ],
-    "initialTrust": 60,
-    "initialReliability": 65,
-    "moves": [
+    "steps": [
       {
-        "moveNumber": 1,
-        "stakeholderPersona": "Chief Information Officer (CIO)",
-        "dialogueText": "We operate three independent Salesforce CRM orgs for Sales, Service, and B2B Commerce. The enterprise architecture group wants to provision a separate Data Cloud license in each org and synchronize unified customer profiles using Platform Events. Can we justify this multi-instance approach?",
+        "id": "s1",
+        "prompt": "An enterprise operates three Salesforce CRM orgs for Sales, Service, and B2B Commerce. The team proposes provisioning independent Data Cloud licenses in each org and synchronizing unified customer profiles with Platform Events. How should the architect respond to this multi-instance architecture proposal?",
         "options": [
           {
-            "id": "m1_a",
-            "text": "Provision independent Data Cloud instances per CRM org and connect them through scheduled bulk data exports.",
-            "trustDelta": -10,
-            "reliabilityDelta": -15,
-            "techDebtImpact": "Creates redundant compute costs and introduces profile synchronization lag across three isolated customer models.",
-            "isOptimal": false
+            "id": "s1_a",
+            "label": "Provision independent Data Cloud instances per CRM org and connect them through scheduled bulk data exports.",
+            "isCorrect": false,
+            "distractorAntipattern": "Siloed Multi-Instance Sprawl",
+            "rationale": "Deploying disconnected instances triples license and compute expenditure while introducing synchronization latency across three conflicting customer identity models."
           },
           {
-            "id": "m1_b",
-            "text": "Establish a central Data Cloud Home Org and connect the remaining orgs as Companions using Data Cloud One.",
-            "trustDelta": 15,
-            "reliabilityDelta": 20,
-            "techDebtImpact": "Establishes a single customer source of truth with zero-copy metadata sharing while avoiding triple licensing costs.",
-            "isOptimal": true
+            "id": "s1_b",
+            "label": "Establish a central Data Cloud Home Org and connect the remaining orgs as Companions using Data Cloud One.",
+            "isCorrect": true,
+            "rationale": "Data Cloud One connects multiple CRM instances to a single home org via metadata federation, eliminating redundant licensing costs and consolidating identity resolution without custom integration pipelines.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#data-cloud-one"
           },
           {
-            "id": "m1_c",
-            "text": "Merge the three Salesforce CRM orgs into a single production org before deploying Data Cloud capabilities.",
-            "trustDelta": -15,
-            "reliabilityDelta": 5,
-            "techDebtImpact": "Forces a multi-year consolidation program that delays business value when metadata federation solves the unification requirement.",
-            "isOptimal": false
+            "id": "s1_c",
+            "label": "Merge the three Salesforce CRM orgs into a single production org before deploying Data Cloud capabilities.",
+            "isCorrect": false,
+            "distractorAntipattern": "Monolithic Consolidation Delay",
+            "rationale": "Forcing a multi-year CRM consolidation project stalls enterprise data unification when zero-copy multi-org federation addresses the requirement immediately."
           }
         ]
       },
       {
-        "moveNumber": 2,
-        "stakeholderPersona": "Chief Privacy Officer (CPO)",
-        "dialogueText": "Our European subsidiary legally requires customer personal data to remain within European Union boundaries. The corporate Home Org is hosted in North America. If we use Data Cloud One across all orgs, will we violate regional data residency regulations?",
+        "id": "s2",
+        "prompt": "A European subsidiary requires customer personal data to remain within European Union boundaries. The corporate Data Cloud Home Org is hosted in North America. If the enterprise connects the EU org via Data Cloud One, does this violate data residency regulations?",
         "options": [
           {
-            "id": "m2_a",
-            "text": "Rely on Data Cloud One cross-org federation because zero-copy metadata links do not physically move CRM data across borders.",
-            "trustDelta": -25,
-            "reliabilityDelta": -10,
-            "techDebtImpact": "Violates EU residency rules because home org identity resolution processes and stores customer data in North American infrastructure.",
-            "isOptimal": false
+            "id": "s2_a",
+            "label": "Rely on Data Cloud One cross-org federation because zero-copy metadata links do not physically move CRM data across borders.",
+            "isCorrect": false,
+            "distractorAntipattern": "Metadata Boundary Misconception",
+            "rationale": "Connecting a companion org to a North American home org causes identity resolution and calculated insights to process and store customer data in North America, violating EU residency mandates."
           },
           {
-            "id": "m2_b",
-            "text": "Provision an independent EU Data Cloud instance and utilize Data Cloud to Data Cloud zero-copy data sharing for governed cross-region sharing.",
-            "trustDelta": 20,
-            "reliabilityDelta": 15,
-            "techDebtImpact": "Satisfies legal residency constraints through regional processing while enabling controlled object federation without custom pipelines.",
-            "isOptimal": true
+            "id": "s2_b",
+            "label": "Provision an independent EU Data Cloud instance and utilize Data Cloud to Data Cloud zero-copy data sharing for governed cross-region sharing.",
+            "isCorrect": true,
+            "rationale": "Maintaining a regional tenant ensures personal records are processed and stored under local legal jurisdiction, while zero-copy sharing enables compliant cross-region queries without replicating sensitive data.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#decision-multiple-data-orgs-vs-shared-data-360-data-cloud-one"
           },
           {
-            "id": "m2_c",
-            "text": "Route EU customer data through an on-premise proxy that masks all personal attributes before streaming to the North American Home Org.",
-            "trustDelta": -5,
-            "reliabilityDelta": -15,
-            "techDebtImpact": "Introduces complex external proxy maintenance and degrades identity resolution accuracy on obfuscated customer identifiers.",
-            "isOptimal": false
+            "id": "s2_c",
+            "label": "Route EU customer data through an on-premise proxy that masks all personal attributes before streaming to the North American Home Org.",
+            "isCorrect": false,
+            "distractorAntipattern": "Obfuscation Pipeline Overhead",
+            "rationale": "Interposing custom scrubbing proxies creates complex infrastructure overhead and cripples identity resolution by obscuring the deterministic identifiers necessary to reconcile customer profiles."
           }
         ]
       },
       {
-        "moveNumber": 3,
-        "stakeholderPersona": "VP of Release Engineering",
-        "dialogueText": "Our delivery teams in companion orgs are attempting to build Copy Field enrichments and ingest local CRM streams directly from companion sandboxes. Their deployments are failing with permission errors. How must our multi-org deployment model be restructured?",
+        "id": "s3",
+        "prompt": "Delivery teams in companion orgs attempt to deploy Copy Field enrichments and create local CRM data streams directly within companion sandboxes, resulting in deployment errors. How must the enterprise restructure its multi-org operational model?",
         "options": [
           {
-            "id": "m3_a",
-            "text": "Centralize all ingestion configuration and field-level enrichments in the Home Org, federating unified outputs to companion orgs via metadata.",
-            "trustDelta": 15,
-            "reliabilityDelta": 15,
-            "techDebtImpact": "Aligns with platform architecture where ingestion and enrichments originate in the home org, preventing invalid companion deployments.",
-            "isOptimal": true
+            "id": "s3_a",
+            "label": "Centralize all ingestion configuration and field-level enrichments in the Home Org, federating unified outputs to companion orgs via metadata.",
+            "isCorrect": true,
+            "rationale": "Platform governance restricts data ingest and enrichment authoring to the Data Cloud Home Org, where calculated fields are defined before being exposed back to companion instances.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#data-cloud-one"
           },
           {
-            "id": "m3_b",
-            "text": "Grant Companion Org administrators delegated system privileges on the Home Org to create remote streams directly.",
-            "trustDelta": -20,
-            "reliabilityDelta": -10,
-            "techDebtImpact": "Weakens enterprise security by bypassing home org governance boundaries without resolving companion org architectural constraints.",
-            "isOptimal": false
+            "id": "s3_b",
+            "label": "Grant Companion Org administrators delegated system privileges on the Home Org to create remote streams directly.",
+            "isCorrect": false,
+            "distractorAntipattern": "Permission Governance Bypass",
+            "rationale": "Elevating companion administrator permissions compromises environment boundaries without resolving the architectural constraint that enrichments must originate in the home org."
           },
           {
-            "id": "m3_c",
-            "text": "Build custom apex callouts in companion orgs to pull unified profile fields via Data Cloud Query REST APIs on record load.",
-            "trustDelta": -10,
-            "reliabilityDelta": -15,
-            "techDebtImpact": "Consumes excessive API governor limits and adds synchronous latency to standard CRM page views.",
-            "isOptimal": false
+            "id": "s3_c",
+            "label": "Build custom Apex callouts in companion orgs to pull unified profile fields via Data Cloud Query REST APIs on record load.",
+            "isCorrect": false,
+            "distractorAntipattern": "Synchronous Query Coupling",
+            "rationale": "Executing synchronous REST queries during record rendering exhausts API quotas, degrades page load times, and circumvents standard zero-copy metadata components."
           }
         ]
       }
