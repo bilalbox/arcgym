@@ -3,6 +3,8 @@ import {
   computeNewStreak,
   calculateActiveStreak,
   calculateTotalPoints,
+  RAPID_FIRE_REPS_PER_DRILL,
+  isRapidFireStreakRequirementMet,
 } from './streak.js';
 
 describe('Streak calculation engine', () => {
@@ -77,6 +79,23 @@ describe('Streak calculation engine', () => {
         'drill-4': { score: 100 },
       };
       expect(calculateTotalPoints(records)).toBe(250);
+    });
+  });
+
+  describe('Rapid Fire streak requirement', () => {
+    it('requires 5 reps by default', () => {
+      expect(RAPID_FIRE_REPS_PER_DRILL).toBe(5);
+    });
+
+    it('returns false when fewer than required reps are completed', () => {
+      expect(isRapidFireStreakRequirementMet(0)).toBe(false);
+      expect(isRapidFireStreakRequirementMet(1)).toBe(false);
+      expect(isRapidFireStreakRequirementMet(4)).toBe(false);
+    });
+
+    it('returns true when all 5 reps are completed', () => {
+      expect(isRapidFireStreakRequirementMet(5)).toBe(true);
+      expect(isRapidFireStreakRequirementMet(6)).toBe(true);
     });
   });
 });

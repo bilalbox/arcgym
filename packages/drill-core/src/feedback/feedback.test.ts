@@ -6,21 +6,35 @@ import {
   DRILL_DISLIKED_TAG_LABELS,
   ALL_LIKED_TAGS,
   ALL_DISLIKED_TAGS,
+  sanitizeFeedbackTags,
 } from '../index.js';
 
 describe('Drill Feedback Domain Logic', () => {
-  it('correctly maps 3 liked and 4 disliked tags to human labels', () => {
-    expect(ALL_LIKED_TAGS).toEqual(['realistic', 'useful', 'good_challenge']);
-    expect(ALL_DISLIKED_TAGS).toEqual(['unrealistic', 'unclear', 'too_easy', 'too_hard']);
+  it('correctly maps 4 liked and 5 disliked tags to human labels', () => {
+    expect(ALL_LIKED_TAGS).toEqual([
+      'hit_at_work',
+      'clear_explanation',
+      'good_challenge',
+      'learned_something',
+    ]);
+    expect(ALL_DISLIKED_TAGS).toEqual([
+      'disagree_with_answer',
+      'ambiguous_question',
+      'felt_like_trick',
+      'doesnt_match_experience',
+      'explanation_didnt_resonate',
+    ]);
 
-    expect(DRILL_LIKED_TAG_LABELS.realistic).toBe('Realistic');
-    expect(DRILL_LIKED_TAG_LABELS.useful).toBe('Useful');
+    expect(DRILL_LIKED_TAG_LABELS.hit_at_work).toBe('Hit this at work');
+    expect(DRILL_LIKED_TAG_LABELS.clear_explanation).toBe('Clear explanation');
     expect(DRILL_LIKED_TAG_LABELS.good_challenge).toBe('Good challenge');
+    expect(DRILL_LIKED_TAG_LABELS.learned_something).toBe('Learned something new');
 
-    expect(DRILL_DISLIKED_TAG_LABELS.unrealistic).toBe('Unrealistic');
-    expect(DRILL_DISLIKED_TAG_LABELS.unclear).toBe('Unclear');
-    expect(DRILL_DISLIKED_TAG_LABELS.too_easy).toBe('Too easy');
-    expect(DRILL_DISLIKED_TAG_LABELS.too_hard).toBe('Too hard');
+    expect(DRILL_DISLIKED_TAG_LABELS.disagree_with_answer).toBe('Disagree with answer');
+    expect(DRILL_DISLIKED_TAG_LABELS.ambiguous_question).toBe('Question was ambiguous');
+    expect(DRILL_DISLIKED_TAG_LABELS.felt_like_trick).toBe('Felt like a trick');
+    expect(DRILL_DISLIKED_TAG_LABELS.doesnt_match_experience).toBe("Doesn't match my experience");
+    expect(DRILL_DISLIKED_TAG_LABELS.explanation_didnt_resonate).toBe("Explanation didn't resonate");
   });
 
   it('returns null percentage when total votes are below minimum threshold', () => {
@@ -47,9 +61,9 @@ describe('Drill Feedback Domain Logic', () => {
 
   it('preserves tag counts and safely handles missing or negative values', () => {
     const tags = {
-      realistic: 12,
-      useful: 8,
-      unclear: 3,
+      hit_at_work: 12,
+      clear_explanation: 8,
+      ambiguous_question: 3,
     };
     const stats = calculateRatingStats('AGD-00101', -5, 10, tags);
     expect(stats.upVotes).toBe(0);
@@ -57,5 +71,20 @@ describe('Drill Feedback Domain Logic', () => {
     expect(stats.totalVotes).toBe(10);
     expect(stats.likePercentage).toBe(0);
     expect(stats.tagCounts).toEqual(tags);
+  });
+
+  it('sanitizes feedback tags and normalizes legacy tags', () => {
+    // Normalizes legacy tags for 'up'
+    const upTags = sanitizeFeedbackTags('up', ['realistic', 'useful', 'hit_at_work', 'invalid_tag']);
+    expect(upTags).toEqual(['hit_at_work', 'clear_explanation']);
+
+    // Normalizes legacy tags for 'down'
+    const downTags = sanitizeFeedbackTags('down', [
+      'unrealistic',
+      'unclear',
+      'disagree_with_answer',
+      'bad_tag',
+    ]);
+    expect(downTags).toEqual(['doesnt_match_experience', 'ambiguous_question', 'disagree_with_answer']);
   });
 });

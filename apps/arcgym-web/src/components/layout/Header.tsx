@@ -8,6 +8,7 @@ interface HeaderProps {
   totalCompleted: number;
   totalDrillsCount: number;
   streakDays: number;
+  isStreakEarnedToday?: boolean;
   totalPoints?: number;
   onOpenProgressModal: () => void;
 }
@@ -18,6 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   totalCompleted,
   totalDrillsCount,
   streakDays,
+  isStreakEarnedToday = false,
   totalPoints = 0,
   onOpenProgressModal,
 }) => {
@@ -94,10 +96,24 @@ export const Header: React.FC<HeaderProps> = ({
 
           {streakDays > 0 && (
             <div
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-yellowLight border border-miro-yellowBorder text-miro-yellowText text-xs font-medium animate-in fade-in duration-200"
-              title={`${streakDays} day practice streak`}
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-medium animate-in fade-in duration-200 ${
+                isStreakEarnedToday
+                  ? 'bg-miro-yellowLight border-miro-yellowBorder text-miro-yellowText'
+                  : 'bg-miro-surface border-miro-hairline text-miro-slate'
+              }`}
+              title={
+                isStreakEarnedToday
+                  ? `${streakDays} day practice streak (achieved today!)`
+                  : `${streakDays} day practice streak • Complete all 5 Rapid Fire reps today to keep your streak!`
+              }
             >
-              <Flame className="h-3.5 w-3.5 text-miro-yellowText fill-miro-yellowText" />
+              <Flame
+                className={`h-3.5 w-3.5 ${
+                  isStreakEarnedToday
+                    ? 'text-miro-yellowText fill-miro-yellowText'
+                    : 'text-miro-muted'
+                }`}
+              />
               <span>{streakDays} day streak</span>
             </div>
           )}

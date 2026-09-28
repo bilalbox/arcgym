@@ -143,6 +143,67 @@ export function useVisitorProgress() {
     []
   );
 
+  // Record completion of all reps in a Rapid Fire drill set to achieve that day's streak
+  const recordRapidFireSetCompletion = useCallback(
+    (
+      attempts: Array<{
+        drillId: string;
+        format: DrillFormat;
+        score: number;
+        accuracy: number;
+        steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
+      }>
+    ) => {
+      const today = getTodayString();
+      const yesterday = getYesterdayString();
+
+      setState((prev) => {
+        const newStreak = computeNewStreak(
+          prev.streakDays,
+          prev.lastActiveDate,
+          today,
+          yesterday
+        );
+
+        const updatedCompleted = { ...prev.completedDrills };
+        const now = new Date().toISOString();
+
+        for (const item of attempts) {
+          const existingRecord = updatedCompleted[item.drillId];
+          updatedCompleted[item.drillId] = {
+            drillId: item.drillId,
+            format: item.format,
+            completedAt: now,
+            score: item.score,
+            accuracy: item.accuracy,
+            attemptsCount: (existingRecord?.attemptsCount || 0) + 1,
+            ...(item.steps ? { steps: item.steps } : {}),
+          };
+        }
+
+        const updated: VisitorProgressState = {
+          ...prev,
+          streakDays: newStreak,
+          lastActiveDate: today,
+          completedDrills: updatedCompleted,
+        };
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          localStorage.setItem(
+            LEGACY_STREAK_KEY,
+            JSON.stringify({ streakDays: updated.streakDays, lastActiveDate: updated.lastActiveDate })
+          );
+        } catch (e) {
+          console.error('Failed to persist progress', e);
+        }
+
+        return updated;
+      });
+    },
+    []
+  );
+
   // Reset progress history
   const resetProgress = useCallback(() => {
     const cleanState: VisitorProgressState = {
@@ -169,14 +230,18 @@ export function useVisitorProgress() {
     return calculateTotalPoints(state.completedDrills);
   }, [state.completedDrills]);
 
+  const isStreakEarnedToday = state.lastActiveDate === getTodayString();
+
   return {
     progress: state,
     streakDays: activeStreak,
+    isStreakEarnedToday,
     totalPoints,
     completedDrills: state.completedDrills,
     totalCompleted,
     isDrillCompleted,
     recordDrillCompletion,
+    recordRapidFireSetCompletion,
     resetProgress,
   };
 }

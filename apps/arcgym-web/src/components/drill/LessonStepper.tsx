@@ -105,6 +105,7 @@ export const LessonStepper: React.FC<{
               <p key={s.stageNumber}>✓ {s.stageName}</p>
             ))}
           </div>
+          <DrillFeedbackWidget drillId={drill.id} />
           <div className="flex flex-col sm:flex-row gap-2">
             <Button onClick={handleReset} variant="secondary" className="flex-1 gap-2">
               <RotateCcw className="h-4 w-4" /> Practice again
@@ -138,7 +139,6 @@ export const LessonStepper: React.FC<{
             )}
           </div>
           <div className="flex items-center gap-3">
-            <DrillFeedbackWidget drillId={drill.id} />
             <span className="text-xs text-miro-slate font-medium">{currentStage.stageName}</span>
           </div>
         </div>

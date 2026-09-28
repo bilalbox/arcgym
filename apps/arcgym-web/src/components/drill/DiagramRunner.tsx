@@ -199,9 +199,6 @@ export const DiagramRunner: React.FC<{
             You committed {decisionResults.length} diagram decisions across {drill.steps.length}{' '}
             topology problem{drill.steps.length === 1 ? '' : 's'}.
           </p>
-          <div className="flex items-center justify-center mt-3">
-            <DrillFeedbackWidget drillId={drill.id} />
-          </div>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
@@ -225,6 +222,8 @@ export const DiagramRunner: React.FC<{
               </p>
             </div>
           </div>
+
+          <DrillFeedbackWidget drillId={drill.id} />
 
           <div className="flex flex-col gap-2.5 pt-1">
             {onNextDrill && (
@@ -269,7 +268,6 @@ export const DiagramRunner: React.FC<{
             )}
           </div>
           <div className="flex items-center gap-3">
-            <DrillFeedbackWidget drillId={drill.id} />
             <span className="text-xs text-miro-slate font-medium">
               Canvas {currentStepIndex + 1} of {drill.steps.length}
             </span>

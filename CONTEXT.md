@@ -28,6 +28,10 @@ _Avoid_: Feature preference, single right answer
 One of three distinct interaction archetypes: Lesson, Rapid Fire, or Diagram. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
 _Avoid_: Question type, quiz mode, Currency, Scenario
 
+**Rapid Fire Drill**:
+A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 5 decision reps (drills), requiring completion of all 5 reps to achieve that day's practice streak.
+_Avoid_: Single-question rapid fire, partial streak award, flashcard round
+
 **Diagram Drill**:
 A spatial judgment format: the learner inspects an ArcGym-redrawn topology derived from official Architect documentation, clicks the missing or incorrect hotspot (node, edge, or compose slot), then commits a constrained MCQ repair. Modes in v1 are `fault` and `compose` only. Diagrams are graph JSON with a separate normalized (0–1) layout; official Salesforce diagram binaries are never shipped. Dual learner-facing grounding: `sourceDiagramUrl` for topology provenance plus correct-option `citationUrl`.
 _Avoid_: Drag-and-drop rearrange, embedded Lucid/PNG from Salesforce, Currency/Scenario revival

@@ -3,6 +3,7 @@ import {
   hashDateString,
   getDailyDrillIndex,
   selectRecommendedDrill,
+  selectRecommendedRapidFireSet,
 } from './engine.js';
 import {
   ArchitecturalDomain,
@@ -184,5 +185,140 @@ describe('Recommendation Engine', () => {
     });
 
     expect(result0?.drill.id).not.toBe(result1?.drill.id);
+  });
+
+  describe('selectRecommendedRapidFireSet', () => {
+    const sevenDrills: DrillDefinitionDTO[] = [
+      mockDrill('RF-1', 'Platform_Core'),
+      mockDrill('RF-2', 'Platform_Core'),
+      mockDrill('RF-3', 'Platform_Core'),
+      mockDrill('RF-4', 'Data_Architecture'),
+      mockDrill('RF-5', 'Platform_Core'),
+      mockDrill('RF-6', 'Platform_Core'),
+      mockDrill('RF-7', 'Data_Architecture'),
+    ];
+
+    it('returns exactly 5 drills for Rapid Fire when pool has >= 5 drills', () => {
+      const result = selectRecommendedRapidFireSet({
+        drills: sevenDrills,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.drills.length).toBe(5);
+      const uniqueIds = new Set(result?.drills.map((d) => d.id));
+      expect(uniqueIds.size).toBe(5);
+    });
+
+    it('includes today featured drill when uncompleted', () => {
+      const today = '2026-09-28';
+      const dailyIdx = getDailyDrillIndex(today, sevenDrills.length);
+      const expectedDaily = sevenDrills[dailyIdx];
+
+      const result = selectRecommendedRapidFireSet({
+        drills: sevenDrills,
+        completedDrills: {},
+        todayDateStr: today,
+        sessionSkipCount: 0,
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.isDaily).toBe(true);
+      expect(result?.drills.map((d) => d.id)).toContain(expectedDaily.id);
+    });
+
+    it('cycles candidate drills when pool has fewer than 5 drills', () => {
+      const twoDrills = [
+        mockDrill('D-A', 'Security_And_Access'),
+        mockDrill('D-B', 'Security_And_Access'),
+      ];
+
+      const result = selectRecommendedRapidFireSet({
+        drills: twoDrills,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.drills.length).toBe(5);
+      expect(result?.drills.map((d) => d.id)).toEqual(['D-B', 'D-A', 'D-B', 'D-A', 'D-B']);
+    });
+
+    it('fills remaining slots from review mode when uncompleted drills are fewer than 5', () => {
+      const completed: Record<string, DrillAttemptRecord> = {
+        'RF-1': { drillId: 'RF-1', format: 'Rapid_Fire', completedAt: '2026-09-20', score: 100, accuracy: 1, attemptsCount: 1 },
+        'RF-2': { drillId: 'RF-2', format: 'Rapid_Fire', completedAt: '2026-09-21', score: 80, accuracy: 1, attemptsCount: 1 },
+        'RF-3': { drillId: 'RF-3', format: 'Rapid_Fire', completedAt: '2026-09-22', score: 90, accuracy: 1, attemptsCount: 1 },
+        'RF-4': { drillId: 'RF-4', format: 'Rapid_Fire', completedAt: '2026-09-23', score: 70, accuracy: 1, attemptsCount: 1 },
+        'RF-5': { drillId: 'RF-5', format: 'Rapid_Fire', completedAt: '2026-09-24', score: 95, accuracy: 1, attemptsCount: 1 },
+      };
+      // RF-6 and RF-7 uncompleted (2 uncompleted)
+      const result = selectRecommendedRapidFireSet({
+        drills: sevenDrills,
+        completedDrills: completed,
+        todayDateStr: '2026-09-28',
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.drills.length).toBe(5);
+      const ids = result?.drills.map((d) => d.id);
+      // Contains the 2 uncompleted drills
+      expect(ids).toContain('RF-6');
+      expect(ids).toContain('RF-7');
+      // All 5 in the set are distinct
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(5);
+    });
+
+    it('respects domain filtering', () => {
+      const result = selectRecommendedRapidFireSet({
+        drills: sevenDrills,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+        domain: 'Data_Architecture',
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.drills.length).toBe(5);
+      expect(result?.drills.every((d) => d.domain === 'Data_Architecture')).toBe(true);
+    });
+
+    it('advances to next set when sessionSkipCount increments', () => {
+      const tenDrills: DrillDefinitionDTO[] = [
+        mockDrill('RF-1', 'Platform_Core'),
+        mockDrill('RF-2', 'Platform_Core'),
+        mockDrill('RF-3', 'Platform_Core'),
+        mockDrill('RF-4', 'Platform_Core'),
+        mockDrill('RF-5', 'Platform_Core'),
+        mockDrill('RF-6', 'Platform_Core'),
+        mockDrill('RF-7', 'Platform_Core'),
+        mockDrill('RF-8', 'Platform_Core'),
+        mockDrill('RF-9', 'Platform_Core'),
+        mockDrill('RF-10', 'Platform_Core'),
+      ];
+
+      const set0 = selectRecommendedRapidFireSet({
+        drills: tenDrills,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+        sessionSkipCount: 0,
+      });
+
+      const set1 = selectRecommendedRapidFireSet({
+        drills: tenDrills,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+        sessionSkipCount: 1,
+      });
+
+      expect(set0?.drills.length).toBe(5);
+      expect(set1?.drills.length).toBe(5);
+      const set0Ids = new Set(set0?.drills.map((d) => d.id));
+      const set1Ids = new Set(set1?.drills.map((d) => d.id));
+      for (const id of set1Ids) {
+        expect(set0Ids.has(id)).toBe(false);
+      }
+    });
   });
 });

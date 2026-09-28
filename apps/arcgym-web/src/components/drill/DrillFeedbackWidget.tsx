@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FeedbackRating,
   DrillLikedReason,
@@ -11,7 +11,7 @@ import {
   DrillRatingStats,
   calculateRatingStats,
 } from '@arcgym/drill-core';
-import { ThumbsUp, ThumbsDown, Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface LocalVoteRecord {
   rating: FeedbackRating;
@@ -66,7 +66,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
   className = '',
   initialStats,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [stats, setStats] = useState<DrillRatingStats>(() =>
     calculateRatingStats(
       drillId,
@@ -81,11 +80,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
   const [selectedTags, setSelectedTags] = useState<Set<DrillFeedbackTag>>(new Set());
   const [hasVoted, setHasVoted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submittedMessage, setSubmittedMessage] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const local = getLocalVote(drillId);
@@ -98,7 +93,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       setSelectedTags(new Set());
       setHasVoted(false);
     }
-    setSubmittedMessage(false);
     setSubmitError(null);
 
     let isMounted = true;
@@ -117,35 +111,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       isMounted = false;
     };
   }, [drillId]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        popoverRef.current &&
-        !popoverRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        setIsOpen(false);
-        buttonRef.current?.focus();
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
 
   const toggleTag = (tag: DrillFeedbackTag) => {
     if (hasVoted) return;
@@ -184,7 +149,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       updatedTagCounts[tag] = (updatedTagCounts[tag] || 0) + 1;
     }
 
-    // Optimistic preview only — commit local vote after a successful edge response.
+    // Optimistic preview commit
     setStats(calculateRatingStats(drillId, nextUp, nextDown, updatedTagCounts));
 
     try {
@@ -200,7 +165,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       if (!res.ok) {
         setStats(previousStats);
         if (res.status === 429) {
-          setSubmitError('Already submitted for this drill today.');
+          setSubmitError('Feedback already submitted for this drill today.');
           setHasVoted(true);
           saveLocalVote(drillId, {
             rating: selectedRating,
@@ -224,11 +189,6 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
         timestamp: new Date().toISOString(),
       });
       setHasVoted(true);
-      setSubmittedMessage(true);
-      setTimeout(() => {
-        setIsOpen(false);
-        setSubmittedMessage(false);
-      }, 1200);
     } catch {
       setStats(previousStats);
       clearLocalVote(drillId);
@@ -238,202 +198,135 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
     }
   };
 
-  const percentageDisplay =
-    stats.likePercentage !== null ? `${stats.likePercentage}%` : '—';
-  const percentageTitle =
-    stats.likePercentage !== null
-      ? `Share of raters who liked this drill (${stats.totalVotes} reviews)`
-      : 'Rating available after 3 reviews';
-
   return (
-    <div className={`relative flex items-center gap-[7px] p-0.5 ${className}`}>
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`inline-flex items-center justify-center min-w-11 min-h-11 sm:min-w-0 sm:min-h-0 cursor-pointer transition-colors ${
-          hasVoted && selectedRating === 'up'
-            ? 'text-miro-blue hover:text-blue-700'
-            : hasVoted && selectedRating === 'down'
-            ? 'text-miro-dangerText hover:text-miro-dangerText'
-            : 'text-miro-muted hover:text-miro-primary'
-        }`}
-      >
-        <svg
-          width="17"
-          height="17"
-          viewBox="0 0 24 24"
-          fill={hasVoted && selectedRating === 'up' ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-1z" />
-        </svg>
-        <span className="sr-only">Rate this drill</span>
-      </button>
-
-      <span
-        className="font-data font-mono text-[12px] text-miro-muted select-none tracking-tight"
-        title={percentageTitle}
-      >
-        {percentageDisplay}
-      </span>
-
-      {isOpen && (
-        <div
-          ref={popoverRef}
-          role="dialog"
-          aria-label="Rate this drill"
-          className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-miro-hairline bg-miro-card p-4 shadow-xl z-50 text-left animate-in fade-in zoom-in-95 duration-150"
-        >
-          <div className="flex items-center justify-between pb-2 mb-3 border-b border-miro-hairlineSoft">
-            <span className="text-xs font-semibold text-miro-primary tracking-tight">
-              {hasVoted ? 'Your drill rating' : 'Rate this drill'}
+    <div
+      className={`text-left space-y-4 rounded-2xl border border-miro-hairlineSoft bg-miro-surface/40 p-4 sm:p-5 transition-all ${className}`}
+    >
+      {hasVoted ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-miro-card border border-miro-hairline">
+          <div className="flex items-center gap-2.5">
+            <div className="h-6 w-6 rounded-full bg-miro-successLight text-miro-successText flex items-center justify-center shrink-0">
+              <Check className="h-3.5 w-3.5" />
+            </div>
+            <p className="text-xs sm:text-sm text-miro-primary font-medium">
+              Thank you for your feedback!{' '}
+              <span className="text-miro-slate font-normal">
+                ({selectedRating === 'up' ? '👍 Liked it' : '👎 Didn’t like it'})
+              </span>
+            </p>
+          </div>
+          {stats.likePercentage !== null && (
+            <span className="text-xs font-mono text-miro-muted">
+              {stats.likePercentage}% liked ({stats.totalVotes} review{stats.totalVotes === 1 ? '' : 's'})
             </span>
+          )}
+        </div>
+      ) : (
+        <div className="space-y-3.5">
+          <div>
+            <h3 className="text-sm sm:text-base font-medium text-miro-primary">
+              What&apos;d you think of today&apos;s drill?
+            </h3>
+          </div>
+
+          <div className="flex flex-wrap gap-2.5">
             <button
-              onClick={() => setIsOpen(false)}
-              className="text-miro-muted hover:text-miro-slate rounded-md p-1 transition-colors"
-              aria-label="Close"
+              type="button"
+              onClick={() => handleRatingSelect('up')}
+              className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs sm:text-sm font-medium border transition-all cursor-pointer ${
+                selectedRating === 'up'
+                  ? 'border-2 border-miro-blue bg-miro-lavenderLight/30 text-miro-primary font-semibold shadow-xs'
+                  : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
+              }`}
             >
-              <X className="h-3.5 w-3.5" />
+              <span aria-hidden="true">👍</span>
+              <span>Liked it</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleRatingSelect('down')}
+              className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs sm:text-sm font-medium border transition-all cursor-pointer ${
+                selectedRating === 'down'
+                  ? 'border-2 border-miro-blue bg-miro-lavenderLight/30 text-miro-primary font-semibold shadow-xs'
+                  : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
+              }`}
+            >
+              <span aria-hidden="true">👎</span>
+              <span>Didn&apos;t like it</span>
             </button>
           </div>
 
-          {submittedMessage ? (
-            <div className="py-4 text-center space-y-1.5">
-              <div className="h-8 w-8 rounded-full bg-miro-successLight text-miro-successText mx-auto flex items-center justify-center">
-                <Check className="h-4 w-4" />
+          {selectedRating === 'up' && (
+            <div className="space-y-2 pt-1 animate-in fade-in duration-200">
+              <span className="text-xs font-medium text-miro-slate">
+                What worked?
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {ALL_LIKED_TAGS.map((tag) => {
+                  const active = selectedTags.has(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-miro-lavenderLight text-miro-blue border-miro-lavenderBorder font-semibold'
+                          : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
+                      }`}
+                    >
+                      {DRILL_LIKED_TAG_LABELS[tag as DrillLikedReason]}
+                    </button>
+                  );
+                })}
               </div>
-              <p className="text-xs font-medium text-miro-primary">Feedback submitted</p>
-              <p className="text-[11px] text-miro-slate">
-                Thank you for helping improve ArcGym drills.
-              </p>
             </div>
-          ) : (
-            <div className="space-y-3.5">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  disabled={hasVoted}
-                  onClick={() => handleRatingSelect('up')}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full text-xs font-medium border transition-colors ${
-                    hasVoted ? 'cursor-default' : 'cursor-pointer'
-                  } ${
-                    selectedRating === 'up'
-                      ? 'bg-miro-primary text-miro-onPrimary border-miro-primary shadow-xs'
-                      : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-                  } disabled:opacity-90`}
-                >
-                  <ThumbsUp className="h-3.5 w-3.5" />
-                  Helpful
-                </button>
+          )}
 
-                <button
-                  type="button"
-                  disabled={hasVoted}
-                  onClick={() => handleRatingSelect('down')}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-full text-xs font-medium border transition-colors ${
-                    hasVoted ? 'cursor-default' : 'cursor-pointer'
-                  } ${
-                    selectedRating === 'down'
-                      ? 'bg-miro-primary text-miro-onPrimary border-miro-primary shadow-xs'
-                      : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-                  } disabled:opacity-90`}
-                >
-                  <ThumbsDown className="h-3.5 w-3.5" />
-                  Needs work
-                </button>
+          {selectedRating === 'down' && (
+            <div className="space-y-2 pt-1 animate-in fade-in duration-200">
+              <span className="text-xs font-medium text-miro-slate">
+                What missed?
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {ALL_DISLIKED_TAGS.map((tag) => {
+                  const active = selectedTags.has(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-miro-dangerLight text-miro-dangerText border-miro-dangerBorder font-semibold'
+                          : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
+                      }`}
+                    >
+                      {DRILL_DISLIKED_TAG_LABELS[tag as DrillDislikedReason]}
+                    </button>
+                  );
+                })}
               </div>
+            </div>
+          )}
 
-              {selectedRating === 'up' && (
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-miro-slate">
-                    What stood out? (Optional)
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ALL_LIKED_TAGS.map((tag) => {
-                      const active = selectedTags.has(tag);
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          disabled={hasVoted}
-                          onClick={() => toggleTag(tag)}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-                            hasVoted ? 'cursor-default' : 'cursor-pointer'
-                          } ${
-                            active
-                              ? 'bg-miro-lavenderLight text-miro-blue border-miro-lavenderBorder'
-                              : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-                          }`}
-                        >
-                          {DRILL_LIKED_TAG_LABELS[tag as DrillLikedReason]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+          {submitError && (
+            <p className="text-xs text-miro-dangerText" role="alert">
+              {submitError}
+            </p>
+          )}
 
-              {selectedRating === 'down' && (
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-medium text-miro-slate">
-                    What could be better? (Optional)
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {ALL_DISLIKED_TAGS.map((tag) => {
-                      const active = selectedTags.has(tag);
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          disabled={hasVoted}
-                          onClick={() => toggleTag(tag)}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
-                            hasVoted ? 'cursor-default' : 'cursor-pointer'
-                          } ${
-                            active
-                              ? 'bg-miro-dangerLight text-miro-dangerText border-miro-dangerBorder'
-                              : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-                          }`}
-                        >
-                          {DRILL_DISLIKED_TAG_LABELS[tag as DrillDislikedReason]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {submitError && (
-                <p className="text-[11px] text-miro-dangerText" role="alert">
-                  {submitError}
-                </p>
-              )}
-
-              <div className="pt-2 flex items-center justify-between border-t border-miro-hairlineSoft">
-                <span className="text-[10px] text-miro-muted">
-                  Anonymous enum pills • No free text
-                </span>
-                {hasVoted ? (
-                  <span className="text-[11px] font-medium text-miro-slate">
-                    Submitted
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={!selectedRating || isSubmitting}
-                    onClick={handleSubmit}
-                    className="rounded-full bg-miro-primary hover:bg-miro-charcoal disabled:opacity-40 text-miro-onPrimary text-xs font-medium px-4 py-1.5 cursor-pointer transition-colors shadow-xs"
-                  >
-                    {isSubmitting ? 'Saving...' : 'Submit'}
-                  </button>
-                )}
-              </div>
+          {selectedRating && (
+            <div className="pt-2">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                className="rounded-xl bg-miro-primary hover:bg-miro-charcoal disabled:opacity-40 text-miro-onPrimary text-xs sm:text-sm font-medium px-5 py-2 cursor-pointer transition-colors shadow-xs"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </button>
             </div>
           )}
         </div>

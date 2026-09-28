@@ -16,6 +16,7 @@ import { execSync } from 'child_process';
 import {
   DRILL_LIKED_TAG_LABELS,
   DRILL_DISLIKED_TAG_LABELS,
+  LEGACY_TAG_ALIASES,
   DrillRatingStats,
   DrillFeedbackRecord,
 } from '../packages/drill-core/src/index.js';
@@ -180,8 +181,11 @@ function renderReport(drillFilter?: string) {
       .sort((a, b) => b[1] - a[1])
       .slice(0, 2)
       .map(([k, count]) => {
+        const resolvedKey = LEGACY_TAG_ALIASES[k] || k;
         const label =
-          (DRILL_LIKED_TAG_LABELS as any)[k] || (DRILL_DISLIKED_TAG_LABELS as any)[k] || k;
+          (DRILL_LIKED_TAG_LABELS as any)[resolvedKey] ||
+          (DRILL_DISLIKED_TAG_LABELS as any)[resolvedKey] ||
+          k;
         return `${label} (${count})`;
       })
       .join(', ');

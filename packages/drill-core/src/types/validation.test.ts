@@ -39,12 +39,12 @@ describe('validation helpers', () => {
   });
 
   it('sanitizes feedback tags by rating polarity', () => {
-    expect(sanitizeFeedbackTags('up', ['realistic', 'too_hard', 'nope'])).toEqual([
-      'realistic',
+    expect(sanitizeFeedbackTags('up', ['hit_at_work', 'disagree_with_answer', 'nope'])).toEqual([
+      'hit_at_work',
     ]);
-    expect(sanitizeFeedbackTags('down', ['too_hard', 'useful', 'too_hard'])).toEqual([
-      'too_hard',
+    expect(sanitizeFeedbackTags('down', ['felt_like_trick', 'clear_explanation', 'felt_like_trick'])).toEqual([
+      'felt_like_trick',
     ]);
-    expect(sanitizeFeedbackTags('up', 'realistic')).toEqual([]);
+    expect(sanitizeFeedbackTags('up', 'hit_at_work')).toEqual([]);
   });
 });

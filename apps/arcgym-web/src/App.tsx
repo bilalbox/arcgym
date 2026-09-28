@@ -15,7 +15,7 @@ import {
   isRapidFireDrill,
   StepAttemptTelemetry,
 } from '@arcgym/drill-core';
-import { Zap, Network, GraduationCap, CheckCircle } from 'lucide-react';
+import { Zap, Network, GraduationCap } from 'lucide-react';
 
 const DiagramRunner = lazy(() =>
   import('@/components/drill/DiagramRunner').then((m) => ({ default: m.DiagramRunner }))
@@ -82,10 +82,12 @@ export const App: React.FC = () => {
 
   const {
     streakDays,
+    isStreakEarnedToday,
     totalPoints,
     completedDrills,
     totalCompleted,
     recordDrillCompletion,
+    recordRapidFireSetCompletion,
     resetProgress,
   } = useVisitorProgress();
 
@@ -111,10 +113,9 @@ export const App: React.FC = () => {
 
   const {
     currentDrill,
-    reason,
+    rapidFireDrills,
     isReviewMode,
     previousAttempt,
-    uncompletedCount,
     advanceToNextDrill,
     resetSessionSkip,
   } = useDrillRecommendation(activeFormat, completedDrills, activeDomain);
@@ -151,6 +152,20 @@ export const App: React.FC = () => {
       accuracy: result.accuracy,
       steps: result.steps,
     });
+  };
+
+  const handleRapidFireComplete = (result: {
+    attempts: Array<{
+      drillId: string;
+      format: DrillFormat;
+      score: number;
+      accuracy: number;
+      steps?: StepAttemptTelemetry[];
+    }>;
+    totalScore: number;
+    accuracy: number;
+  }) => {
+    recordRapidFireSetCompletion(result.attempts);
   };
 
   const openProgressModal = () => {
@@ -192,6 +207,7 @@ export const App: React.FC = () => {
           totalCompleted={totalCompleted}
           totalDrillsCount={ALL_DRILLS.length}
           streakDays={streakDays}
+          isStreakEarnedToday={isStreakEarnedToday}
           totalPoints={totalPoints}
           onOpenProgressModal={openProgressModal}
         />
@@ -218,36 +234,18 @@ export const App: React.FC = () => {
         totalCompleted={totalCompleted}
         totalDrillsCount={ALL_DRILLS.length}
         streakDays={streakDays}
+        isStreakEarnedToday={isStreakEarnedToday}
         totalPoints={totalPoints}
         onOpenProgressModal={openProgressModal}
       />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
         <div className="text-center sm:text-left space-y-2">
-          {reason === 'daily' && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-miro-lavenderLight border border-miro-lavenderBorder text-miro-blue text-xs font-medium mb-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-miro-blue" />
-              Today's architectural practice
-            </div>
-          )}
-          {reason === 'next_uncompleted' && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-miro-successLight border border-miro-successBorder text-miro-successText text-xs font-medium mb-1">
-              <CheckCircle className="h-3.5 w-3.5 text-miro-successText" />
-              Daily drill completed • Next uncompleted practice ({uncompletedCount} remaining)
-            </div>
-          )}
-          {reason === 'review' && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-miro-yellowLight border border-miro-yellowBorder text-miro-yellowText text-xs font-medium mb-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-miro-yellowLight0" />
-              Mastery Review Mode • Spaced repetition practice
-            </div>
-          )}
-
           <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
             Architectural judgment practice
           </h1>
           <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
-            Trade-off drills strictly grounded in official Salesforce Well-Architected guidance.
+            Trade-off drills grounded in official Salesforce Well-Architected guidance.
           </p>
         </div>
 
@@ -321,9 +319,11 @@ export const App: React.FC = () => {
           {currentDrill && isRapidFireDrill(currentDrill) && (
             <RapidFireRunner
               drill={currentDrill}
+              drills={rapidFireDrills}
               isReviewMode={isReviewMode}
               previousAttempt={previousAttempt}
               onDrillComplete={handleDrillComplete}
+              onRapidFireComplete={handleRapidFireComplete}
               onNextDrill={advanceToNextDrill}
             />
           )}

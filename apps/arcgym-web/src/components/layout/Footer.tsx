@@ -1,5 +1,4 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
 
 interface FooterProps {
   navigate: (to: string) => void;
@@ -12,16 +11,24 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
   return (
     <footer className="pt-8 pb-12 border-t border-miro-hairlineSoft text-center space-y-3">
       <p className="text-xs text-miro-slate leading-relaxed max-w-2xl mx-auto">
-        All practice scenarios are strictly grounded in official guidance from{' '}
+        All scenarios are grounded in guidance from{' '}
         <a
           href="https://architect.salesforce.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
         >
-          architect.salesforce.com <ExternalLink className="h-3 w-3" />
+          architect.salesforce.com
         </a>
-              .
+              {' '}and discussions in the{' '}
+        <a
+          href="https://trailhead.salesforce.com/trailblazer-community/groups"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
+        >
+          Trailblazer Community
+        </a>.
               <p>ArcGym is heavily inspired by{' '}
         <a
           href="https://analystgym.com/"
@@ -29,7 +36,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
           rel="noopener noreferrer"
           className="text-miro-blue hover:text-miro-blueDeep font-medium underline inline-flex items-center gap-1"
         >
-          Analyst Gym <ExternalLink className="h-3 w-3" />
+          Analyst Gym
         </a>
         .</p>
       </p>

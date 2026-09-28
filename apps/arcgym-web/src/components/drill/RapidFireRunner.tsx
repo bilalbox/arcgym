@@ -25,8 +25,9 @@ interface StepResult {
   score: number;
 }
 
-export const RapidFireRunner: React.FC<{
-  drill: RapidFireDrillDefinition;
+export interface RapidFireRunnerProps {
+  drill?: RapidFireDrillDefinition;
+  drills?: RapidFireDrillDefinition[];
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
   onDrillComplete?: (result: {
@@ -37,12 +38,27 @@ export const RapidFireRunner: React.FC<{
     streakDays: number;
     steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
   }) => void;
+  onRapidFireComplete?: (result: {
+    attempts: Array<{
+      drillId: string;
+      format: DrillFormat;
+      score: number;
+      accuracy: number;
+      steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
+    }>;
+    totalScore: number;
+    accuracy: number;
+  }) => void;
   onNextDrill?: () => void;
-}> = ({
+}
+
+export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   drill,
+  drills,
   isReviewMode = false,
   previousAttempt,
   onDrillComplete,
+  onRapidFireComplete,
   onNextDrill,
 }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -52,6 +68,34 @@ export const RapidFireRunner: React.FC<{
   const [stepResults, setStepResults] = useState<StepResult[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  // Normalize into a sequence of reps (default 5 drills per rapid fire)
+  const repList = useMemo(() => {
+    if (drills && drills.length > 0) {
+      return drills.map((d, index) => ({
+        drill: d,
+        step: d.steps[0] ?? {
+          id: `step-${index}`,
+          prompt: d.title,
+          options: [],
+        },
+      }));
+    }
+    if (drill) {
+      return drill.steps.map((step) => ({
+        drill,
+        step,
+      }));
+    }
+    return [];
+  }, [drills, drill]);
+
+  const sessionKey = useMemo(() => {
+    if (drills && drills.length > 0) {
+      return drills.map((d) => d.id).join(':');
+    }
+    return drill?.id ?? 'default';
+  }, [drills, drill]);
+
   useEffect(() => {
     setCurrentStepIndex(0);
     setSelectedOptionId(null);
@@ -59,17 +103,28 @@ export const RapidFireRunner: React.FC<{
     setIsSubmitted(false);
     setStepResults([]);
     setIsCompleted(false);
-  }, [drill.id]);
+  }, [sessionKey]);
 
-  const currentStep = drill.steps[currentStepIndex];
-  const orderedOptions = useMemo(
-    () => orderOptions(currentStep.options, optionSeed(drill.id, currentStep.id)),
-    [drill.id, currentStep]
-  );
-  const progressPercent = Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / drill.steps.length) * 100);
+  const currentRep = repList[currentStepIndex] ?? repList[0];
+  const activeDrill = currentRep?.drill;
+  const currentStep = currentRep?.step;
+
+  const orderedOptions = useMemo(() => {
+    if (!activeDrill || !currentStep) return [];
+    return orderOptions(currentStep.options, optionSeed(activeDrill.id, currentStep.id));
+  }, [activeDrill?.id, currentStep]);
+
+  const progressPercent = repList.length > 0
+    ? Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / repList.length) * 100)
+    : 0;
+
   const correctCitationHref = safeCitationHref(
-    currentStep.options.find((o) => o.isCorrect)?.citationUrl
+    currentStep?.options.find((o) => o.isCorrect)?.citationUrl
   );
+
+  if (!activeDrill || !currentStep) {
+    return null;
+  }
 
   const handleSelectOption = (optionId: string) => {
     if (isSubmitted) return;
@@ -99,7 +154,7 @@ export const RapidFireRunner: React.FC<{
   };
 
   const handleNext = () => {
-    if (currentStepIndex + 1 < drill.steps.length) {
+    if (currentStepIndex + 1 < repList.length) {
       setCurrentStepIndex((prev) => prev + 1);
       setSelectedOptionId(null);
       setSelectedConfidence(null);
@@ -110,13 +165,45 @@ export const RapidFireRunner: React.FC<{
       const correctCount = stepResults.filter((r) => r.isCorrect).length;
       const accuracy = stepResults.length > 0 ? correctCount / stepResults.length : 0;
 
+      const attempts = repList.map((rep, idx) => {
+        const r = stepResults[idx];
+        return {
+          drillId: rep.drill.id,
+          format: 'Rapid_Fire' as DrillFormat,
+          score: r?.score ?? 0,
+          accuracy: r?.isCorrect ? 1 : 0,
+          steps: r
+            ? [
+                {
+                  stepId: r.stepId,
+                  confidence: (r.confidence / 100) as ConfidenceAnchor,
+                  isCorrect: r.isCorrect,
+                  score: r.score,
+                  selectedOptionId: r.selectedOptionId,
+                  distractorAntipattern: r.isCorrect
+                    ? undefined
+                    : rep.step.options.find((o) => o.id === r.selectedOptionId)?.distractorAntipattern,
+                },
+              ]
+            : [],
+        };
+      });
+
+      if (onRapidFireComplete) {
+        onRapidFireComplete({
+          attempts,
+          totalScore: totalPts,
+          accuracy,
+        });
+      }
+
       onDrillComplete?.({
-        drillId: drill.id,
+        drillId: repList[0].drill.id,
         format: 'Rapid_Fire',
         score: totalPts,
         accuracy,
         streakDays: 1,
-        steps: stepResults.map((r) => ({
+        steps: stepResults.map((r, idx) => ({
           stepId: r.stepId,
           confidence: (r.confidence / 100) as ConfidenceAnchor,
           isCorrect: r.isCorrect,
@@ -124,9 +211,7 @@ export const RapidFireRunner: React.FC<{
           selectedOptionId: r.selectedOptionId,
           distractorAntipattern: r.isCorrect
             ? undefined
-            : drill.steps
-                .find((s) => s.id === r.stepId)
-                ?.options.find((o) => o.id === r.selectedOptionId)?.distractorAntipattern,
+            : repList[idx]?.step.options.find((o) => o.id === r.selectedOptionId)?.distractorAntipattern,
         })),
       });
     }
@@ -150,13 +235,10 @@ export const RapidFireRunner: React.FC<{
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-miro-successLight text-miro-successText">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h2 className="text-xl sm:text-2xl font-medium text-miro-primary">Drill completed</h2>
+          <h2 className="text-xl sm:text-2xl font-medium text-miro-primary">Rapid Fire completed</h2>
           <p className="text-sm text-miro-slate mt-1">
-            You committed all {drill.steps.length} architectural decision reps for today.
+            You committed all {repList.length} architectural decision reps for today.
           </p>
-          <div className="flex items-center justify-center mt-3">
-            <DrillFeedbackWidget drillId={drill.id} />
-          </div>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
           <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
@@ -167,42 +249,64 @@ export const RapidFireRunner: React.FC<{
             <div>
               <span className="text-xs text-miro-slate font-medium">Decisions correct</span>
               <p className="text-2xl font-medium text-miro-successText mt-0.5">
-                {stepResults.filter((r) => r.isCorrect).length} / {drill.steps.length}
+                {stepResults.filter((r) => r.isCorrect).length} / {repList.length}
               </p>
             </div>
             <div>
               <span className="text-xs text-miro-slate font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-miro-primary mt-0.5">
-                {Math.round(stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length)}%
+                {stepResults.length > 0
+                  ? Math.round(stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length)
+                  : 0}
+                %
               </p>
             </div>
           </div>
 
           <div className="space-y-2.5">
-            <h4 className="text-xs font-semibold text-miro-slate">Decision breakdown</h4>
-            {stepResults.map((r, i) => (
-              <div
-                key={r.stepId}
-                className="flex items-center justify-between p-3 rounded-xl border border-miro-hairline bg-miro-card text-sm"
-              >
-                <div className="flex items-center gap-2.5">
-                  {r.isCorrect ? (
-                    <CheckCircle2 className="h-4 w-4 text-miro-successText shrink-0" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-miro-dangerText shrink-0" />
-                  )}
-                  <span className="font-medium text-miro-primary">Rep {i + 1}</span>
+            <h4 className="text-xs font-semibold text-miro-slate">Decision breakdown ({repList.length} reps)</h4>
+            {stepResults.map((r, i) => {
+              const rep = repList[i];
+              return (
+                <div
+                  key={`${rep?.drill.id ?? i}-${r.stepId}`}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-miro-hairline bg-miro-card text-sm gap-2"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {r.isCorrect ? (
+                      <CheckCircle2 className="h-4 w-4 text-miro-successText shrink-0" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-miro-dangerText shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-miro-primary text-xs shrink-0">Rep {i + 1}</span>
+                        {rep?.drill.domainLabel && (
+                          <Badge variant="domain" className="text-[10px] py-0 px-2 shrink-0">
+                            {rep.drill.domainLabel}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-miro-slate truncate mt-0.5">
+                        {rep?.drill.title}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
+                    <Badge variant={r.isCorrect ? 'success' : 'destructive'}>
+                      {r.confidence}% confidence
+                    </Badge>
+                    <span
+                      className={`font-mono text-xs font-semibold ${
+                        r.score >= 0 ? 'text-miro-successText' : 'text-miro-dangerText'
+                      }`}
+                    >
+                      {r.score >= 0 ? `+${r.score}` : r.score} pts
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant={r.isCorrect ? 'success' : 'destructive'}>
-                    {r.confidence}% confidence
-                  </Badge>
-                  <span className={`font-mono text-xs font-semibold ${r.score >= 0 ? 'text-miro-successText' : 'text-miro-dangerText'}`}>
-                    {r.score >= 0 ? `+${r.score}` : r.score} pts
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {isReviewMode && previousAttempt && (
@@ -211,6 +315,8 @@ export const RapidFireRunner: React.FC<{
               <span className="font-semibold">Prior score: +{previousAttempt.score} pts</span>
             </div>
           )}
+
+          <DrillFeedbackWidget drillId={repList[0]?.drill.id ?? 'drill'} />
 
           <div className="flex flex-col gap-2.5 pt-1">
             {onNextDrill && (
@@ -221,11 +327,11 @@ export const RapidFireRunner: React.FC<{
                 }}
                 className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
               >
-                Practice next suggested drill <ArrowRight className="h-4 w-4" />
+                Practice next Rapid Fire set <ArrowRight className="h-4 w-4" />
               </Button>
             )}
             <Button onClick={handleRestart} variant="secondary" className="w-full gap-2">
-              <RotateCcw className="h-4 w-4" /> Practice this drill again
+              <RotateCcw className="h-4 w-4" /> Practice this set again
             </Button>
           </div>
         </CardContent>
@@ -238,8 +344,8 @@ export const RapidFireRunner: React.FC<{
       <CardHeader className="pb-4 border-b border-miro-hairlineSoft">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="domain">{drill.domainLabel}</Badge>
-            {(drill.pillars || []).map((p) => (
+            <Badge variant="domain">{activeDrill.domainLabel}</Badge>
+            {(activeDrill.pillars || []).map((p) => (
               <Badge key={p} variant="pillar">
                 {p}
               </Badge>
@@ -250,10 +356,9 @@ export const RapidFireRunner: React.FC<{
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <DrillFeedbackWidget drillId={drill.id} />
-            <span className="text-xs text-miro-slate font-medium">
-              Rep {currentStepIndex + 1} of {drill.steps.length}
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-semibold text-miro-primary bg-miro-surfaceSoft px-2.5 py-1 rounded-full border border-miro-hairlineSoft">
+              Rep {currentStepIndex + 1} of {repList.length}
             </span>
           </div>
         </div>
@@ -261,6 +366,11 @@ export const RapidFireRunner: React.FC<{
       </CardHeader>
 
       <CardContent className="pt-6">
+        <div className="mb-2">
+          <span className="text-[11px] uppercase tracking-wider text-miro-muted font-medium">
+            {activeDrill.title}
+          </span>
+        </div>
         <h2 className="text-base sm:text-lg font-medium text-miro-primary leading-relaxed mb-6">
           {currentStep.prompt}
         </h2>
@@ -371,7 +481,15 @@ export const RapidFireRunner: React.FC<{
                 </a>
               )}
               <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
-                Next rep <ArrowRight className="h-4 w-4" />
+                {currentStepIndex + 1 < repList.length ? (
+                  <>
+                    Next rep ({currentStepIndex + 2} of {repList.length}) <ArrowRight className="h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Complete Rapid Fire <CheckCircle2 className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </div>

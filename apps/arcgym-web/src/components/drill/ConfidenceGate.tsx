@@ -32,9 +32,6 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
             Confidence
           </span>
         </div>
-        <span className="text-[11px] text-miro-muted">
-          Overconfidence carries a 2.5× penalty
-        </span>
       </div>
 
       <div className="grid grid-cols-4 gap-2 mb-3">
