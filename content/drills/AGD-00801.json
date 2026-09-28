@@ -6,7 +6,7 @@
   "domainLabel": "Data 360 Architecture",
   "difficulty": "Lead_CTA",
   "pillars": ["Trust", "Reliability"],
-  "version": 3,
+  "version": 4,
   "status": "published",
   "steps": [
     {
@@ -19,7 +19,7 @@
         {
           "id": "s1_a",
           "label": "Unified Individual Segment Activation",
-          "diagramUrl": "/diagrams/agd-00801-unified-activation.svg",
+          "diagramUrl": "/diagrams/agd-00801-unified-topology.svg",
           "isCorrect": true,
           "rationale": "Activations built on segments of the Unified Individual data model object guarantee that deduplicated enterprise identities govern channel reach, eliminating source-key duplicates.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
@@ -27,7 +27,7 @@
         {
           "id": "s1_b",
           "label": "Direct Source DMO Activation",
-          "diagramUrl": "/diagrams/agd-00801-direct-dmo.svg",
+          "diagramUrl": "/diagrams/agd-00801-direct-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Identity Resolution Bypass",
           "rationale": "Directly activating from source Contact DMOs completely bypasses the Identity Resolution engine and Unified Individual profiles, causing channel activations to treat CRM and web records as separate individuals."
@@ -35,7 +35,7 @@
         {
           "id": "s1_c",
           "label": "Raw Data Lake Ingest Push",
-          "diagramUrl": "/diagrams/agd-00801-raw-ingest.svg",
+          "diagramUrl": "/diagrams/agd-00801-lake-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Raw Ingest Activation",
           "rationale": "Skipping both data model harmonization and identity resolution delivers raw, unharmonized lake records directly to marketing channels, compounding fragmentation and schema errors."

@@ -1,55 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="100%">
-  <title>Option A: Unified Individual Segment Activation</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160" width="100%" height="100%">
+  <title>Unified Individual Segment Activation Topology</title>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arrow-unified" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
     </marker>
   </defs>
 
-  <rect width="800" height="240" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect width="800" height="160" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
 
   <!-- Flow Lines -->
-  <path d="M 125 120 L 165 120" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <path d="M 285 120 L 325 120" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <path d="M 455 120 L 495 120" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
-  <path d="M 625 120 L 665 120" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)" fill="none"/>
+  <path d="M 125 80 L 165 80" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow-unified)" fill="none"/>
+  <path d="M 285 80 L 325 80" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow-unified)" fill="none"/>
+  <path d="M 455 80 L 495 80" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow-unified)" fill="none"/>
+  <path d="M 625 80 L 665 80" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow-unified)" fill="none"/>
 
   <!-- Stage 1: DLOs -->
-  <g transform="translate(25, 95)">
-    <rect width="100" height="50" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <g transform="translate(25, 53)">
+    <rect width="100" height="54" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
     <text x="50" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Raw DLOs</text>
-    <text x="50" y="38" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">CRM &amp; Web Ingest</text>
+    <text x="50" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">CRM &amp; Web Ingest</text>
   </g>
 
   <!-- Stage 2: Contact DMO -->
-  <g transform="translate(165, 95)">
-    <rect width="120" height="50" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <g transform="translate(165, 53)">
+    <rect width="120" height="54" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
     <text x="60" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Contact DMO</text>
-    <text x="60" y="38" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Data Model Mapping</text>
+    <text x="60" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Data Model Mapping</text>
   </g>
 
   <!-- Stage 3: Identity Resolution -->
-  <g transform="translate(325, 95)">
-    <rect width="130" height="50" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <g transform="translate(325, 53)">
+    <rect width="130" height="54" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
     <text x="65" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Identity Resolution</text>
-    <text x="65" y="38" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Rules &amp; Reconciliation</text>
+    <text x="65" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Rules &amp; Reconciliation</text>
   </g>
 
   <!-- Stage 4: Unified Individual & Segment -->
-  <g transform="translate(495, 95)">
-    <rect width="130" height="50" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <g transform="translate(495, 53)">
+    <rect width="130" height="54" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
     <text x="65" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Unified Segment</text>
-    <text x="65" y="38" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Unified Individual DMO</text>
+    <text x="65" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Unified Individual DMO</text>
   </g>
 
   <!-- Stage 5: Marketing Cloud -->
-  <g transform="translate(665, 95)">
-    <rect width="110" height="50" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+  <g transform="translate(665, 53)">
+    <rect width="110" height="54" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
     <text x="55" y="24" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">Marketing Cloud</text>
-    <text x="55" y="38" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Engagement Channel</text>
+    <text x="55" y="40" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Engagement Channel</text>
   </g>
-
-  <!-- Legend Header -->
-  <text x="30" y="36" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#1e293b">Option A: Unified Individual Segment Activation</text>
-  <text x="30" y="54" font-family="system-ui, sans-serif" font-size="11" fill="#64748b">Activations consume segments built on Unified Individual profiles created by Identity Resolution.</text>
 </svg>
