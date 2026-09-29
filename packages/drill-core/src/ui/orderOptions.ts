@@ -17,7 +17,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/** Shuffle seed for one decision: a Rapid Fire / Diagram step id, or a Lesson stage number. */
+/** Shuffle seed for one decision: a Rapid Fire step id, or a Lesson stage number. */
 export function optionSeed(drillId: string, decisionKey: string | number): string {
   return `${drillId}:${decisionKey}`;
 }

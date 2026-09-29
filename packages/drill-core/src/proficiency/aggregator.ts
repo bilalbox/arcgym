@@ -5,8 +5,6 @@ import {
   type DimensionProficiency,
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
-  isDiagramDrill,
-  isRapidFireDrill,
   type ProficiencyDimension,
 } from '../types/drill.js';
 
@@ -25,14 +23,7 @@ export interface ProficiencyReportData {
  * Derives the total decision reps / question steps for a given drill definition.
  */
 export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
-  if (isRapidFireDrill(drill)) {
-    return drill.steps?.length || 1;
-  }
-  if (isDiagramDrill(drill)) {
-    // Single calibrated decision per step
-    return drill.steps?.length || 1;
-  }
-  return 1;
+  return drill.steps?.length || 1;
 }
 
 /**

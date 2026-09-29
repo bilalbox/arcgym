@@ -7,14 +7,7 @@ const DRILLS_DIR = path.resolve(import.meta.dirname, '../../../../content/drills
 
 /** Each rendered decision as [runner seed, correct flag per authored option]. */
 function renderedDecisions(drill: DrillDefinitionDTO): [string, boolean[]][] {
-  switch (drill.format) {
-    case 'Rapid_Fire':
-    case 'Diagram':
-      return drill.steps.map((s) => [
-        optionSeed(drill.id, s.id),
-        s.options.map((o) => o.isCorrect),
-      ]);
-  }
+  return drill.steps.map((s) => [optionSeed(drill.id, s.id), s.options.map((o) => o.isCorrect)]);
 }
 
 describe('rendered option order on published drills', () => {

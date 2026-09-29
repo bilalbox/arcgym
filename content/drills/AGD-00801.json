@@ -1,7 +1,7 @@
 {
   "id": "AGD-00801",
   "title": "Data 360: Activation Topology for Unified Individuals",
-  "format": "Diagram",
+  "format": "Rapid_Fire",
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 Architecture",
   "difficulty": "Lead_CTA",
@@ -11,10 +11,7 @@
   "steps": [
     {
       "id": "s1",
-      "mode": "compare",
-      "variant": "compare_topology",
       "prompt": "Nightly identity jobs run, but marketing campaigns are still delivering duplicate messages to the same person under different CRM and web IDs. Which architecture topology ensures activations deliver unified individuals without duplicate channel contacts?",
-      "sourceDiagramUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html",
       "options": [
         {
           "id": "s1_a",

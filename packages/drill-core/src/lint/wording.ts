@@ -27,7 +27,7 @@ interface Choice {
   antipattern?: string;
 }
 
-/** One decision point: a Rapid Fire or Diagram step. */
+/** One decision point: a Rapid Fire step. */
 interface Question {
   format: DrillFormat;
   where: string;
@@ -36,36 +36,19 @@ interface Question {
 }
 
 function questionsOf(drill: DrillDefinitionDTO): Question[] {
-  switch (drill.format) {
-    case 'Rapid_Fire':
-      return drill.steps.map((step) => ({
-        format: drill.format,
-        where: `step ${step.id}`,
-        stem: step.prompt,
-        choices: step.options.map((o) => ({
-          id: o.id,
-          text: o.label,
-          isCorrect: o.isCorrect,
-          feedbackField: 'rationale',
-          feedback: o.rationale,
-          antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
-        })),
-      }));
-    case 'Diagram':
-      return drill.steps.map((step) => ({
-        format: drill.format,
-        where: `step ${step.id}`,
-        stem: step.prompt,
-        choices: step.options.map((o) => ({
-          id: o.id,
-          text: o.label,
-          isCorrect: o.isCorrect,
-          feedbackField: 'rationale',
-          feedback: o.rationale,
-          antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
-        })),
-      }));
-  }
+  return drill.steps.map((step) => ({
+    format: drill.format,
+    where: `step ${step.id}`,
+    stem: step.prompt,
+    choices: step.options.map((o) => ({
+      id: o.id,
+      text: o.label,
+      isCorrect: o.isCorrect,
+      feedbackField: 'rationale',
+      feedback: o.rationale,
+      antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
+    })),
+  }));
 }
 
 const LENGTH_TELL_RATIO = 1.25;

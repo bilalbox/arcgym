@@ -8,12 +8,19 @@ import {
   type RapidFireDrillDefinition,
   safeCitationHref,
 } from '@arcgym/drill-core';
-import { ArrowRight, CheckCircle2, ExternalLink, RotateCcw, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Expand, ExternalLink, RotateCcw, XCircle } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
@@ -68,6 +75,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [stepResults, setStepResults] = useState<StepResult[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [inspectDiagram, setInspectDiagram] = useState<{
+    url: string;
+    label: string;
+  } | null>(null);
 
   // Normalize into a sequence of reps (default 5 drills per rapid fire)
   const repList = useMemo(() => {
@@ -105,6 +116,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     setIsSubmitted(false);
     setStepResults([]);
     setIsCompleted(false);
+    setInspectDiagram(null);
   }, [sessionKey]);
 
   const currentRep = repList[currentStepIndex] ?? repList[0];
@@ -417,33 +429,86 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             }
 
             return (
-              <button
-                type="button"
-                key={opt.id}
-                onClick={() => handleSelectOption(opt.id)}
-                className={`w-full text-left p-4 rounded-xl border transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 ${containerStyle}`}
-              >
-                <div className="mt-0.5 shrink-0">
-                  {isSubmitted && opt.isCorrect ? (
-                    <CheckCircle2 className="h-5 w-5 text-miro-successText" />
-                  ) : isSubmitted && isSelected && !opt.isCorrect ? (
-                    <XCircle className="h-5 w-5 text-miro-dangerText" />
-                  ) : (
-                    <div
-                      className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs font-semibold ${
-                        isSelected
-                          ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
-                          : 'border-miro-hairlineStrong text-miro-muted'
-                      }`}
-                    >
-                      {String.fromCharCode(65 + index)}
+              <div key={opt.id} className={`rounded-xl border ${containerStyle}`}>
+                <button
+                  type="button"
+                  disabled={isSubmitted}
+                  aria-pressed={isSelected}
+                  onClick={() => handleSelectOption(opt.id)}
+                  className={`w-full text-left p-4 transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 disabled:cursor-default ${
+                    opt.diagramUrl || (isSubmitted && opt.distractorAntipattern) ? 'pb-2.5' : ''
+                  }`}
+                >
+                  <div className="mt-0.5 shrink-0">
+                    {isSubmitted && opt.isCorrect ? (
+                      <CheckCircle2 className="h-5 w-5 text-miro-successText" />
+                    ) : isSubmitted && isSelected && !opt.isCorrect ? (
+                      <XCircle className="h-5 w-5 text-miro-dangerText" />
+                    ) : (
+                      <div
+                        className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs font-semibold ${
+                          isSelected
+                            ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
+                            : 'border-miro-hairlineStrong text-miro-muted'
+                        }`}
+                      >
+                        {String.fromCharCode(65 + index)}
+                      </div>
+                    )}
+                  </div>
+                  <p className="flex-1 font-normal text-miro-primary">{opt.label}</p>
+                </button>
+
+                {opt.diagramUrl && (
+                  <div className="px-4 pb-3 pl-[3.375rem]">
+                    <div className="relative rounded-lg border border-miro-hairlineSoft bg-miro-surface overflow-hidden">
+                      <button
+                        type="button"
+                        disabled={isSubmitted}
+                        aria-label={`Select ${opt.label}`}
+                        onClick={() => handleSelectOption(opt.id)}
+                        className="block w-full cursor-pointer disabled:cursor-default"
+                      >
+                        <img
+                          src={opt.diagramUrl}
+                          alt={`${opt.label} topology preview`}
+                          className="w-full h-auto max-h-48 object-contain bg-miro-card"
+                        />
+                      </button>
+                      {isSubmitted && (
+                        <div className="absolute inset-x-0 top-0 flex justify-center p-2 pointer-events-none">
+                          {opt.isCorrect ? (
+                            <Badge variant="success" className="gap-1.5">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Well-Architected
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="gap-1.5">
+                              <XCircle className="h-3.5 w-3.5" /> Antipattern
+                              {opt.distractorAntipattern ? `: ${opt.distractorAntipattern}` : ''}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="absolute bottom-2 right-2 h-7 gap-1.5 px-2 text-xs"
+                        onClick={() => {
+                          const url = opt.diagramUrl;
+                          if (url) setInspectDiagram({ url, label: opt.label });
+                        }}
+                      >
+                        <Expand className="h-3.5 w-3.5" />
+                        Inspect
+                      </Button>
                     </div>
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="font-normal text-miro-primary">{opt.label}</p>
-                  {isSubmitted && opt.distractorAntipattern && (
-                    <div className="mt-2.5 text-xs text-miro-dangerText bg-miro-dangerLight border border-miro-dangerBorder p-2.5 rounded-lg space-y-1.5">
+                  </div>
+                )}
+
+                {isSubmitted && opt.distractorAntipattern && (
+                  <div className="px-4 pb-4 pl-[3.375rem]">
+                    <div className="text-xs text-miro-dangerText bg-miro-dangerLight border border-miro-dangerBorder p-2.5 rounded-lg space-y-1.5">
                       <p>
                         <span className="font-semibold">Antipattern risk:</span>{' '}
                         {opt.distractorAntipattern}
@@ -452,9 +517,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                         <p className="text-xs sm:text-sm leading-relaxed">{opt.rationale}</p>
                       )}
                     </div>
-                  )}
-                </div>
-              </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -524,6 +589,27 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           </div>
         )}
       </CardContent>
+
+      <Dialog
+        open={inspectDiagram !== null}
+        onOpenChange={(open) => {
+          if (!open) setInspectDiagram(null);
+        }}
+      >
+        <DialogContent className="max-w-4xl w-[calc(100%-2rem)] p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>{inspectDiagram?.label ?? 'Topology'}</DialogTitle>
+            <DialogDescription>Full-size architecture topology preview.</DialogDescription>
+          </DialogHeader>
+          {inspectDiagram && (
+            <img
+              src={inspectDiagram.url}
+              alt={`${inspectDiagram.label} topology`}
+              className="w-full h-auto max-h-[75vh] object-contain rounded-lg border border-miro-hairlineSoft bg-miro-card"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -101,9 +101,7 @@ function parsePromptArgs(args: string[]): PromptArgs {
       result.pillar = args[++i];
     } else if (arg === '--format' && value) {
       if (!SUPPORTED_FORMATS.includes(value as (typeof SUPPORTED_FORMATS)[number])) {
-        fail(
-          `--format must be one of ${SUPPORTED_FORMATS.join('|')} (Diagram drills are authored by hand)`,
-        );
+        fail(`--format must be one of ${SUPPORTED_FORMATS.join('|')}`);
       }
       result.format = args[++i] as PromptArgs['format'];
     } else if (arg === '--difficulty' && value) {

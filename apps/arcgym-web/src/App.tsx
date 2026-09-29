@@ -3,11 +3,8 @@ import {
   ARCHITECTURAL_DOMAINS,
   type ArchitecturalDomain,
   type DrillFormat,
-  isDiagramDrill,
-  isRapidFireDrill,
   type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
-import { Network, Zap } from 'lucide-react';
 import type React from 'react';
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
@@ -17,9 +14,6 @@ import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendati
 import { useRouter } from '@/hooks/useRouter';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
 
-const DiagramRunner = lazy(() =>
-  import('@/components/drill/DiagramRunner').then((m) => ({ default: m.DiagramRunner })),
-);
 const ProgressDialog = lazy(() =>
   import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog })),
 );
@@ -30,44 +24,14 @@ const SkillProfilePage = lazy(() =>
   import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage })),
 );
 
-interface FormatConfig {
-  id: DrillFormat;
-  label: string;
-  icon: React.ReactNode;
-  description: string;
-}
-
-const FORMATS: FormatConfig[] = [
-  {
-    id: 'Rapid_Fire',
-    label: 'Rapid Fire',
-    icon: <Zap className="h-4 w-4" />,
-    description: 'High-velocity decision reps across Integration, Data, Security, and Agentic AI.',
-  },
-  {
-    id: 'Diagram',
-    label: 'Diagram',
-    icon: <Network className="h-4 w-4" />,
-    description:
-      'Locate the missing or wrong element on a topology, or evaluate competing architectures.',
-  },
-];
-
 const RouteFallback: React.FC = () => (
   <div className="min-h-screen bg-miro-surface flex items-center justify-center">
     <p className="text-sm text-miro-slate">Loading…</p>
   </div>
 );
 
-const PanelFallback: React.FC = () => (
-  <div className="rounded-2xl border border-miro-hairline bg-miro-card p-8 text-center">
-    <p className="text-sm text-miro-slate">Loading drill…</p>
-  </div>
-);
-
 export const App: React.FC = () => {
   const { pathname, search, navigate } = useRouter();
-  const [activeFormat, setActiveFormat] = useState<DrillFormat>('Rapid_Fire');
   const [activeDomain, setActiveDomain] = useState<ArchitecturalDomain | undefined>(undefined);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [progressDialogLoaded, setProgressDialogLoaded] = useState(false);
@@ -94,35 +58,15 @@ export const App: React.FC = () => {
     }
   }, [search]);
 
-  const domainsForFormat = useMemo(() => {
-    const present = new Set(
-      ALL_DRILLS.filter((d) => d.format === activeFormat).map((d) => d.domain),
-    );
+  const availableDomains = useMemo(() => {
+    const present = new Set(ALL_DRILLS.map((d) => d.domain));
     return (Object.keys(ARCHITECTURAL_DOMAIN_LABELS) as ArchitecturalDomain[]).filter((d) =>
       present.has(d),
     );
-  }, [activeFormat]);
+  }, []);
 
-  const {
-    currentDrill,
-    rapidFireDrills,
-    isReviewMode,
-    previousAttempt,
-    advanceToNextDrill,
-    resetSessionSkip,
-  } = useDrillRecommendation(activeFormat, completedDrills, activeDomain);
-
-  const handleFormatChange = (fmt: DrillFormat) => {
-    setActiveFormat(fmt);
-    // Drop domain if it would empty the Format ∩ Domain pool
-    const stillValid = ALL_DRILLS.some(
-      (d) => d.format === fmt && (!activeDomain || d.domain === activeDomain),
-    );
-    if (!stillValid) {
-      setActiveDomain(undefined);
-    }
-    resetSessionSkip();
-  };
+  const { rapidFireDrills, isReviewMode, previousAttempt, advanceToNextDrill, resetSessionSkip } =
+    useDrillRecommendation(completedDrills, activeDomain);
 
   const handleDomainChange = (domain: ArchitecturalDomain | undefined) => {
     setActiveDomain(domain);
@@ -241,37 +185,6 @@ export const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 pt-2">
-          {FORMATS.map((fmt) => {
-            const isActive = activeFormat === fmt.id;
-            return (
-              <button
-                type="button"
-                key={fmt.id}
-                onClick={() => handleFormatChange(fmt.id)}
-                title={fmt.description}
-                className={`flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-150 cursor-pointer ${
-                  isActive
-                    ? 'border-miro-primary bg-miro-card shadow-xs text-miro-primary'
-                    : 'border-miro-hairline bg-miro-card/70 hover:bg-miro-card hover:border-miro-hairlineStrong text-miro-slate'
-                }`}
-              >
-                <span
-                  className={`p-1.5 rounded-lg shrink-0 ${
-                    isActive
-                      ? 'bg-miro-surface text-miro-primary'
-                      : 'bg-miro-surface text-miro-muted'
-                  }`}
-                >
-                  {fmt.icon}
-                </span>
-                <span className="text-sm font-medium">{fmt.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Architectural Domain filter — only domains with drills in the active Format */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] uppercase tracking-wider text-miro-muted font-medium mr-1">
             Domain
@@ -287,7 +200,7 @@ export const App: React.FC = () => {
           >
             All
           </button>
-          {domainsForFormat.map((domain) => (
+          {availableDomains.map((domain) => (
             <button
               type="button"
               key={domain}
@@ -304,18 +217,15 @@ export const App: React.FC = () => {
         </div>
 
         <div className="pt-2">
-          {!currentDrill && (
+          {rapidFireDrills.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-miro-hairline bg-miro-card p-8 text-center space-y-2">
               <p className="text-sm font-medium text-miro-slate">No drills in this domain yet</p>
               <p className="text-xs text-miro-slate">
-                Pick another Architectural Domain, or choose All, for the active Format.
+                Pick another Architectural Domain, or choose All.
               </p>
             </div>
-          )}
-
-          {currentDrill && isRapidFireDrill(currentDrill) && (
+          ) : (
             <RapidFireRunner
-              drill={currentDrill}
               drills={rapidFireDrills}
               isReviewMode={isReviewMode}
               previousAttempt={previousAttempt}
@@ -324,17 +234,6 @@ export const App: React.FC = () => {
               onNextDrill={advanceToNextDrill}
             />
           )}
-          <Suspense fallback={<PanelFallback />}>
-            {currentDrill && isDiagramDrill(currentDrill) && (
-              <DiagramRunner
-                drill={currentDrill}
-                isReviewMode={isReviewMode}
-                previousAttempt={previousAttempt}
-                onDrillComplete={handleDrillComplete}
-                onNextDrill={advanceToNextDrill}
-              />
-            )}
-          </Suspense>
         </div>
 
         <Footer navigate={navigate} currentPath={pathname} />

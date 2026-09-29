@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type {
-  DiagramDrillDefinition,
   DrillAttemptRecord,
   DrillDefinitionDTO,
   RapidFireDrillDefinition,
@@ -45,10 +44,10 @@ const mockRapidFireDrill: RapidFireDrillDefinition = {
   ],
 };
 
-const mockDiagramDrill2: DiagramDrillDefinition = {
+const mockRapidFireDrill2: RapidFireDrillDefinition = {
   id: 'DR-002',
   title: 'Platform Event Architecture',
-  format: 'Diagram',
+  format: 'Rapid_Fire',
   domain: 'Integration_Apis',
   domainLabel: 'Integration',
   difficulty: 'Lead_CTA',
@@ -58,10 +57,7 @@ const mockDiagramDrill2: DiagramDrillDefinition = {
   steps: [
     {
       id: 's1',
-      mode: 'compare',
       prompt: 'Which event delivery architecture avoids duplicate triggers?',
-      sourceDiagramUrl:
-        'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
       options: [
         {
           id: 'o1',
@@ -82,10 +78,7 @@ const mockDiagramDrill2: DiagramDrillDefinition = {
     },
     {
       id: 's2',
-      mode: 'compare',
       prompt: 'Step 2',
-      sourceDiagramUrl:
-        'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
       options: [
         {
           id: 'o3',
@@ -99,10 +92,10 @@ const mockDiagramDrill2: DiagramDrillDefinition = {
   ],
 };
 
-const mockDiagramDrill: DiagramDrillDefinition = {
+const mockRapidFireDrill3: RapidFireDrillDefinition = {
   id: 'DR-003',
   title: 'Missing Identity Resolution',
-  format: 'Diagram',
+  format: 'Rapid_Fire',
   domain: 'Data_Architecture',
   domainLabel: 'Data 360',
   difficulty: 'Lead_CTA',
@@ -112,23 +105,7 @@ const mockDiagramDrill: DiagramDrillDefinition = {
   steps: [
     {
       id: 's1',
-      mode: 'fault',
       prompt: 'Which missing component breaks unified profiles?',
-      sourceDiagramUrl:
-        'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html',
-      variant: 'missing_node',
-      graph: {
-        nodes: [
-          { id: 'dlo', label: 'DLO', kind: 'component' },
-          { id: 'slot_ir', label: '?', kind: 'slot' },
-        ],
-        edges: [{ id: 'e1', source: 'dlo', target: 'slot_ir' }],
-      },
-      layout: { nodes: { dlo: { x: 0.2, y: 0.5 }, slot_ir: { x: 0.7, y: 0.5 } } },
-      hotspots: [
-        { id: 'slot_ir', targetKind: 'slot', isCorrect: true },
-        { id: 'dlo', targetKind: 'node', isCorrect: false },
-      ],
       options: [
         {
           id: 'o1',
@@ -152,15 +129,15 @@ const mockDiagramDrill: DiagramDrillDefinition = {
 
 const allMockDrills: DrillDefinitionDTO[] = [
   mockRapidFireDrill,
-  mockDiagramDrill2,
-  mockDiagramDrill,
+  mockRapidFireDrill2,
+  mockRapidFireDrill3,
 ];
 
 describe('getDrillQuestionCount', () => {
-  it('correctly counts steps for Rapid Fire and Diagram drills', () => {
+  it('correctly counts steps for Rapid Fire drills', () => {
     expect(getDrillQuestionCount(mockRapidFireDrill)).toBe(3);
-    expect(getDrillQuestionCount(mockDiagramDrill2)).toBe(2);
-    expect(getDrillQuestionCount(mockDiagramDrill)).toBe(1);
+    expect(getDrillQuestionCount(mockRapidFireDrill2)).toBe(2);
+    expect(getDrillQuestionCount(mockRapidFireDrill3)).toBe(1);
   });
 });
 
@@ -220,7 +197,7 @@ describe('calculateProficiencyReport', () => {
       },
       'DR-002': {
         drillId: 'DR-002',
-        format: 'Diagram',
+        format: 'Rapid_Fire',
         completedAt: '2026-09-27T00:00:00Z',
         score: 50,
         accuracy: 0.5,
@@ -257,7 +234,7 @@ describe('calculateProficiencyReport', () => {
       },
       'DR-002': {
         drillId: 'DR-002',
-        format: 'Diagram',
+        format: 'Rapid_Fire',
         completedAt: '2026-09-27T00:00:00Z',
         score: 50,
         accuracy: 0.5, // 1/2 right

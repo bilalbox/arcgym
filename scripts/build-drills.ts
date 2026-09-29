@@ -7,7 +7,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
-  type DiagramDrillDefinition,
   type DrillDefinitionDTO,
   lintDrillWording,
   type RapidFireDrillDefinition,
@@ -32,7 +31,7 @@ const ARCHITECTURAL_DOMAINS = new Set([
   'Devops_Lifecycle',
 ]);
 
-const FORMATS = new Set(['Rapid_Fire', 'Diagram']);
+const FORMATS = new Set(['Rapid_Fire']);
 const STATUSES = new Set(['draft', 'published']);
 const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
 const PILLARS = new Set([
@@ -149,206 +148,10 @@ function validateRapidFire(file: string, drill: RapidFireDrillDefinition) {
           `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
         );
       }
-    }
-  }
-}
-
-function isOfficialSourceDiagram(url: unknown): boolean {
-  if (typeof url !== 'string' || !url.startsWith('https://')) return false;
-  try {
-    const host = new URL(url).hostname;
-    return host === 'architect.salesforce.com' || host === 'developer.salesforce.com';
-  } catch {
-    return false;
-  }
-}
-
-function validateDiagram(file: string, drill: DiagramDrillDefinition) {
-  if (!Array.isArray(drill.steps) || drill.steps.length === 0) {
-    err(file, 'Diagram requires non-empty steps');
-    return;
-  }
-  const modes = new Set(['fault', 'compose', 'compare']);
-  const variants = new Set([
-    'missing_node',
-    'wrong_edge',
-    'misplaced_component',
-    'missing_edge',
-    'compare_topology',
-  ]);
-  const nodeKinds = new Set(['component', 'slot']);
-  const targetKinds = new Set(['node', 'edge', 'slot']);
-
-  for (const step of drill.steps) {
-    if (!step.id || !step.prompt) {
-      err(file, `Diagram step missing id or prompt`);
-      continue;
-    }
-    if (!modes.has(step.mode)) {
-      err(file, `step ${step.id} invalid mode ${step.mode} (expected fault|compose|compare)`);
-    }
-    if (step.variant && !variants.has(step.variant)) {
-      err(file, `step ${step.id} invalid variant ${step.variant}`);
-    }
-    if (!isOfficialSourceDiagram(step.sourceDiagramUrl)) {
-      err(
-        file,
-        `step ${step.id} sourceDiagramUrl must be https on architect.salesforce.com or developer.salesforce.com`,
-      );
-    }
-
-    if (step.mode === 'compare') {
-      if (!Array.isArray(step.options) || step.options.length < 2) {
-        err(file, `step ${step.id} compare mode requires at least 2 options[]`);
-        continue;
-      }
-      const correctCount = step.options.filter((o) => o.isCorrect).length;
-      if (correctCount !== 1) {
-        err(file, `step ${step.id} compare mode must have exactly one correct option`);
-      }
-      validateOptionIds(file, `step ${step.id}`, step.options);
-      for (const option of step.options) {
-        const compareOpt = option as { diagramUrl?: unknown; diagramSvg?: unknown };
-        if (
-          typeof compareOpt.diagramUrl !== 'string' &&
-          typeof compareOpt.diagramSvg !== 'string'
-        ) {
-          err(file, `compare option ${option.id} missing valid diagramUrl or diagramSvg`);
+      if (option.diagramUrl !== undefined) {
+        if (typeof option.diagramUrl !== 'string' || !option.diagramUrl.startsWith('/')) {
+          err(file, `option ${option.id} diagramUrl must be an absolute path (e.g. /diagrams/...)`);
         }
-        if (!option.rationale) {
-          err(file, `option ${option.id} is missing rationale`);
-        }
-        if (!option.isCorrect && !option.distractorAntipattern) {
-          err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
-        }
-        if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
-          err(
-            file,
-            `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
-          );
-        }
-      }
-      continue;
-    }
-
-    if (!step.graph || !Array.isArray(step.graph.nodes) || !Array.isArray(step.graph.edges)) {
-      err(file, `step ${step.id} requires graph.nodes[] and graph.edges[]`);
-      continue;
-    }
-    if (!step.layout || typeof step.layout.nodes !== 'object' || step.layout.nodes === null) {
-      err(file, `step ${step.id} requires layout.nodes`);
-      continue;
-    }
-
-    const nodeIds = new Set<string>();
-    for (const node of step.graph.nodes) {
-      if (!node.id || !nodeKinds.has(node.kind)) {
-        err(file, `step ${step.id} node missing id or invalid kind`);
-        continue;
-      }
-      if (node.kind !== 'slot' && !node.label) {
-        err(file, `step ${step.id} component node ${node.id} missing label`);
-        continue;
-      }
-      if (typeof node.label !== 'string') {
-        err(file, `step ${step.id} node ${node.id} label must be a string`);
-        continue;
-      }
-      if (nodeIds.has(node.id)) {
-        err(file, `step ${step.id} duplicate node id ${node.id}`);
-      }
-      nodeIds.add(node.id);
-      const pos = step.layout.nodes[node.id];
-      if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') {
-        err(file, `step ${step.id} node ${node.id} missing layout x/y`);
-      } else if (pos.x < 0 || pos.x > 1 || pos.y < 0 || pos.y > 1) {
-        err(file, `step ${step.id} node ${node.id} layout must be normalized 0–1`);
-      }
-    }
-
-    const edgeIds = new Set<string>();
-    for (const edge of step.graph.edges) {
-      if (!edge.id || !edge.source || !edge.target) {
-        err(file, `step ${step.id} edge missing id/source/target`);
-        continue;
-      }
-      if (edgeIds.has(edge.id)) {
-        err(file, `step ${step.id} duplicate edge id ${edge.id}`);
-      }
-      edgeIds.add(edge.id);
-      if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) {
-        err(file, `step ${step.id} edge ${edge.id} references unknown node`);
-      }
-    }
-
-    if (!Array.isArray(step.hotspots) || step.hotspots.length === 0) {
-      err(file, `step ${step.id} requires hotspots[]`);
-      continue;
-    }
-    const correctHotspots = step.hotspots.filter((h) => h.isCorrect);
-    if (correctHotspots.length !== 1) {
-      err(file, `step ${step.id} must have exactly one correct hotspot`);
-    }
-    const hotspotIds = new Set<string>();
-    for (const hotspot of step.hotspots) {
-      if (!hotspot.id || !targetKinds.has(hotspot.targetKind)) {
-        err(file, `step ${step.id} hotspot missing id or invalid targetKind`);
-        continue;
-      }
-      if (hotspotIds.has(hotspot.id)) {
-        err(file, `step ${step.id} duplicate hotspot id ${hotspot.id}`);
-      }
-      hotspotIds.add(hotspot.id);
-      const inGraph =
-        (hotspot.targetKind === 'edge' && edgeIds.has(hotspot.id)) ||
-        ((hotspot.targetKind === 'node' || hotspot.targetKind === 'slot') &&
-          nodeIds.has(hotspot.id));
-      if (!inGraph) {
-        err(
-          file,
-          `step ${step.id} hotspot ${hotspot.id} not found in graph for targetKind ${hotspot.targetKind}`,
-        );
-      }
-      if (hotspot.targetKind === 'slot') {
-        const node = step.graph.nodes.find((n) => n.id === hotspot.id);
-        if (node && node.kind !== 'slot') {
-          err(
-            file,
-            `step ${step.id} hotspot ${hotspot.id} targetKind slot but node.kind is ${node.kind}`,
-          );
-        }
-      }
-      if (!hotspot.isCorrect && hotspot.distractorAntipattern) {
-        const words = String(hotspot.distractorAntipattern).split(/\s+/).filter(Boolean);
-        if (words.length < 2 || words.length > 5) {
-          err(
-            file,
-            `step ${step.id} hotspot ${hotspot.id} distractorAntipattern must be 2–5 words`,
-          );
-        }
-      }
-    }
-
-    if (!Array.isArray(step.options) || step.options.length < 2) {
-      err(file, `step ${step.id} requires options[] (MCQ after correct hotspot)`);
-      continue;
-    }
-    if (!step.options.some((o) => o.isCorrect)) {
-      err(file, `step ${step.id} has NO correct option marked`);
-    }
-    validateOptionIds(file, `step ${step.id}`, step.options);
-    for (const option of step.options) {
-      if (!option.rationale) {
-        err(file, `option ${option.id} is missing rationale`);
-      }
-      if (!option.isCorrect && !option.distractorAntipattern) {
-        err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
-      }
-      if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
-        err(
-          file,
-          `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
-        );
       }
     }
   }
@@ -388,14 +191,7 @@ for (const file of drillFiles) {
 
     validateMetadata(file, drill);
 
-    switch (drill.format) {
-      case 'Rapid_Fire':
-        validateRapidFire(file, drill as RapidFireDrillDefinition);
-        break;
-      case 'Diagram':
-        validateDiagram(file, drill as DiagramDrillDefinition);
-        break;
-    }
+    validateRapidFire(file, drill as RapidFireDrillDefinition);
 
     lintWording(file, drill);
 

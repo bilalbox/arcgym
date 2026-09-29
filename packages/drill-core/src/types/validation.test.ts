@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   isAllowedCitationUrl,
-  isDiagramCompareStep,
-  isDiagramHotspotStep,
   isValidDrillId,
   safeCitationHref,
   sanitizeFeedbackTags,
@@ -42,39 +40,5 @@ describe('validation helpers', () => {
       sanitizeFeedbackTags('down', ['felt_like_trick', 'clear_explanation', 'felt_like_trick']),
     ).toEqual(['felt_like_trick']);
     expect(sanitizeFeedbackTags('up', 'hit_at_work')).toEqual([]);
-  });
-
-  it('correctly discriminates diagram hotspot and compare steps', () => {
-    const hotspotStep = {
-      id: 's1',
-      mode: 'fault' as const,
-      variant: 'wrong_edge' as const,
-      prompt: 'Locate error',
-      sourceDiagramUrl: 'https://architect.salesforce.com/docs',
-      graph: { nodes: [], edges: [] },
-      layout: { nodes: {} },
-      hotspots: [],
-      options: [],
-    };
-    const compareStep = {
-      id: 's2',
-      mode: 'compare' as const,
-      prompt: 'Select architecture',
-      sourceDiagramUrl: 'https://architect.salesforce.com/docs',
-      options: [
-        {
-          id: 'o1',
-          label: 'Arch A',
-          diagramUrl: '/diagrams/a.svg',
-          isCorrect: true,
-          rationale: 'Valid',
-        },
-      ],
-    };
-
-    expect(isDiagramHotspotStep(hotspotStep)).toBe(true);
-    expect(isDiagramCompareStep(hotspotStep)).toBe(false);
-    expect(isDiagramHotspotStep(compareStep)).toBe(false);
-    expect(isDiagramCompareStep(compareStep)).toBe(true);
   });
 });
