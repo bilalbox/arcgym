@@ -42,7 +42,7 @@ export function useDrillRecommendation(
         todayDateStr: new Date().toISOString().slice(0, 10),
         domain,
         sessionSkipCount: 0,
-        setCount: 5,
+        setCount: 3,
       }),
   );
 
@@ -54,7 +54,7 @@ export function useDrillRecommendation(
         todayDateStr: new Date().toISOString().slice(0, 10),
         domain,
         sessionSkipCount: 0,
-        setCount: 5,
+        setCount: 3,
       });
       if (rfSet && rfSet.drills.length > 0) {
         return recommendationFromSet(rfSet);
@@ -72,7 +72,7 @@ export function useDrillRecommendation(
       todayDateStr,
       domain,
       sessionSkipCount: 0,
-      setCount: 5,
+      setCount: 3,
     });
     setActiveRapidFireSet(rfSet);
     setActiveRecommendation(rfSet && rfSet.drills.length > 0 ? recommendationFromSet(rfSet) : null);
@@ -87,7 +87,7 @@ export function useDrillRecommendation(
         todayDateStr,
         domain,
         sessionSkipCount: nextSkip,
-        setCount: 5,
+        setCount: 3,
       });
       setActiveRapidFireSet(nextSet);
       if (nextSet && nextSet.drills.length > 0) {
@@ -105,7 +105,7 @@ export function useDrillRecommendation(
       todayDateStr,
       domain,
       sessionSkipCount: 0,
-      setCount: 5,
+      setCount: 3,
     });
     setActiveRapidFireSet(rfSet);
     setActiveRecommendation(rfSet && rfSet.drills.length > 0 ? recommendationFromSet(rfSet) : null);

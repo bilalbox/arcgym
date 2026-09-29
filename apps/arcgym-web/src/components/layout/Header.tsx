@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               title={
                 isStreakEarnedToday
                   ? `${streakDays} day practice streak (achieved today!)`
-                  : `${streakDays} day practice streak • Complete all 5 Rapid Fire reps today to keep your streak!`
+                  : `${streakDays} day practice streak • Complete all 3 Rapid Fire reps today to keep your streak!`
               }
             >
               <Flame

@@ -80,7 +80,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     label: string;
   } | null>(null);
 
-  // Normalize into a sequence of reps (default 5 drills per rapid fire)
+  // Normalize into a sequence of reps (default 3 drills per rapid fire)
   const repList = useMemo(() => {
     if (drills && drills.length > 0) {
       return drills.map((d, index) => ({

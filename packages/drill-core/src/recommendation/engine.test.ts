@@ -198,7 +198,7 @@ describe('Recommendation Engine', () => {
       mockDrill('RF-7', 'Data_Architecture'),
     ];
 
-    it('returns exactly 5 drills for Rapid Fire when pool has >= 5 drills', () => {
+    it('returns exactly 3 drills for Rapid Fire when pool has >= 3 drills', () => {
       const result = selectRecommendedRapidFireSet({
         drills: sevenDrills,
         completedDrills: {},
@@ -206,9 +206,9 @@ describe('Recommendation Engine', () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result?.drills.length).toBe(5);
+      expect(result?.drills.length).toBe(3);
       const uniqueIds = new Set(result?.drills.map((d) => d.id));
-      expect(uniqueIds.size).toBe(5);
+      expect(uniqueIds.size).toBe(3);
     });
 
     it('includes today featured drill when uncompleted', () => {
@@ -228,7 +228,7 @@ describe('Recommendation Engine', () => {
       expect(result?.drills.map((d) => d.id)).toContain(expectedDaily.id);
     });
 
-    it('cycles candidate drills when pool has fewer than 5 drills', () => {
+    it('cycles candidate drills when pool has fewer than 3 drills', () => {
       const twoDrills = [
         mockDrill('D-A', 'Security_And_Access'),
         mockDrill('D-B', 'Security_And_Access'),
@@ -241,11 +241,11 @@ describe('Recommendation Engine', () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result?.drills.length).toBe(5);
-      expect(result?.drills.map((d) => d.id)).toEqual(['D-B', 'D-A', 'D-B', 'D-A', 'D-B']);
+      expect(result?.drills.length).toBe(3);
+      expect(result?.drills.map((d) => d.id)).toEqual(['D-B', 'D-A', 'D-B']);
     });
 
-    it('fills remaining slots from review mode when uncompleted drills are fewer than 5', () => {
+    it('fills remaining slots from review mode when uncompleted drills are fewer than 3', () => {
       const completed: Record<string, DrillAttemptRecord> = {
         'RF-1': {
           drillId: 'RF-1',
@@ -296,14 +296,14 @@ describe('Recommendation Engine', () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result?.drills.length).toBe(5);
+      expect(result?.drills.length).toBe(3);
       const ids = result?.drills.map((d) => d.id);
       // Contains the 2 uncompleted drills
       expect(ids).toContain('RF-6');
       expect(ids).toContain('RF-7');
-      // All 5 in the set are distinct
+      // All 3 in the set are distinct
       const uniqueIds = new Set(ids);
-      expect(uniqueIds.size).toBe(5);
+      expect(uniqueIds.size).toBe(3);
     });
 
     it('respects domain filtering', () => {
@@ -315,7 +315,7 @@ describe('Recommendation Engine', () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result?.drills.length).toBe(5);
+      expect(result?.drills.length).toBe(3);
       expect(result?.drills.every((d) => d.domain === 'Data_Architecture')).toBe(true);
     });
 
@@ -347,8 +347,8 @@ describe('Recommendation Engine', () => {
         sessionSkipCount: 1,
       });
 
-      expect(set0?.drills.length).toBe(5);
-      expect(set1?.drills.length).toBe(5);
+      expect(set0?.drills.length).toBe(3);
+      expect(set1?.drills.length).toBe(3);
       const set0Ids = new Set(set0?.drills.map((d) => d.id));
       const set1Ids = new Set(set1?.drills.map((d) => d.id));
       for (const id of set1Ids) {

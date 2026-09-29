@@ -29,7 +29,7 @@ The interaction archetype for every Drill. ArcGym uses a single unified format: 
 _Avoid_: Question type, quiz mode, Currency, Scenario, Lesson, Diagram-as-separate-format
 
 **Rapid Fire Drill**:
-A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 5 decision reps (drills), requiring completion of all 5 reps to achieve that day's practice streak. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
+A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 3 decision reps (drills), requiring completion of all 3 reps to achieve that day's practice streak. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
 _Avoid_: Single-question rapid fire, partial streak award, flashcard round, separate Diagram runner
 
 **Well-Architected Grounding**:

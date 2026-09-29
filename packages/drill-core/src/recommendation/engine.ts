@@ -144,7 +144,7 @@ export function selectRecommendedDrill(params: {
 }
 
 /**
- * Selects a set of Rapid Fire drills (default 5) for a multi-rep workout round.
+ * Selects a set of Rapid Fire drills (default 3) for a multi-rep workout round.
  * Guarantees exactly setCount reps. Prioritizes today's uncompleted featured drill,
  * followed by next uncompleted drills, and fills with review drills (or cycling) as needed.
  */
@@ -162,7 +162,7 @@ export function selectRecommendedRapidFireSet(params: {
     todayDateStr,
     domain,
     sessionSkipCount = 0,
-    setCount = 5,
+    setCount = 3,
   } = params;
 
   const candidateDrills = drills.filter(isRapidFireDrill).filter((d) => {

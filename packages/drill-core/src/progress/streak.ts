@@ -21,9 +21,9 @@ export function getYesterdayString(): string {
 }
 
 /**
- * Default number of architectural decision reps per Rapid Fire drill.
+ * Default number of architectural decision reps per Rapid Fire set.
  */
-export const RAPID_FIRE_REPS_PER_DRILL = 5;
+export const RAPID_FIRE_REPS_PER_DRILL = 3;
 
 /**
  * Determines whether the user has completed all required reps in a Rapid Fire drill
