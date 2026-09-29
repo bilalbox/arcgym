@@ -100,6 +100,28 @@ Dark mode is a physical drafting slate under low ambient task lighting — not O
 
 ---
 
+### Design Token Governance & Antipattern Prevention
+
+To prevent common design token failure modes (see [6 Common Mistakes in Design Tokens Naming](https://designtokens.substack.com/p/6-common-mistakes-in-design-tokens)), ArcGym enforces the following token architecture:
+
+#### 1. Three-Tier Token Architecture
+* **Tier 1 (Primitives):** Raw color values and scale steps (e.g. `#0176d3`, `#f7f8fa`). Never consumed directly in product UI.
+* **Tier 2 (Semantic Decisions):** Shared intent and role-based decisions that adapt across themes (e.g. `surface-base`, `surface-card`, `border-subtle`, `text-primary`, `action-primary-bg`).
+* **Tier 3 (Component Contracts):** Dedicated component-scoped bindings (e.g. `card-border`, `button-primary-bg`), created only when a component requires an independent contract.
+
+#### 2. Auditing ArcGym Against the 6 Mistakes
+
+| Antipattern | ArcGym Diagnostic | Resolution & Architectural Rule |
+| :--- | :--- | :--- |
+| **1. Naming tokens after components too early** | Previous spec used `--tag-yellow-*` and `--miro-modal-shadow`, binding shared pastel chips and overlay shadows to single components. | Name the shared decision first: pastel colors are semantic accents/status indicators (`status-warning`, `brand-accent`), not component tags. Shadows are elevation tiers (`elevation-overlay`). |
+| **2. Encoding current value in the name** | Tokens like `--miro-blue` leak hue (in dark mode it shifts to blueprint blue); `--miro-charcoal` inverts to chalk `#d4d7e0` in dark mode (a light color called "charcoal"); `--miro-slate` is used as body text color; `--miro-tealLight` is `#122826` (dark ground) in dark mode. | Semantic tokens describe role and purpose, not physical value or lightness. Use `--color-brand-primary`, `--color-text-secondary`, `--color-surface-subtle`. Primitive palettes preserve value scales, while semantic tokens preserve role intent. |
+| **3. Inconsistent segment sequence** | Mixed order existed: property-last (`tealText`, `tealBorder`) vs modifier-last (`hairlineSoft`, `surfaceSoft`) vs prepositional (`onPrimary`) vs component-first (`modal-shadow`). | Standardize on predictable segment sequence: `{category}-{role/element}-{modifier}` (e.g., `color-surface-soft`, `color-text-muted`, `color-border-strong`). |
+| **4. Mixing casing and separators** | Mixed camelCase and kebab-case in CSS custom properties (`--miro-surfaceSoft` vs `--miro-modal-shadow`). | All CSS custom properties and utility classes must be canonical `kebab-case` (`--miro-surface-soft`, `--miro-hairline-soft`, `--miro-on-primary`). Aliases ensure camelCase remains functional without breaking automation. |
+| **5. Vague modifiers without clear roles** | Overloaded `--miro-primary` used simultaneously for text ink, button background, active border, and brand mark. Overlapping synonyms (`muted`, `slate`, `soft`). | Enforce a controlled modifier vocabulary. Modifiers must attach to explicit roles: `text.primary` vs `action.primary.bg` vs `border.selected`. Standard scale: `default`, `subtle`, `muted`, `strong`. |
+| **6. Renaming without a migration strategy** | Changing or cleaning token names risks breaking hundreds of active utility usages in components. | Non-breaking aliasing: Whenever tokens are refactored, the canonical name is introduced and legacy names are maintained as aliases in `:root` and `@theme`. Deprecations are communicated and mapped before removal. |
+
+---
+
 ## 3. Typography: Geist Sans Discipline
 
 Typography carries the personality of ArcGym. We standardize on **Geist Sans** with strict geometric weight restraint.

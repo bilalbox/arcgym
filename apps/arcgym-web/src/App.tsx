@@ -127,9 +127,22 @@ export const App: React.FC = () => {
   // Route: Privacy policy
   if (pathname === '/privacy') {
     return (
-      <Suspense fallback={<RouteFallback />}>
-        <PrivacyPage navigate={navigate} />
-      </Suspense>
+      <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
+        <Header
+          pathname={pathname}
+          navigate={navigate}
+          totalCompleted={totalCompleted}
+          totalDrillsCount={ALL_DRILLS.length}
+          streakDays={streakDays}
+          isStreakEarnedToday={isStreakEarnedToday}
+          totalPoints={totalPoints}
+          onOpenProgressModal={openProgressModal}
+        />
+        <Suspense fallback={<RouteFallback />}>
+          <PrivacyPage navigate={navigate} />
+        </Suspense>
+        {progressDialog}
+      </div>
     );
   }
 
