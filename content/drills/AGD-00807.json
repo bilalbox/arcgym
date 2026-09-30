@@ -16,7 +16,7 @@
         {
           "id": "s1_a",
           "label": "Materializing Transformed Records into Native Storage",
-          "diagramUrl": "/diagrams/agd-00807-bdt-materialization.svg",
+          "diagramUrl": "/diagrams/agd-00807-bdt-materialization-topology.svg",
           "isCorrect": true,
           "rationale": "Batch pipelines read remote datasets across networks and persist them into internal lakehouse files. This duplicates data volume, burns compute credits, and breaks the core benefit of virtualized query access.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
@@ -24,7 +24,7 @@
         {
           "id": "s1_b",
           "label": "Saturating Multi-Tenant Batch Pipeline Execution Limits",
-          "diagramUrl": "/diagrams/agd-00807-scheduler-limits.svg",
+          "diagramUrl": "/diagrams/agd-00807-scheduler-limits-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Pipeline Limit Saturation",
           "rationale": "Batch data transforms execute on scheduled intervals or manual triggers rather than sustaining persistent cluster locks that block unrelated tenant jobs."
@@ -32,7 +32,7 @@
         {
           "id": "s1_c",
           "label": "Triggering Unsupported External Table Stream Exceptions",
-          "diagramUrl": "/diagrams/agd-00807-stream-exceptions.svg",
+          "diagramUrl": "/diagrams/agd-00807-stream-exceptions-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Unsupported Source Schema",
           "rationale": "Data Cloud supports selecting federated lake objects as valid inputs within batch transformation pipelines, making schema parsing technically permissible though architecturally counterproductive."

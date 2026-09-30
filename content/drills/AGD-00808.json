@@ -16,7 +16,7 @@
         {
           "id": "s1_a",
           "label": "Calculated Insights Generate Aggregations Rather Than Entity Rows",
-          "diagramUrl": "/diagrams/agd-00808-ci-aggregation.svg",
+          "diagramUrl": "/diagrams/agd-00808-ci-aggregation-topology.svg",
           "isCorrect": true,
           "rationale": "Multidimensional metric engines build summarized rollup objects for segmentation or activation. They require pre-mapped entities and cannot perform row-level schema cleansing or surrogate key generation.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
@@ -24,7 +24,7 @@
         {
           "id": "s1_b",
           "label": "Calculated Insights Lack Support for ANSI Standard Expressions",
-          "diagramUrl": "/diagrams/agd-00808-ansi-syntax.svg",
+          "diagramUrl": "/diagrams/agd-00808-ansi-syntax-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Unsupported Query Syntax Assumption",
           "rationale": "The insight engine supports ANSI SQL syntax for multidimensional rollups and window calculations, but its execution model restricts outputs to summarized metric objects."
@@ -32,7 +32,7 @@
         {
           "id": "s1_c",
           "label": "Calculated Insights Cannot Read External Zero Copy Sources",
-          "diagramUrl": "/diagrams/agd-00808-zero-copy-source.svg",
+          "diagramUrl": "/diagrams/agd-00808-zero-copy-source-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Federated Source Reading Restriction",
           "rationale": "Calculated insights can reference data model objects backed by federated sources, but the engine is designed for metric calculations rather than record deduplication."
