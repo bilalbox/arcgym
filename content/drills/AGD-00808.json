@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00808",
+  "title": "Zero Copy Federation: Calculated Insights Misuse",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data Cloud Modeling & Transformation",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Reliability", "Operational_Excellence"],
+  "version": 1,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A delivery team connects a BigQuery lakehouse table to Data Cloud via Zero Copy. To resolve inconsistent status codes and duplicate transaction identifiers before profile unification, an architect suggests creating an ANSI SQL Calculated Insight. Why is using Calculated Insights for this requirement an architectural antipattern?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Calculated Insights Generate Aggregations Rather Than Entity Rows",
+          "diagramUrl": "/diagrams/agd-00808-ci-aggregation.svg",
+          "isCorrect": true,
+          "rationale": "Multidimensional metric engines build summarized rollup objects for segmentation or activation. They require pre-mapped entities and cannot perform row-level schema cleansing or surrogate key generation.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
+        },
+        {
+          "id": "s1_b",
+          "label": "Calculated Insights Lack Support for ANSI Standard Expressions",
+          "diagramUrl": "/diagrams/agd-00808-ansi-syntax.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Unsupported Query Syntax Assumption",
+          "rationale": "The insight engine supports ANSI SQL syntax for multidimensional rollups and window calculations, but its execution model restricts outputs to summarized metric objects."
+        },
+        {
+          "id": "s1_c",
+          "label": "Calculated Insights Cannot Read External Zero Copy Sources",
+          "diagramUrl": "/diagrams/agd-00808-zero-copy-source.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Federated Source Reading Restriction",
+          "rationale": "Calculated insights can reference data model objects backed by federated sources, but the engine is designed for metric calculations rather than record deduplication."
+        }
+      ]
+    }
+  ]
+}

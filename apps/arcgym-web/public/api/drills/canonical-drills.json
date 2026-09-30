@@ -1339,5 +1339,144 @@
         ]
       }
     ]
+  },
+  {
+    "id": "AGD-00807",
+    "title": "Zero Copy Federation: Batch Data Transform Antipattern",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Lakehouse Federation & Transformation",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Cost_Optimization",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "An architect integrates a 500-million-row Snowflake order table via Zero Copy federation. Because raw fields contain malformed dates, an engineer proposes running a Batch Data Transform in Data Cloud to clean and persist the records into the canonical SalesOrder object. Why does this design undermine the core objective of Zero Copy?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Materializing Transformed Records into Native Storage",
+            "diagramUrl": "/diagrams/agd-00807-bdt-materialization.svg",
+            "isCorrect": true,
+            "rationale": "Batch pipelines read remote datasets across networks and persist them into internal lakehouse files. This duplicates data volume, burns compute credits, and breaks the core benefit of virtualized query access.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+          },
+          {
+            "id": "s1_b",
+            "label": "Saturating Multi-Tenant Batch Pipeline Execution Limits",
+            "diagramUrl": "/diagrams/agd-00807-scheduler-limits.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Pipeline Limit Saturation",
+            "rationale": "Batch data transforms execute on scheduled intervals or manual triggers rather than sustaining persistent cluster locks that block unrelated tenant jobs."
+          },
+          {
+            "id": "s1_c",
+            "label": "Triggering Unsupported External Table Stream Exceptions",
+            "diagramUrl": "/diagrams/agd-00807-stream-exceptions.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Unsupported Source Schema",
+            "rationale": "Data Cloud supports selecting federated lake objects as valid inputs within batch transformation pipelines, making schema parsing technically permissible though architecturally counterproductive."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00808",
+    "title": "Zero Copy Federation: Calculated Insights Misuse",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data Cloud Modeling & Transformation",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "A delivery team connects a BigQuery lakehouse table to Data Cloud via Zero Copy. To resolve inconsistent status codes and duplicate transaction identifiers before profile unification, an architect suggests creating an ANSI SQL Calculated Insight. Why is using Calculated Insights for this requirement an architectural antipattern?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Calculated Insights Generate Aggregations Rather Than Entity Rows",
+            "diagramUrl": "/diagrams/agd-00808-ci-aggregation.svg",
+            "isCorrect": true,
+            "rationale": "Multidimensional metric engines build summarized rollup objects for segmentation or activation. They require pre-mapped entities and cannot perform row-level schema cleansing or surrogate key generation.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
+          },
+          {
+            "id": "s1_b",
+            "label": "Calculated Insights Lack Support for ANSI Standard Expressions",
+            "diagramUrl": "/diagrams/agd-00808-ansi-syntax.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Unsupported Query Syntax Assumption",
+            "rationale": "The insight engine supports ANSI SQL syntax for multidimensional rollups and window calculations, but its execution model restricts outputs to summarized metric objects."
+          },
+          {
+            "id": "s1_c",
+            "label": "Calculated Insights Cannot Read External Zero Copy Sources",
+            "diagramUrl": "/diagrams/agd-00808-zero-copy-source.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Federated Source Reading Restriction",
+            "rationale": "Calculated insights can reference data model objects backed by federated sources, but the engine is designed for metric calculations rather than record deduplication."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00809",
+    "title": "Zero Copy Federation: Curated Lakehouse Views",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Zero Copy Lakehouse Architecture",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Cost_Optimization",
+      "Reliability",
+      "Trust"
+    ],
+    "version": 1,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "An enterprise federates a 140-column raw transaction table from Snowflake into Data Cloud for Agentforce grounding. Data Cloud only needs 12 fields, and primary keys require deduplication. Which architecture aligns with Salesforce Well-Architected guidance to clean at the source while minimizing egress overhead?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Curated Snowflake View Enforcing Uniqueness and Column Pruning",
+            "diagramUrl": "/diagrams/agd-00809-curated-view.svg",
+            "isCorrect": true,
+            "rationale": "Curated views push filtering, deduplication, and type casting to the source engine. This approach minimizes network data transmission, enforces identity uniqueness before mapping, and provides direct one-to-one alignment with standard objects.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+          },
+          {
+            "id": "s1_b",
+            "label": "Formula Field Expressions Configured on Federated Lake Objects",
+            "diagramUrl": "/diagrams/agd-00809-formula-fields.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Virtual Field Predicate Blocking",
+            "rationale": "Applying dynamic formulas across hundreds of unpruned federated columns prevents optimal query predicate pushdown to the warehouse, increasing query latency and transfer volume."
+          },
+          {
+            "id": "s1_c",
+            "label": "Identity Resolution Rule Sets Applied to Uncleaned Transactions",
+            "diagramUrl": "/diagrams/agd-00809-id-resolution.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Transaction Level Resolution Overkill",
+            "rationale": "Identity resolution creates unified individual customer profiles from party identifiers. It cannot resolve duplicate transaction records or normalize non-standard transactional timestamps."
+          }
+        ]
+      }
+    ]
   }
 ]

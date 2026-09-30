@@ -19,6 +19,7 @@ const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const WEB_DATA_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/src/data');
 const WEB_PUBLIC_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/public/api/drills');
+const WEB_PUBLIC_ROOT = path.join(ROOT_DIR, 'apps/arcgym-web/public');
 const ARCHITECT_CHUNKS_PATH = path.join(ROOT_DIR, 'data/architect_chunks.json');
 
 const ARCHITECTURAL_DOMAINS = new Set([
@@ -151,6 +152,14 @@ function validateRapidFire(file: string, drill: RapidFireDrillDefinition) {
       if (option.diagramUrl !== undefined) {
         if (typeof option.diagramUrl !== 'string' || !option.diagramUrl.startsWith('/')) {
           err(file, `option ${option.id} diagramUrl must be an absolute path (e.g. /diagrams/...)`);
+        } else {
+          const diagramPath = path.join(WEB_PUBLIC_ROOT, option.diagramUrl.replace(/^\/+/, ''));
+          if (!fs.existsSync(diagramPath)) {
+            err(
+              file,
+              `option ${option.id} diagramUrl references missing asset: ${option.diagramUrl} (expected at ${diagramPath})`,
+            );
+          }
         }
       }
     }
