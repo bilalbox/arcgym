@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00806",
+  "title": "Lakehouse File Federation: Apache Iceberg vs. Native Ingestion",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Lakehouse File Federation & Open Formats",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Cost_Optimization", "Operational_Excellence"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An enterprise stores 400 TB of IoT diagnostic telemetry in an Amazon S3 bucket using Apache Iceberg tables in the same AWS region as its Data Cloud tenant. Data Science and Agentforce teams need read access for customer anomaly scoring. Which architecture provides access while avoiding data movement and egress costs?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Zero Copy File Federation via S3 Iceberg Catalog",
+          "diagramUrl": "/diagrams/agd-00806-iceberg-topology.svg",
+          "isCorrect": true,
+          "rationale": "File federation allows Data Cloud to read open-table Parquet files directly from object storage without copying bytes. When co-located in the same cloud region, row-access credit consumption is avoided, and partition pruning minimizes network scan overhead.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-method-decision-criteria"
+        },
+        {
+          "id": "s1_b",
+          "label": "Continuous Batch Data Stream Ingestion into Native Storage",
+          "diagramUrl": "/diagrams/agd-00806-s3-ingest-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Petabyte-Scale Ingestion Credit Drain",
+          "rationale": "Ingesting 400 TB through standard data stream connectors consumes millions of ingestion and storage credits, creates duplicate storage footprints, and requires continuous reconciliation of external file changes."
+        },
+        {
+          "id": "s1_c",
+          "label": "Relational Database Staging Layer with Reverse ETL Connectors",
+          "diagramUrl": "/diagrams/agd-00806-staging-rds-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Staging Database Compute Bottleneck",
+          "rationale": "Placing an intermediate relational SQL database between object storage and Data Cloud introduces an unneeded compute bottleneck, adds significant cloud operational costs, and fails to handle massive file partitions."
+        }
+      ]
+    }
+  ]
+}

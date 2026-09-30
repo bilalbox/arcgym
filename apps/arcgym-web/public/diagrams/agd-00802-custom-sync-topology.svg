@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160" width="100%" height="100%">
+  <title>Reverse ETL Synchronization to Custom Objects Topology</title>
+  <defs>
+    <marker id="arrow-neutral-sync2" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <rect width="800" height="160" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Home Org Data Cloud -->
+  <g transform="translate(30, 25)">
+    <rect width="240" height="110" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="240" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="120" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Data Cloud Lakehouse</text>
+    <text x="120" y="55" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Unified Profiles &amp; Insights</text>
+    <text x="120" y="75" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Unified Customer Records</text>
+  </g>
+
+  <!-- High-Volume Bulk Pipe -->
+  <path d="M 270 80 L 470 80" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow-neutral-sync2)" fill="none"/>
+  <rect x="295" y="52" width="150" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="370" y="67" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" font-weight="500" fill="#475569">Reverse ETL / Bulk API</text>
+
+  <!-- Companion CRM Orgs -->
+  <g transform="translate(480, 20)">
+    <rect width="290" height="120" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="290" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="145" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Companion Orgs Storage</text>
+    <text x="145" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0f172a">Custom Object: Customer_360_Profile__c</text>
+    <text x="145" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Nightly Scheduled Batch Ingestion</text>
+    <rect x="20" y="85" width="250" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="145" y="101" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#475569">Relational Lookups &amp; Page Layouts</text>
+  </g>
+</svg>

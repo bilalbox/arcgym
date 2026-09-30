@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160" width="100%" height="100%">
+  <title>Cross-Border Companion Link Topology</title>
+  <defs>
+    <marker id="arrow-neutral-cross" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <rect width="800" height="160" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- European Region Boundary -->
+  <g transform="translate(30, 20)">
+    <rect width="260" height="120" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="260" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="130" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">European Subsidiary Boundary</text>
+    <rect x="25" y="42" width="210" height="58" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="130" y="64" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="#0f172a">EU CRM Companion Org</text>
+    <text x="130" y="82" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">Local Customer &amp; Order Records</text>
+  </g>
+
+  <!-- Cross-Border Arrow -->
+  <path d="M 290 80 L 510 80" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow-neutral-cross)" fill="none"/>
+  
+  <!-- Pill in center -->
+  <rect x="325" y="52" width="150" height="34" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="400" y="66" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" font-weight="600" fill="#0f172a">Data Cloud One Link</text>
+  <text x="400" y="79" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" fill="#64748b">Cross-Region Ingestion Flow</text>
+
+  <!-- North America Data Cloud Home Org -->
+  <g transform="translate(510, 20)">
+    <rect width="260" height="120" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="260" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="130" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">North America Tenant</text>
+    <rect x="25" y="42" width="210" height="58" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="130" y="64" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Central Data Cloud Home Org</text>
+    <text x="130" y="82" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#64748b">Identity Resolution &amp; DMO Storage</text>
+  </g>
+</svg>

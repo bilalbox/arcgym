@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00805",
+  "title": "Data Virtualization: Salesforce Connect vs. Data Cloud Zero Copy",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data Virtualization & Lake Interoperability",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Reliability", "Cost_Optimization"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Customer service reps require real-time drill-down into 50 million ERP shipment records on Account pages. Simultaneously, analytics teams require aggregated purchase metrics and AI propensity scoring across that same shipment history. Which data virtualization architecture satisfies both transactional UI inspection and high-volume analytical processing without exceeding platform limits?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Hybrid Virtualization via Salesforce Connect and Zero Copy",
+          "diagramUrl": "/diagrams/agd-00805-hybrid-topology.svg",
+          "isCorrect": true,
+          "rationale": "Salesforce Connect OData adapters excel at point-lookup record detail views and related lists using server-driven pagination. Pairing Connect with Data Cloud zero-copy federation offloads aggregate calculations and predictive insights to an elastic lake engine without encountering callout thresholds.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/integration-patterns.html#data-virtualization"
+        },
+        {
+          "id": "s1_b",
+          "label": "Salesforce Connect External Objects for Aggregated Enterprise Reporting",
+          "diagramUrl": "/diagrams/agd-00805-external-reporting-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "External Object Batch Overload",
+          "rationale": "Executing cross-table analytical rollups and large-scale AI scans against external objects triggers OData batch thresholds, query timeouts, and severe rate throttling on the source enterprise gateway."
+        },
+        {
+          "id": "s1_c",
+          "label": "Scheduled Relational Batch Extraction into Custom Salesforce Objects",
+          "diagramUrl": "/diagrams/agd-00805-custom-load-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Relational Data Volume Saturation",
+          "rationale": "Loading 50 million operational rows into core custom objects saturates licensed database storage, introduces severe lookup skew, and causes database locking during automated nightly synchronizations."
+        }
+      ]
+    }
+  ]
+}

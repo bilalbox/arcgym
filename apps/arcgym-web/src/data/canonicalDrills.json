@@ -1107,5 +1107,237 @@
         ]
       }
     ]
+  },
+  {
+    "id": "AGD-00802",
+    "title": "Data Cloud One: Multi-Org Topology and Credit Governance",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data Cloud One Multi-Org Topology",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Cost_Optimization",
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 2,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "An enterprise operates three Salesforce CRM orgs for Sales, Service, and Commerce. Leaders want unified customer profiles and cross-cloud Agentforce reasoning without purchasing separate Data Cloud instances for each org. Which architecture topology satisfies this multi-org requirement while centralizing credit consumption?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Data Cloud One Home Org with Companion Federation",
+            "diagramUrl": "/diagrams/agd-00802-hub-topology.svg",
+            "isCorrect": true,
+            "rationale": "A central home org anchors the data model and identity resolution, while companion orgs leverage shared metadata to run local Agentforce actions against unified profiles. All companion compute activity consumes credits centrally from the home org wallet.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#data-cloud-one"
+          },
+          {
+            "id": "s1_b",
+            "label": "Independent Data Cloud Instances with Custom API Sync",
+            "diagramUrl": "/diagrams/agd-00802-independent-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Siloed Multi-Instance Sprawl",
+            "rationale": "Deploying disconnected instances triples licensing overhead, duplicates ingestion pipelines, and creates divergent identity rules that prevent achieving a single enterprise customer graph."
+          },
+          {
+            "id": "s1_c",
+            "label": "Reverse ETL Synchronization into Companion Custom Objects",
+            "diagramUrl": "/diagrams/agd-00802-custom-sync-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "CRM Storage Limit Saturation",
+            "rationale": "Copying lake-scale customer records into custom relational objects inflates core CRM storage fees, triggers database record locks, and exhausts daily asynchronous Apex processing allocations."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00803",
+    "title": "Global Data Residency: Multi-Cluster Data Cloud Topology",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Global Data Residency & Multi-Cluster Federation",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Trust",
+      "Reliability"
+    ],
+    "version": 2,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "A multinational corporation operates a European CRM org subject to strict GDPR cross-border data transfer prohibitions, and a North American CRM org. Executives require cross-region customer analytics and unified reporting without moving European personal records offshore. Which architecture topology maintains legal compliance while supporting cross-region insights?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Regional Data Cloud Clusters with Governed Data Sharing",
+            "diagramUrl": "/diagrams/agd-00803-regional-topology.svg",
+            "isCorrect": true,
+            "rationale": "Operating dedicated home instances preserves local regulatory jurisdiction over personal data. Zero-copy data sharing between regional platforms exposes harmonized metrics and aggregated insights cross-region without physical file replication across international boundaries.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#decision-multiple-data-orgs-vs-shared-data-360-data-cloud-one"
+          },
+          {
+            "id": "s1_b",
+            "label": "Single Global Home Org with Cross-Border Companion Link",
+            "diagramUrl": "/diagrams/agd-00803-cross-border-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Cross-Border Residency Boundary Breach",
+            "rationale": "Connecting European companion instances to a North American tenant causes identity resolution engines to ingest and store raw personal records overseas, creating immediate regulatory violations."
+          },
+          {
+            "id": "s1_c",
+            "label": "Edge Anonymization Proxy Before Global Cloud Ingestion",
+            "diagramUrl": "/diagrams/agd-00803-proxy-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Edge Identity Obfuscation Overhead",
+            "rationale": "Masking customer identifiers before ingestion strips the deterministic and probabilistic keys required to match profiles, producing fragmented datasets while introducing an unmanageable proxy maintenance burden."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00804",
+    "title": "Zero Copy Data Federation: Query Acceleration Strategy",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Zero Copy Lakehouse Federation",
+    "difficulty": "Associate_Domain_Architect",
+    "pillars": [
+      "Cost_Optimization",
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 2,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "An enterprise connects an external Snowflake lakehouse containing 120 million transaction records to Data Cloud. Service agents and Agentforce bots query recent purchase history at sustained peak rates exceeding 600 requests per minute. Staleness up to 30 minutes is acceptable. Which federation topology optimizes query response times without runaway external compute spend?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Accelerated Query Caching with Scheduled Refresh Intervals",
+            "diagramUrl": "/diagrams/agd-00804-cached-topology.svg",
+            "isCorrect": true,
+            "rationale": "Accelerated query caching maintains temporary materialized results within the platform, serving high-frequency reads in sub-second time. This approach shields the external warehouse from continuous concurrency surges and prevents compute warehouse auto-scaling spikes.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+          },
+          {
+            "id": "s1_b",
+            "label": "Direct Live Query Pushdown on Every User Interaction",
+            "diagramUrl": "/diagrams/agd-00804-live-query-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "High-Concurrency Live Query Throttling",
+            "rationale": "Pushing live SQL queries directly to the external lakehouse during high-concurrency CRM and bot activity prevents warehouse auto-suspension, driving extreme cloud compute charges and risking network gateway timeouts."
+          },
+          {
+            "id": "s1_c",
+            "label": "Continuous Batch Ingestion into Native Lake Storage",
+            "diagramUrl": "/diagrams/agd-00804-batch-lake-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Redundant Lake Storage Duplication",
+            "rationale": "Replicating millions of historical records into native lake tables duplicates file storage overhead, consumes substantial ingestion credits, and creates unnecessary pipeline latency when zero-copy federation provides direct read access."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00805",
+    "title": "Data Virtualization: Salesforce Connect vs. Data Cloud Zero Copy",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data Virtualization & Lake Interoperability",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Cost_Optimization"
+    ],
+    "version": 2,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "Customer service reps require real-time drill-down into 50 million ERP shipment records on Account pages. Simultaneously, analytics teams require aggregated purchase metrics and AI propensity scoring across that same shipment history. Which data virtualization architecture satisfies both transactional UI inspection and high-volume analytical processing without exceeding platform limits?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Hybrid Virtualization via Salesforce Connect and Zero Copy",
+            "diagramUrl": "/diagrams/agd-00805-hybrid-topology.svg",
+            "isCorrect": true,
+            "rationale": "Salesforce Connect OData adapters excel at point-lookup record detail views and related lists using server-driven pagination. Pairing Connect with Data Cloud zero-copy federation offloads aggregate calculations and predictive insights to an elastic lake engine without encountering callout thresholds.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/integration-patterns.html#data-virtualization"
+          },
+          {
+            "id": "s1_b",
+            "label": "Salesforce Connect External Objects for Aggregated Enterprise Reporting",
+            "diagramUrl": "/diagrams/agd-00805-external-reporting-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "External Object Batch Overload",
+            "rationale": "Executing cross-table analytical rollups and large-scale AI scans against external objects triggers OData batch thresholds, query timeouts, and severe rate throttling on the source enterprise gateway."
+          },
+          {
+            "id": "s1_c",
+            "label": "Scheduled Relational Batch Extraction into Custom Salesforce Objects",
+            "diagramUrl": "/diagrams/agd-00805-custom-load-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Relational Data Volume Saturation",
+            "rationale": "Loading 50 million operational rows into core custom objects saturates licensed database storage, introduces severe lookup skew, and causes database locking during automated nightly synchronizations."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "AGD-00806",
+    "title": "Lakehouse File Federation: Apache Iceberg vs. Native Ingestion",
+    "format": "Rapid_Fire",
+    "domain": "Data_Architecture",
+    "domainLabel": "Lakehouse File Federation & Open Formats",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Cost_Optimization",
+      "Operational_Excellence"
+    ],
+    "version": 2,
+    "status": "published",
+    "steps": [
+      {
+        "id": "s1",
+        "prompt": "An enterprise stores 400 TB of IoT diagnostic telemetry in an Amazon S3 bucket using Apache Iceberg tables in the same AWS region as its Data Cloud tenant. Data Science and Agentforce teams need read access for customer anomaly scoring. Which architecture provides access while avoiding data movement and egress costs?",
+        "options": [
+          {
+            "id": "s1_a",
+            "label": "Zero Copy File Federation via S3 Iceberg Catalog",
+            "diagramUrl": "/diagrams/agd-00806-iceberg-topology.svg",
+            "isCorrect": true,
+            "rationale": "File federation allows Data Cloud to read open-table Parquet files directly from object storage without copying bytes. When co-located in the same cloud region, row-access credit consumption is avoided, and partition pruning minimizes network scan overhead.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-method-decision-criteria"
+          },
+          {
+            "id": "s1_b",
+            "label": "Continuous Batch Data Stream Ingestion into Native Storage",
+            "diagramUrl": "/diagrams/agd-00806-s3-ingest-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Petabyte-Scale Ingestion Credit Drain",
+            "rationale": "Ingesting 400 TB through standard data stream connectors consumes millions of ingestion and storage credits, creates duplicate storage footprints, and requires continuous reconciliation of external file changes."
+          },
+          {
+            "id": "s1_c",
+            "label": "Relational Database Staging Layer with Reverse ETL Connectors",
+            "diagramUrl": "/diagrams/agd-00806-staging-rds-topology.svg",
+            "isCorrect": false,
+            "distractorAntipattern": "Staging Database Compute Bottleneck",
+            "rationale": "Placing an intermediate relational SQL database between object storage and Data Cloud introduces an unneeded compute bottleneck, adds significant cloud operational costs, and fails to handle massive file partitions."
+          }
+        ]
+      }
+    ]
   }
 ]

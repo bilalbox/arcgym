@@ -32,6 +32,7 @@ interface ProgressDialogProps {
   streakDays?: number;
   allDrills: DrillDefinitionDTO[];
   onResetProgress: () => void;
+  navigate?: (to: string) => void;
 }
 
 export const ProgressDialog: React.FC<ProgressDialogProps> = ({
@@ -43,6 +44,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   streakDays = 0,
   allDrills,
   onResetProgress,
+  navigate,
 }) => {
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -167,6 +169,47 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                   day: 'numeric',
                   year: 'numeric',
                 });
+
+                if (navigate) {
+                  return (
+                    <button
+                      type="button"
+                      key={attempt.drillId}
+                      onClick={() => {
+                        navigate(`/drills/${attempt.drillId}`);
+                        onOpenChange(false);
+                      }}
+                      className="w-full text-left p-3 rounded-xl border border-miro-hairline bg-miro-card transition-colors flex items-start justify-between gap-3 text-sm cursor-pointer hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-miro-blue"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[10px] text-miro-muted">
+                            {attempt.drillId}
+                          </span>
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-normal">
+                            {domain}
+                          </Badge>
+                        </div>
+                        <p className="font-medium text-miro-primary text-xs sm:text-sm line-clamp-1">
+                          {title}
+                        </p>
+                        <div className="flex items-center gap-3 text-[11px] text-miro-muted">
+                          <span className="inline-flex items-center gap-1">
+                            <Calendar className="h-3 w-3" /> {dateStr}
+                          </span>
+                          {attempt.attemptsCount > 1 && (
+                            <span>• {attempt.attemptsCount} attempts</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-mono text-xs font-semibold text-miro-successText bg-miro-successLight px-2 py-0.5 rounded-md border border-miro-successBorder">
+                          +{attempt.score} pts
+                        </span>
+                      </div>
+                    </button>
+                  );
+                }
 
                 return (
                   <div

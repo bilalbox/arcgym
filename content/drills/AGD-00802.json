@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00802",
+  "title": "Data Cloud One: Multi-Org Topology and Credit Governance",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Data Cloud One Multi-Org Topology",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Cost_Optimization", "Reliability", "Operational_Excellence"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An enterprise operates three Salesforce CRM orgs for Sales, Service, and Commerce. Leaders want unified customer profiles and cross-cloud Agentforce reasoning without purchasing separate Data Cloud instances for each org. Which architecture topology satisfies this multi-org requirement while centralizing credit consumption?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Data Cloud One Home Org with Companion Federation",
+          "diagramUrl": "/diagrams/agd-00802-hub-topology.svg",
+          "isCorrect": true,
+          "rationale": "A central home org anchors the data model and identity resolution, while companion orgs leverage shared metadata to run local Agentforce actions against unified profiles. All companion compute activity consumes credits centrally from the home org wallet.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#data-cloud-one"
+        },
+        {
+          "id": "s1_b",
+          "label": "Independent Data Cloud Instances with Custom API Sync",
+          "diagramUrl": "/diagrams/agd-00802-independent-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Siloed Multi-Instance Sprawl",
+          "rationale": "Deploying disconnected instances triples licensing overhead, duplicates ingestion pipelines, and creates divergent identity rules that prevent achieving a single enterprise customer graph."
+        },
+        {
+          "id": "s1_c",
+          "label": "Reverse ETL Synchronization into Companion Custom Objects",
+          "diagramUrl": "/diagrams/agd-00802-custom-sync-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "CRM Storage Limit Saturation",
+          "rationale": "Copying lake-scale customer records into custom relational objects inflates core CRM storage fees, triggers database record locks, and exhausts daily asynchronous Apex processing allocations."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160" width="100%" height="100%">
+  <title>Independent Data Cloud Instances Topology</title>
+  <defs>
+    <marker id="arrow-neutral-sync" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <rect width="800" height="160" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Instance 1: Sales -->
+  <g transform="translate(30, 25)">
+    <rect width="210" height="110" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="210" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="105" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Sales Org + Data Cloud 1</text>
+    <text x="105" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0f172a">Local Identity Rules</text>
+    <rect x="20" y="70" width="170" height="22" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="105" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#475569">Local DLO/DMO Storage</text>
+  </g>
+
+  <!-- Instance 2: Service -->
+  <g transform="translate(295, 25)">
+    <rect width="210" height="110" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="210" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="105" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Service Org + Data Cloud 2</text>
+    <text x="105" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0f172a">Local Identity Rules</text>
+    <rect x="20" y="70" width="170" height="22" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="105" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#475569">Local DLO/DMO Storage</text>
+  </g>
+
+  <!-- Instance 3: Commerce -->
+  <g transform="translate(560, 25)">
+    <rect width="210" height="110" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="210" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="105" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Commerce + Data Cloud 3</text>
+    <text x="105" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0f172a">Local Identity Rules</text>
+    <rect x="20" y="70" width="170" height="22" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="105" y="85" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#475569">Local DLO/DMO Storage</text>
+  </g>
+
+  <!-- Point-to-Point Sync Lines -->
+  <path d="M 240 60 L 295 60" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-neutral-sync)" fill="none"/>
+  <path d="M 295 75 L 240 75" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-neutral-sync)" fill="none"/>
+  <path d="M 505 60 L 560 60" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-neutral-sync)" fill="none"/>
+  <path d="M 560 75 L 505 75" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow-neutral-sync)" fill="none"/>
+
+  <!-- Footer Description -->
+  <rect x="250" y="136" width="300" height="18" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="400" y="149" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#64748b">Cross-Org Synchronization via Bulk API &amp; Platform Events</text>
+</svg>

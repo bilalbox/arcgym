@@ -23,6 +23,7 @@ const PrivacyPage = lazy(() =>
 const SkillProfilePage = lazy(() =>
   import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage })),
 );
+const DrillPage = lazy(() => import('@/pages/DrillPage').then((m) => ({ default: m.DrillPage })));
 
 const RouteFallback: React.FC = () => (
   <div className="min-h-screen bg-miro-surface flex items-center justify-center">
@@ -120,9 +121,21 @@ export const App: React.FC = () => {
         streakDays={streakDays}
         allDrills={ALL_DRILLS}
         onResetProgress={resetProgress}
+        navigate={navigate}
       />
     </Suspense>
   ) : null;
+
+  // Match /drills/:id or /drill/:id (e.g. /drills/AGD-00201)
+  const drillMatch = pathname.match(/^\/drills?\/([^/]+)$/i);
+  const routeDrillId = drillMatch ? drillMatch[1] : null;
+
+  // If bare /drills or /drill without ID, redirect to practice
+  useEffect(() => {
+    if (pathname === '/drills' || pathname === '/drill') {
+      navigate('/');
+    }
+  }, [pathname, navigate]);
 
   // Route: Privacy policy
   if (pathname === '/privacy') {
@@ -165,6 +178,35 @@ export const App: React.FC = () => {
             completedDrills={completedDrills}
             totalPoints={totalPoints}
             allDrills={ALL_DRILLS}
+            navigate={navigate}
+            pathname={pathname}
+          />
+        </Suspense>
+        {progressDialog}
+      </div>
+    );
+  }
+
+  // Route: Individual Drill Preview / Practice (/drills/:id)
+  if (routeDrillId) {
+    return (
+      <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
+        <Header
+          pathname={pathname}
+          navigate={navigate}
+          totalCompleted={totalCompleted}
+          totalDrillsCount={ALL_DRILLS.length}
+          streakDays={streakDays}
+          isStreakEarnedToday={isStreakEarnedToday}
+          totalPoints={totalPoints}
+          onOpenProgressModal={openProgressModal}
+        />
+        <Suspense fallback={<RouteFallback />}>
+          <DrillPage
+            drillId={routeDrillId}
+            allDrills={ALL_DRILLS}
+            completedDrills={completedDrills}
+            onDrillComplete={handleDrillComplete}
             navigate={navigate}
             pathname={pathname}
           />

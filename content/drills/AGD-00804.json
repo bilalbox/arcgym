@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00804",
+  "title": "Zero Copy Data Federation: Query Acceleration Strategy",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Zero Copy Lakehouse Federation",
+  "difficulty": "Associate_Domain_Architect",
+  "pillars": ["Cost_Optimization", "Reliability", "Operational_Excellence"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "An enterprise connects an external Snowflake lakehouse containing 120 million transaction records to Data Cloud. Service agents and Agentforce bots query recent purchase history at sustained peak rates exceeding 600 requests per minute. Staleness up to 30 minutes is acceptable. Which federation topology optimizes query response times without runaway external compute spend?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Accelerated Query Caching with Scheduled Refresh Intervals",
+          "diagramUrl": "/diagrams/agd-00804-cached-topology.svg",
+          "isCorrect": true,
+          "rationale": "Accelerated query caching maintains temporary materialized results within the platform, serving high-frequency reads in sub-second time. This approach shields the external warehouse from continuous concurrency surges and prevents compute warehouse auto-scaling spikes.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+        },
+        {
+          "id": "s1_b",
+          "label": "Direct Live Query Pushdown on Every User Interaction",
+          "diagramUrl": "/diagrams/agd-00804-live-query-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "High-Concurrency Live Query Throttling",
+          "rationale": "Pushing live SQL queries directly to the external lakehouse during high-concurrency CRM and bot activity prevents warehouse auto-suspension, driving extreme cloud compute charges and risking network gateway timeouts."
+        },
+        {
+          "id": "s1_c",
+          "label": "Continuous Batch Ingestion into Native Lake Storage",
+          "diagramUrl": "/diagrams/agd-00804-batch-lake-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Redundant Lake Storage Duplication",
+          "rationale": "Replicating millions of historical records into native lake tables duplicates file storage overhead, consumes substantial ingestion credits, and creates unnecessary pipeline latency when zero-copy federation provides direct read access."
+        }
+      ]
+    }
+  ]
+}

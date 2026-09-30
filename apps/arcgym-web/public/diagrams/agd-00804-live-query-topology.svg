@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160" width="100%" height="100%">
+  <title>Direct Live Query Pushdown Topology</title>
+  <defs>
+    <marker id="arrow-neutral-live" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+    </marker>
+  </defs>
+
+  <rect width="800" height="160" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- High-QPS CRM Requests -->
+  <g transform="translate(30, 25)">
+    <rect width="230" height="110" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="230" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="115" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Continuous CRM Traffic</text>
+    <text x="115" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0f172a">600+ Requests / Minute</text>
+    <text x="115" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#64748b">CRM Record Pages &amp; Agentforce</text>
+    <rect x="20" y="82" width="190" height="20" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="115" y="96" text-anchor="middle" font-family="system-ui, sans-serif" font-size="8" fill="#475569">Synchronous REST / SQL Callouts</text>
+  </g>
+
+  <!-- Query Pushdown Streams -->
+  <path d="M 260 65 L 490 65" stroke="#64748b" stroke-width="2" marker-end="url(#arrow-neutral-live)" fill="none"/>
+  <path d="M 260 80 L 490 80" stroke="#64748b" stroke-width="2" marker-end="url(#arrow-neutral-live)" fill="none"/>
+  <path d="M 260 95 L 490 95" stroke="#64748b" stroke-width="2" marker-end="url(#arrow-neutral-live)" fill="none"/>
+
+  <rect x="310" y="32" width="140" height="22" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="380" y="47" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" font-weight="500" fill="#475569">Live Pushdown Queries</text>
+
+  <!-- Snowflake Cluster -->
+  <g transform="translate(500, 20)">
+    <rect width="270" height="120" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="270" height="26" rx="10" fill="#f1f5f9"/>
+    <text x="135" y="18" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" font-weight="600" fill="#0f172a">Snowflake Lakehouse</text>
+    <text x="135" y="52" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="600" fill="#0f172a">Multi-Cluster Warehouse</text>
+    <text x="135" y="70" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#64748b">Direct Execution on Source Compute</text>
+    <rect x="20" y="85" width="230" height="24" rx="4" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="135" y="101" text-anchor="middle" font-family="system-ui, sans-serif" font-size="9" fill="#475569">Active Compute Clustered per Query</text>
+  </g>
+</svg>

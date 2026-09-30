@@ -256,7 +256,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             Rapid Fire completed
           </h2>
           <p className="text-sm text-miro-slate mt-1">
-            You committed all {repList.length} architectural decision reps for today.
+            You committed all {repList.length} architectural decision{' '}
+            {repList.length === 1 ? 'rep' : 'reps'}.
           </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
@@ -286,7 +287,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
 
           <div className="space-y-2.5">
             <h4 className="text-xs font-semibold text-miro-slate">
-              Decision breakdown ({repList.length} reps)
+              Decision breakdown ({repList.length} {repList.length === 1 ? 'rep' : 'reps'})
             </h4>
             {stepResults.map((r, i) => {
               const rep = repList[i];

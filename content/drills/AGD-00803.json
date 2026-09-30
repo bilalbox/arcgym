@@ -1,0 +1,43 @@
+{
+  "id": "AGD-00803",
+  "title": "Global Data Residency: Multi-Cluster Data Cloud Topology",
+  "format": "Rapid_Fire",
+  "domain": "Data_Architecture",
+  "domainLabel": "Global Data Residency & Multi-Cluster Federation",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Trust", "Reliability"],
+  "version": 2,
+  "status": "published",
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "A multinational corporation operates a European CRM org subject to strict GDPR cross-border data transfer prohibitions, and a North American CRM org. Executives require cross-region customer analytics and unified reporting without moving European personal records offshore. Which architecture topology maintains legal compliance while supporting cross-region insights?",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Regional Data Cloud Clusters with Governed Data Sharing",
+          "diagramUrl": "/diagrams/agd-00803-regional-topology.svg",
+          "isCorrect": true,
+          "rationale": "Operating dedicated home instances preserves local regulatory jurisdiction over personal data. Zero-copy data sharing between regional platforms exposes harmonized metrics and aggregated insights cross-region without physical file replication across international boundaries.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-provisioning.html#decision-multiple-data-orgs-vs-shared-data-360-data-cloud-one"
+        },
+        {
+          "id": "s1_b",
+          "label": "Single Global Home Org with Cross-Border Companion Link",
+          "diagramUrl": "/diagrams/agd-00803-cross-border-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Cross-Border Residency Boundary Breach",
+          "rationale": "Connecting European companion instances to a North American tenant causes identity resolution engines to ingest and store raw personal records overseas, creating immediate regulatory violations."
+        },
+        {
+          "id": "s1_c",
+          "label": "Edge Anonymization Proxy Before Global Cloud Ingestion",
+          "diagramUrl": "/diagrams/agd-00803-proxy-topology.svg",
+          "isCorrect": false,
+          "distractorAntipattern": "Edge Identity Obfuscation Overhead",
+          "rationale": "Masking customer identifiers before ingestion strips the deterministic and probabilistic keys required to match profiles, producing fragmented datasets while introducing an unmanageable proxy maintenance burden."
+        }
+      ]
+    }
+  ]
+}
