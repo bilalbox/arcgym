@@ -1,0 +1,18 @@
+---
+description: Elegant minimalism for ArcGym learner-facing UI copy
+globs: apps/arcgym-web/src/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# UI Copy Minimalism
+
+Err on the side of silence. Structure teaches; captions that restate the route, format, or mechanic are deleted.
+
+- No meta-explanations ("Separate from the daily Rapid Fire streak", how probes "unlock scenario facts", grounding tutorials).
+- No redundant labels (restamping "Case Files" under Cases, format badges next to a format-obvious title).
+- No decorative icon + echo rows (icon beside a title already shown as the hero).
+- Prefer short verbs: Begin, Lock probes, Commit, Next, Finish.
+- Keep state labels that change (Probes · 2 / 3); drop narrative section headers (Recommendation, Unlocked scenario facts).
+- Score copy stays numeric.
+
+Canonical detail: `design.md` §7. Domain term: UI Copy Minimalism in `CONTEXT.md` / `GLOSSARY.md`.

@@ -1,0 +1,251 @@
+{
+  "id": "AGD-00901",
+  "title": "Harborline Devices",
+  "format": "Case_File",
+  "domain": "Integration_Apis",
+  "domainLabel": "Case File — Harborline",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Reliability", "Trust", "Operational_Excellence"],
+  "version": 1,
+  "status": "published",
+  "brief": {
+    "title": "Harborline Medical Devices",
+    "synopsis": "Harborline Medical Devices sells implantable sensors through hospital networks in North America and EMEA. Leadership wants a single Salesforce org to run opportunity tracking, partner-managed implant registrations, and post-implant case work. An on-prem ERP already owns product master and shipment confirmation. Hospital IT teams will not accept long synchronous waits when registering an implant. Compliance requires that hospital partner users see only their own implant records. A new release train must ship monthly without freezing production customizations for days. You will recommend an architecture that balances integration decoupling, partner visibility, and safe release practice."
+  },
+  "stations": [
+    {
+      "id": "st_integration",
+      "domain": "Integration_Apis",
+      "boardDomain": "Integration",
+      "prompt": "How should Salesforce notify the ERP and two regional warehouse systems when an implant registration is confirmed?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_integration_p1",
+          "label": "Must the outbound message include fields computed from related Account and Product records?",
+          "tier": "pivotal",
+          "answer": "Yes. The warehouse needs a computed SKU bundle code and hospital account territory that are not fields on the Implant Registration object alone."
+        },
+        {
+          "id": "st_integration_p2",
+          "label": "How many external consumers must receive the same registration confirmation?",
+          "tier": "pivotal",
+          "answer": "Three: the ERP plus two regional warehouse systems, each owned by a different operations team."
+        },
+        {
+          "id": "st_integration_p3",
+          "label": "Is near-real-time delivery preferred over nightly batch for warehouse acknowledgment?",
+          "tier": "useful",
+          "answer": "Near-real-time is preferred so hospitals can schedule surgery the same day."
+        },
+        {
+          "id": "st_integration_p4",
+          "label": "Can Harborline purchase additional Salesforce API call packs this quarter?",
+          "tier": "distractor",
+          "answer": "Budget is frozen; architecture must fit existing entitlements.",
+          "distractorAntipattern": "License First Thinking"
+        },
+        {
+          "id": "st_integration_p5",
+          "label": "Which systems integrator already has an MuleSoft retainer?",
+          "tier": "distractor",
+          "answer": "No SI is pre-selected; pattern choice comes before partner selection.",
+          "distractorAntipattern": "Partner Fishing"
+        },
+        {
+          "id": "st_integration_p6",
+          "label": "Does the CEO prefer Salesforce Flow screens for every registration?",
+          "tier": "distractor",
+          "answer": "UI preference is undecided and not the integration constraint.",
+          "distractorAntipattern": "UI Preference Drift"
+        },
+        {
+          "id": "st_integration_p7",
+          "label": "How many conference rooms does Harborline headquarters have?",
+          "tier": "distractor",
+          "answer": "Irrelevant to the architecture.",
+          "distractorAntipattern": "Facilities Fishing"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_integration_a",
+          "label": "Publish a custom platform event after Apex builds the registration payload",
+          "isCorrect": true,
+          "rationale": "Publish/subscribe lets one computed message reach every warehouse and the ERP without coupling the registration save path to each consumer. Apex can assemble Account and Product fields before publish.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe"
+        },
+        {
+          "id": "st_integration_b",
+          "label": "Enqueue a Queueable callout job per warehouse from the registration trigger",
+          "isCorrect": false,
+          "distractorAntipattern": "Point-to-Point Callout Fan-Out",
+          "rationale": "One outbound job per consumer ties registration processing to every warehouse and grows trigger complexity with each new subscriber."
+        },
+        {
+          "id": "st_integration_c",
+          "label": "Call each warehouse synchronously from an after-save Flow action",
+          "isCorrect": false,
+          "distractorAntipattern": "Sync Callout Trap",
+          "rationale": "Hospital users cannot wait on three external round-trips, and synchronous callouts compete for the same transaction limits."
+        }
+      ]
+    },
+    {
+      "id": "st_security",
+      "domain": "Security_And_Access",
+      "boardDomain": "Security",
+      "prompt": "How should hospital partner users gain access to implant registrations without seeing peer hospitals' data?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_security_p1",
+          "label": "Are hospital users external Experience Cloud users or internal Salesforce licenses?",
+          "tier": "pivotal",
+          "answer": "External Experience Cloud partner users authenticating through each hospital's IdP."
+        },
+        {
+          "id": "st_security_p2",
+          "label": "Must each hospital's users be restricted to Implant Registration records owned by their Account hierarchy?",
+          "tier": "pivotal",
+          "answer": "Yes. Peer-hospital visibility is a compliance failure even for read-only list views and API queries."
+        },
+        {
+          "id": "st_security_p3",
+          "label": "Do hospitals share a single parent Account or separate Account trees?",
+          "tier": "useful",
+          "answer": "Separate Account trees per hospital network with no shared parent."
+        },
+        {
+          "id": "st_security_p4",
+          "label": "Can Harborline disable the API for all partner users?",
+          "tier": "distractor",
+          "answer": "Partners need API access for their own EHR adapters; hiding the UI is not enough.",
+          "distractorAntipattern": "UI Only Security"
+        },
+        {
+          "id": "st_security_p5",
+          "label": "Should every partner user be made a Salesforce System Administrator temporarily?",
+          "tier": "distractor",
+          "answer": "No. Temporary admin access is rejected by compliance.",
+          "distractorAntipattern": "Admin Privilege Shortcut"
+        },
+        {
+          "id": "st_security_p6",
+          "label": "Does marketing want a public Impant Registration site?",
+          "tier": "distractor",
+          "answer": "Marketing site scope is out of this station.",
+          "distractorAntipattern": "Scope Creep Hook"
+        },
+        {
+          "id": "st_security_p7",
+          "label": "Which color theme do hospital portals prefer?",
+          "tier": "distractor",
+          "answer": "Branding is not a sharing decision.",
+          "distractorAntipattern": "Branding Distraction"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_security_a",
+          "label": "Experience Cloud sharing sets scoped to each hospital Account hierarchy",
+          "isCorrect": true,
+          "rationale": "Platform sharing architecture uses ownership and sharing sets so external users see only records related to their Account tree, including API access—not just UI filters.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals#platform-sharing-architecture"
+        },
+        {
+          "id": "st_security_b",
+          "label": "One public Experience Cloud page filtered by a Screen Flow picklist of hospitals",
+          "isCorrect": false,
+          "distractorAntipattern": "UI Filter As Security",
+          "rationale": "UI filters do not enforce record visibility; partners can still query or deep-link peer hospital records."
+        },
+        {
+          "id": "st_security_c",
+          "label": "Grant Modify All Data on Implant Registration to a single partner profile",
+          "isCorrect": false,
+          "distractorAntipattern": "Overprivileged Partner Profile",
+          "rationale": "A shared Modify All profile collapses hospital boundaries and violates least privilege for external users."
+        }
+      ]
+    },
+    {
+      "id": "st_devops",
+      "domain": "Devops_Lifecycle",
+      "boardDomain": "Development_Lifecycle",
+      "prompt": "How should Harborline structure environments and promotion so monthly releases do not freeze production customization for days?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_devops_p1",
+          "label": "Is source control the system of record for metadata, or is production still edited directly?",
+          "tier": "pivotal",
+          "answer": "Leadership wants source-driven development; production hot-fixes still happen today and must be absorbed into the pipeline."
+        },
+        {
+          "id": "st_devops_p2",
+          "label": "How many concurrent workstreams need isolated sandboxes each sprint?",
+          "tier": "pivotal",
+          "answer": "Four feature teams plus one integration test stream need concurrent sandboxes each sprint."
+        },
+        {
+          "id": "st_devops_p3",
+          "label": "Is there a fixed monthly production cutover window?",
+          "tier": "useful",
+          "answer": "Yes: the second Saturday of each month, four-hour window."
+        },
+        {
+          "id": "st_devops_p4",
+          "label": "Can Harborline buy Unlimited Edition solely for more sandboxes?",
+          "tier": "distractor",
+          "answer": "Edition change is off the table this fiscal year.",
+          "distractorAntipattern": "Edition Upgrade Escape"
+        },
+        {
+          "id": "st_devops_p5",
+          "label": "Should developers share one Developer sandbox and overwrite each other's work?",
+          "tier": "distractor",
+          "answer": "Shared overwrite sandboxes already caused two lost weeks of work.",
+          "distractorAntipattern": "Sandbox Collision Habit"
+        },
+        {
+          "id": "st_devops_p6",
+          "label": "Does the CFO prefer Change Sets because they look free?",
+          "tier": "distractor",
+          "answer": "Cost optics must not dictate the promotion model.",
+          "distractorAntipattern": "Change Set Cost Myth"
+        },
+        {
+          "id": "st_devops_p7",
+          "label": "Who brings snacks to release day?",
+          "tier": "distractor",
+          "answer": "Irrelevant.",
+          "distractorAntipattern": "Ritual Fishing"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_devops_a",
+          "label": "Source-driven CI/CD with a sandbox strategy mapped to team streams",
+          "isCorrect": true,
+          "rationale": "Operational Excellence DevOps patterns treat source as the system of record and size sandbox topology to concurrent workstreams so monthly promotions stay automated and reviewable.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-devops-patterns.html#cicd-pipelines"
+        },
+        {
+          "id": "st_devops_b",
+          "label": "Edit production directly and capture metadata with weekly Change Sets",
+          "isCorrect": false,
+          "distractorAntipattern": "Production Edit Spiral",
+          "rationale": "Direct production edits and ad-hoc Change Sets freeze work during cutovers and lose an auditable promotion history."
+        },
+        {
+          "id": "st_devops_c",
+          "label": "One shared full sandbox where all teams develop until release day",
+          "isCorrect": false,
+          "distractorAntipattern": "Single Sandbox Bottleneck",
+          "rationale": "A single shared sandbox collides concurrent streams and cannot isolate integration test from feature work."
+        }
+      ]
+    }
+  ]
+}

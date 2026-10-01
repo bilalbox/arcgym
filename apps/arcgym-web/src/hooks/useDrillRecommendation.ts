@@ -2,6 +2,8 @@ import {
   type ArchitecturalDomain,
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
+  isRapidFireDrill,
+  type RapidFireDrillDefinition,
   type RecommendedRound,
   selectRecommendedRound,
 } from '@arcgym/drill-core';
@@ -9,6 +11,7 @@ import { useCallback, useMemo, useState } from 'react';
 import rawCanonicalDrills from '../data/canonicalDrills.json';
 
 const ALL_DRILLS = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
+const RAPID_FIRE_DRILLS = ALL_DRILLS.filter(isRapidFireDrill);
 
 export function useDrillRecommendation(
   completedDrills: Record<string, DrillAttemptRecord>,
@@ -20,7 +23,7 @@ export function useDrillRecommendation(
 
   const activeRound: RecommendedRound | null = useMemo(() => {
     return selectRecommendedRound({
-      drills: ALL_DRILLS,
+      drills: RAPID_FIRE_DRILLS,
       completedDrills,
       todayDateStr,
       domain,
@@ -41,10 +44,12 @@ export function useDrillRecommendation(
     ? completedDrills[activeRound.drills[0].id]
     : undefined;
 
+  const rapidFireDrills = (activeRound?.drills ?? []).filter(isRapidFireDrill);
+
   return {
     round: activeRound,
-    drills: activeRound?.drills ?? [],
-    rapidFireDrills: activeRound?.drills ?? [],
+    drills: rapidFireDrills,
+    rapidFireDrills: rapidFireDrills as RapidFireDrillDefinition[],
     isDaily: activeRound?.isDaily ?? false,
     reason: activeRound?.reason ?? null,
     isReviewMode: activeRound?.reason === 'review',
@@ -52,7 +57,7 @@ export function useDrillRecommendation(
     uncompletedCount: activeRound?.uncompletedCount ?? 0,
     totalCount: activeRound?.totalCount ?? 0,
     completionPercentage: activeRound?.completionPercentage ?? 0,
-    allDrillsCount: ALL_DRILLS.length,
+    allDrillsCount: RAPID_FIRE_DRILLS.length,
     advanceToNextDrill,
     resetSessionSkip,
   };

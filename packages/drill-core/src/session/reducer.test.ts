@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DrillDefinitionDTO } from '../types/drill.js';
+import type { RapidFireDrillDefinition } from '../types/drill.js';
 import {
   createPracticeSessionState,
   getCurrentRep,
@@ -7,7 +7,7 @@ import {
   practiceSessionReducer,
 } from './reducer.js';
 
-function createMockDrill(id: string): DrillDefinitionDTO {
+function createMockDrill(id: string): RapidFireDrillDefinition {
   return {
     id,
     title: `Mock Drill ${id}`,

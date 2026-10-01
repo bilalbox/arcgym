@@ -192,3 +192,18 @@ To eliminate "AI-generated" visual tells:
 
 ### Topology preview motion
 Rapid Fire options with `diagramUrl` may use a lightbox Inspect overlay. Keep Miro craft tokens for chrome; do not import Salesforce kit-of-parts clones or official diagram binaries as authoritative sources.
+
+---
+
+## 7. UI Copy: Elegant Minimalism
+
+Err on the side of silence. The interface should teach by structure, not by caption.
+
+* **No meta-explanations.** Do not tell the learner how ArcGym works ("Separate from the daily Rapid Fire streak", "clarifying questions unlock scenario facts", "Well-Architected grounding required"). If the mechanic is not obvious from the layout, fix the layout.
+* **No redundant labels.** Do not restamp what the route, title, or chrome already said ("Case Files" under a Cases page, "Case File" badge next to a Case File title, repeating the Brief title under a card that already shows the synopsis).
+* **No decorative icon + echo rows.** A Layers icon next to the Brief title that already appears as the hero is noise — delete it.
+* **Prefer verbs over tutorials.** Buttons: `Begin`, `Lock probes`, `Commit`, `Next`, `Finish`. Not "Lock probes & unlock answers" or "Begin stations".
+* **Section headers earn their keep.** Keep labels that change state or remaining budget (`Probes · 2 / 3`). Drop headers that only narrate the next obviously labeled control (`Recommendation`, `Unlocked scenario facts`).
+* **Score copy stays numeric.** Prefer `142 pts · probe 50 · rec 92` over paragraph explanations of dual scoring.
+
+When in doubt, delete the string and re-read the screen.

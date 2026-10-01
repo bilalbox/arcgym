@@ -1,4 +1,10 @@
-import type { DrillDefinitionDTO, DrillFormat } from '../types/drill.js';
+import type {
+  CaseFileDrillDefinition,
+  DrillDefinitionDTO,
+  DrillFormat,
+  RapidFireDrillDefinition,
+} from '../types/drill.js';
+import { isCaseFileDrill, isRapidFireDrill } from '../types/drill.js';
 
 export type WordingRuleId =
   | 'length-tell'
@@ -6,7 +12,9 @@ export type WordingRuleId =
   | 'antipattern-name'
   | 'label-echo'
   | 'self-refuting-distractor'
-  | 'long-stem';
+  | 'long-stem'
+  | 'pivotal-leak'
+  | 'probe-not-question';
 
 export interface WordingFinding {
   ruleId: WordingRuleId;
@@ -23,11 +31,11 @@ interface Choice {
   isCorrect: boolean;
   feedbackField: FeedbackField;
   feedback: string;
-  /** Rapid Fire only: the short name shown on every wrong option after submit. */
+  /** Short name shown on every wrong option after submit. */
   antipattern?: string;
 }
 
-/** One decision point: a Rapid Fire step. */
+/** One decision point: a Rapid Fire step or Case File station recommendation. */
 interface Question {
   format: DrillFormat;
   where: string;
@@ -35,26 +43,14 @@ interface Question {
   choices: Choice[];
 }
 
-function questionsOf(drill: DrillDefinitionDTO): Question[] {
-  return drill.steps.map((step) => ({
-    format: drill.format,
-    where: `step ${step.id}`,
-    stem: step.prompt,
-    choices: step.options.map((o) => ({
-      id: o.id,
-      text: o.label,
-      isCorrect: o.isCorrect,
-      feedbackField: 'rationale',
-      feedback: o.rationale,
-      antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
-    })),
-  }));
-}
-
 const LENGTH_TELL_RATIO = 1.25;
 const MAX_STEM_WORDS = 55;
+/** Case File briefs are Evaluation-scale narratives. */
+const MAX_BRIEF_WORDS = 220;
+const MAX_STATION_PROMPT_WORDS = 55;
 const VERDICT_PREFIX = /^[A-Z][A-Za-z ]{0,24}[!:]\s/;
 const SELF_REFUTING = /\b(entirely|blindly|immediately|always|never|directly to production)\b/i;
+const QUESTION_MARK = /\?/;
 
 const LABEL_ECHO_JACCARD = 0.4;
 const STOPWORDS = new Set([
@@ -99,16 +95,49 @@ function contentWordJaccard(a: string, b: string): number {
   return distinct === 0 ? 0 : shared / distinct;
 }
 
+function questionsOfRapidFire(drill: RapidFireDrillDefinition): Question[] {
+  return drill.steps.map((step) => ({
+    format: drill.format,
+    where: `step ${step.id}`,
+    stem: step.prompt,
+    choices: step.options.map((o) => ({
+      id: o.id,
+      text: o.label,
+      isCorrect: o.isCorrect,
+      feedbackField: 'rationale' as const,
+      feedback: o.rationale,
+      antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
+    })),
+  }));
+}
+
+function questionsOfCaseFile(drill: CaseFileDrillDefinition): Question[] {
+  return drill.stations.map((station) => ({
+    format: drill.format,
+    where: `station ${station.id}`,
+    stem: station.prompt,
+    choices: station.options.map((o) => ({
+      id: o.id,
+      text: o.label,
+      isCorrect: o.isCorrect,
+      feedbackField: 'rationale' as const,
+      feedback: o.rationale,
+      antipattern: o.isCorrect ? undefined : (o.distractorAntipattern ?? ''),
+    })),
+  }));
+}
+
 function lintQuestion(question: Question): WordingFinding[] {
   const findings: WordingFinding[] = [];
   const { where, choices } = question;
 
   const stemWords = wordCount(question.stem);
-  if (stemWords > MAX_STEM_WORDS) {
+  const maxStem = question.format === 'Case_File' ? MAX_STATION_PROMPT_WORDS : MAX_STEM_WORDS;
+  if (stemWords > maxStem) {
     findings.push({
       ruleId: 'long-stem',
       where,
-      message: `question text has ${stemWords} words (max ${MAX_STEM_WORDS}); cut sentences no option depends on`,
+      message: `question text has ${stemWords} words (max ${maxStem}); cut sentences no option depends on`,
     });
   }
 
@@ -173,7 +202,61 @@ function lintQuestion(question: Question): WordingFinding[] {
   return findings;
 }
 
+function lintCaseFileExtras(drill: CaseFileDrillDefinition): WordingFinding[] {
+  const findings: WordingFinding[] = [];
+  const briefWords = wordCount(drill.brief.synopsis);
+  if (briefWords > MAX_BRIEF_WORDS) {
+    findings.push({
+      ruleId: 'long-stem',
+      where: 'brief.synopsis',
+      message: `brief synopsis has ${briefWords} words (max ${MAX_BRIEF_WORDS}); keep Evaluation-scale, not a full Review Board packet`,
+    });
+  }
+
+  const synopsisLower = drill.brief.synopsis.toLowerCase();
+  for (const station of drill.stations) {
+    for (const probe of station.probes) {
+      if (!QUESTION_MARK.test(probe.label)) {
+        findings.push({
+          ruleId: 'probe-not-question',
+          where: `station ${station.id} probe ${probe.id}`,
+          message: 'probe label must be a clarifying question ending with ?',
+        });
+      }
+      if (probe.tier === 'pivotal') {
+        const answer = probe.answer.trim();
+        if (answer.length >= 8 && synopsisLower.includes(answer.toLowerCase())) {
+          findings.push({
+            ruleId: 'pivotal-leak',
+            where: `station ${station.id} probe ${probe.id}`,
+            message:
+              'pivotal probe answer appears in brief.synopsis; leave critical facts behind the Probe Budget',
+          });
+        }
+      }
+      if (probe.tier === 'distractor' && probe.distractorAntipattern) {
+        const words = wordCount(probe.distractorAntipattern);
+        if (words < 2 || words > 5 || /[.!?]/.test(probe.distractorAntipattern)) {
+          findings.push({
+            ruleId: 'antipattern-name',
+            where: `station ${station.id} probe ${probe.id}`,
+            message: `distractorAntipattern "${probe.distractorAntipattern}" must be a 2–5 word name, not a sentence`,
+          });
+        }
+      }
+    }
+  }
+
+  return findings;
+}
+
 /** Answer tells and feedback defects that let a learner find the answer without architectural judgment. */
 export function lintDrillWording(drill: DrillDefinitionDTO): WordingFinding[] {
-  return questionsOf(drill).flatMap(lintQuestion);
+  if (isRapidFireDrill(drill)) {
+    return questionsOfRapidFire(drill).flatMap(lintQuestion);
+  }
+  if (isCaseFileDrill(drill)) {
+    return [...questionsOfCaseFile(drill).flatMap(lintQuestion), ...lintCaseFileExtras(drill)];
+  }
+  return [];
 }

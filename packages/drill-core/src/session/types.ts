@@ -1,14 +1,14 @@
 import type {
   ConfidenceAnchor,
   DrillAttemptRecord,
-  DrillDefinitionDTO,
   MetacognitiveQuadrant,
+  RapidFireDrillDefinition,
   RapidFireStepDTO,
   StepAttemptTelemetry,
 } from '../types/drill.js';
 
 export interface PracticeRepState {
-  drill: DrillDefinitionDTO;
+  drill: RapidFireDrillDefinition;
   step: RapidFireStepDTO;
   selectedOptionId: string | null;
   committedConfidence: ConfidenceAnchor | null;
@@ -20,7 +20,7 @@ export interface PracticeRepState {
 }
 
 export interface PracticeSessionState {
-  drills: DrillDefinitionDTO[];
+  drills: RapidFireDrillDefinition[];
   reps: PracticeRepState[];
   currentRepIndex: number;
   isCompleted: boolean;

@@ -5,7 +5,7 @@ ArcGym is an architectural judgment practice platform for Salesforce Architects,
 ## Language
 
 **Drill**:
-A self-contained, 2-minute architectural judgment practice exercise.
+A self-contained architectural judgment practice exercise. Rapid Fire drills target about 2 minutes per rep; Case File stations are Evaluation-scale and longer.
 _Avoid_: Quiz, test, exam, flashcard
 
 **Architectural Domain**:
@@ -25,19 +25,43 @@ A design tension evaluated across the Salesforce Well-Architected Framework pill
 _Avoid_: Feature preference, single right answer
 
 **Drill Format**:
-The interaction archetype for every Drill. ArcGym uses a single unified format: Rapid Fire. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains. Topology-choice drills embed optional `diagramUrl` previews inside Rapid Fire options (with Inspect lightbox), rather than a separate Diagram runner.
+The interaction archetype for a Drill. ArcGym supports two formats: Rapid Fire (daily streak) and Case File (Evaluation-scale CTA practice). Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains. Topology-choice drills embed optional `diagramUrl` previews inside options (with Inspect lightbox), rather than a separate Diagram runner.
 _Avoid_: Question type, quiz mode, Currency, Scenario, Lesson, Diagram-as-separate-format
 
 **Rapid Fire Drill**:
 A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 3 decision reps (drills), requiring completion of all 3 reps to achieve that day's practice streak. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
 _Avoid_: Single-question rapid fire, partial streak award, flashcard round, separate Diagram runner
 
+**Case File Drill**:
+An Evaluation-scale architectural judgment exercise: a Brief (fictional narrative), three Stations under that Brief, a scarce Probe Budget of clarifying questions that unlock scenario facts at each Station, then a confidence-gated recommendation. Outside the daily Rapid Fire streak. Always exactly three Stations — never a solo station.
+_Avoid_: Board Probe, Board Eval, Scenario, Currency, oral defense, free-text presentation, full Review Board clock, solo station
+
+**Brief**:
+The fictional enterprise narrative shared by every Station in a Case File. Leaves pivotal facts behind the Probe Budget.
+_Avoid_: Exam scenario packet, stem, prompt dump
+
+**Station**:
+One CTA-board-domain decision inside a Case File: Probe Budget discovery, then a confidence-gated recommendation.
+_Avoid_: Question, quiz item, solo drill, Board Probe station
+
+**Probe Budget**:
+The limited number of clarifying questions an architect may ask before committing a Case File Station recommendation. Pivotal probes narrow the decision space; distractor probes waste budget on irrelevant fishing.
+_Avoid_: Hint unlock, investigation credits, Currency spend
+
+**Cases**:
+The learner-facing mode for Case File practice, separate from the daily Rapid Fire streak.
+_Avoid_: Board Eval, Review Board mock, exam mode
+
+**UI Copy Minimalism**:
+Learner-facing strings stay sparse. Structure and controls carry meaning; captions that restate the route, format, or mechanic are deleted. Prefer short verbs over tutorials.
+_Avoid_: Meta-explanations, redundant section labels, decorative icon+echo rows, instructional subtitles
+
 **Well-Architected Grounding**:
 The architectural rationale, citations, and decision trees anchored directly in official documentation from architect.salesforce.com.
 _Avoid_: Opinion, editorializing
 
 **Universal Pre-Submit Gate**:
-The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps.
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps and Case File Station recommendations.
 _Avoid_: Feedback prompt, post-quiz survey
 
 **Hybrid Document Pattern**:

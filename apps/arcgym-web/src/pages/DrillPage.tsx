@@ -1,8 +1,9 @@
 import {
   ARCHITECTURAL_DOMAIN_LABELS,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
   type DrillFormat,
+  isRapidFireDrill,
+  type RapidFireDrillDefinition,
   type StepAttemptTelemetry,
   WELL_ARCHITECTED_PILLAR_LABELS,
 } from '@arcgym/drill-core';
@@ -16,7 +17,7 @@ import { Button } from '@/components/ui/button';
 
 interface DrillPageProps {
   drillId: string;
-  allDrills: DrillDefinitionDTO[];
+  allDrills: RapidFireDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
   onDrillComplete: (result: {
     drillId: string;
@@ -40,7 +41,8 @@ export const DrillPage: React.FC<DrillPageProps> = ({
 }) => {
   const drill = useMemo(() => {
     const cleanId = drillId.trim().toUpperCase();
-    return allDrills.find((d) => d.id.toUpperCase() === cleanId);
+    const found = allDrills.find((d) => d.id.toUpperCase() === cleanId);
+    return found && isRapidFireDrill(found) ? found : undefined;
   }, [allDrills, drillId]);
 
   const previousAttempt = drill ? completedDrills[drill.id] : undefined;

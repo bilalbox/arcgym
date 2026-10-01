@@ -2,13 +2,13 @@ import {
   type ConfidenceAnchor,
   createPracticeSessionState,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
   type DrillFormat,
   getCurrentRep,
   getRoundCompletionResult,
   optionSeed,
   orderOptions,
   practiceSessionReducer,
+  type RapidFireDrillDefinition,
   type RoundCompletionResult,
   type StepAttemptTelemetry,
   safeCitationHref,
@@ -31,8 +31,8 @@ import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 export interface RapidFireRunnerProps {
-  drill?: DrillDefinitionDTO;
-  drills?: DrillDefinitionDTO[];
+  drill?: RapidFireDrillDefinition;
+  drills?: RapidFireDrillDefinition[];
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
   onRoundComplete?: (result: RoundCompletionResult) => void;

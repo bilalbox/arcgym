@@ -61,7 +61,9 @@ export function selectRecommendedRound(params: {
     setCount = 3,
   } = params;
 
+  // Daily streak is Rapid Fire only — Case File uses a separate Cases entry.
   const candidateDrills = drills.filter((d) => {
+    if (d.format !== 'Rapid_Fire') return false;
     if (domain && d.domain !== domain) return false;
     return true;
   });

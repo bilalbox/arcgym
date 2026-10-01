@@ -1,6 +1,6 @@
 import { RAPID_FIRE_REPS_PER_DRILL } from '../progress/streak.js';
 import { ArcGymScoringEngine } from '../scoring/brier.js';
-import type { DrillDefinitionDTO, StepAttemptTelemetry } from '../types/drill.js';
+import type { RapidFireDrillDefinition, StepAttemptTelemetry } from '../types/drill.js';
 import type {
   PracticeRepState,
   PracticeSessionAction,
@@ -8,7 +8,9 @@ import type {
   RoundCompletionResult,
 } from './types.js';
 
-export function createPracticeSessionState(drills: DrillDefinitionDTO[]): PracticeSessionState {
+export function createPracticeSessionState(
+  drills: RapidFireDrillDefinition[],
+): PracticeSessionState {
   const reps: PracticeRepState[] = drills.map((drill, index) => ({
     drill,
     step: drill.steps[0] ?? {

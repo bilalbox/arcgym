@@ -7,7 +7,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  type CaseFileDrillDefinition,
   type DrillDefinitionDTO,
+  type DrillOptionDTO,
   lintDrillWording,
   type RapidFireDrillDefinition,
 } from '../packages/drill-core/src/index.js';
@@ -32,7 +34,18 @@ const ARCHITECTURAL_DOMAINS = new Set([
   'Devops_Lifecycle',
 ]);
 
-const FORMATS = new Set(['Rapid_Fire']);
+const BOARD_DOMAINS = new Set([
+  'System_Architecture',
+  'Security',
+  'Data',
+  'Solution_Architecture',
+  'Integration',
+  'Development_Lifecycle',
+  'Communication',
+]);
+
+const PROBE_TIERS = new Set(['pivotal', 'useful', 'distractor']);
+const FORMATS = new Set(['Rapid_Fire', 'Case_File']);
 const STATUSES = new Set(['draft', 'published']);
 const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
 const PILLARS = new Set([
@@ -43,6 +56,7 @@ const PILLARS = new Set([
   'Fairness',
 ]);
 const CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
+const DEFAULT_PIVOTAL_COUNT = 2;
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
@@ -98,6 +112,47 @@ function validateOptionIds(file: string, where: string, options: Array<{ id: str
   }
 }
 
+function validateDiagramUrl(file: string, where: string, diagramUrl: unknown) {
+  if (diagramUrl === undefined) return;
+  if (typeof diagramUrl !== 'string' || !diagramUrl.startsWith('/')) {
+    err(file, `${where} diagramUrl must be an absolute path (e.g. /diagrams/...)`);
+    return;
+  }
+  const diagramPath = path.join(WEB_PUBLIC_ROOT, diagramUrl.replace(/^\/+/, ''));
+  if (!fs.existsSync(diagramPath)) {
+    err(
+      file,
+      `${where} diagramUrl references missing asset: ${diagramUrl} (expected at ${diagramPath})`,
+    );
+  }
+}
+
+function validateMcqOptions(file: string, where: string, options: DrillOptionDTO[]) {
+  if (!Array.isArray(options) || options.length < 2) {
+    err(file, `${where} requires at least 2 options`);
+    return;
+  }
+  if (!options.some((o) => o.isCorrect)) {
+    err(file, `${where} has NO correct option marked`);
+  }
+  validateOptionIds(file, where, options);
+  for (const option of options) {
+    if (!option.rationale) {
+      err(file, `option ${option.id} is missing rationale`);
+    }
+    if (!option.isCorrect && !option.distractorAntipattern) {
+      err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
+    }
+    if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
+      err(
+        file,
+        `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
+      );
+    }
+    validateDiagramUrl(file, `option ${option.id}`, option.diagramUrl);
+  }
+}
+
 function validateMetadata(file: string, drill: DrillDefinitionDTO) {
   if (!DIFFICULTIES.has(drill.difficulty)) {
     err(file, `invalid difficulty: ${drill.difficulty} (expected ${[...DIFFICULTIES].join('|')})`);
@@ -132,37 +187,96 @@ function validateRapidFire(file: string, drill: RapidFireDrillDefinition) {
       err(file, `step ${step.id} has invalid prompt or options`);
       continue;
     }
-    if (!step.options.some((o) => o.isCorrect)) {
-      err(file, `step ${step.id} has NO correct option marked`);
+    validateMcqOptions(file, `step ${step.id}`, step.options);
+  }
+}
+
+function validateCaseFile(file: string, drill: CaseFileDrillDefinition) {
+  if (!drill.brief || typeof drill.brief.title !== 'string' || !drill.brief.title) {
+    err(file, 'Case_File requires brief.title');
+  }
+  if (!drill.brief || typeof drill.brief.synopsis !== 'string' || !drill.brief.synopsis) {
+    err(file, 'Case_File requires brief.synopsis');
+  }
+  if (drill.brief?.exhibits) {
+    for (const [i, exhibit] of drill.brief.exhibits.entries()) {
+      if (!exhibit.label || !exhibit.diagramUrl) {
+        err(file, `brief.exhibits[${i}] requires label and diagramUrl`);
+      } else {
+        validateDiagramUrl(file, `brief.exhibits[${i}]`, exhibit.diagramUrl);
+      }
     }
-    validateOptionIds(file, `step ${step.id}`, step.options);
-    for (const option of step.options) {
-      if (!option.rationale) {
-        err(file, `option ${option.id} is missing rationale`);
+  }
+
+  if (!Array.isArray(drill.stations) || drill.stations.length === 0) {
+    err(file, 'Case_File requires non-empty stations');
+    return;
+  }
+  if (drill.stations.length !== 3) {
+    err(file, `Case_File requires exactly 3 stations; got ${drill.stations.length}`);
+  }
+
+  const stationIds = drill.stations.map((s) => s.id);
+  if (new Set(stationIds).size !== stationIds.length) {
+    err(file, 'Case_File has duplicate station ids');
+  }
+
+  const boardDomains = new Set<string>();
+  for (const station of drill.stations) {
+    if (!station.prompt) {
+      err(file, `station ${station.id} missing prompt`);
+    }
+    if (!ARCHITECTURAL_DOMAINS.has(station.domain)) {
+      err(file, `station ${station.id} invalid domain: ${station.domain}`);
+    }
+    if (!BOARD_DOMAINS.has(station.boardDomain)) {
+      err(file, `station ${station.id} invalid boardDomain: ${station.boardDomain}`);
+    }
+    if (boardDomains.has(station.boardDomain)) {
+      err(file, `duplicate boardDomain across stations: ${station.boardDomain}`);
+    }
+    boardDomains.add(station.boardDomain);
+
+    if (typeof station.probeBudget !== 'number' || station.probeBudget < 1) {
+      err(file, `station ${station.id} probeBudget must be a positive number`);
+    }
+
+    if (!Array.isArray(station.probes) || station.probes.length < 5) {
+      err(file, `station ${station.id} requires at least 5 probes`);
+      continue;
+    }
+
+    validateOptionIds(file, `station ${station.id} probes`, station.probes);
+
+    let pivotalCount = 0;
+    for (const probe of station.probes) {
+      if (!probe.label || !probe.answer) {
+        err(file, `station ${station.id} probe ${probe.id} missing label or answer`);
       }
-      if (!option.isCorrect && !option.distractorAntipattern) {
-        err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
+      if (!PROBE_TIERS.has(probe.tier)) {
+        err(file, `station ${station.id} probe ${probe.id} invalid tier: ${probe.tier}`);
       }
-      if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
+      if (probe.tier === 'pivotal') pivotalCount++;
+      if (probe.tier === 'distractor' && !probe.distractorAntipattern) {
         err(
           file,
-          `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
+          `station ${station.id} distractor probe ${probe.id} missing distractorAntipattern`,
         );
       }
-      if (option.diagramUrl !== undefined) {
-        if (typeof option.diagramUrl !== 'string' || !option.diagramUrl.startsWith('/')) {
-          err(file, `option ${option.id} diagramUrl must be an absolute path (e.g. /diagrams/...)`);
-        } else {
-          const diagramPath = path.join(WEB_PUBLIC_ROOT, option.diagramUrl.replace(/^\/+/, ''));
-          if (!fs.existsSync(diagramPath)) {
-            err(
-              file,
-              `option ${option.id} diagramUrl references missing asset: ${option.diagramUrl} (expected at ${diagramPath})`,
-            );
-          }
-        }
-      }
     }
+
+    if (pivotalCount !== DEFAULT_PIVOTAL_COUNT) {
+      err(
+        file,
+        `station ${station.id} must have exactly ${DEFAULT_PIVOTAL_COUNT} pivotal probes (got ${pivotalCount})`,
+      );
+    }
+
+    if (station.probeBudget > station.probes.length) {
+      err(file, `station ${station.id} probeBudget exceeds probe pool size`);
+    }
+
+    validateMcqOptions(file, `station ${station.id}`, station.options);
   }
 }
 
@@ -200,7 +314,11 @@ for (const file of drillFiles) {
 
     validateMetadata(file, drill);
 
-    validateRapidFire(file, drill as RapidFireDrillDefinition);
+    if (drill.format === 'Rapid_Fire') {
+      validateRapidFire(file, drill as RapidFireDrillDefinition);
+    } else if (drill.format === 'Case_File') {
+      validateCaseFile(file, drill as CaseFileDrillDefinition);
+    }
 
     lintWording(file, drill);
 

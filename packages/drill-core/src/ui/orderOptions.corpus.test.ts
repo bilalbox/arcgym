@@ -1,13 +1,28 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { type DrillDefinitionDTO, optionSeed, orderOptions } from '../index.js';
+import {
+  type DrillDefinitionDTO,
+  isCaseFileDrill,
+  isRapidFireDrill,
+  optionSeed,
+  orderOptions,
+} from '../index.js';
 
 const DRILLS_DIR = path.resolve(import.meta.dirname, '../../../../content/drills');
 
 /** Each rendered decision as [runner seed, correct flag per authored option]. */
 function renderedDecisions(drill: DrillDefinitionDTO): [string, boolean[]][] {
-  return drill.steps.map((s) => [optionSeed(drill.id, s.id), s.options.map((o) => o.isCorrect)]);
+  if (isRapidFireDrill(drill)) {
+    return drill.steps.map((s) => [optionSeed(drill.id, s.id), s.options.map((o) => o.isCorrect)]);
+  }
+  if (isCaseFileDrill(drill)) {
+    return drill.stations.map((s) => [
+      optionSeed(drill.id, s.id),
+      s.options.map((o) => o.isCorrect),
+    ]);
+  }
+  return [];
 }
 
 describe('rendered option order on published drills', () => {

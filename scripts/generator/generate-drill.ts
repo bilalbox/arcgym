@@ -29,7 +29,7 @@ const WELL_ARCHITECTED_PILLARS = [
   'Cost_Optimization',
   'Fairness',
 ];
-const SUPPORTED_FORMATS = ['Rapid_Fire'] as const;
+const SUPPORTED_FORMATS = ['Rapid_Fire', 'Case_File'] as const;
 const DIFFICULTIES = ['Associate_Domain_Architect', 'Lead_CTA'] as const;
 
 interface ChromaChunk {
@@ -69,6 +69,8 @@ interface PromptArgs {
   format: (typeof SUPPORTED_FORMATS)[number];
   difficulty: (typeof DIFFICULTIES)[number];
   steps: number;
+  /** Case_File: exactly 3 (Case File). Defaults from --steps when unset. */
+  stations?: number;
   id?: string;
   topK: number;
   fromCard?: string;
@@ -111,6 +113,12 @@ function parsePromptArgs(args: string[]): PromptArgs {
       result.difficulty = args[++i] as PromptArgs['difficulty'];
     } else if (arg === '--steps' && value) {
       result.steps = parseInt(args[++i], 10);
+    } else if (arg === '--stations' && value) {
+      const n = parseInt(args[++i], 10);
+      if (n !== 3) {
+        fail('--stations must be 3');
+      }
+      result.stations = n;
     } else if (arg === '--id' && value) {
       result.id = args[++i];
     } else if (arg === '--top-k' && value) {
@@ -263,12 +271,137 @@ ${approaches}
 
 /** The wording standard for every generated drill; `ingest` enforces the mechanical parts via lintDrillWording. */
 const WORDING_RULES = `### Wording Rules (ingest rejects drills that break the checkable ones):
-- Question text (prompt / scenario): the situation, then the constraint(s) the answer depends on, then exactly one question. Every sentence and number must matter to at least one option's reasoning; keep it to 55 words or fewer. State constraints as facts or numbers (e.g. "the org already uses 80% of its daily API allocation"), never as the negation of an option's approach ("without a polling service" rules out the polling option by keyword). Ask for the decision ("Which pattern should the architect use?"), not "Which is Well-Architected?". Never name the source document. No stakeholder emotion ("Leadership will not accept…").
+- Question text (prompt / scenario): the situation, then the constraint(s) the answer depends on, then exactly one question. Every sentence and number must matter to at least one option's reasoning; keep Rapid Fire stems and Case File station prompts to 55 words or fewer. State constraints as facts or numbers (e.g. "the org already uses 80% of its daily API allocation"), never as the negation of an option's approach ("without a polling service" rules out the polling option by keyword). Ask for the decision ("Which pattern should the architect use?"), not "Which is Well-Architected?". Never name the source document. No stakeholder emotion ("Leadership will not accept…").
 - Options: every option answers the same question in the same grammatical shape, with one decision per option. The correct option must not be the longest: keep all options within ±25% of each other in word count. Every distractor is something a competent practitioner would plausibly choose. Never use words that announce a wrong answer: entirely, blindly, immediately, always, never, directly to production, raw, without X.
 - Facts: every number, limit, product name, and API or exception name must be real. A distractor may misapply a real limit but may not invent one.
-- Correct-option rationale (Rapid Fire rationale): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
+- Correct-option rationale (Rapid Fire rationale / Case File recommendation rationale): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
 - Feedback text (rationale): no verdict prefixes ("Correct!", "Antipattern:", "Risky!"); the UI already shows the verdict.
+- Case File only: brief.synopsis may be longer (Evaluation-scale, max ~220 words) but must NOT contain pivotal probe answer text. Probe labels are clarifying questions ending with ?. Probe answers are scenario facts only—never architecture advice. Exactly 2 pivotal probes per station; distractor probes need distractorAntipattern.
 `;
+
+function buildRapidFireSchema(
+  drillId: string,
+  args: PromptArgs,
+  domain: string,
+  domainLabel: string,
+  pillarExample: string,
+  sourceCardLine: string,
+  citationUrl: string,
+): string {
+  return `{
+  "id": "${drillId}",
+  "title": "Clear, concise CTA-level drill title",
+  "format": "Rapid_Fire",
+  "domain": "${domain}",
+  "domainLabel": "${domainLabel}",
+  "difficulty": "${args.difficulty}",
+  "pillars": ${pillarExample},
+  "version": 1,
+  "status": "draft",${sourceCardLine}
+  "steps": [
+    {
+      "id": "s1",
+      "prompt": "Situation, then the constraint(s) the answer depends on, then one question...",
+      "options": [
+        {
+          "id": "s1_a",
+          "label": "Option A description...",
+          "isCorrect": false,
+          "distractorAntipattern": "Short Antipattern Name",
+          "rationale": "1–2 sentences: why it fails under this step's constraint",
+          "citationUrl": "${citationUrl}"
+        },
+        {
+          "id": "s1_b",
+          "label": "Option B description (optimal)...",
+          "isCorrect": true,
+          "rationale": "The principle from the cited chunk and the constraint in the prompt that decides it",
+          "citationUrl": "${citationUrl}"
+        }
+      ]
+    }
+  ]
+}`;
+}
+
+function buildCaseFileSchema(
+  drillId: string,
+  args: PromptArgs,
+  domain: string,
+  domainLabel: string,
+  pillarExample: string,
+  sourceCardLine: string,
+  citationUrl: string,
+): string {
+  return `{
+  "id": "${drillId}",
+  "title": "Clear Evaluation-scale Case File title",
+  "format": "Case_File",
+  "domain": "${domain}",
+  "domainLabel": "${domainLabel}",
+  "difficulty": "${args.difficulty}",
+  "pillars": ${pillarExample},
+  "version": 1,
+  "status": "draft",${sourceCardLine}
+  "brief": {
+    "title": "Fictional enterprise case name",
+    "synopsis": "Multi-paragraph Evaluation brief with intentional ambiguity; leave pivotal facts for probes (max ~220 words)"
+  },
+  "stations": [
+    {
+      "id": "st1",
+      "domain": "${domain}",
+      "boardDomain": "Integration",
+      "prompt": "Station question after the brief...",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st1_p1",
+          "label": "Pivotal clarifying question?",
+          "tier": "pivotal",
+          "answer": "Scenario fact that narrows the decision (must NOT appear in brief.synopsis)"
+        },
+        {
+          "id": "st1_p2",
+          "label": "Second pivotal clarifying question?",
+          "tier": "pivotal",
+          "answer": "Another scenario fact"
+        },
+        {
+          "id": "st1_p3",
+          "label": "Useful clarifying question?",
+          "tier": "useful",
+          "answer": "Helpful but not required fact"
+        },
+        {
+          "id": "st1_p4",
+          "label": "Distractor clarifying question?",
+          "tier": "distractor",
+          "answer": "Irrelevant fact",
+          "distractorAntipattern": "Short Antipattern Name"
+        }
+      ],
+      "options": [
+        {
+          "id": "st1_a",
+          "label": "Recommendation A...",
+          "isCorrect": true,
+          "rationale": "Principle from cited chunk + constraint unlocked by probes",
+          "citationUrl": "${citationUrl}"
+        },
+        {
+          "id": "st1_b",
+          "label": "Recommendation B...",
+          "isCorrect": false,
+          "distractorAntipattern": "Short Antipattern Name",
+          "rationale": "Why it fails under the unlocked constraints"
+        }
+      ]
+    }
+  ]
+}
+Write exactly 3 stations with distinct boardDomain values from System_Architecture | Security | Data | Solution_Architecture | Integration | Development_Lifecycle | Communication. Each station needs ~7 probes (exactly 2 pivotal), probeBudget 3, and 3 recommendation options.`;
+}
 
 function buildPrompt(
   chunks: ChromaChunk[],
@@ -299,15 +432,45 @@ ${c.content}
     : `choose 1-3 from ${WELL_ARCHITECTED_PILLARS.join(' | ')}`;
   const pillarExample = JSON.stringify(pillars.length ? pillars : ['Reliability']);
   const sourceCardLine = card ? `\n  "sourceCardIds": ["${card.card_id}"],` : '';
+  const citationUrl = chunks[0]?.metadata?.url || 'https://architect.salesforce.com';
+
+  const schema =
+    args.format === 'Case_File'
+      ? buildCaseFileSchema(
+          drillId,
+          args,
+          domain,
+          domainLabel,
+          pillarExample,
+          sourceCardLine,
+          citationUrl,
+        )
+      : buildRapidFireSchema(
+          drillId,
+          args,
+          domain,
+          domainLabel,
+          pillarExample,
+          sourceCardLine,
+          citationUrl,
+        );
+
+  const formatNotes =
+    args.format === 'Case_File'
+      ? `- Stations: always 3 under one Brief
+- Probe Budget: 3 picks from ~7 clarifying questions per station
+- Dual scoring: probe quality + confidence-gated recommendation
+- Grounding: only final correct options cite chunks; probe answers are scenario fiction`
+      : `- Number of Steps: up to ${args.steps}`;
 
   return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
 Generate a high-stakes, realistic architectural judgment drill formatted as valid JSON strictly adhering to the ArcGym schema.
 
 ### Core Authoring Principles:
 1. Dilemma Under Constraint: Do NOT write simple trivia or recall questions. Pose a realistic enterprise scenario with competing priorities (e.g. scale vs cost, real-time vs governor limits, speed vs trust).
-2. Explicit Antipatterns: Every distractor option MUST name a real-world architectural antipattern in 'distractorAntipattern' as a short name of 2–5 words (e.g. "ETL Data Hoarding", "Synchronous Callout Coupling"). Its 'rationale' is 1–2 sentences: why it fails under this step's constraint. Use 3 options per step.
-3. Grounding: Every correct option is grounded: its rationale restates guidance from one chunk below, and its citationUrl is that chunk's Citation URL, copied exactly. Write only steps the chunks govern; fewer steps than requested is right when they govern fewer decisions. If they govern none, output only {"error": "<what official guidance is missing>"}.
-4. Option Balance: Place the correct option in varied positions across steps, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
+2. Explicit Antipatterns: Every distractor option MUST name a real-world architectural antipattern in 'distractorAntipattern' as a short name of 2–5 words (e.g. "ETL Data Hoarding", "Synchronous Callout Coupling"). Its 'rationale' is 1–2 sentences: why it fails under this step's constraint. Use 3 options per decision.
+3. Grounding: Every correct option is grounded: its rationale restates guidance from one chunk below, and its citationUrl is that chunk's Citation URL, copied exactly. Write only decisions the chunks govern; fewer than requested is right when they govern fewer. If they govern none, output only {"error": "<what official guidance is missing>"}.
+4. Option Balance: Place the correct option in varied positions across decisions, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
 5. Language & Tone: Professional, authoritative, CTA-level precision. Sentence-case typography. No casual jargon or LLM filler phrases.
 
 ${WORDING_RULES}
@@ -319,47 +482,14 @@ ${WORDING_RULES}
 - Pillars: ${pillarSpec}
 - Format: "${args.format}"
 - Difficulty: "${args.difficulty}"
-- Number of Steps: up to ${args.steps}
+${formatNotes}
 ${frictionSection}
 ### Grounding Documentation Chunks from architect.salesforce.com:
 ${contextText}
 
 ### Required JSON Output Format:
 Output ONLY valid, parseable JSON conforming to this TypeScript schema with no markdown code blocks outside:
-{
-  "id": "${drillId}",
-  "title": "Clear, concise CTA-level drill title",
-  "format": "${args.format}",
-  "domain": "${domain}",
-  "domainLabel": "${domainLabel}",
-  "difficulty": "${args.difficulty}",
-  "pillars": ${pillarExample},
-  "version": 1,
-  "status": "draft",${sourceCardLine}
-  "steps": [
-    {
-      "id": "s1",
-      "prompt": "Situation, then the constraint(s) the answer depends on, then one question...",
-      "options": [
-        {
-          "id": "s1_a",
-          "label": "Option A description...",
-          "isCorrect": false,
-          "distractorAntipattern": "Short Antipattern Name",
-          "rationale": "1–2 sentences: why it fails under this step's constraint",
-          "citationUrl": "${chunks[0]?.metadata?.url || 'https://architect.salesforce.com'}"
-        },
-        {
-          "id": "s1_b",
-          "label": "Option B description (optimal)...",
-          "isCorrect": true,
-          "rationale": "The principle from the cited chunk and the constraint in the prompt that decides it",
-          "citationUrl": "${chunks[0]?.metadata?.url || 'https://architect.salesforce.com'}"
-        }
-      ]
-    }
-  ]
-}
+${schema}
 `;
 }
 

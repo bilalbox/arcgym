@@ -1,8 +1,3 @@
----
-name: generating-drills
-description: Drill authoring for ArcGym. Use when the user wants a new drill, from a Friction Card (FC-…) or from a topic.
----
-
 # Generating Drills
 
 You are the model. `generate-drill.ts prompt` retrieves official chunks and prints an authoring prompt, you answer it, and `ingest` saves your answer as a draft. The prompt's rules are the authoring standard.
@@ -15,12 +10,12 @@ You are the model. `generate-drill.ts prompt` retrieves official chunks and prin
 
    ```bash
    mkdir -p /tmp/arcgym
-   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<id> [--format Lesson] > /tmp/arcgym/drill-prompt.md
+   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<id> [--format Rapid_Fire|Case_File] > /tmp/arcgym/drill-prompt.md
    ```
 
-   Stderr lists the drill id and the retrieved chunk titles. Rerun with `--query "<sharper doc search>"` until the chunks govern the problem. Done when every step or stage you plan to write has a chunk that states its governing guidance.
+   Stderr lists the drill id and the retrieved chunk titles. Rerun with `--query "<sharper doc search>"` until the chunks govern the problem. Done when every step or station you plan to write has a chunk that states its governing guidance. Case Files always have a Brief and exactly three Stations.
 
-3. **Write the drill** as the prompt's answer, saved to `/tmp/arcgym/<drill id>.json`. Done when every correct option is grounded (its rationale restates what its cited chunk says) and ingest reports no wording findings, or, when the prompt's error rule applies, you have told the user which guidance is missing and stopped.
+3. **Write the drill** as the prompt's answer, saved to `/tmp/arcgym/<drill id>.json`. Done when every correct option is grounded (its rationale restates what its cited chunk says) and ingest reports no wording findings, or, when the prompt's error rule applies, you have told the user which guidance is missing and stopped. Case File probe answers are scenario fiction and must not leak into `brief.synopsis`.
 
 4. **Ingest.**
 

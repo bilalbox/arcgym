@@ -1,6 +1,6 @@
 export type ConfidenceAnchor = 0.5 | 0.7 | 0.85 | 0.95;
 
-export type DrillFormat = 'Rapid_Fire';
+export type DrillFormat = 'Rapid_Fire' | 'Case_File';
 
 /** Practice category from Salesforce Architect Fundamentals. Orthogonal to Well-Architected pillars. */
 export type ArchitecturalDomain =
@@ -32,6 +32,38 @@ export const ARCHITECTURAL_DOMAIN_LABELS: Record<ArchitecturalDomain, string> = 
   Infrastructure: 'Infrastructure',
   Devops_Lifecycle: 'DevOps Lifecycle',
 };
+
+/** Official CTA Review Board / Evaluation scoring domains. Orthogonal to Architectural Domain. */
+export type BoardDomain =
+  | 'System_Architecture'
+  | 'Security'
+  | 'Data'
+  | 'Solution_Architecture'
+  | 'Integration'
+  | 'Development_Lifecycle'
+  | 'Communication';
+
+export const BOARD_DOMAINS: BoardDomain[] = [
+  'System_Architecture',
+  'Security',
+  'Data',
+  'Solution_Architecture',
+  'Integration',
+  'Development_Lifecycle',
+  'Communication',
+];
+
+export const BOARD_DOMAIN_LABELS: Record<BoardDomain, string> = {
+  System_Architecture: 'System Architecture',
+  Security: 'Security',
+  Data: 'Data',
+  Solution_Architecture: 'Solution Architecture',
+  Integration: 'Integration',
+  Development_Lifecycle: 'Development Lifecycle',
+  Communication: 'Communication',
+};
+
+export type ProbeTier = 'pivotal' | 'useful' | 'distractor';
 
 export type WellArchitectedPillar =
   | 'Trust'
@@ -79,7 +111,34 @@ export interface RapidFireStepDTO {
   options: DrillOptionDTO[];
 }
 
-/** Editorial lifecycle — drafts stay in content/ but are excluded from the live catalog. */
+/** Clarifying question in a Case File station. Answers are scenario facts, not architecture advice. */
+export interface ProbeOptionDTO {
+  id: string;
+  label: string;
+  tier: ProbeTier;
+  answer: string;
+  distractorAntipattern?: string;
+}
+
+/** Fictional narrative for a Case File — always present. */
+export interface CaseBriefDTO {
+  title: string;
+  synopsis: string;
+  exhibits?: Array<{ label: string; diagramUrl: string }>;
+}
+
+/** One CTA-domain decision inside a Case File: Probe Budget then recommendation. */
+export interface CaseFileStationDTO {
+  id: string;
+  domain: ArchitecturalDomain;
+  boardDomain: BoardDomain;
+  prompt: string;
+  probeBudget: number;
+  probes: ProbeOptionDTO[];
+  options: DrillOptionDTO[];
+}
+
+/** Editorial lifecycle — drafts stay in content/ but are excluded from the learner catalog. */
 export type DrillStatus = 'draft' | 'published';
 
 export const DRILL_STATUSES: DrillStatus[] = ['draft', 'published'];
@@ -104,10 +163,21 @@ export interface RapidFireDrillDefinition extends DrillDefinitionBase {
   steps: RapidFireStepDTO[];
 }
 
-export type DrillDefinitionDTO = RapidFireDrillDefinition;
+export interface CaseFileDrillDefinition extends DrillDefinitionBase {
+  format: 'Case_File';
+  brief: CaseBriefDTO;
+  /** Always exactly 3 stations under one Brief. */
+  stations: CaseFileStationDTO[];
+}
+
+export type DrillDefinitionDTO = RapidFireDrillDefinition | CaseFileDrillDefinition;
 
 export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefinition {
   return d.format === 'Rapid_Fire';
+}
+
+export function isCaseFileDrill(d: DrillDefinitionDTO): d is CaseFileDrillDefinition {
+  return d.format === 'Case_File';
 }
 
 export interface AttemptSubmissionDTO {
@@ -126,6 +196,11 @@ export interface StepAttemptTelemetry {
   score: number;
   selectedOptionId?: string;
   distractorAntipattern?: string;
+  /** Case File: selected clarifying-question ids. */
+  selectedProbeIds?: string[];
+  probeScore?: number;
+  recommendationScore?: number;
+  missedPivotal?: boolean;
 }
 
 export interface DrillAttemptRecord {

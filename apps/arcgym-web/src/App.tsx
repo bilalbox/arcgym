@@ -3,6 +3,8 @@ import {
   ARCHITECTURAL_DOMAINS,
   type ArchitecturalDomain,
   type DrillFormat,
+  isCaseFileDrill,
+  isRapidFireDrill,
   type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
 import type React from 'react';
@@ -24,6 +26,8 @@ const SkillProfilePage = lazy(() =>
   import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage })),
 );
 const DrillPage = lazy(() => import('@/pages/DrillPage').then((m) => ({ default: m.DrillPage })));
+const CasesPage = lazy(() => import('@/pages/CasesPage').then((m) => ({ default: m.CasesPage })));
+const CasePage = lazy(() => import('@/pages/CasePage').then((m) => ({ default: m.CasePage })));
 
 const RouteFallback: React.FC = () => (
   <div className="min-h-screen bg-miro-surface flex items-center justify-center">
@@ -48,7 +52,9 @@ export const App: React.FC = () => {
     resetProgress,
   } = useVisitorProgress();
 
-  // If URL has ?domain=Param, sync to activeDomain filter
+  const caseFiles = useMemo(() => ALL_DRILLS.filter(isCaseFileDrill), []);
+  const rapidFireCatalog = useMemo(() => ALL_DRILLS.filter(isRapidFireDrill), []);
+
   useEffect(() => {
     if (search) {
       const params = new URLSearchParams(search);
@@ -60,11 +66,11 @@ export const App: React.FC = () => {
   }, [search]);
 
   const availableDomains = useMemo(() => {
-    const present = new Set(ALL_DRILLS.map((d) => d.domain));
+    const present = new Set(rapidFireCatalog.map((d) => d.domain));
     return (Object.keys(ARCHITECTURAL_DOMAIN_LABELS) as ArchitecturalDomain[]).filter((d) =>
       present.has(d),
     );
-  }, []);
+  }, [rapidFireCatalog]);
 
   const { rapidFireDrills, isReviewMode, previousAttempt, advanceToNextDrill, resetSessionSkip } =
     useDrillRecommendation(completedDrills, activeDomain);
@@ -126,98 +132,7 @@ export const App: React.FC = () => {
     </Suspense>
   ) : null;
 
-  // Match /drills/:id or /drill/:id (e.g. /drills/AGD-00201)
-  const drillMatch = pathname.match(/^\/drills?\/([^/]+)$/i);
-  const routeDrillId = drillMatch ? drillMatch[1] : null;
-
-  // If bare /drills or /drill without ID, redirect to practice
-  useEffect(() => {
-    if (pathname === '/drills' || pathname === '/drill') {
-      navigate('/');
-    }
-  }, [pathname, navigate]);
-
-  // Route: Privacy policy
-  if (pathname === '/privacy') {
-    return (
-      <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
-        <Header
-          pathname={pathname}
-          navigate={navigate}
-          totalCompleted={totalCompleted}
-          totalDrillsCount={ALL_DRILLS.length}
-          streakDays={streakDays}
-          isStreakEarnedToday={isStreakEarnedToday}
-          totalPoints={totalPoints}
-          onOpenProgressModal={openProgressModal}
-        />
-        <Suspense fallback={<RouteFallback />}>
-          <PrivacyPage navigate={navigate} />
-        </Suspense>
-        {progressDialog}
-      </div>
-    );
-  }
-
-  // Route: Skill Profile
-  if (pathname === '/skills') {
-    return (
-      <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
-        <Header
-          pathname={pathname}
-          navigate={navigate}
-          totalCompleted={totalCompleted}
-          totalDrillsCount={ALL_DRILLS.length}
-          streakDays={streakDays}
-          isStreakEarnedToday={isStreakEarnedToday}
-          totalPoints={totalPoints}
-          onOpenProgressModal={openProgressModal}
-        />
-        <Suspense fallback={<RouteFallback />}>
-          <SkillProfilePage
-            completedDrills={completedDrills}
-            totalPoints={totalPoints}
-            allDrills={ALL_DRILLS}
-            navigate={navigate}
-            pathname={pathname}
-          />
-        </Suspense>
-        {progressDialog}
-      </div>
-    );
-  }
-
-  // Route: Individual Drill Preview / Practice (/drills/:id)
-  if (routeDrillId) {
-    return (
-      <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
-        <Header
-          pathname={pathname}
-          navigate={navigate}
-          totalCompleted={totalCompleted}
-          totalDrillsCount={ALL_DRILLS.length}
-          streakDays={streakDays}
-          isStreakEarnedToday={isStreakEarnedToday}
-          totalPoints={totalPoints}
-          onOpenProgressModal={openProgressModal}
-        />
-        <Suspense fallback={<RouteFallback />}>
-          <DrillPage
-            drillId={routeDrillId}
-            allDrills={ALL_DRILLS}
-            completedDrills={completedDrills}
-            onDrillComplete={handleDrillComplete}
-            navigate={navigate}
-            pathname={pathname}
-          />
-        </Suspense>
-        {progressDialog}
-      </div>
-    );
-  }
-
-  // Route: Home / Practice
-  return (
+  const shell = (body: React.ReactNode) => (
     <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
       <Header
         pathname={pathname}
@@ -229,72 +144,160 @@ export const App: React.FC = () => {
         totalPoints={totalPoints}
         onOpenProgressModal={openProgressModal}
       />
+      {body}
+      {progressDialog}
+    </div>
+  );
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-        <div className="text-center sm:text-left space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
-            Architectural judgment practice
-          </h1>
-          <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
-            Trade-off drills grounded in official Salesforce Well-Architected guidance.
-          </p>
-        </div>
+  const drillMatch = pathname.match(/^\/drills?\/([^/]+)$/i);
+  const routeDrillId = drillMatch ? drillMatch[1] : null;
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] uppercase tracking-wider text-miro-muted font-medium mr-1">
-            Domain
-          </span>
+  const caseMatch = pathname.match(/^\/cases\/([^/]+)$/i);
+  const routeCaseId = caseMatch ? caseMatch[1] : null;
+
+  useEffect(() => {
+    if (pathname === '/drills' || pathname === '/drill') {
+      navigate('/');
+    }
+  }, [pathname, navigate]);
+
+  useEffect(() => {
+    if (!routeDrillId) return;
+    const found = ALL_DRILLS.find((d) => d.id.toUpperCase() === routeDrillId.toUpperCase());
+    if (found && isCaseFileDrill(found)) {
+      navigate(`/cases/${found.id}`);
+    }
+  }, [routeDrillId, navigate]);
+
+  if (pathname === '/privacy') {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <PrivacyPage navigate={navigate} />
+      </Suspense>,
+    );
+  }
+
+  if (pathname === '/skills') {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <SkillProfilePage
+          completedDrills={completedDrills}
+          totalPoints={totalPoints}
+          allDrills={ALL_DRILLS}
+          navigate={navigate}
+          pathname={pathname}
+        />
+      </Suspense>,
+    );
+  }
+
+  if (pathname === '/cases') {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <CasesPage
+          caseFiles={caseFiles}
+          completedDrills={completedDrills}
+          navigate={navigate}
+          pathname={pathname}
+        />
+      </Suspense>,
+    );
+  }
+
+  if (routeCaseId) {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <CasePage
+          drillId={routeCaseId}
+          allDrills={ALL_DRILLS}
+          caseFiles={caseFiles}
+          completedDrills={completedDrills}
+          onDrillComplete={handleDrillComplete}
+          navigate={navigate}
+          pathname={pathname}
+        />
+      </Suspense>,
+    );
+  }
+
+  if (routeDrillId) {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <DrillPage
+          drillId={routeDrillId}
+          allDrills={rapidFireCatalog}
+          completedDrills={completedDrills}
+          onDrillComplete={handleDrillComplete}
+          navigate={navigate}
+          pathname={pathname}
+        />
+      </Suspense>,
+    );
+  }
+
+  return shell(
+    <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="text-center sm:text-left space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
+          Architectural judgment practice
+        </h1>
+        <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
+          Trade-off drills grounded in official Salesforce Well-Architected guidance.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[11px] uppercase tracking-wider text-miro-muted font-medium mr-1">
+          Domain
+        </span>
+        <button
+          type="button"
+          onClick={() => handleDomainChange(undefined)}
+          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
+            activeDomain === undefined
+              ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
+              : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
+          }`}
+        >
+          All
+        </button>
+        {availableDomains.map((domain) => (
           <button
             type="button"
-            onClick={() => handleDomainChange(undefined)}
+            key={domain}
+            onClick={() => handleDomainChange(domain)}
             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-              activeDomain === undefined
+              activeDomain === domain
                 ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
                 : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
             }`}
           >
-            All
+            {ARCHITECTURAL_DOMAIN_LABELS[domain]}
           </button>
-          {availableDomains.map((domain) => (
-            <button
-              type="button"
-              key={domain}
-              onClick={() => handleDomainChange(domain)}
-              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-                activeDomain === domain
-                  ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
-                  : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-              }`}
-            >
-              {ARCHITECTURAL_DOMAIN_LABELS[domain]}
-            </button>
-          ))}
-        </div>
+        ))}
+      </div>
 
-        <div className="pt-2">
-          {rapidFireDrills.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-miro-hairline bg-miro-card p-8 text-center space-y-2">
-              <p className="text-sm font-medium text-miro-slate">No drills in this domain yet</p>
-              <p className="text-xs text-miro-slate">
-                Pick another Architectural Domain, or choose All.
-              </p>
-            </div>
-          ) : (
-            <RapidFireRunner
-              drills={rapidFireDrills}
-              isReviewMode={isReviewMode}
-              previousAttempt={previousAttempt}
-              onRapidFireComplete={handleRapidFireComplete}
-              onNextDrill={advanceToNextDrill}
-            />
-          )}
-        </div>
+      <div className="pt-2">
+        {rapidFireDrills.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-miro-hairline bg-miro-card p-8 text-center space-y-2">
+            <p className="text-sm font-medium text-miro-slate">No drills in this domain yet</p>
+            <p className="text-xs text-miro-slate">
+              Pick another Architectural Domain, or choose All.
+            </p>
+          </div>
+        ) : (
+          <RapidFireRunner
+            drills={rapidFireDrills}
+            isReviewMode={isReviewMode}
+            previousAttempt={previousAttempt}
+            onRapidFireComplete={handleRapidFireComplete}
+            onNextDrill={advanceToNextDrill}
+          />
+        )}
+      </div>
 
-        <Footer navigate={navigate} currentPath={pathname} />
-      </main>
-
-      {progressDialog}
-    </div>
+      <Footer navigate={navigate} currentPath={pathname} />
+    </main>,
   );
 };
 

@@ -25,6 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const isHome = pathname === '/' || pathname === '';
   const isSkills = pathname === '/skills';
+  const isCases = pathname === '/cases' || pathname.startsWith('/cases/');
   const { resolved, toggle } = useTheme();
 
   return (
@@ -70,6 +71,17 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Skill Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/cases')}
+              className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
+                isCases
+                  ? 'border-miro-primary text-miro-primary font-medium'
+                  : 'border-transparent text-miro-muted hover:text-miro-primary'
+              }`}
+            >
+              Cases
             </button>
           </nav>
         </div>
