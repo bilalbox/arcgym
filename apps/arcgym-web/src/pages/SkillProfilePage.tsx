@@ -4,7 +4,6 @@ import {
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
 } from '@arcgym/drill-core';
-import { CheckCircle2, Trophy, Zap } from 'lucide-react';
 import type React from 'react';
 import { useMemo } from 'react';
 import { Footer } from '@/components/layout/Footer';
@@ -55,56 +54,34 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
         </p>
       </div>
 
-      {/* Overview Stat Badges */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-miro-card rounded-2xl border border-miro-hairline shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-miro-lavenderLight flex items-center justify-center text-miro-blue shrink-0">
-            <Zap className="h-4 w-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-miro-muted uppercase tracking-wider font-medium block">
-              Question Reps
-            </span>
-            <span className="text-base sm:text-lg font-semibold text-miro-primary">
-              {report.totalQuestionsAnswered} reps
-            </span>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-miro-card rounded-2xl border border-miro-hairline">
+        <div>
+          <span className="text-xs text-miro-muted font-medium block mb-0.5">Question reps</span>
+          <span className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
+            {report.totalQuestionsAnswered}
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-miro-yellowLight flex items-center justify-center text-miro-yellowText shrink-0">
-            <Trophy className="h-4 w-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-miro-muted uppercase tracking-wider font-medium block">
-              Total Points
-            </span>
-            <span className="text-base sm:text-lg font-semibold text-miro-primary">
-              {totalPoints.toLocaleString()}{' '}
-              <span className="text-xs font-normal text-miro-muted">pts</span>
-            </span>
-          </div>
+        <div>
+          <span className="text-xs text-miro-muted font-medium block mb-0.5">Points</span>
+          <span className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
+            {totalPoints.toLocaleString()}
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-miro-successLight flex items-center justify-center text-miro-successText shrink-0">
-            <CheckCircle2 className="h-4 w-4" />
-          </div>
-          <div>
-            <span className="text-[11px] text-miro-muted uppercase tracking-wider font-medium block">
-              Measured Domains
-            </span>
-            <span className="text-base sm:text-lg font-semibold text-miro-successText">
-              {report.measuredCount} of {report.totalCount} active
-            </span>
-          </div>
+        <div>
+          <span className="text-xs text-miro-muted font-medium block mb-0.5">Measured domains</span>
+          <span className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
+            {report.measuredCount}
+            <span className="text-xs font-normal text-miro-muted"> of {report.totalCount}</span>
+          </span>
         </div>
       </div>
 
       {/* Radar Chart */}
       <ArchitecturalRadarChart
         items={report.items}
-        title="Architectural Domain Proficiency Radar"
+        title="Domain proficiency"
         onSelectItem={handleReviewDrills}
       />
 

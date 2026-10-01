@@ -206,13 +206,13 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
       {hasVoted ? (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-miro-card border border-miro-hairline">
           <div className="flex items-center gap-2.5">
-            <div className="h-6 w-6 rounded-full bg-miro-successLight text-miro-successText flex items-center justify-center shrink-0">
+            <div className="h-6 w-6 rounded-full border border-miro-hairline bg-miro-surface text-miro-slate flex items-center justify-center shrink-0">
               <Check className="h-3.5 w-3.5" />
             </div>
             <p className="text-xs sm:text-sm text-miro-primary font-medium">
-              Thank you for your feedback!{' '}
+              Feedback recorded{' '}
               <span className="text-miro-slate font-normal">
-                ({selectedRating === 'up' ? '👍 Liked it' : '👎 Didn’t like it'})
+                · {selectedRating === 'up' ? 'Liked' : "Didn't like"}
               </span>
             </p>
           </div>
@@ -227,7 +227,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
         <div className="space-y-3.5">
           <div>
             <h3 className="text-sm sm:text-base font-medium text-miro-primary">
-              What&apos;d you think of today&apos;s drill?
+              How was this drill?
             </h3>
           </div>
 
@@ -235,27 +235,25 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
             <button
               type="button"
               onClick={() => handleRatingSelect('up')}
-              className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs sm:text-sm font-medium border transition-all cursor-pointer ${
+              className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs sm:text-sm font-medium border transition-colors cursor-pointer ${
                 selectedRating === 'up'
-                  ? 'border-2 border-miro-blue bg-miro-lavenderLight/30 text-miro-primary font-semibold shadow-xs'
+                  ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
                   : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
               }`}
             >
-              <span aria-hidden="true">👍</span>
-              <span>Liked it</span>
+              Liked
             </button>
 
             <button
               type="button"
               onClick={() => handleRatingSelect('down')}
-              className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs sm:text-sm font-medium border transition-all cursor-pointer ${
+              className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs sm:text-sm font-medium border transition-colors cursor-pointer ${
                 selectedRating === 'down'
-                  ? 'border-2 border-miro-blue bg-miro-lavenderLight/30 text-miro-primary font-semibold shadow-xs'
+                  ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
                   : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
               }`}
             >
-              <span aria-hidden="true">👎</span>
-              <span>Didn&apos;t like it</span>
+              Didn&apos;t like
             </button>
           </div>
 
@@ -272,7 +270,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                       onClick={() => toggleTag(tag)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
                         active
-                          ? 'bg-miro-lavenderLight text-miro-blue border-miro-lavenderBorder font-semibold'
+                          ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
                           : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
                       }`}
                     >
@@ -297,7 +295,7 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
                       onClick={() => toggleTag(tag)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
                         active
-                          ? 'bg-miro-dangerLight text-miro-dangerText border-miro-dangerBorder font-semibold'
+                          ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
                           : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
                       }`}
                     >

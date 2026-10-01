@@ -1,4 +1,4 @@
-import { Flame, Moon, Sun, Target, Zap } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import type React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -12,6 +12,9 @@ interface HeaderProps {
   totalPoints?: number;
   onOpenProgressModal: () => void;
 }
+
+const chipClass =
+  'inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full border border-miro-hairline bg-miro-card text-miro-slate text-xs font-medium transition-colors';
 
 export const Header: React.FC<HeaderProps> = ({
   pathname,
@@ -90,12 +93,11 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onOpenProgressModal}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-surface hover:bg-miro-hairlineSoft border border-miro-hairline text-miro-slate text-xs font-medium transition-colors cursor-pointer"
-            title="Click to view practice history and completed drills"
+            className={`${chipClass} hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong cursor-pointer`}
+            title="Practice history"
           >
-            <Target className="h-3.5 w-3.5 text-miro-blue" />
-            <span>
-              {totalCompleted} / {totalDrillsCount} mastered
+            <span className="font-mono tabular-nums">
+              {totalCompleted}/{totalDrillsCount}
             </span>
           </button>
 
@@ -103,35 +105,25 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenProgressModal}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-miro-lavenderLight hover:bg-miro-lavenderLight/80 border border-miro-lavenderBorder text-miro-blue text-xs font-semibold transition-colors cursor-pointer"
-              title="Total points achieved across all drills. Click to view history."
+              className={`${chipClass} hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong cursor-pointer`}
+              title="Total points"
             >
-              <Zap className="h-3.5 w-3.5 text-miro-blue fill-miro-blue" />
-              <span>{totalPoints.toLocaleString()} pts</span>
+              <span className="font-mono tabular-nums">{totalPoints.toLocaleString()}</span>
             </button>
           )}
 
           {streakDays > 0 && (
             <div
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border text-xs font-medium animate-in fade-in duration-200 ${
-                isStreakEarnedToday
-                  ? 'bg-miro-yellowLight border-miro-yellowBorder text-miro-yellowText'
-                  : 'bg-miro-surface border-miro-hairline text-miro-slate'
+              className={`${chipClass} ${
+                isStreakEarnedToday ? 'border-miro-hairlineStrong text-miro-primary' : ''
               }`}
               title={
                 isStreakEarnedToday
-                  ? `${streakDays} day practice streak (achieved today!)`
-                  : `${streakDays} day practice streak • Complete all 3 Rapid Fire reps today to keep your streak!`
+                  ? `${streakDays}-day streak · earned today`
+                  : `${streakDays}-day streak`
               }
             >
-              <Flame
-                className={`h-3.5 w-3.5 ${
-                  isStreakEarnedToday
-                    ? 'text-miro-yellowText fill-miro-yellowText'
-                    : 'text-miro-muted'
-                }`}
-              />
-              <span>{streakDays} day streak</span>
+              <span className="font-mono tabular-nums">{streakDays}d</span>
             </div>
           )}
 
