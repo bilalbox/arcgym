@@ -29,7 +29,7 @@ const WELL_ARCHITECTED_PILLARS = [
   'Cost_Optimization',
   'Fairness',
 ];
-const SUPPORTED_FORMATS = ['Rapid_Fire', 'Lesson'] as const;
+const SUPPORTED_FORMATS = ['Rapid_Fire'] as const;
 const DIFFICULTIES = ['Associate_Domain_Architect', 'Lead_CTA'] as const;
 
 interface ChromaChunk {
@@ -146,9 +146,9 @@ function loadFrictionCard(cardId: string): FrictionCard {
   return card;
 }
 
-/** Generated Rapid_Fire drills use AGD-00401..00499; Lessons use AGD-00701..00799. */
-function getNextDrillId(format: PromptArgs['format']): string {
-  const [floor, ceiling] = format === 'Lesson' ? [700, 800] : [400, 500];
+/** Generated Rapid_Fire drills use AGD-00401..00499. */
+function getNextDrillId(): string {
+  const [floor, ceiling] = [400, 500];
   const files = fs.existsSync(DRILLS_DIR) ? fs.readdirSync(DRILLS_DIR) : [];
   let maxNum = floor;
   for (const f of files) {
@@ -266,8 +266,8 @@ const WORDING_RULES = `### Wording Rules (ingest rejects drills that break the c
 - Question text (prompt / scenario): the situation, then the constraint(s) the answer depends on, then exactly one question. Every sentence and number must matter to at least one option's reasoning; keep it to 55 words or fewer. State constraints as facts or numbers (e.g. "the org already uses 80% of its daily API allocation"), never as the negation of an option's approach ("without a polling service" rules out the polling option by keyword). Ask for the decision ("Which pattern should the architect use?"), not "Which is Well-Architected?". Never name the source document. No stakeholder emotion ("Leadership will not accept…").
 - Options: every option answers the same question in the same grammatical shape, with one decision per option. The correct option must not be the longest: keep all options within ±25% of each other in word count. Every distractor is something a competent practitioner would plausibly choose. Never use words that announce a wrong answer: entirely, blindly, immediately, always, never, directly to production, raw, without X.
 - Facts: every number, limit, product name, and API or exception name must be real. A distractor may misapply a real limit but may not invent one.
-- Correct-option rationale (Rapid Fire rationale, Lesson coachingFeedback): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
-- Feedback text (rationale, coachingFeedback): no verdict prefixes ("Correct!", "Antipattern:", "Risky!"); the UI already shows the verdict.
+- Correct-option rationale (Rapid Fire rationale): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
+- Feedback text (rationale): no verdict prefixes ("Correct!", "Antipattern:", "Risky!"); the UI already shows the verdict.
 `;
 
 function buildPrompt(
@@ -299,152 +299,6 @@ ${c.content}
     : `choose 1-3 from ${WELL_ARCHITECTED_PILLARS.join(' | ')}`;
   const pillarExample = JSON.stringify(pillars.length ? pillars : ['Reliability']);
   const sourceCardLine = card ? `\n  "sourceCardIds": ["${card.card_id}"],` : '';
-
-  if (args.format === 'Lesson') {
-    return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
-Generate a high-stakes, realistic 4-stage architectural Lesson drill formatted as valid JSON strictly adhering to the ArcGym Lesson schema.
-
-### Core Lesson Authoring Principles:
-1. 4-Stage Progressive Refactor: A Lesson drill simulates an enterprise refactor walkthrough across exactly 4 chronological stages:
-   - Stage 1: Forensic Diagnosis (diagnose real-world architectural bottleneck, concurrency collision, or technical debt)
-   - Stage 2: Target Architecture Pattern (select optimal Well-Architected design pattern and justify trade-offs)
-   - Stage 3: Migration & Cutover Strategy (zero-downtime cutover, backward compatibility, feature toggles, or canary rollout)
-   - Stage 4: Telemetry & Observability (transaction monitoring, health thresholds, drift alerts, or Event Monitoring)
-2. Coaching Feedback: Every option's 'coachingFeedback' explains the mechanism. For the correct option, give the principle and the constraint in the scenario that decides it; for a wrong option, explain why it fails under this stage's constraint. Never open with a verdict ("Correct!", "Antipattern:").
-3. Grounding: Every correct option is grounded: its coachingFeedback restates guidance from one of the official chunks below. If the chunks cannot ground all 4 stages, output only {"error": "<what official guidance is missing>"}.
-4. Option Balance: At least 3 options per stage, every one a choice a competent practitioner would plausibly make. Place the correct option in varied positions across stages, and keep all options comparable in length and specificity, so judgment rather than pattern finds the answer.
-5. Language & Tone: Professional, authoritative CTA-level precision. Sentence-case typography. No filler phrases.
-
-${WORDING_RULES}
-### Target Drill Specifications:
-- Drill ID: "${drillId}"
-- Topic: "${args.topic}"
-- Domain: "${domain}" (must be one of: Platform_Core, Data_Architecture, Security_And_Access, Integration_Apis, Ai_And_Automation, Infrastructure, Devops_Lifecycle)
-- Domain Label: "${domainLabel}"
-- Pillars: ${pillarSpec}
-- Format: "Lesson"
-- Difficulty: "${args.difficulty}"
-${frictionSection}
-### Grounding Documentation Chunks from architect.salesforce.com:
-${contextText}
-
-### Required JSON Output Format:
-Output ONLY valid, parseable JSON conforming to this TypeScript schema with no markdown code blocks outside:
-{
-  "id": "${drillId}",
-  "title": "Concise CTA-level title (e.g. 'Async Pipeline: 4-stage Well-Architected refactor')",
-  "format": "Lesson",
-  "domain": "${domain}",
-  "domainLabel": "${domainLabel}",
-  "difficulty": "${args.difficulty}",
-  "pillars": ${pillarExample},
-  "version": 1,
-  "status": "draft",${sourceCardLine}
-  "stages": [
-    {
-      "stageNumber": 1,
-      "stageName": "Stage 1: Forensic Diagnosis",
-      "scenario": "Symptoms with the numbers that matter, then one question asking for the root cause...",
-      "options": [
-        {
-          "id": "st1_a",
-          "text": "A real platform behavior that fits some symptoms but not the deciding one...",
-          "isCorrect": false,
-          "coachingFeedback": "Which symptom this cause would produce, and which observed symptom rules it out."
-        },
-        {
-          "id": "st1_b",
-          "text": "The actual root cause, stated as the platform mechanism...",
-          "isCorrect": true,
-          "coachingFeedback": "The principle from the cited chunk, tied to the symptom in the scenario that decides it."
-        },
-        {
-          "id": "st1_c",
-          "text": "A second cause a competent architect would check first...",
-          "isCorrect": false,
-          "coachingFeedback": "Why this cause does not explain the symptoms under this stage's constraint."
-        }
-      ]
-    },
-    {
-      "stageNumber": 2,
-      "stageName": "Stage 2: Target Architecture Pattern",
-      "scenario": "The constraint the replacement must meet, as a fact or number, then one question asking for the pattern...",
-      "options": [
-        {
-          "id": "st2_a",
-          "text": "A proven pattern that solves a neighboring problem...",
-          "isCorrect": false,
-          "coachingFeedback": "The constraint this pattern misses and the cost it adds as a result."
-        },
-        {
-          "id": "st2_b",
-          "text": "The familiar quick fix most teams reach for first...",
-          "isCorrect": false,
-          "coachingFeedback": "What this fix defers and when that debt comes due under this load."
-        },
-        {
-          "id": "st2_c",
-          "text": "The target pattern the cited chunk governs...",
-          "isCorrect": true,
-          "coachingFeedback": "The principle from the cited chunk and the constraint that rules out the alternatives."
-        }
-      ]
-    },
-    {
-      "stageNumber": 3,
-      "stageName": "Stage 3: Migration & Cutover Strategy",
-      "scenario": "The live-operations constraint on cutover, as a fact or number, then one question asking for the sequence...",
-      "options": [
-        {
-          "id": "st3_a",
-          "text": "A staged cutover with a validation gate and a rollback path...",
-          "isCorrect": true,
-          "coachingFeedback": "Why the validation gate and rollback path satisfy the stated live-operations constraint."
-        },
-        {
-          "id": "st3_b",
-          "text": "A weekend cutover with a full regression pass beforehand...",
-          "isCorrect": false,
-          "coachingFeedback": "What a single cutover window cannot catch that a staged rollout would."
-        },
-        {
-          "id": "st3_c",
-          "text": "A parallel run that keeps both designs writing indefinitely...",
-          "isCorrect": false,
-          "coachingFeedback": "The drift and reconciliation cost of running both designs with no exit criterion."
-        }
-      ]
-    },
-    {
-      "stageNumber": 4,
-      "stageName": "Stage 4: Telemetry & Observability",
-      "scenario": "The failure mode that must be caught and how fast, then one question asking for the monitoring design...",
-      "options": [
-        {
-          "id": "st4_a",
-          "text": "A daily summary report of failed transactions for the support team...",
-          "isCorrect": false,
-          "coachingFeedback": "How long this failure mode runs undetected before a daily summary surfaces it."
-        },
-        {
-          "id": "st4_b",
-          "text": "A threshold alert on the leading metric this failure mode moves...",
-          "isCorrect": true,
-          "coachingFeedback": "Why this metric moves before users are affected, per the cited chunk."
-        },
-        {
-          "id": "st4_c",
-          "text": "Verbose debug logging enabled on every transaction in production...",
-          "isCorrect": false,
-          "coachingFeedback": "The storage and signal-to-noise cost of logging everything without an alert."
-        }
-      ]
-    }
-  ]
-}
-`;
-  }
 
   return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
 Generate a high-stakes, realistic architectural judgment drill formatted as valid JSON strictly adhering to the ArcGym schema.
@@ -519,7 +373,7 @@ function runPrompt(argv: string[]) {
   if (!args.topic) {
     fail('Pass --topic or --from-card.');
   }
-  const drillId = args.id || getNextDrillId(args.format);
+  const drillId = args.id || getNextDrillId();
 
   console.error(
     `[Generator] ${drillId} | ${args.format} | ${args.difficulty} | topic: ${args.topic}`,

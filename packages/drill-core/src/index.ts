@@ -3,6 +3,8 @@ export * from './proficiency/aggregator.js';
 export * from './progress/streak.js';
 export * from './recommendation/engine.js';
 export * from './scoring/brier.js';
+export * from './session/reducer.js';
+export * from './session/types.js';
 export * from './types/drill.js';
 export * from './types/feedback.js';
 export * from './types/validation.js';

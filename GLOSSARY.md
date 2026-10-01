@@ -1,0 +1,65 @@
+# ArcGym Domain Glossary
+
+Domain terminology for ArcGym architecture and drill authoring, anchored in the Salesforce Well-Architected Framework.
+
+## Domain Terms
+
+### Drill
+A self-contained, 2-minute architectural judgment practice exercise.
+_Avoid_: Quiz, test, exam, flashcard
+
+### Architectural Domain
+One of seven practice categories drawn from Salesforce Architect Fundamentals (Platform Core, Data Architecture, Security and Access, Integration APIs, AI and Automation, Infrastructure, DevOps Lifecycle). Every Drill has exactly one primary Architectural Domain. Orthogonal to Well-Architected pillars: domain is *where* on the platform map a Drill sits; pillars are *how* the Architectural Trade-Off is judged.
+_Avoid_: Topic tag, free-form domain string, Well-Architected pillar
+
+### Domain Label
+A short human-facing curriculum title for a Drill (for example "Data 360 & Data Cloud Zero Copy") that sits beside its Architectural Domain. Used for display, not filtering.
+_Avoid_: Architectural Domain, subtitle, SEO keyword
+
+### Confidence Calibration
+The practice of rating self-assessed certainty before committing an answer, scoring architects on whether they know what they know (and know what they don't know).
+_Avoid_: Guess, bet, probability score
+
+### Architectural Trade-Off
+A design tension evaluated across the Salesforce Well-Architected Framework pillars (Trust, Reliability, Operational Excellence, Resource and Cost Optimization, Fairness).
+_Avoid_: Feature preference, single right answer
+
+### Drill Format
+The interaction archetype for every Drill. ArcGym uses a single unified format: Rapid Fire. Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains. Topology-choice drills embed optional `diagramUrl` previews inside Rapid Fire options (with Inspect lightbox), rather than a separate Diagram runner.
+_Avoid_: Question type, quiz mode, Currency, Scenario, Lesson, Diagram-as-separate-format
+
+### Rapid Fire Drill
+A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 3 decision reps (drills), requiring completion of all 3 reps to achieve that day's practice streak. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
+_Avoid_: Single-question rapid fire, partial streak award, flashcard round, separate Diagram runner
+
+### Practice Round
+A sequenced set of architectural decision reps (default 3 for a daily practice workout, or 1 for solo practice) evaluated under the Universal Pre-Submit Gate.
+_Avoid_: Quiz session, test round, question set
+
+### Practice Session
+The state machine governing rep progression, option selection, confidence commitment, and Brier scoring across a Practice Round.
+_Avoid_: Quiz runner, game controller, test runner
+
+### Well-Architected Grounding
+The architectural rationale, citations, and decision trees anchored directly in official documentation from architect.salesforce.com.
+_Avoid_: Opinion, editorializing
+
+### Universal Pre-Submit Gate
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps.
+_Avoid_: Feedback prompt, post-quiz survey
+
+### Architect Linter
+The 3-tier automated validation pipeline (Schema, Deterministic Platform Rule Linter, Adversarial CTA Red-Team LLM) that verifies generated drills prior to human editorial review.
+_Avoid_: Code checker, syntax validator
+
+### Drill Status
+Editorial lifecycle on a Drill source file: `draft` (in `content/drills/`, excluded from the learner catalog) or `published` (compiled into `canonicalDrills.json` and seedable to KV). Toggle with `pnpm drill:status`.
+_Avoid_: Featured-day webhook "publish", soft-delete, archive
+
+### Antipattern Distractor
+An incorrect drill choice deliberately modeled after a documented, real-world architectural antipattern to test an architect's discernment of technical debt and scalability boundaries.
+_Avoid_: Wrong answer, trick option
+
+### Friction Card
+A human-reviewed, paraphrased record of one Trailblazer Community thread: the problem, the naive approaches practitioners tried and why they failed, and how the thread resolved. Friction Cards source Antipattern Distractors and scenario realism only; a community resolution is never Well-Architected Grounding, so every correct answer still cites official documentation.
+_Avoid_: Community pattern, frontier solution, dual grounding

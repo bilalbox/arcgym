@@ -284,7 +284,6 @@ export const App: React.FC = () => {
               drills={rapidFireDrills}
               isReviewMode={isReviewMode}
               previousAttempt={previousAttempt}
-              onDrillComplete={handleDrillComplete}
               onRapidFireComplete={handleRapidFireComplete}
               onNextDrill={advanceToNextDrill}
             />

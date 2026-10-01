@@ -1,16 +1,21 @@
 import {
-  ArcGymScoringEngine,
   type ConfidenceAnchor,
+  createPracticeSessionState,
   type DrillAttemptRecord,
+  type DrillDefinitionDTO,
   type DrillFormat,
+  getCurrentRep,
+  getRoundCompletionResult,
   optionSeed,
   orderOptions,
-  type RapidFireDrillDefinition,
+  practiceSessionReducer,
+  type RoundCompletionResult,
+  type StepAttemptTelemetry,
   safeCitationHref,
 } from '@arcgym/drill-core';
 import { ArrowRight, CheckCircle2, Expand, ExternalLink, RotateCcw, XCircle } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -25,37 +30,24 @@ import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
-interface StepResult {
-  stepId: string;
-  selectedOptionId: string;
-  confidence: number;
-  isCorrect: boolean;
-  score: number;
-}
-
 export interface RapidFireRunnerProps {
-  drill?: RapidFireDrillDefinition;
-  drills?: RapidFireDrillDefinition[];
+  drill?: DrillDefinitionDTO;
+  drills?: DrillDefinitionDTO[];
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
+  onRoundComplete?: (result: RoundCompletionResult) => void;
+  onRapidFireComplete?: (result: {
+    attempts: DrillAttemptRecord[];
+    totalScore: number;
+    accuracy: number;
+  }) => void;
   onDrillComplete?: (result: {
     drillId: string;
     format: DrillFormat;
     score: number;
     accuracy: number;
     streakDays: number;
-    steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
-  }) => void;
-  onRapidFireComplete?: (result: {
-    attempts: Array<{
-      drillId: string;
-      format: DrillFormat;
-      score: number;
-      accuracy: number;
-      steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
-    }>;
-    totalScore: number;
-    accuracy: number;
+    steps?: StepAttemptTelemetry[];
   }) => void;
   onNextDrill?: () => void;
 }
@@ -65,68 +57,82 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   drills,
   isReviewMode = false,
   previousAttempt,
-  onDrillComplete,
+  onRoundComplete,
   onRapidFireComplete,
+  onDrillComplete,
   onNextDrill,
 }) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [stepResults, setStepResults] = useState<StepResult[]>([]);
-  const [isCompleted, setIsCompleted] = useState(false);
   const [inspectDiagram, setInspectDiagram] = useState<{
     url: string;
     label: string;
   } | null>(null);
 
-  // Normalize into a sequence of reps (default 3 drills per rapid fire)
-  const repList = useMemo(() => {
-    if (drills && drills.length > 0) {
-      return drills.map((d, index) => ({
-        drill: d,
-        step: d.steps[0] ?? {
-          id: `step-${index}`,
-          prompt: d.title,
-          options: [],
-        },
-      }));
-    }
-    if (drill) {
-      return drill.steps.map((step) => ({
-        drill,
-        step,
-      }));
-    }
+  // Normalize drills into a list (supports both set workout and solo drill navigation)
+  const drillList = useMemo(() => {
+    if (drills && drills.length > 0) return drills;
+    if (drill) return [drill];
     return [];
   }, [drills, drill]);
 
   const sessionKey = useMemo(() => {
-    if (drills && drills.length > 0) {
-      return drills.map((d) => d.id).join(':');
-    }
-    return drill?.id ?? 'default';
-  }, [drills, drill]);
+    return drillList.map((d) => d.id).join(':') || 'empty';
+  }, [drillList]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset state when sessionKey changes
+  const [session, dispatch] = useReducer(
+    practiceSessionReducer,
+    drillList,
+    createPracticeSessionState,
+  );
+
+  // Reset session when drill list changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset session on sessionKey change
   useEffect(() => {
-    setCurrentStepIndex(0);
-    setSelectedOptionId(null);
+    dispatch({ type: 'RESET_SESSION' });
     setSelectedConfidence(null);
-    setIsSubmitted(false);
-    setStepResults([]);
-    setIsCompleted(false);
     setInspectDiagram(null);
   }, [sessionKey]);
 
-  const currentRep = repList[currentStepIndex] ?? repList[0];
+  const repList = session.reps;
+  const currentStepIndex = session.currentRepIndex;
+  const currentRep = getCurrentRep(session);
   const activeDrill = currentRep?.drill;
   const currentStep = currentRep?.step;
+  const isSubmitted = currentRep?.isSubmitted ?? false;
+  const selectedOptionId = currentRep?.selectedOptionId ?? null;
+  const isCompleted = session.isCompleted;
+
+  // Track completion callback invocation to avoid double execution
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (isCompleted && !completedRef.current) {
+      completedRef.current = true;
+      const result = getRoundCompletionResult(session);
+      if (result) {
+        onRoundComplete?.(result);
+        onRapidFireComplete?.({
+          attempts: result.attempts,
+          totalScore: result.totalScore,
+          accuracy: result.accuracy,
+        });
+        onDrillComplete?.({
+          drillId: repList[0]?.drill.id ?? 'drill',
+          format: 'Rapid_Fire',
+          score: result.totalScore,
+          accuracy: result.accuracy,
+          streakDays: 1,
+          steps: result.steps,
+        });
+      }
+    } else if (!isCompleted) {
+      completedRef.current = false;
+    }
+  }, [isCompleted, session, onRoundComplete, onRapidFireComplete, onDrillComplete, repList]);
 
   const orderedOptions = useMemo(() => {
     if (!activeDrill || !currentStep) return [];
     return orderOptions(currentStep.options, optionSeed(activeDrill.id, currentStep.id));
-  }, [activeDrill?.id, currentStep, activeDrill]);
+  }, [activeDrill, currentStep]);
 
   const progressPercent =
     repList.length > 0
@@ -143,109 +149,29 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
 
   const handleSelectOption = (optionId: string) => {
     if (isSubmitted) return;
-    setSelectedOptionId(optionId);
+    dispatch({ type: 'SELECT_OPTION', optionId });
   };
 
   const handleSubmit = () => {
     if (!selectedOptionId || !selectedConfidence) return;
-
-    const chosenOption = currentStep.options.find((o) => o.id === selectedOptionId);
-    const isCorrect = !!chosenOption?.isCorrect;
-
     const confidenceAnchor = (selectedConfidence / 100) as ConfidenceAnchor;
-    const brierResult = ArcGymScoringEngine.calculateDecisionScore(confidenceAnchor, isCorrect);
-    const score = brierResult.pointsAwarded;
-
-    const newResult: StepResult = {
-      stepId: currentStep.id,
-      selectedOptionId,
-      confidence: selectedConfidence,
-      isCorrect,
-      score,
-    };
-
-    setStepResults((prev) => [...prev, newResult]);
-    setIsSubmitted(true);
+    dispatch({ type: 'COMMIT_CONFIDENCE', confidence: confidenceAnchor });
   };
 
   const handleNext = () => {
-    if (currentStepIndex + 1 < repList.length) {
-      setCurrentStepIndex((prev) => prev + 1);
-      setSelectedOptionId(null);
-      setSelectedConfidence(null);
-      setIsSubmitted(false);
-    } else {
-      setIsCompleted(true);
-      const totalPts = stepResults.reduce((acc, r) => acc + r.score, 0);
-      const correctCount = stepResults.filter((r) => r.isCorrect).length;
-      const accuracy = stepResults.length > 0 ? correctCount / stepResults.length : 0;
-
-      const attempts = repList.map((rep, idx) => {
-        const r = stepResults[idx];
-        return {
-          drillId: rep.drill.id,
-          format: 'Rapid_Fire' as DrillFormat,
-          score: r?.score ?? 0,
-          accuracy: r?.isCorrect ? 1 : 0,
-          steps: r
-            ? [
-                {
-                  stepId: r.stepId,
-                  confidence: (r.confidence / 100) as ConfidenceAnchor,
-                  isCorrect: r.isCorrect,
-                  score: r.score,
-                  selectedOptionId: r.selectedOptionId,
-                  distractorAntipattern: r.isCorrect
-                    ? undefined
-                    : rep.step.options.find((o) => o.id === r.selectedOptionId)
-                        ?.distractorAntipattern,
-                },
-              ]
-            : [],
-        };
-      });
-
-      if (onRapidFireComplete) {
-        onRapidFireComplete({
-          attempts,
-          totalScore: totalPts,
-          accuracy,
-        });
-      }
-
-      onDrillComplete?.({
-        drillId: repList[0].drill.id,
-        format: 'Rapid_Fire',
-        score: totalPts,
-        accuracy,
-        streakDays: 1,
-        steps: stepResults.map((r, idx) => ({
-          stepId: r.stepId,
-          confidence: (r.confidence / 100) as ConfidenceAnchor,
-          isCorrect: r.isCorrect,
-          score: r.score,
-          selectedOptionId: r.selectedOptionId,
-          distractorAntipattern: r.isCorrect
-            ? undefined
-            : repList[idx]?.step.options.find((o) => o.id === r.selectedOptionId)
-                ?.distractorAntipattern,
-        })),
-      });
-    }
+    setSelectedConfidence(null);
+    dispatch({ type: 'ADVANCE_REP' });
   };
 
   const handleRestart = () => {
-    setCurrentStepIndex(0);
-    setSelectedOptionId(null);
     setSelectedConfidence(null);
-    setIsSubmitted(false);
-    setStepResults([]);
-    setIsCompleted(false);
+    dispatch({ type: 'RESET_SESSION' });
   };
 
-  const totalScore = stepResults.reduce((acc, r) => acc + r.score, 0);
-
   if (isCompleted) {
+    const totalScore = session.totalScore;
+    const correctCount = session.reps.filter((r) => r.isCorrect).length;
+
     return (
       <Card className="border-miro-hairline bg-miro-card shadow-xs">
         <CardHeader className="text-center pb-4">
@@ -269,15 +195,17 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             <div>
               <span className="text-xs text-miro-slate font-medium">Decisions correct</span>
               <p className="text-2xl font-medium text-miro-successText mt-0.5">
-                {stepResults.filter((r) => r.isCorrect).length} / {repList.length}
+                {correctCount} / {repList.length}
               </p>
             </div>
             <div>
               <span className="text-xs text-miro-slate font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-miro-primary mt-0.5">
-                {stepResults.length > 0
+                {repList.length > 0
                   ? Math.round(
-                      stepResults.reduce((acc, r) => acc + r.confidence, 0) / stepResults.length,
+                      (repList.reduce((acc, r) => acc + (r.committedConfidence ?? 0), 0) /
+                        repList.length) *
+                        100,
                     )
                   : 0}
                 %
@@ -289,11 +217,13 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             <h4 className="text-xs font-semibold text-miro-slate">
               Decision breakdown ({repList.length} {repList.length === 1 ? 'rep' : 'reps'})
             </h4>
-            {stepResults.map((r, i) => {
-              const rep = repList[i];
+            {repList.map((r, i) => {
+              const repScore = r.score ?? 0;
+              const repConf = Math.round((r.committedConfidence ?? 0) * 100);
+
               return (
                 <div
-                  key={`${rep?.drill.id ?? i}-${r.stepId}`}
+                  key={`${r.drill.id}-${r.step.id}`}
                   className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-miro-hairline bg-miro-card text-sm gap-2"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -307,25 +237,25 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                         <span className="font-semibold text-miro-primary text-xs shrink-0">
                           Rep {i + 1}
                         </span>
-                        {rep?.drill.domainLabel && (
+                        {r.drill.domainLabel && (
                           <Badge variant="domain" className="text-[10px] py-0 px-2 shrink-0">
-                            {rep.drill.domainLabel}
+                            {r.drill.domainLabel}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-miro-slate truncate mt-0.5">{rep?.drill.title}</p>
+                      <p className="text-xs text-miro-slate truncate mt-0.5">{r.drill.title}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 self-end sm:self-auto shrink-0">
                     <Badge variant={r.isCorrect ? 'success' : 'destructive'}>
-                      {r.confidence}% confidence
+                      {repConf}% confidence
                     </Badge>
                     <span
                       className={`font-mono text-xs font-semibold ${
-                        r.score >= 0 ? 'text-miro-successText' : 'text-miro-dangerText'
+                        repScore >= 0 ? 'text-miro-successText' : 'text-miro-dangerText'
                       }`}
                     >
-                      {r.score >= 0 ? `+${r.score}` : r.score} pts
+                      {repScore >= 0 ? `+${repScore}` : repScore} pts
                     </span>
                   </div>
                 </div>
@@ -365,6 +295,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
       </Card>
     );
   }
+
+  const currentScore = currentRep.score;
 
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
@@ -450,95 +382,72 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                         className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs font-semibold ${
                           isSelected
                             ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
-                            : 'border-miro-hairlineStrong text-miro-muted'
+                            : 'border-miro-hairlineStrong text-miro-slate'
                         }`}
                       >
                         {String.fromCharCode(65 + index)}
                       </div>
                     )}
                   </div>
-                  <p className="flex-1 font-normal text-miro-primary">{opt.label}</p>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-normal text-miro-primary block">{opt.label}</span>
+
+                    {/* Antipattern Pill under distractor */}
+                    {isSubmitted && !opt.isCorrect && opt.distractorAntipattern && (
+                      <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-miro-surface border border-miro-hairlineSoft text-xs">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-miro-muted">
+                          Antipattern:
+                        </span>
+                        <span className="font-medium text-miro-dangerText">
+                          {opt.distractorAntipattern}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {opt.diagramUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInspectDiagram({
+                          url: opt.diagramUrl as string,
+                          label: `${String.fromCharCode(65 + index)}: ${opt.label}`,
+                        });
+                      }}
+                      className="shrink-0 h-8 px-2 text-xs text-miro-slate hover:text-miro-primary flex items-center gap-1"
+                    >
+                      <Expand className="h-3.5 w-3.5" />
+                      Inspect
+                    </Button>
+                  )}
                 </button>
-
-                {opt.diagramUrl && (
-                  <div className="px-4 pb-3 pl-[3.375rem]">
-                    <div className="relative rounded-lg border border-miro-hairlineSoft bg-miro-surface overflow-hidden">
-                      <button
-                        type="button"
-                        disabled={isSubmitted}
-                        aria-label={`Select ${opt.label}`}
-                        onClick={() => handleSelectOption(opt.id)}
-                        className="block w-full cursor-pointer disabled:cursor-default"
-                      >
-                        <img
-                          src={opt.diagramUrl}
-                          alt={`${opt.label} topology preview`}
-                          className="w-full h-auto max-h-48 object-contain bg-miro-card"
-                        />
-                      </button>
-                      {isSubmitted && (
-                        <div className="absolute inset-x-0 top-0 flex justify-center p-2 pointer-events-none">
-                          {opt.isCorrect ? (
-                            <Badge variant="success" className="gap-1.5">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Well-Architected
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="gap-1.5">
-                              <XCircle className="h-3.5 w-3.5" /> Antipattern
-                              {opt.distractorAntipattern ? `: ${opt.distractorAntipattern}` : ''}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        className="absolute bottom-2 right-2 h-7 gap-1.5 px-2 text-xs"
-                        onClick={() => {
-                          const url = opt.diagramUrl;
-                          if (url) setInspectDiagram({ url, label: opt.label });
-                        }}
-                      >
-                        <Expand className="h-3.5 w-3.5" />
-                        Inspect
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {isSubmitted && opt.distractorAntipattern && (
-                  <div className="px-4 pb-4 pl-[3.375rem]">
-                    <div className="text-xs text-miro-dangerText bg-miro-dangerLight border border-miro-dangerBorder p-2.5 rounded-lg space-y-1.5">
-                      <p>
-                        <span className="font-semibold">Antipattern risk:</span>{' '}
-                        {opt.distractorAntipattern}
-                      </p>
-                      {isSelected && (
-                        <p className="text-xs sm:text-sm leading-relaxed">{opt.rationale}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
 
-        {/* Universal Pre-Submit Gate */}
-        {!isSubmitted ? (
-          <ConfidenceGate
-            selectedConfidence={selectedConfidence}
-            onSelectConfidence={setSelectedConfidence}
-            onSubmit={handleSubmit}
-            hasSelectedAnswer={!!selectedOptionId}
-            submitLabel="Commit decision"
-          />
-        ) : (
-          <div className="mt-6 rounded-2xl border border-miro-hairline bg-miro-surface p-6 space-y-4">
+        {/* Universal Pre-Submit Confidence Gate */}
+        {!isSubmitted && (
+          <div className="pt-2">
+            <ConfidenceGate
+              selectedConfidence={selectedConfidence}
+              onSelectConfidence={setSelectedConfidence}
+              onSubmit={handleSubmit}
+              disabled={!selectedOptionId}
+              hasSelectedAnswer={Boolean(selectedOptionId)}
+            />
+          </div>
+        )}
+
+        {/* Result & Architectural Rationale upon submit */}
+        {isSubmitted && (
+          <div className="mt-6 pt-4 border-t border-miro-hairlineSoft space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {currentStep.options.find((o) => o.id === selectedOptionId)?.isCorrect ? (
+                {currentRep.isCorrect ? (
                   <Badge variant="success" className="gap-1.5 px-3 py-1">
                     <CheckCircle2 className="h-3.5 w-3.5" /> Well-Architected Choice
                   </Badge>
@@ -547,11 +456,13 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                     <XCircle className="h-3.5 w-3.5" /> Antipattern Detected
                   </Badge>
                 )}
-                <span className="text-xs text-miro-slate">Confidence: {selectedConfidence}%</span>
+                <span className="text-xs text-miro-slate">
+                  Confidence: {Math.round((currentRep.committedConfidence ?? 0) * 100)}%
+                </span>
               </div>
               <span className="text-sm font-mono font-semibold text-miro-primary">
-                Score: {stepResults[stepResults.length - 1]?.score > 0 ? '+' : ''}
-                {stepResults[stepResults.length - 1]?.score} pts
+                Score: {currentScore && currentScore > 0 ? '+' : ''}
+                {currentScore} pts
               </span>
             </div>
 
