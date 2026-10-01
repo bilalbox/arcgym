@@ -5,12 +5,16 @@
   "domain": "Integration_Apis",
   "domainLabel": "Case File — Harborline",
   "difficulty": "Lead_CTA",
-  "pillars": ["Reliability", "Trust", "Operational_Excellence"],
-  "version": 1,
+  "pillars": [
+    "Reliability",
+    "Trust",
+    "Operational_Excellence"
+  ],
+  "version": 2,
   "status": "published",
   "brief": {
     "title": "Harborline Medical Devices",
-    "synopsis": "Harborline Medical Devices sells implantable sensors through hospital networks in North America and EMEA. Leadership wants a single Salesforce org to run opportunity tracking, partner-managed implant registrations, and post-implant case work. An on-prem ERP already owns product master and shipment confirmation. Hospital IT teams will not accept long synchronous waits when registering an implant. Compliance requires that hospital partner users see only their own implant records. A new release train must ship monthly without freezing production customizations for days. You will recommend an architecture that balances integration decoupling, partner visibility, and safe release practice."
+    "synopsis": "Harborline Medical Devices sells implantable sensors through hospital networks in North America and EMEA. Leadership wants a single Salesforce org to run opportunity tracking, partner-managed implant registrations, and post-implant case work. An on-prem ERP already owns product master and shipment confirmation. Hospital partners will register implants from their own portals, and compliance limits each hospital's visibility to its own implant records. A new release train must ship monthly without freezing production customizations for days. You will recommend an architecture that balances integration decoupling, partner visibility, and safe release practice."
   },
   "stations": [
     {
@@ -34,37 +38,37 @@
         },
         {
           "id": "st_integration_p3",
-          "label": "Is near-real-time delivery preferred over nightly batch for warehouse acknowledgment?",
+          "label": "What latency will hospital IT accept during the implant registration save?",
           "tier": "useful",
-          "answer": "Near-real-time is preferred so hospitals can schedule surgery the same day."
+          "answer": "The save must stay interactive; multi-second synchronous callouts during registration are rejected."
         },
         {
           "id": "st_integration_p4",
           "label": "Can Harborline purchase additional Salesforce API call packs this quarter?",
           "tier": "distractor",
-          "answer": "Budget is frozen; architecture must fit existing entitlements.",
+          "answer": "API pack spend is frozen at the current entitlement for this quarter.",
           "distractorAntipattern": "License First Thinking"
         },
         {
           "id": "st_integration_p5",
-          "label": "Which systems integrator already has an MuleSoft retainer?",
+          "label": "Must MuleSoft own the fan-out before Salesforce can publish a registration event?",
           "tier": "distractor",
-          "answer": "No SI is pre-selected; pattern choice comes before partner selection.",
-          "distractorAntipattern": "Partner Fishing"
+          "answer": "No MuleSoft ownership mandate was recorded for the registration confirmation path.",
+          "distractorAntipattern": "Middleware Prerequisite Myth"
         },
         {
           "id": "st_integration_p6",
-          "label": "Does the CEO prefer Salesforce Flow screens for every registration?",
+          "label": "Is Change Data Capture required instead of a custom platform event?",
           "tier": "distractor",
-          "answer": "UI preference is undecided and not the integration constraint.",
-          "distractorAntipattern": "UI Preference Drift"
+          "answer": "CDC is available in the org, but the open decision is how the computed multi-consumer notification is shaped.",
+          "distractorAntipattern": "CDC Default Bias"
         },
         {
           "id": "st_integration_p7",
-          "label": "How many conference rooms does Harborline headquarters have?",
+          "label": "Does the CEO require Salesforce Flow screens for every registration?",
           "tier": "distractor",
-          "answer": "Irrelevant to the architecture.",
-          "distractorAntipattern": "Facilities Fishing"
+          "answer": "No UI mandate has been issued for the outbound notification design.",
+          "distractorAntipattern": "UI Preference Drift"
         }
       ],
       "options": [
@@ -87,7 +91,7 @@
           "label": "Call each warehouse synchronously from an after-save Flow action",
           "isCorrect": false,
           "distractorAntipattern": "Sync Callout Trap",
-          "rationale": "Hospital users cannot wait on three external round-trips, and synchronous callouts compete for the same transaction limits."
+          "rationale": "Three synchronous external round-trips during save break the interactive registration path and compete for the same transaction limits."
         }
       ]
     },
@@ -100,13 +104,13 @@
       "probes": [
         {
           "id": "st_security_p1",
-          "label": "Are hospital users external Experience Cloud users or internal Salesforce licenses?",
+          "label": "Are hospital users on high-volume Experience Cloud licenses without roles?",
           "tier": "pivotal",
-          "answer": "External Experience Cloud partner users authenticating through each hospital's IdP."
+          "answer": "Yes. Hospital partners use high-volume Experience Cloud licenses without roles and authenticate through each hospital's IdP."
         },
         {
           "id": "st_security_p2",
-          "label": "Must each hospital's users be restricted to Implant Registration records owned by their Account hierarchy?",
+          "label": "Must each hospital's users be restricted to Implant Registration records related to their hospital Account?",
           "tier": "pivotal",
           "answer": "Yes. Peer-hospital visibility is a compliance failure even for read-only list views and API queries."
         },
@@ -120,38 +124,38 @@
           "id": "st_security_p4",
           "label": "Can Harborline disable the API for all partner users?",
           "tier": "distractor",
-          "answer": "Partners need API access for their own EHR adapters; hiding the UI is not enough.",
+          "answer": "Partners need API access for their own EHR adapters; UI-only lockdown was rejected.",
           "distractorAntipattern": "UI Only Security"
         },
         {
           "id": "st_security_p5",
           "label": "Should every partner user be made a Salesforce System Administrator temporarily?",
           "tier": "distractor",
-          "answer": "No. Temporary admin access is rejected by compliance.",
+          "answer": "Temporary admin access is rejected by compliance.",
           "distractorAntipattern": "Admin Privilege Shortcut"
         },
         {
           "id": "st_security_p6",
-          "label": "Does marketing want a public Impant Registration site?",
+          "label": "Can restriction rules alone replace account-scoped sharing for partners?",
           "tier": "distractor",
-          "answer": "Marketing site scope is out of this station.",
-          "distractorAntipattern": "Scope Creep Hook"
+          "answer": "Restriction rules are not configured for Implant Registration in this org.",
+          "distractorAntipattern": "Restriction Rule Shortcut"
         },
         {
           "id": "st_security_p7",
-          "label": "Which color theme do hospital portals prefer?",
+          "label": "Is one Experience Cloud site without account mapping enough for all hospitals?",
           "tier": "distractor",
-          "answer": "Branding is not a sharing decision.",
-          "distractorAntipattern": "Branding Distraction"
+          "answer": "A shared site shell is planned, but account mapping for record access is still required.",
+          "distractorAntipattern": "Site Shell As Security"
         }
       ],
       "options": [
         {
           "id": "st_security_a",
-          "label": "Experience Cloud sharing sets scoped to each hospital Account hierarchy",
+          "label": "Sharing sets matching Implant Registration to each partner's hospital Account",
           "isCorrect": true,
-          "rationale": "Platform sharing architecture uses ownership and sharing sets so external users see only records related to their Account tree, including API access—not just UI filters.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals#platform-sharing-architecture"
+          "rationale": "High-volume Experience Cloud licenses do not use the role-based sharing model; sharing sets grant access by foreign-key match on Account lookups so each hospital partner sees only related implant records, including through the API.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/platform-sharing-architecture.html#users-and-licenses"
         },
         {
           "id": "st_security_b",
@@ -162,10 +166,10 @@
         },
         {
           "id": "st_security_c",
-          "label": "Grant Modify All Data on Implant Registration to a single partner profile",
+          "label": "One public group of all partners with a criteria-based sharing rule",
           "isCorrect": false,
-          "distractorAntipattern": "Overprivileged Partner Profile",
-          "rationale": "A shared Modify All profile collapses hospital boundaries and violates least privilege for external users."
+          "distractorAntipattern": "Broad Partner Group Share",
+          "rationale": "A single all-partners group collapses hospital boundaries, so criteria sharing still grants peer-hospital implant rows to every partner user in the group."
         }
       ]
     },
@@ -210,17 +214,17 @@
         },
         {
           "id": "st_devops_p6",
-          "label": "Does the CFO prefer Change Sets because they look free?",
+          "label": "Must every concurrent stream use a Full Copy sandbox?",
           "tier": "distractor",
-          "answer": "Cost optics must not dictate the promotion model.",
-          "distractorAntipattern": "Change Set Cost Myth"
+          "answer": "Finance rejected five Full Copy sandboxes; Partial Copy remains available for integration test.",
+          "distractorAntipattern": "Full Copy Over-Provision"
         },
         {
           "id": "st_devops_p7",
-          "label": "Who brings snacks to release day?",
+          "label": "Can unlocked packages replace source control for this release train?",
           "tier": "distractor",
-          "answer": "Irrelevant.",
-          "distractorAntipattern": "Ritual Fishing"
+          "answer": "Unlocked packages are allowed later; source control remains the system of record for this train.",
+          "distractorAntipattern": "Package Instead Of Source"
         }
       ],
       "options": [
@@ -228,8 +232,8 @@
           "id": "st_devops_a",
           "label": "Source-driven CI/CD with a sandbox strategy mapped to team streams",
           "isCorrect": true,
-          "rationale": "Operational Excellence DevOps patterns treat source as the system of record and size sandbox topology to concurrent workstreams so monthly promotions stay automated and reviewable.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-devops-patterns.html#cicd-pipelines"
+          "rationale": "Sandbox strategy pairs source-driven daily work with isolated Developer sandboxes per stream and a shared integration sandbox, so four feature teams plus integration test do not collide before the monthly cutover.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence.html#sandbox-strategy"
         },
         {
           "id": "st_devops_b",

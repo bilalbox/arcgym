@@ -1,0 +1,411 @@
+{
+  "id": "AGD-00403",
+  "title": "Northline Cart Abandon",
+  "format": "Case_File",
+  "domain": "Data_Architecture",
+  "domainLabel": "Case File \u2014 Northline",
+  "difficulty": "Lead_CTA",
+  "pillars": [
+    "Reliability",
+    "Trust",
+    "Operational_Excellence"
+  ],
+  "version": 3,
+  "status": "published",
+  "brief": {
+    "title": "Northline Outfitters",
+    "synopsis": "Northline Outfitters is a B2C apparel brand running Salesforce CRM and Marketing Cloud Engagement. Shoppers browse and build carts on a public storefront, and leadership wants Data 360 to recover abandoned carts with a personalized SMS or email while the shopper is still deciding. CRM Contacts store known shopper emails and phones. Merchandising analytics already runs from a warehouse, and marketing already runs an abandon recovery journey in Marketing Cloud. You will recommend how Northline should ingest, model, unify, detect, and act on cart abandon under those constraints."
+  },
+  "stations": [
+    {
+      "id": "st_ingest",
+      "domain": "Data_Architecture",
+      "boardDomain": "Integration",
+      "prompt": "Cart events must be ingested into Data 360 so that customers with abandoned carts can be identified and activated into Marketing Cloud. Which ingestion approach should the architect choose?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_ingest_p1",
+          "label": "Does the public website already emit interaction events that can be captured by an SDK?",
+          "tier": "pivotal",
+          "answer": "Yes. The storefront already fires cart and line events, and engineering can place the Salesforce Interactions SDK on those pages."
+        },
+        {
+          "id": "st_ingest_p2",
+          "label": "What latency does merchandising accept for the abandon offer path?",
+          "tier": "pivotal",
+          "answer": "Offers must be eligible within about 15 minutes of abandon; next-morning delivery is treated as a failed recovery."
+        },
+        {
+          "id": "st_ingest_p3",
+          "label": "Do the same cart events already land in Snowflake for analytics?",
+          "tier": "useful",
+          "answer": "Yes. A nightly warehouse load already stores browse and cart history for merchandising reports."
+        },
+        {
+          "id": "st_ingest_p4",
+          "label": "Can Northline buy more Data 360 credits this quarter solely for ingestion experiments?",
+          "tier": "distractor",
+          "answer": "Credit spend is capped at the current entitlement for this quarter.",
+          "distractorAntipattern": "Credit Budget Escape"
+        },
+        {
+          "id": "st_ingest_p5",
+          "label": "Is Marketing Cloud Personalization already licensed for the storefront?",
+          "tier": "distractor",
+          "answer": "Procurement has not finished the Personalization entitlement review.",
+          "distractorAntipattern": "License First Thinking"
+        },
+        {
+          "id": "st_ingest_p6",
+          "label": "Can Zero Copy on Snowflake satisfy both merchandising analytics and the abandon offer path?",
+          "tier": "distractor",
+          "answer": "Merchandising wants warehouse freshness; abandon recovery still has a separate same-hour latency target.",
+          "distractorAntipattern": "Federation For Triggers"
+        },
+        {
+          "id": "st_ingest_p7",
+          "label": "Does the CEO require every Salesforce object to land only in Snowflake?",
+          "tier": "distractor",
+          "answer": "No warehouse mandate has been issued for the abandon path.",
+          "distractorAntipattern": "Executive Preference Drift"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_ingest_a",
+          "label": "Nightly batch stream from Snowflake cart tables into Data 360 DLOs",
+          "isCorrect": false,
+          "distractorAntipattern": "Batch Cadence Mismatch",
+          "rationale": "Batch loads refresh on a schedule measured in hours, so cart events miss the same-hour recovery window even when the warehouse already holds the rows."
+        },
+        {
+          "id": "st_ingest_b",
+          "label": "Web SDK streaming through the Personalization Connector into DLOs",
+          "isCorrect": true,
+          "rationale": "SDK capture streams behavioral events into Data 360 through the Personalization Connector so each cart action is available within seconds for real-time segmentation and triggered personalization, matching the same-hour abandon SLA.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data360_integration_patterns_and_practices.html#real-time-web-and-mobile-behavior-ingestion"
+        },
+        {
+          "id": "st_ingest_c",
+          "label": "Zero Copy federation querying Snowflake cart tables at offer time",
+          "isCorrect": false,
+          "distractorAntipattern": "Federation For Triggers",
+          "rationale": "Zero Copy removes duplicate storage for analytics freshness tradeoffs; it does not replace a continuous low-latency event pipeline for same-hour abandon offers."
+        }
+      ]
+    },
+    {
+      "id": "st_map",
+      "domain": "Data_Architecture",
+      "boardDomain": "Data",
+      "prompt": "Stream DLOs hold anonymous cart lines and known CRM party rows that must unify later. How should the architect map those DLOs before identity resolution?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_map_p1",
+          "label": "Must known CRM Contact party rows unify with website shoppers on standard Individual profiles?",
+          "tier": "pivotal",
+          "answer": "Yes. Known Contacts must land on standard Individual and contact-point DMOs so identity resolution can link them to web events."
+        },
+        {
+          "id": "st_map_p2",
+          "label": "Will mapping change after go-live, requiring reprocessing of already ingested cart rows?",
+          "tier": "pivotal",
+          "answer": "Yes. The team expects iterative map fixes and must reprocess retained stream DLOs after each change."
+        },
+        {
+          "id": "st_map_p3",
+          "label": "Are cart line attributes needed as engagement history on the unified profile?",
+          "tier": "useful",
+          "answer": "Yes. Line SKU, cart id, and abandon timestamp must remain queryable against the unified individual."
+        },
+        {
+          "id": "st_map_p4",
+          "label": "Should every field name mirror the website JSON keys in a custom DMO?",
+          "tier": "distractor",
+          "answer": "Website JSON keys still change by release; naming parity is not a stated requirement.",
+          "distractorAntipattern": "Source Schema Mirror"
+        },
+        {
+          "id": "st_map_p5",
+          "label": "Can the team delete stream DLOs after the first successful map to save storage?",
+          "tier": "distractor",
+          "answer": "Finance asked about storage cost, but as-ingested cart rows must stay available for remaps.",
+          "distractorAntipattern": "Raw Layer Deletion"
+        },
+        {
+          "id": "st_map_p6",
+          "label": "Does marketing require Tableau labels on every DMO field before go-live?",
+          "tier": "distractor",
+          "answer": "Tableau field labeling is scheduled for a later analytics sprint.",
+          "distractorAntipattern": "BI Label Drift"
+        },
+        {
+          "id": "st_map_p7",
+          "label": "Must the Sales Data Kit overwrite existing Contact mappings in this release?",
+          "tier": "distractor",
+          "answer": "No kit deploy is scheduled; existing CRM Contact maps must stay intact.",
+          "distractorAntipattern": "Kit Mapping Overwrite"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_map_a",
+          "label": "Keep stream DLOs and map them to standard Customer 360 DMOs",
+          "isCorrect": true,
+          "rationale": "DLOs are the persistent as-ingested layer for reprocessing, and mapping them to the standard Customer 360 DMO model creates the harmonized layer identity resolution and activation consume.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+        },
+        {
+          "id": "st_map_b",
+          "label": "Map stream DLOs only to custom DMOs that mirror website JSON keys",
+          "isCorrect": false,
+          "distractorAntipattern": "Source-Shaped Custom Model",
+          "rationale": "Custom source-shaped DMOs leave party and engagement data outside the standard Customer 360 model that unification and activation treat as the single source of truth."
+        },
+        {
+          "id": "st_map_c",
+          "label": "Collapse carts into one derived DLO and delete the stream DLOs",
+          "isCorrect": false,
+          "distractorAntipattern": "Raw Layer Deletion",
+          "rationale": "Derived DLOs are built on source DLOs; deleting the stream layer removes the as-ingested rows needed when mappings change."
+        }
+      ]
+    },
+    {
+      "id": "st_unify",
+      "domain": "Data_Architecture",
+      "boardDomain": "Data",
+      "prompt": "Abandon SMS must address the shopper who owns the cart. Which identity resolution approach meets that person-level criterion?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_unify_p1",
+          "label": "After login, do website events carry a known email that also exists on CRM Contact?",
+          "tier": "pivotal",
+          "answer": "Yes. Authenticated sessions stamp normalized email on cart events, and CRM Contacts already store that email."
+        },
+        {
+          "id": "st_unify_p2",
+          "label": "Do multiple adults in one household commonly share a single phone number on file?",
+          "tier": "pivotal",
+          "answer": "Yes. About one in five households lists one shared landline across several adults who shop separately."
+        },
+        {
+          "id": "st_unify_p3",
+          "label": "Is loyalty ID available on both CRM and authenticated web sessions?",
+          "tier": "useful",
+          "answer": "Yes for enrolled shoppers; guests often have email only after login."
+        },
+        {
+          "id": "st_unify_p4",
+          "label": "Can marketing accept SMS to any adult in the household?",
+          "tier": "distractor",
+          "answer": "No. Compliance requires the offer go to the cart owner.",
+          "distractorAntipattern": "Household Broadcast Shortcut"
+        },
+        {
+          "id": "st_unify_p5",
+          "label": "Should reconciliation set consent to Most Recently Updated to fix merges?",
+          "tier": "distractor",
+          "answer": "Consent reconciliation is still unset; matching rules are the open decision.",
+          "distractorAntipattern": "Reconciliation As Match Fix"
+        },
+        {
+          "id": "st_unify_p6",
+          "label": "Does the brand prefer Household as the default unified entity for all use cases?",
+          "tier": "distractor",
+          "answer": "No default entity preference has been recorded for abandon SMS.",
+          "distractorAntipattern": "Default Entity Drift"
+        },
+        {
+          "id": "st_unify_p7",
+          "label": "Is fuzzy first-name matching approved when email is missing on guest carts?",
+          "tier": "distractor",
+          "answer": "Fuzzy name matching on guests was rejected in privacy review.",
+          "distractorAntipattern": "Fuzzy Guest Matching"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_unify_a",
+          "label": "Individual Matching on exact Normalized Phone Number alone",
+          "isCorrect": false,
+          "distractorAntipattern": "Phone-Only Over-Clustering",
+          "rationale": "Identity resolution treats every set of records a rule matches as one entity, so a phone-only rule merges every adult who shares the household landline into one Unified Individual and mixes their carts and consent."
+        },
+        {
+          "id": "st_unify_b",
+          "label": "Individual Matching on exact email and loyalty ID identifiers",
+          "isCorrect": true,
+          "rationale": "Individual Matching builds Unified Individual profiles by linking personal identifiers such as emails and loyalty IDs to one person, which keeps the cart owner distinct when phones are shared across a household.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#identity-resolution-types"
+        },
+        {
+          "id": "st_unify_c",
+          "label": "Household Matching that activates SMS against the household group",
+          "isCorrect": false,
+          "distractorAntipattern": "Household Activation Target",
+          "rationale": "Household Matching aggregates related Unified Individuals into a group, so activating against the household cannot address the single cart owner the SMS must reach."
+        }
+      ]
+    },
+    {
+      "id": "st_detect",
+      "domain": "Data_Architecture",
+      "boardDomain": "Solution_Architecture",
+      "prompt": "Northline must detect each cart abandoned in the last 20 minutes and act per cart. Which Data 360 compute should produce that signal?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_detect_p1",
+          "label": "What lookback and publish cadence does the existing abandoned-browser segment use?",
+          "tier": "pivotal",
+          "answer": "It selects carts abandoned in the last 7 days and publishes on an hourly Rapid Publish schedule into Marketing Cloud journeys."
+        },
+        {
+          "id": "st_detect_p2",
+          "label": "Must the trigger fire once per abandoned cart record rather than as a bulk audience membership refresh?",
+          "tier": "pivotal",
+          "answer": "Yes. Each abandon needs its own near-real-time signal with cart id and line context, not a nightly audience list."
+        },
+        {
+          "id": "st_detect_p3",
+          "label": "Is a 20-minute streaming time window acceptable for the abandon definition?",
+          "tier": "useful",
+          "answer": "Yes. Product defines abandon as no checkout within 20 minutes after the last cart update."
+        },
+        {
+          "id": "st_detect_p4",
+          "label": "Can marketing keep the 7-day lookback if SMS simply sends faster?",
+          "tier": "distractor",
+          "answer": "Marketing proposed it; compliance still requires a fresh 20-minute abandon definition.",
+          "distractorAntipattern": "Channel Speed Myth"
+        },
+        {
+          "id": "st_detect_p5",
+          "label": "Should Streaming Activation of the abandon audience replace the insight?",
+          "tier": "distractor",
+          "answer": "Activation destinations are still open; the open question is how the abandon signal is computed.",
+          "distractorAntipattern": "Activation Before Signal"
+        },
+        {
+          "id": "st_detect_p6",
+          "label": "Does the weekly journey remain the system of record for abandon membership?",
+          "tier": "distractor",
+          "answer": "Retention wants a near-real-time path; the weekly journey is not mandated as the signal source.",
+          "distractorAntipattern": "Legacy Journey Lock-In"
+        },
+        {
+          "id": "st_detect_p7",
+          "label": "Can a batch Calculated Insight on a one-minute schedule meet the window?",
+          "tier": "distractor",
+          "answer": "Batch CI schedules discussed so far are hourly or slower.",
+          "distractorAntipattern": "Batch Cost Myth"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_detect_a",
+          "label": "Streaming Insight over a 20-minute cart-event window",
+          "isCorrect": true,
+          "rationale": "Streaming Insights compute metrics from real-time event data with Spark Structured Streaming for immediate low-latency engagement, so a 20-minute abandon window can fire per cart instead of waiting on batch schedules.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#calculated-insights"
+        },
+        {
+          "id": "st_detect_b",
+          "label": "Batch Calculated Insight feeding the 7-day abandoned-browser segment",
+          "isCorrect": false,
+          "distractorAntipattern": "Batch Aggregation For Triggers",
+          "rationale": "Batch Calculated Insights run as periodic Spark jobs for high-volume aggregation, so the 7-day hourly audience cannot express a per-cart 20-minute abandon."
+        },
+        {
+          "id": "st_detect_c",
+          "label": "Rapid Publish segment of carts abandoned within 20 minutes",
+          "isCorrect": false,
+          "distractorAntipattern": "Segment Cadence Mismatch",
+          "rationale": "Rapid Publish is the fastest standard segment cadence at every 1 to 4 hours, so membership still lags a per-cart 20-minute abandon window Streaming Insights are built to express."
+        }
+      ]
+    },
+    {
+      "id": "st_act",
+      "domain": "Data_Architecture",
+      "boardDomain": "Integration",
+      "prompt": "A Streaming Insight marks each abandoned cart. How should Data 360 start the CRM Flow that sends the per-cart offer?",
+      "probeBudget": 3,
+      "probes": [
+        {
+          "id": "st_act_p1",
+          "label": "Must the Flow start per abandoned cart within about a minute of the insight crossing?",
+          "tier": "pivotal",
+          "answer": "Yes. The offer Flow must run once per cart with cart id context within roughly 60 seconds of the streaming signal."
+        },
+        {
+          "id": "st_act_p2",
+          "label": "Is the current marketing path an audience publish into a classic journey after activation completes?",
+          "tier": "pivotal",
+          "answer": "Yes. Today Marketing Cloud journeys start from activated audience membership, not from per-record streaming events."
+        },
+        {
+          "id": "st_act_p3",
+          "label": "Does the CRM already host the SMS/email offer Flow the retention team wants to reuse?",
+          "tier": "useful",
+          "answer": "Yes. A packaged Flow already sends the offer once it receives cart id and contact keys."
+        },
+        {
+          "id": "st_act_p4",
+          "label": "Can Northline export the audience to S3 and webhook the Flow?",
+          "tier": "distractor",
+          "answer": "Security rejected file-export relays for this offer because of minutes-to-hours latency.",
+          "distractorAntipattern": "File Export Relay"
+        },
+        {
+          "id": "st_act_p5",
+          "label": "Should Apex poll the Query API every few seconds for new insight rows?",
+          "tier": "distractor",
+          "answer": "Polling was rejected in design review for limit and delay reasons.",
+          "distractorAntipattern": "API Polling Loop"
+        },
+        {
+          "id": "st_act_p6",
+          "label": "Should Streaming Activation to Marketing Cloud replace the CRM Flow trigger?",
+          "tier": "distractor",
+          "answer": "Marketing Cloud streaming activation is available, but the retention Flow in CRM must still start per cart.",
+          "distractorAntipattern": "Channel Swap Drift"
+        },
+        {
+          "id": "st_act_p7",
+          "label": "Must Journey Builder remain the only UI that can start an offer?",
+          "tier": "distractor",
+          "answer": "No UI mandate was recorded; Journey Builder is preferred by some marketers only.",
+          "distractorAntipattern": "UI Preference Drift"
+        }
+      ],
+      "options": [
+        {
+          "id": "st_act_a",
+          "label": "Activation-Triggered Flow after the abandon audience publish completes",
+          "isCorrect": false,
+          "distractorAntipattern": "Audience Publish Relay",
+          "rationale": "Activation-Triggered Flows start only after activation populates an Audience DMO, so the offer waits on audience publish rather than the per-cart streaming crossing."
+        },
+        {
+          "id": "st_act_b",
+          "label": "Streaming Activation of the abandon audience into Marketing Cloud",
+          "isCorrect": false,
+          "distractorAntipattern": "Audience Streaming Detour",
+          "rationale": "Streaming Activation still delivers audience membership to a destination API, so the CRM offer Flow never receives the per-cart insight threshold crossing inside the one-minute window."
+        },
+        {
+          "id": "st_act_c",
+          "label": "Data Action on insight threshold targeting the offer Flow",
+          "isCorrect": true,
+          "rationale": "Data Actions watch incremental changes against rules such as threshold crossings and send enriched events to destinations like Salesforce Flow, which matches per-cart sub-minute orchestration.",
+          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-actions"
+        }
+      ]
+    }
+  ]
+}

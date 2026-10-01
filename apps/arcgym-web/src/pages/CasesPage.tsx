@@ -24,7 +24,7 @@ export const CasesPage: React.FC<CasesPageProps> = ({
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">Cases</h1>
         <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
-          Brief, Probe Budget, three Stations.
+          Brief, Probe Budget, three or more Stations.
         </p>
       </div>
 

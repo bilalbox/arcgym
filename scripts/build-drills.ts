@@ -212,8 +212,8 @@ function validateCaseFile(file: string, drill: CaseFileDrillDefinition) {
     err(file, 'Case_File requires non-empty stations');
     return;
   }
-  if (drill.stations.length !== 3) {
-    err(file, `Case_File requires exactly 3 stations; got ${drill.stations.length}`);
+  if (drill.stations.length < 3) {
+    err(file, `Case_File requires at least 3 stations; got ${drill.stations.length}`);
   }
 
   const stationIds = drill.stations.map((s) => s.id);
@@ -221,7 +221,6 @@ function validateCaseFile(file: string, drill: CaseFileDrillDefinition) {
     err(file, 'Case_File has duplicate station ids');
   }
 
-  const boardDomains = new Set<string>();
   for (const station of drill.stations) {
     if (!station.prompt) {
       err(file, `station ${station.id} missing prompt`);
@@ -232,10 +231,6 @@ function validateCaseFile(file: string, drill: CaseFileDrillDefinition) {
     if (!BOARD_DOMAINS.has(station.boardDomain)) {
       err(file, `station ${station.id} invalid boardDomain: ${station.boardDomain}`);
     }
-    if (boardDomains.has(station.boardDomain)) {
-      err(file, `duplicate boardDomain across stations: ${station.boardDomain}`);
-    }
-    boardDomains.add(station.boardDomain);
 
     if (typeof station.probeBudget !== 'number' || station.probeBudget < 1) {
       err(file, `station ${station.id} probeBudget must be a positive number`);

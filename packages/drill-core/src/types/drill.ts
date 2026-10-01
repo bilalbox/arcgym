@@ -166,7 +166,7 @@ export interface RapidFireDrillDefinition extends DrillDefinitionBase {
 export interface CaseFileDrillDefinition extends DrillDefinitionBase {
   format: 'Case_File';
   brief: CaseBriefDTO;
-  /** Always exactly 3 stations under one Brief. */
+  /** At least 3 stations under one Brief. */
   stations: CaseFileStationDTO[];
 }
 

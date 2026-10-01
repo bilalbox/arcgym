@@ -33,7 +33,7 @@ A high-tempo multi-rep architectural decision workout. Each Rapid Fire round com
 _Avoid_: Single-question rapid fire, partial streak award, flashcard round, separate Diagram runner
 
 ### Case File Drill
-An Evaluation-scale architectural judgment exercise: a Brief (fictional narrative), three Stations under that Brief, a scarce Probe Budget of clarifying questions that unlock scenario facts at each Station, then a confidence-gated recommendation. Outside the daily Rapid Fire streak. Always exactly three Stations — never a solo station.
+An Evaluation-scale architectural judgment exercise: a Brief (fictional narrative), three or more Stations under that Brief, a scarce Probe Budget of clarifying questions that unlock scenario facts at each Station, then a confidence-gated recommendation. Outside the daily Rapid Fire streak. Always at least three Stations — never a solo station.
 _Avoid_: Board Probe, Board Eval, Scenario, Currency, oral defense, free-text presentation, full Review Board clock, solo station
 
 ### Brief

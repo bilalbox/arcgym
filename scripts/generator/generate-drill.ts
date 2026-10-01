@@ -69,13 +69,13 @@ interface PromptArgs {
   format: (typeof SUPPORTED_FORMATS)[number];
   difficulty: (typeof DIFFICULTIES)[number];
   steps: number;
-  /** Case_File: exactly 3 (Case File). Defaults from --steps when unset. */
+  /** Case_File: station count (>= 3). Defaults to 3 when unset. */
   stations?: number;
   id?: string;
   topK: number;
   fromCard?: string;
-  /** Overrides the ChromaDB search phrase (defaults to the card's official_doc_query, then the topic). */
-  query?: string;
+  /** Overrides the ChromaDB search phrase(s). Multiple --query flags are merged and deduped. */
+  queries: string[];
 }
 
 function fail(message: string): never {
@@ -90,6 +90,7 @@ function parsePromptArgs(args: string[]): PromptArgs {
     difficulty: 'Lead_CTA',
     steps: 3,
     topK: 5,
+    queries: [],
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -115,8 +116,8 @@ function parsePromptArgs(args: string[]): PromptArgs {
       result.steps = parseInt(args[++i], 10);
     } else if (arg === '--stations' && value) {
       const n = parseInt(args[++i], 10);
-      if (n !== 3) {
-        fail('--stations must be 3');
+      if (!Number.isFinite(n) || n < 3) {
+        fail('--stations must be an integer >= 3');
       }
       result.stations = n;
     } else if (arg === '--id' && value) {
@@ -126,7 +127,7 @@ function parsePromptArgs(args: string[]): PromptArgs {
     } else if (arg === '--from-card' && value) {
       result.fromCard = args[++i];
     } else if (arg === '--query' && value) {
-      result.query = args[++i];
+      result.queries.push(args[++i]);
     } else {
       fail(`Unknown or incomplete argument: ${arg}`);
     }
@@ -165,6 +166,10 @@ function getNextDrillId(): string {
     if (num > maxNum && num < ceiling) maxNum = num;
   }
   return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
+}
+
+function chunkKey(c: ChromaChunk): string {
+  return `${c.metadata.url}::${c.metadata.section_title}::${c.content.slice(0, 80)}`;
 }
 
 function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[] {
@@ -215,6 +220,20 @@ function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[
         cosine_similarity: 0.8,
       }));
   }
+}
+
+function queryChromaMerged(queries: string[], topK: number, pillar?: string): ChromaChunk[] {
+  const seen = new Set<string>();
+  const merged: ChromaChunk[] = [];
+  for (const query of queries) {
+    for (const chunk of queryChroma(query, topK, pillar)) {
+      const key = chunkKey(chunk);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(chunk);
+    }
+  }
+  return merged;
 }
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -333,6 +352,7 @@ function buildCaseFileSchema(
   sourceCardLine: string,
   citationUrl: string,
 ): string {
+  const stationCount = args.stations ?? 3;
   return `{
   "id": "${drillId}",
   "title": "Clear Evaluation-scale Case File title",
@@ -400,7 +420,7 @@ function buildCaseFileSchema(
     }
   ]
 }
-Write exactly 3 stations with distinct boardDomain values from System_Architecture | Security | Data | Solution_Architecture | Integration | Development_Lifecycle | Communication. Each station needs ~7 probes (exactly 2 pivotal), probeBudget 3, and 3 recommendation options.`;
+Write exactly ${stationCount} stations. boardDomain values come from System_Architecture | Security | Data | Solution_Architecture | Integration | Development_Lifecycle | Communication — prefer distinct values when stations span different board areas; reuse is allowed when several stations sit in one board domain. Each station needs ~7 probes (exactly 2 pivotal), probeBudget 3, and 3 recommendation options.`;
 }
 
 function buildPrompt(
@@ -457,7 +477,7 @@ ${c.content}
 
   const formatNotes =
     args.format === 'Case_File'
-      ? `- Stations: always 3 under one Brief
+      ? `- Stations: ${args.stations ?? 3} under one Brief (minimum 3)
 - Probe Budget: 3 picks from ~7 clarifying questions per station
 - Dual scoring: probe quality + confidence-gated recommendation
 - Grounding: only final correct options cite chunks; probe answers are scenario fiction`
@@ -513,11 +533,9 @@ function runPrompt(argv: string[]) {
       `[Generator] Card ${card.card_id} (${card.naive_approaches.length} naive approaches)`,
     );
 
-  const chunks = queryChroma(
-    args.query ?? card?.official_doc_query ?? args.topic,
-    args.topK,
-    args.pillar,
-  );
+  const searchQueries =
+    args.queries.length > 0 ? args.queries : [card?.official_doc_query ?? args.topic];
+  const chunks = queryChromaMerged(searchQueries, args.topK, args.pillar);
   if (chunks.length === 0) {
     fail('No official chunks retrieved. Retry with --query "<better doc search>".');
   }

@@ -10,10 +10,10 @@ You are the model. `generate-drill.ts prompt` retrieves official chunks and prin
 
    ```bash
    mkdir -p /tmp/arcgym
-   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<id> [--format Rapid_Fire|Case_File] > /tmp/arcgym/drill-prompt.md
+   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<id> [--format Rapid_Fire|Case_File] [--stations N] > /tmp/arcgym/drill-prompt.md
    ```
 
-   Stderr lists the drill id and the retrieved chunk titles. Rerun with `--query "<sharper doc search>"` until the chunks govern the problem. Done when every step or station you plan to write has a chunk that states its governing guidance. Case Files always have a Brief and exactly three Stations.
+   Stderr lists the drill id and the retrieved chunk titles. Rerun with one or more `--query "<sharper doc search>"` flags until the chunks govern the problem (multiple `--query` values are merged and deduped—needed when Case File stations span topics). Done when every step or station you plan to write has a chunk that states its governing guidance. Case Files always have a Brief and at least three Stations (`--stations N`, default 3).
 
 3. **Write the drill** as the prompt's answer, saved to `/tmp/arcgym/<drill id>.json`. Done when every correct option is grounded (its rationale restates what its cited chunk says) and ingest reports no wording findings, or, when the prompt's error rule applies, you have told the user which guidance is missing and stopped. Case File probe answers are scenario fiction and must not leak into `brief.synopsis`.
 
