@@ -362,13 +362,16 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             }
 
             return (
-              <div key={opt.id} className={`rounded-xl border ${containerStyle}`}>
+              <div
+                key={opt.id}
+                className={`rounded-xl border ${containerStyle} flex items-stretch`}
+              >
                 <button
                   type="button"
                   disabled={isSubmitted}
                   aria-pressed={isSelected}
                   onClick={() => handleSelectOption(opt.id)}
-                  className={`w-full text-left p-4 transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 disabled:cursor-default ${
+                  className={`min-w-0 flex-1 text-left p-4 transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 disabled:cursor-default ${
                     opt.diagramUrl || (isSubmitted && opt.distractorAntipattern) ? 'pb-2.5' : ''
                   }`}
                 >
@@ -404,26 +407,27 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                       </div>
                     )}
                   </div>
+                </button>
 
-                  {opt.diagramUrl && (
+                {opt.diagramUrl && (
+                  <div className="shrink-0 flex items-start pt-3 pr-3">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
+                      onClick={() => {
                         setInspectDiagram({
                           url: opt.diagramUrl as string,
                           label: `${String.fromCharCode(65 + index)}: ${opt.label}`,
                         });
                       }}
-                      className="shrink-0 h-8 px-2 text-xs text-miro-slate hover:text-miro-primary flex items-center gap-1"
+                      className="h-8 px-2 text-xs text-miro-slate hover:text-miro-primary flex items-center gap-1"
                     >
                       <Expand className="h-3.5 w-3.5" />
                       Inspect
                     </Button>
-                  )}
-                </button>
+                  </div>
+                )}
               </div>
             );
           })}

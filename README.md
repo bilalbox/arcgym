@@ -13,7 +13,8 @@ Progress and confidence calibration live in the browser. There is no Salesforce 
 | App | React 19 + Vite 8 (`apps/arcgym-web`) |
 | Design | Miro-inspired system (see [`design.md`](./design.md)) via Tailwind CSS 4 + Radix primitives |
 | Domain | `@arcgym/drill-core` — scoring, calibration, recommendation types |
-| Hosting & Analytics | Cloudflare Pages + Pages Functions + KV (Wrangler 4) + Cloudflare Web Analytics (cookieless) |
+| Diagrams | `@arcgym/diagrams` — React SVG topology primitives, export, L1/L2 geometry QA |
+| Hosting & Analytics | Cloudflare Pages + Pages Functions + KV at **https://practice.23p.tech** (Wrangler 4) + Cloudflare Web Analytics (cookieless) |
 | Content | JSON drills under `content/drills/`, compiled by `scripts/build-drills.ts` |
 
 ## Pipeline Architecture
@@ -121,6 +122,7 @@ flowchart TD
 ```
 apps/arcgym-web/     Cloudflare Pages React app (UI + Functions + /privacy route)
 packages/drill-core/ Pure TypeScript domain library (scoring, calibration, recommendations)
+packages/diagrams/   React SVG topology primitives, SVG export, L1/L2 geometry QA
 content/drills/      Authoritative drill JSON (38 drills across 6 architectural domains)
 scripts/             Drill build, KV seed, RAG crawler, Friction Card tooling, drill generator
 data/                Local-only RAG corpus, Trailhead SQLite, and Friction Card catalog (gitignored)
@@ -156,13 +158,19 @@ pnpm format
 # Compile drills → web data/public, typecheck, Biome check, then build packages + web
 pnpm build
 
-# Unit tests (drill-core)
+# Export authored diagrams → apps/arcgym-web/public/diagrams/
+pnpm diagrams:export
+
+# L1/L2 geometry QA on package-emitted SVGs (Playwright + Chromium)
+pnpm test:diagram-qa
+
+# Unit tests (drill-core) + diagram QA when run recursively
 pnpm test
 
 # Preview production build
 pnpm preview
 
-# Automatically runs typecheck, Biome checks, and build before deploying to Cloudflare Pages
+# Automatically runs typecheck, Biome checks, build, and diagram QA before deploying to Cloudflare Pages
 pnpm deploy
 
 # Push compiled drills into KV (after build)
@@ -174,6 +182,13 @@ pnpm seed
 ```bash
 # Validate & emit published drills into canonical-drills.json only
 pnpm build:drills
+
+# Diagram authoring happy path:
+# 1. Author topology TSX in packages/diagrams/src/authored/ (import from @arcgym/diagrams primitives)
+# 2. Register the id in packages/diagrams/src/registry.ts and the export script
+# 3. pnpm diagrams:export  → writes apps/arcgym-web/public/diagrams/<id>.svg
+# 4. Set diagramUrl on the option / exhibit in content/drills/
+# 5. pnpm build:drills && pnpm test:diagram-qa
 
 # Toggle editorial status (draft stays in content/; published enters the learner catalog)
 pnpm drill:status --status draft --all

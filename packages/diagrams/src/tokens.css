@@ -1,0 +1,67 @@
+/* ArcGym diagram tokens — light (default) and dark. */
+
+:root,
+.diagram-theme-light {
+  --diagram-arcgym-canvas-bg: #f8fafc;
+  --diagram-arcgym-canvas-border: #e2e8f0;
+  --diagram-arcgym-zone-bg: #ffffff;
+  --diagram-arcgym-zone-border: #cbd5e1;
+  --diagram-arcgym-zone-header-bg: #f1f5f9;
+  --diagram-arcgym-card-bg: #ffffff;
+  --diagram-arcgym-card-border: #cbd5e1;
+  --diagram-arcgym-card-header-bg: #f1f5f9;
+  --diagram-arcgym-card-title: #0f172a;
+  --diagram-arcgym-card-subtitle: #64748b;
+  --diagram-arcgym-badge-bg: #f8fafc;
+  --diagram-arcgym-badge-border: #cbd5e1;
+  --diagram-arcgym-badge-text: #475569;
+  --diagram-arcgym-line: #64748b;
+  --diagram-arcgym-line-text: #475569;
+  --diagram-arcgym-pill-bg: #ffffff;
+  --diagram-arcgym-pill-border: #cbd5e1;
+  --diagram-arcgym-warn-bg: #fef2f2;
+  --diagram-arcgym-warn-border: #dc2626;
+  --diagram-arcgym-warn-header-bg: #fee2e2;
+  --diagram-arcgym-warn-text: #991b1b;
+  --diagram-arcgym-warn-subtext: #b91c1c;
+  --diagram-arcgym-family-sky: #0284c7;
+  --diagram-arcgym-family-teal: #0d9488;
+  --diagram-arcgym-family-violet: #7c3aed;
+  --diagram-arcgym-family-rose: #e11d48;
+  --diagram-arcgym-family-amber: #d97706;
+  --diagram-arcgym-family-lime: #65a30d;
+  --diagram-arcgym-family-slate: #64748b;
+}
+
+.diagram-theme-dark,
+[data-theme="dark"] {
+  --diagram-arcgym-canvas-bg: #0b1118;
+  --diagram-arcgym-canvas-border: #1e293b;
+  --diagram-arcgym-zone-bg: #111927;
+  --diagram-arcgym-zone-border: #243447;
+  --diagram-arcgym-zone-header-bg: #192535;
+  --diagram-arcgym-card-bg: #141e2c;
+  --diagram-arcgym-card-border: #2d3f55;
+  --diagram-arcgym-card-header-bg: #1e2b3c;
+  --diagram-arcgym-card-title: #f1f5f9;
+  --diagram-arcgym-card-subtitle: #94a3b8;
+  --diagram-arcgym-badge-bg: #0b1118;
+  --diagram-arcgym-badge-border: #2d3f55;
+  --diagram-arcgym-badge-text: #cbd5e1;
+  --diagram-arcgym-line: #94a3b8;
+  --diagram-arcgym-line-text: #cbd5e1;
+  --diagram-arcgym-pill-bg: #141e2c;
+  --diagram-arcgym-pill-border: #2d3f55;
+  --diagram-arcgym-warn-bg: #2d1217;
+  --diagram-arcgym-warn-border: #ef4444;
+  --diagram-arcgym-warn-header-bg: #431720;
+  --diagram-arcgym-warn-text: #fecdd3;
+  --diagram-arcgym-warn-subtext: #fca5a5;
+  --diagram-arcgym-family-sky: #38bdf8;
+  --diagram-arcgym-family-teal: #2dd4bf;
+  --diagram-arcgym-family-violet: #a78bfa;
+  --diagram-arcgym-family-rose: #fb7185;
+  --diagram-arcgym-family-amber: #fbbf24;
+  --diagram-arcgym-family-lime: #a3e635;
+  --diagram-arcgym-family-slate: #94a3b8;
+}

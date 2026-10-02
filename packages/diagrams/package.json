@@ -1,0 +1,39 @@
+{
+  "name": "@arcgym/diagrams",
+  "version": "1.0.0",
+  "private": true,
+  "description": "React SVG topology primitives, tokens, and geometry QA for ArcGym drill diagrams",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tokens.css": "./src/tokens.css",
+    "./qa": {
+      "types": "./dist/qa/auditSvgGeometry.d.ts",
+      "import": "./dist/qa/auditSvgGeometry.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "export": "tsx --tsconfig tsconfig.scripts.json scripts/export-svgs.tsx",
+    "test:diagram-qa": "pnpm export && playwright test",
+    "test": "pnpm test:diagram-qa"
+  },
+  "dependencies": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.19.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

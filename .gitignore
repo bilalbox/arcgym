@@ -24,6 +24,9 @@ Thumbs.db
 # Test / coverage
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+packages/diagrams/test-results/
 
 # Python crawler / Chroma index (local RAG corpus)
 __pycache__/
