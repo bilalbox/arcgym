@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  citationHostname,
   isAllowedCitationUrl,
   isValidDrillId,
   safeCitationHref,
@@ -38,6 +39,13 @@ describe('validation helpers', () => {
     expect(safeCitationHref('https://architect.salesforce.com/docs')).toBe(
       'https://architect.salesforce.com/docs',
     );
+    expect(citationHostname('https://help.salesforce.com/s/articleView?id=000')).toBe(
+      'help.salesforce.com',
+    );
+    expect(
+      citationHostname('https://developer.salesforce.com/docs/data/data-cloud-dev/guide/x.html'),
+    ).toBe('developer.salesforce.com');
+    expect(citationHostname('https://evil.example/phish')).toBeUndefined();
   });
 
   it('sanitizes feedback tags by rating polarity', () => {

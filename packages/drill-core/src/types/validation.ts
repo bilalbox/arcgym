@@ -39,3 +39,12 @@ export function isAllowedCitationUrl(url: unknown): boolean {
 export function safeCitationHref(url: unknown): string | undefined {
   return isAllowedCitationUrl(url) ? (url as string) : undefined;
 }
+
+/**
+ * Hostname for learner-facing citation link labels (allowlisted URLs only).
+ */
+export function citationHostname(url: unknown): string | undefined {
+  const href = safeCitationHref(url);
+  if (!href) return undefined;
+  return new URL(href).hostname.toLowerCase();
+}

@@ -1,5 +1,6 @@
 import {
   type ConfidenceAnchor,
+  citationHostname,
   createPracticeSessionState,
   type DrillAttemptRecord,
   type DrillFormat,
@@ -139,9 +140,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
       ? Math.round(((currentStepIndex + (isSubmitted ? 1 : 0)) / repList.length) * 100)
       : 0;
 
-  const correctCitationHref = safeCitationHref(
-    currentStep?.options.find((o) => o.isCorrect)?.citationUrl,
-  );
+  const correctCitationUrl = currentStep?.options.find((o) => o.isCorrect)?.citationUrl;
+  const correctCitationHref = safeCitationHref(correctCitationUrl);
+  const correctCitationHost = citationHostname(correctCitationUrl);
 
   if (!activeDrill || !currentStep) {
     return null;
@@ -478,7 +479,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             </div>
 
             <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              {correctCitationHref && (
+              {correctCitationHref && correctCitationHost && (
                 <a
                   href={correctCitationHref}
                   target="_blank"
@@ -486,7 +487,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   className="text-xs text-miro-blue hover:text-miro-blueDeep font-medium flex items-center gap-1.5 underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  View guidance on architect.salesforce.com
+                  View guidance on {correctCitationHost}
                 </a>
               )}
               <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
