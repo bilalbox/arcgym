@@ -8,7 +8,7 @@ Add `format: Troubleshooting` as a peer to Rapid Fire and Case File. Learner chr
 
 ## Grading
 
-Cause text is graded with Workers AI `@cf/baai/bge-reranker-base` against one authored gold cause and exactly three hidden antipattern distractors (never shown as MCQ). Verdict policy (absolute thresholds + symmetric gold margin) and the session reducer were validated in the throwaway prototype at `packages/drill-core/prototypes/troubleshooting-ai/` (`pnpm prototype:troubleshoot`). Production lifts `gradeCause` + `troubleshootSession`; the HTML shell stays throwaway. Unit tests inject rerank score maps — CI never calls live Workers AI.
+Cause text is graded with Workers AI `@cf/cloudflare/clef` as a **choice** decision over one authored gold cause, exactly three hidden antipattern distractors (never shown as MCQ), and a catchall **`other`** (“something else”) for vague or unmatched wrong answers. Verdict is CLEF’s argmax among those options. A bakeout against BGE reranker and CLEF-flash lived in `packages/drill-core/prototypes/cause-grade-bakeout/` (`pnpm prototype:cause-bakeout`); production uses CLEF only. Session policy lifts `gradeCause` + `troubleshootSession`. Unit tests inject CLEF probability maps — CI never calls live Workers AI.
 
 ## Scoring and progress
 

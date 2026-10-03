@@ -9,7 +9,7 @@ export interface DrillKvNamespace {
   list(options?: { prefix?: string }): Promise<{ keys: Array<{ name: string }> }>;
 }
 
-/** Minimal Workers AI binding surface for BGE reranker grading. */
+/** Minimal Workers AI binding surface for CLEF cause grading. */
 export interface AiBinding {
   run(model: string, inputs: Record<string, unknown>): Promise<unknown>;
 }

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROTOTYPE — Cause grade bakeout (BGE vs CLEF vs CLEF-flash)</title>
+  <style>
+    :root {
+      --ink: #14201c;
+      --muted: #5a6b63;
+      --line: #d5ddd8;
+      --paper: #f7f5f0;
+      --panel: #ffffff;
+      --accent: #0f6b4c;
+      --accent-soft: #e4f3ec;
+      --warn: #8a4b12;
+      --warn-soft: #f8ecd9;
+      --bad: #8b2430;
+      --bad-soft: #f8e6e8;
+      --good: #0f6b4c;
+      --good-soft: #e4f3ec;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #e8f2ec 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #efe8dc 0%, transparent 50%),
+        var(--paper);
+      line-height: 1.45;
+    }
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    h1 { font-size: 1.45rem; margin: 0 0 0.4rem; letter-spacing: -0.02em; }
+    .lede { color: var(--muted); max-width: 70ch; margin: 0 0 1rem; }
+    .banner {
+      border: 1px solid var(--line);
+      background: var(--warn-soft);
+      color: var(--warn);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      margin-bottom: 1.25rem;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.1rem 1.2rem;
+      margin-bottom: 1rem;
+    }
+    section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0.55rem 0.8rem;
+      font: inherit;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    textarea, input[type="text"] {
+      width: 100%;
+      font: inherit;
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+    textarea { min-height: 88px; resize: vertical; }
+    .hint { color: var(--muted); font-size: 0.85rem; margin: 0.35rem 0 0; }
+    .pill {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #eef1ef;
+    }
+    .pill.good { background: var(--good-soft); color: var(--good); }
+    .pill.bad { background: var(--bad-soft); color: var(--bad); }
+    .pill.warn { background: var(--warn-soft); color: var(--warn); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      border-bottom: 1px solid #eef1ef;
+      padding: 0.55rem 0.4rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    tr.selected { background: var(--accent-soft); }
+    tr.clickable { cursor: pointer; }
+    tr.clickable:hover { background: #f3f6f4; }
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.7rem 0.8rem;
+      background: #fbfcfa;
+    }
+    .score-card h3 { margin: 0 0 0.4rem; font-size: 0.92rem; }
+    .bar {
+      height: 6px;
+      background: #e8eee9;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 0.2rem;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+    .row { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.5rem; font-size: 0.85rem; margin: 0.25rem 0; }
+    .row .k { color: var(--muted); font-family: var(--mono); font-size: 0.78rem; }
+    pre.raw {
+      margin: 0.5rem 0 0;
+      padding: 0.6rem;
+      background: #f3f6f4;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      overflow: auto;
+      max-height: 180px;
+    }
+    .checks { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0 0.75rem; font-size: 0.9rem; }
+    .checks label { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>PROTOTYPE — Cause grade bakeout</h1>
+  <p class="lede">
+    <strong>Question:</strong> Which Workers AI grader — BGE reranker, CLEF, or CLEF-flash — best separates
+    paraphrased gold causes, distractor traps, and vague misses when choices are
+    <em>gold · distractors · something else</em>?
+  </p>
+  <div class="banner">
+    Throwaway bakeout. Not production. Live Workers AI calls are billed even in
+    <code>wrangler dev</code>. Run <code>pnpm prototype:cause-bakeout</code>.
+  </div>
+
+  <section>
+    <h2>Models under test</h2>
+    <div class="checks" id="model-checks">
+      <label><input type="checkbox" value="bge" checked /> BGE reranker</label>
+      <label><input type="checkbox" value="clef" checked /> CLEF (27B)</label>
+      <label><input type="checkbox" value="clef-flash" checked /> CLEF-flash (9B)</label>
+    </div>
+    <p class="hint" id="api-status">Checking API…</p>
+    <div class="actions">
+      <button type="button" class="primary" id="btn-run-corpus">Run labeled corpus</button>
+      <button type="button" id="btn-clear">Clear results</button>
+    </div>
+    <p class="hint">
+      BGE reports both <strong>argmax</strong> (highest among gold/distractors/other) and
+      <strong>policy</strong> (production Troubleshoot thresholds+margin). CLEF* uses a choice question with an
+      <code>other</code> catchall — argmax ≡ chosen option.
+    </p>
+  </section>
+
+  <section>
+    <h2>Corpus results</h2>
+    <div id="summary" class="hint">No runs yet.</div>
+    <div style="overflow-x:auto; margin-top:0.75rem">
+      <table>
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Expected</th>
+            <th>BGE argmax</th>
+            <th>BGE policy</th>
+            <th>CLEF</th>
+            <th>CLEF-flash</th>
+            <th>ms</th>
+          </tr>
+        </thead>
+        <tbody id="results-body">
+          <tr><td colspan="7" class="hint">Run the corpus to fill this table.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Selected case detail</h2>
+    <div id="detail">Pick a result row.</div>
+  </section>
+
+  <section>
+    <h2>Free-play</h2>
+    <p class="hint">Score one custom cause against the Incident’s gold + 3 distractors + other.</p>
+    <textarea id="free-cause" placeholder="Learner root cause…"></textarea>
+    <div class="actions" style="margin-top:0.65rem">
+      <button type="button" class="primary" id="btn-free">Score free-play</button>
+    </div>
+    <div id="free-detail" class="hint" style="margin-top:0.75rem"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  const INCIDENT = {
+    issue:
+      'For two weeks, segment refresh was stable. Now refreshes intermittently fail with query timeout near the top of the hour. Ops already enlarged the Snowflake warehouse once; failures continue.',
+    gold: {
+      id: 'gold',
+      text:
+        'Formula fields on the curated DLO force expensive Zero Copy evaluation, and after the BDT schedule slip those scans overlap segment refresh, causing intermittent timeouts.',
+    },
+    distractors: [
+      {
+        id: 'd1',
+        text: 'The Snowflake warehouse is still undersized for peak concurrent segment refresh load.',
+        antipattern: 'Scale First Warehouse',
+      },
+      {
+        id: 'd2',
+        text: 'Zero Copy connector rate limiting is throttling the segment refresh queries.',
+        antipattern: 'Blame Connector Ceiling',
+      },
+      {
+        id: 'd3',
+        text: 'Cross-region network latency between Data Cloud and Snowflake is causing the timeouts.',
+        antipattern: 'Network Ghost Hunt',
+      },
+    ],
+    other: {
+      id: 'other',
+      text: 'Something else — a vague, mixed, or unrelated root cause that does not match any authored diagnosis.',
+    },
+  };
+
+  /** Labeled cause texts. expected ∈ gold | d1 | d2 | d3 | other */
+  const CORPUS = [
+    {
+      id: 'gold-near',
+      label: 'Near-gold paraphrase',
+      expected: 'gold',
+      text:
+        'Formula fields on the curated DLO make Zero Copy evaluation expensive, and the slipped BDT window now overlaps segment refresh so we get intermittent timeouts.',
+    },
+    {
+      id: 'gold-short',
+      label: 'Short gold (false-neg risk)',
+      expected: 'gold',
+      text: 'Curated DLO formulas plus BDT overlap are driving the Zero Copy timeouts.',
+    },
+    {
+      id: 'gold-reword',
+      label: 'Gold reworded',
+      expected: 'gold',
+      text:
+        'Segment refresh times out because expensive formula evaluation on the Zero Copy path collides with the batch transform schedule.',
+    },
+    {
+      id: 'd1-warehouse',
+      label: 'Warehouse distractor',
+      expected: 'd1',
+      text: 'The Snowflake warehouse is still undersized for peak concurrent segment refresh load and needs another scale-up.',
+    },
+    {
+      id: 'd2-connector',
+      label: 'Connector distractor',
+      expected: 'd2',
+      text: 'Zero Copy connector rate limiting is throttling the segment refresh queries at the top of the hour.',
+    },
+    {
+      id: 'd3-network',
+      label: 'Network distractor',
+      expected: 'd3',
+      text: 'Cross-region network latency between Data Cloud and Snowflake is causing the timeouts.',
+    },
+    {
+      id: 'vague',
+      label: 'Vague symptom restatement',
+      expected: 'other',
+      text: 'Something is slow in Data Cloud when segments refresh near the top of the hour.',
+    },
+    {
+      id: 'mixed',
+      label: 'Mixed / hedged',
+      expected: 'other',
+      text:
+        'Timeouts come from heavy Snowflake load during segment refresh; warehouse pressure and Zero Copy cost are both in play.',
+    },
+    {
+      id: 'wrong-domain',
+      label: 'Wrong-domain miss',
+      expected: 'other',
+      text: 'Marketing Cloud journey entry source is misconfigured so segment membership never updates.',
+    },
+    {
+      id: 'identity',
+      label: 'Identity red herring',
+      expected: 'other',
+      text: 'CRM identity sync into Data Cloud is lagging and that breaks segment refresh.',
+    },
+  ];
+
+  /** @type {Record<string, any>} */
+  let corpusResults = {};
+  let selectedId = null;
+  let busy = false;
+
+  function selectedModels() {
+    return [...document.querySelectorAll('#model-checks input:checked')].map((el) => el.value);
+  }
+
+  function pill(ok) {
+    return ok
+      ? '<span class="pill good">match</span>'
+      : '<span class="pill bad">miss</span>';
+  }
+
+  function cell(result, expected, field) {
+    if (!result) return '<span class="hint">—</span>';
+    if (result.error) return `<span class="pill bad" title="${escapeHtml(result.error)}">err</span>`;
+    const got = result[field] || result.argmaxId || '—';
+    const ok = got === expected;
+    return `${escapeHtml(got)} ${pill(ok)}`;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async function bake(causeText, models) {
+    const res = await fetch('/api/bake', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        causeText,
+        issue: INCIDENT.issue,
+        models,
+        gold: INCIDENT.gold,
+        distractors: INCIDENT.distractors,
+        other: INCIDENT.other,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+  }
+
+  function renderTable() {
+    const body = document.getElementById('results-body');
+    const rows = CORPUS.map((c) => {
+      const r = corpusResults[c.id];
+      if (!r) {
+        return `<tr class="clickable" data-id="${c.id}"><td>${escapeHtml(c.label)}</td><td><code>${c.expected}</code></td><td colspan="5" class="hint">pending</td></tr>`;
+      }
+      const bge = r.results.bge;
+      const clef = r.results.clef;
+      const flash = r.results['clef-flash'];
+      const ms = ['bge', 'clef', 'clef-flash']
+        .map((m) => r.results[m]?.latencyMs)
+        .filter((n) => typeof n === 'number')
+        .join(' / ');
+      return `<tr class="clickable ${selectedId === c.id ? 'selected' : ''}" data-id="${c.id}">
+        <td>${escapeHtml(c.label)}</td>
+        <td><code>${c.expected}</code></td>
+        <td>${cell(bge, c.expected, 'argmaxId')}</td>
+        <td>${cell(bge, c.expected, 'policyVerdict')}</td>
+        <td>${cell(clef, c.expected, 'policyVerdict')}</td>
+        <td>${cell(flash, c.expected, 'policyVerdict')}</td>
+        <td class="hint">${escapeHtml(ms || '—')}</td>
+      </tr>`;
+    });
+    body.innerHTML = rows.join('');
+
+    // Summary accuracy
+    const done = CORPUS.filter((c) => corpusResults[c.id]);
+    if (done.length === 0) {
+      document.getElementById('summary').textContent = 'No runs yet.';
+      return;
+    }
+    const acc = (picker) => {
+      let hit = 0;
+      let n = 0;
+      for (const c of done) {
+        const r = corpusResults[c.id].results[picker.model];
+        if (!r || r.error) continue;
+        n += 1;
+        const got = r[picker.field];
+        if (got === c.expected) hit += 1;
+      }
+      return n ? `${hit}/${n} (${Math.round((100 * hit) / n)}%)` : '—';
+    };
+    document.getElementById('summary').innerHTML = [
+      `<strong>Accuracy vs labeled expected</strong> · n=${done.length}`,
+      `BGE argmax ${acc({ model: 'bge', field: 'argmaxId' })}`,
+      `BGE policy ${acc({ model: 'bge', field: 'policyVerdict' })}`,
+      `CLEF ${acc({ model: 'clef', field: 'policyVerdict' })}`,
+      `CLEF-flash ${acc({ model: 'clef-flash', field: 'policyVerdict' })}`,
+    ].join(' · ');
+  }
+
+  function scoreBars(scores) {
+    if (!scores || typeof scores !== 'object') return '<p class="hint">No scores</p>';
+    const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(...entries.map(([, v]) => v), 0.0001);
+    return entries
+      .map(
+        ([id, v]) => `<div class="row"><span class="k">${escapeHtml(id)}</span><div>
+          <div>${Number(v).toFixed(3)}</div>
+          <div class="bar"><i style="width:${Math.round((100 * v) / max)}%"></i></div>
+        </div></div>`,
+      )
+      .join('');
+  }
+
+  function renderModelCard(title, result) {
+    if (!result) return `<div class="score-card"><h3>${title}</h3><p class="hint">not run</p></div>`;
+    if (result.error) {
+      return `<div class="score-card"><h3>${title}</h3><p class="pill bad">error</p><p class="hint">${escapeHtml(result.error)}</p></div>`;
+    }
+    return `<div class="score-card">
+      <h3>${escapeHtml(title)}</h3>
+      <p class="hint">${escapeHtml(result.model || '')} · ${result.latencyMs}ms</p>
+      <p>argmax <code>${escapeHtml(result.argmaxId)}</code>
+        ${result.policyVerdict && result.policyVerdict !== result.argmaxId
+          ? ` · policy <code>${escapeHtml(result.policyVerdict)}</code>`
+          : ''}</p>
+      ${scoreBars(result.scores)}
+      ${result.rawAnswers ? `<pre class="raw">${escapeHtml(JSON.stringify(result.rawAnswers, null, 2))}</pre>` : ''}
+    </div>`;
+  }
+
+  function renderDetail(caseId, payload, freeLabel) {
+    const el = freeLabel ? document.getElementById('free-detail') : document.getElementById('detail');
+    const c = CORPUS.find((x) => x.id === caseId);
+    const title = freeLabel || (c ? c.label : caseId);
+    const expected = c ? c.expected : '(free-play)';
+    el.innerHTML = `
+      <p><strong>${escapeHtml(title)}</strong> · expected <code>${escapeHtml(expected)}</code></p>
+      <p class="hint">${escapeHtml(payload.causeText)}</p>
+      <div class="score-grid" style="margin-top:0.75rem">
+        ${renderModelCard('BGE reranker', payload.results.bge)}
+        ${renderModelCard('CLEF', payload.results.clef)}
+        ${renderModelCard('CLEF-flash', payload.results['clef-flash'])}
+      </div>`;
+  }
+
+  async function runCorpus() {
+    if (busy) return;
+    const models = selectedModels();
+    if (models.length === 0) {
+      alert('Pick at least one model');
+      return;
+    }
+    busy = true;
+    const btn = document.getElementById('btn-run-corpus');
+    btn.disabled = true;
+    corpusResults = {};
+    renderTable();
+    try {
+      for (const c of CORPUS) {
+        document.getElementById('api-status').textContent = `Scoring ${c.id}…`;
+        const data = await bake(c.text, models);
+        corpusResults[c.id] = data;
+        renderTable();
+      }
+      document.getElementById('api-status').textContent = 'Corpus complete.';
+      if (!selectedId) selectedId = CORPUS[0].id;
+      renderTable();
+      if (corpusResults[selectedId]) renderDetail(selectedId, corpusResults[selectedId]);
+    } catch (err) {
+      document.getElementById('api-status').textContent = `Failed: ${err.message || err}`;
+    } finally {
+      busy = false;
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('btn-run-corpus').addEventListener('click', () => void runCorpus());
+  document.getElementById('btn-clear').addEventListener('click', () => {
+    corpusResults = {};
+    selectedId = null;
+    renderTable();
+    document.getElementById('detail').textContent = 'Pick a result row.';
+  });
+
+  document.getElementById('results-body').addEventListener('click', (e) => {
+    const tr = e.target.closest('tr[data-id]');
+    if (!tr) return;
+    selectedId = tr.getAttribute('data-id');
+    renderTable();
+    if (corpusResults[selectedId]) renderDetail(selectedId, corpusResults[selectedId]);
+  });
+
+  document.getElementById('btn-free').addEventListener('click', async () => {
+    const text = document.getElementById('free-cause').value.trim();
+    if (!text || busy) return;
+    const models = selectedModels();
+    busy = true;
+    document.getElementById('free-detail').textContent = 'Scoring…';
+    try {
+      const data = await bake(text, models);
+      renderDetail('free', data, 'Free-play');
+    } catch (err) {
+      document.getElementById('free-detail').textContent = `Failed: ${err.message || err}`;
+    } finally {
+      busy = false;
+    }
+  });
+
+  // Preset fill helpers via double-click on corpus labels after run — skip.
+  // Health check
+  fetch('/api/health')
+    .then((r) => r.json())
+    .then((d) => {
+      document.getElementById('api-status').textContent = d.ok
+        ? `API ready · ${Object.values(d.models || {}).join(' · ')}`
+        : 'API not ready';
+    })
+    .catch(() => {
+      document.getElementById('api-status').textContent =
+        'API unreachable — open via pnpm prototype:cause-bakeout (not file://).';
+    });
+
+  renderTable();
+})();
+</script>
+</body>
+</html>

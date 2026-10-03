@@ -5,8 +5,9 @@ import {
 } from '@arcgym/drill-core';
 
 /**
- * Fetch BGE rerank scores from the Pages Function (server loads gold + distractors
- * from KV). In Vite-only local preview, falls back to the prototype Jaccard stub.
+ * Fetch CLEF choice probabilities from the Pages Function (server loads gold +
+ * distractors + other from KV). In Vite-only local preview, falls back to a
+ * Jaccard stub so Incidents remain playable.
  */
 export async function fetchCauseScoreOverrides(
   drill: TroubleshootingDrillDefinition,

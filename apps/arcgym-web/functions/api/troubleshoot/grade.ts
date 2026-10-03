@@ -1,5 +1,7 @@
 import {
-  causeGradePassages,
+  CAUSE_GRADE_MODEL,
+  CAUSE_OTHER_ID,
+  causeGradeCriteria,
   isTroubleshootingDrill,
   isValidDrillId,
   type TroubleshootingDrillDefinition,
@@ -13,46 +15,8 @@ import {
   requireKv,
 } from '../../_shared/env';
 
-const RERANK_MODEL = '@cf/baai/bge-reranker-base';
 const MAX_BODY_BYTES = 16_384;
 const MAX_CAUSE_CHARS = 4_000;
-
-interface Passage {
-  id: string;
-  text: string;
-}
-
-function sigmoid(x: number): number {
-  return 1 / (1 + Math.exp(-x));
-}
-
-async function scoreRerank(
-  ai: NonNullable<Env['AI']>,
-  query: string,
-  passages: Passage[],
-): Promise<Record<string, number>> {
-  const result = (await ai.run(RERANK_MODEL, {
-    query,
-    contexts: passages.map((p) => ({ text: p.text })),
-  })) as
-    | { response?: Array<{ id?: number; score?: number }> }
-    | Array<{ id?: number; score?: number }>;
-
-  const rows = Array.isArray(result) ? result : (result.response ?? []);
-  const scores: Record<string, number> = {};
-  for (const row of rows) {
-    const idx = typeof row.id === 'number' ? row.id : -1;
-    const passage = passages[idx];
-    if (!passage) continue;
-    const raw = typeof row.score === 'number' ? row.score : 0;
-    const mapped = raw >= 0 && raw <= 1 ? raw : sigmoid(raw);
-    scores[passage.id] = Number(mapped.toFixed(4));
-  }
-  for (const p of passages) {
-    if (scores[p.id] == null) scores[p.id] = 0;
-  }
-  return scores;
-}
 
 async function withRetry<T>(fn: () => Promise<T>, attempts = 2): Promise<T> {
   let last: unknown;
@@ -68,6 +32,77 @@ async function withRetry<T>(fn: () => Promise<T>, attempts = 2): Promise<T> {
     }
   }
   throw last instanceof Error ? last : new Error(String(last));
+}
+
+function normalizeClefChoice(raw: unknown): {
+  choice: string | null;
+  probabilities: Record<string, number>;
+} {
+  if (!raw || typeof raw !== 'object') {
+    return { choice: null, probabilities: {} };
+  }
+  const obj = raw as Record<string, unknown>;
+  const choice =
+    typeof obj.choice === 'string'
+      ? obj.choice
+      : typeof obj.value === 'string'
+        ? obj.value
+        : typeof obj.answer === 'string'
+          ? obj.answer
+          : null;
+
+  const probabilities: Record<string, number> = {};
+  const probsRaw = obj.probabilities ?? obj.probs ?? obj.scores;
+  if (probsRaw && typeof probsRaw === 'object' && !Array.isArray(probsRaw)) {
+    for (const [k, v] of Object.entries(probsRaw as Record<string, unknown>)) {
+      if (typeof v === 'number') probabilities[k] = Number(v.toFixed(4));
+    }
+  }
+  return { choice, probabilities };
+}
+
+async function scoreClef(
+  ai: NonNullable<Env['AI']>,
+  causeText: string,
+  issue: string,
+  criteria: Record<string, string>,
+): Promise<{ scores: Record<string, number>; choice: string | null; confidence?: number }> {
+  const result = (await ai.run(CAUSE_GRADE_MODEL, {
+    model: 'clef',
+    state: {
+      issue,
+      learnerRootCause: causeText,
+    },
+    questions: {
+      match: {
+        type: 'choice',
+        instructions:
+          "Which authored diagnosis best matches the learner's root-cause statement? Choose 'other' if the statement is vague, mixed, or matches none of the authored diagnoses well.",
+        criteria,
+      },
+    },
+  })) as {
+    answers?: Record<string, unknown>;
+  };
+
+  const matchRaw = result.answers?.match ?? result.answers;
+  const { choice, probabilities } = normalizeClefChoice(matchRaw);
+
+  const scores: Record<string, number> = { ...probabilities };
+  for (const id of Object.keys(criteria)) {
+    if (scores[id] == null) scores[id] = 0;
+  }
+  // Ensure catchall key exists even if CLEF omits it.
+  if (scores[CAUSE_OTHER_ID] == null) scores[CAUSE_OTHER_ID] = 0;
+
+  const confidence =
+    matchRaw &&
+    typeof matchRaw === 'object' &&
+    typeof (matchRaw as { confidence?: unknown }).confidence === 'number'
+      ? (matchRaw as { confidence: number }).confidence
+      : undefined;
+
+  return { scores, choice, confidence };
 }
 
 export async function onRequestPost(context: { request: Request; env: Env }) {
@@ -95,18 +130,18 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       return opaqueError(400, 'causeText is required');
     }
 
-    let passages: Passage[] | null = null;
+    let drill: TroubleshootingDrillDefinition | null = null;
     try {
       const kv = requireKv(env);
       const catalogEntry = await kv.get(`drill:id:${drillId}`, 'json');
       if (catalogEntry && isTroubleshootingDrill(catalogEntry as TroubleshootingDrillDefinition)) {
-        passages = causeGradePassages(catalogEntry as TroubleshootingDrillDefinition);
+        drill = catalogEntry as TroubleshootingDrillDefinition;
       }
     } catch {
-      // KV unbound — cannot load authored passages server-side.
+      // KV unbound — cannot load authored criteria server-side.
     }
 
-    if (!passages || passages.length === 0) {
+    if (!drill) {
       return opaqueError(404, 'Unknown troubleshooting drill');
     }
 
@@ -114,12 +149,16 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     if (!ai) {
       return opaqueError(503, 'AI grading unavailable');
     }
-    const gradePassages = passages;
-    const scores = await withRetry(() => scoreRerank(ai, causeText, gradePassages));
+    const criteria = causeGradeCriteria(drill);
+    const issue = drill.issue;
+    const scored = await withRetry(() => scoreClef(ai, causeText, issue, criteria));
+
     return jsonResponse({
-      scores,
-      model: RERANK_MODEL,
-      mode: 'rerank',
+      scores: scored.scores,
+      choice: scored.choice,
+      confidence: scored.confidence,
+      model: CAUSE_GRADE_MODEL,
+      mode: 'clef',
       drillId,
     });
   } catch (error: unknown) {

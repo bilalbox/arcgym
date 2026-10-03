@@ -4,18 +4,21 @@ import type {
   TroubleshootingDrillDefinition,
 } from '../types/drill.js';
 
-/** Absolute thresholds + symmetric margin from the troubleshooting-ai prototype. */
-export const DEFAULT_CAUSE_GRADING = {
-  correctThreshold: 0.62,
-  distractorThreshold: 0.55,
-  goldMargin: 0.08,
-} as const;
+/** Catchall CLEF choice id for vague / unmatched wrong causes. */
+export const CAUSE_OTHER_ID = 'other';
+
+/** Authored CLEF criterion text for the something-else bucket. */
+export const DEFAULT_OTHER_CRITERION =
+  'Something else — a vague, mixed, or unrelated root cause that does not match any authored diagnosis.';
+
+/** CLEF model used for production Troubleshoot cause grading. */
+export const CAUSE_GRADE_MODEL = '@cf/cloudflare/clef';
 
 export type CauseScoreOverrides = Record<string, number>;
 
 export interface GradedPassage {
   id: string;
-  kind: 'gold' | 'distractor';
+  kind: 'gold' | 'distractor' | 'other';
   text: string;
   rationale: string;
   antipattern?: string;
@@ -25,19 +28,25 @@ export interface GradedPassage {
 export interface GradeCauseResult {
   verdict: CauseVerdict;
   isCorrect: boolean;
+  /** CLEF choice id with the highest probability (`gold`, a distractor id, or `other`). */
+  chosenId: string;
   scores: GradedPassage[];
   goldScore: number;
   bestDistractorScore: number;
+  otherScore: number;
   matchedDistractor: (HiddenDistractorDTO & { score: number }) | null;
   goldRationale: string;
   goldCitationUrl?: string;
-  thresholds: typeof DEFAULT_CAUSE_GRADING;
 }
 
 /**
- * Grade a free-text cause against gold + hidden distractors using an injected
- * BGE-reranker score map. Tests and the Worker scorer both supply overrides;
- * unit CI never calls Workers AI.
+ * Grade a free-text cause from an injected CLEF choice probability map
+ * (`gold`, each hidden distractor id, and `other`). Unit CI never calls Workers AI.
+ *
+ * Policy: argmax among those options.
+ * - gold → correct
+ * - distractor id → incorrect_distractor (attach authored antipattern)
+ * - other → incorrect_miss
  */
 export function gradeCause(
   drill: TroubleshootingDrillDefinition,
@@ -46,11 +55,9 @@ export function gradeCause(
 ): GradeCauseResult {
   if (!scoreOverrides || typeof scoreOverrides !== 'object') {
     throw new Error(
-      'gradeCause requires scoreOverrides (inject BGE rerank scores; no live AI in tests)',
+      'gradeCause requires scoreOverrides (inject CLEF choice probabilities; no live AI in tests)',
     );
   }
-
-  const { correctThreshold, distractorThreshold, goldMargin } = DEFAULT_CAUSE_GRADING;
 
   const requireScore = (id: string): number => {
     const score = scoreOverrides[id];
@@ -77,22 +84,30 @@ export function gradeCause(
     score: requireScore(d.id),
   }));
 
-  const scores = [goldPassage, ...distractorPassages].sort((a, b) => b.score - a.score);
-  const bestDistractor = distractorPassages.reduce((a, b) => (b.score > a.score ? b : a));
+  const otherPassage: GradedPassage = {
+    id: CAUSE_OTHER_ID,
+    kind: 'other',
+    text: DEFAULT_OTHER_CRITERION,
+    rationale: 'Learner cause did not match the gold diagnosis or a known antipattern distractor.',
+    score: requireScore(CAUSE_OTHER_ID),
+  };
 
-  const beatsDistractor = goldPassage.score >= bestDistractor.score + goldMargin;
-  const distractorBeatsGold = bestDistractor.score >= goldPassage.score + goldMargin;
+  const scores = [goldPassage, ...distractorPassages, otherPassage].sort(
+    (a, b) => b.score - a.score,
+  );
+  const chosen = scores[0] ?? otherPassage;
+  const bestDistractor = distractorPassages.reduce((a, b) => (b.score > a.score ? b : a));
 
   let verdict: CauseVerdict;
   let matchedDistractor: GradeCauseResult['matchedDistractor'] = null;
 
-  if (goldPassage.score >= correctThreshold && beatsDistractor) {
+  if (chosen.id === 'gold') {
     verdict = 'correct';
-  } else if (bestDistractor.score >= distractorThreshold && distractorBeatsGold) {
+  } else if (chosen.kind === 'distractor') {
     verdict = 'incorrect_distractor';
-    const source = drill.hiddenDistractors.find((d) => d.id === bestDistractor.id);
+    const source = drill.hiddenDistractors.find((d) => d.id === chosen.id);
     if (source) {
-      matchedDistractor = { ...source, score: bestDistractor.score };
+      matchedDistractor = { ...source, score: chosen.score };
     }
   } else {
     verdict = 'incorrect_miss';
@@ -101,30 +116,32 @@ export function gradeCause(
   return {
     verdict,
     isCorrect: verdict === 'correct',
+    chosenId: chosen.id,
     scores,
     goldScore: goldPassage.score,
     bestDistractorScore: bestDistractor.score,
+    otherScore: otherPassage.score,
     matchedDistractor,
     goldRationale: drill.goldCause.rationale,
     goldCitationUrl: drill.goldCause.citationUrl,
-    thresholds: DEFAULT_CAUSE_GRADING,
   };
 }
 
-/** Passage list for Workers AI `@cf/baai/bge-reranker-base`. */
-export function causeGradePassages(
-  drill: TroubleshootingDrillDefinition,
-): Array<{ id: string; text: string }> {
-  return [
-    { id: 'gold', text: drill.goldCause.text },
-    ...drill.hiddenDistractors.map((d) => ({ id: d.id, text: d.text })),
-  ];
+/** CLEF choice criteria: gold + hidden distractors + something-else catchall. */
+export function causeGradeCriteria(drill: TroubleshootingDrillDefinition): Record<string, string> {
+  const criteria: Record<string, string> = {
+    gold: drill.goldCause.text,
+  };
+  for (const d of drill.hiddenDistractors) {
+    criteria[d.id] = d.text;
+  }
+  criteria[CAUSE_OTHER_ID] = DEFAULT_OTHER_CRITERION;
+  return criteria;
 }
 
 /**
- * Token Jaccard stand-in from the troubleshooting-ai prototype.
- * For local Vite preview only when the Pages AI grade route is unavailable —
- * never used as the production grader.
+ * Token Jaccard stand-in for local Vite preview when the Pages CLEF grade route
+ * is unavailable — never used as the production grader.
  */
 export function stubCauseScoreOverrides(
   drill: TroubleshootingDrillDefinition,
@@ -156,5 +173,7 @@ export function stubCauseScoreOverrides(
   for (const d of drill.hiddenDistractors) {
     overrides[d.id] = scoreOne(d.text);
   }
+  // Mild prior so vague answers land on other instead of a weak distractor paraphrase.
+  overrides[CAUSE_OTHER_ID] = Math.max(0.15, scoreOne(DEFAULT_OTHER_CRITERION));
   return overrides;
 }

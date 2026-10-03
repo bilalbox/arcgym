@@ -54,7 +54,7 @@ const MAX_STATION_PROMPT_WORDS = 55;
 /** Troubleshooting architecture synopsis stays shorter than a Case File brief. */
 const MAX_ARCHITECTURE_WORDS = 120;
 const MAX_ISSUE_WORDS = 80;
-/** Gold cause must stay short for stable BGE reranker matching (~2 sentences). */
+/** Gold cause must stay short for stable CLEF choice matching (~2 sentences). */
 const MAX_GOLD_CAUSE_SENTENCES = 2;
 const MAX_GOLD_CAUSE_WORDS = 55;
 const CAUSE_LEAK_JACCARD = 0.45;
@@ -294,7 +294,7 @@ function lintTroubleshootingExtras(drill: TroubleshootingDrillDefinition): Wordi
     findings.push({
       ruleId: 'gold-too-long',
       where: 'goldCause.text',
-      message: `gold cause has ${goldSentences} sentences / ${goldWords} words (max ${MAX_GOLD_CAUSE_SENTENCES} sentences, ${MAX_GOLD_CAUSE_WORDS} words); keep ~2 sentences for reranker stability`,
+      message: `gold cause has ${goldSentences} sentences / ${goldWords} words (max ${MAX_GOLD_CAUSE_SENTENCES} sentences, ${MAX_GOLD_CAUSE_WORDS} words); keep ~2 sentences for CLEF matching stability`,
     });
   }
 

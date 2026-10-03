@@ -118,7 +118,7 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, {
       type: 'COMMIT_CONFIDENCE',
       confidence: 0.85,
-      scoreOverrides: { gold: 0.82, d1: 0.4, d2: 0.3, d3: 0.2 },
+      scoreOverrides: { gold: 0.82, d1: 0.08, d2: 0.05, d3: 0.03, other: 0.02 },
     });
     expect(state.phase).toBe('feedback');
     expect(state.grade?.verdict).toBe('correct');
@@ -153,7 +153,7 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, {
       type: 'COMMIT_CONFIDENCE',
       confidence: 0.7,
-      scoreOverrides: { gold: 0.9, d1: 0.2, d2: 0.2, d3: 0.2 },
+      scoreOverrides: { gold: 0.9, d1: 0.03, d2: 0.03, d3: 0.02, other: 0.02 },
     });
 
     expect(state.isCorrect).toBe(true);
@@ -175,7 +175,7 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, {
       type: 'COMMIT_CONFIDENCE',
       confidence: 0.95,
-      scoreOverrides: { gold: 0.3, d1: 0.8, d2: 0.2, d3: 0.1 },
+      scoreOverrides: { gold: 0.1, d1: 0.7, d2: 0.05, d3: 0.05, other: 0.1 },
     });
 
     expect(state.isCorrect).toBe(false);

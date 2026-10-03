@@ -595,7 +595,7 @@ ${c.content}
       : args.format === 'Troubleshooting'
         ? `- One Incident: architecture synopsis + required diagram + issue
 - Probe Budget: 3 picks from ~7 clarifying questions (≥2 pivotal)
-- Free-text cause graded against gold + exactly 3 hidden distractors (never MCQ)
+- Free-text cause graded by CLEF choice over gold + exactly 3 hidden distractors + other catchall (never MCQ)
 - Dual scoring: probe quality + Brier on cause correct/incorrect
 - Grounding: probe answers are scenario fiction; goldCause.citationUrl optional when failure class is doc-backed`
         : `- Number of Steps: up to ${args.steps}`;

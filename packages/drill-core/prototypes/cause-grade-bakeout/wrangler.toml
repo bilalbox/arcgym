@@ -1,0 +1,14 @@
+# PROTOTYPE ONLY — BGE vs CLEF vs CLEF-flash cause-grade bakeout.
+# Run: pnpm prototype:cause-bakeout
+name = "arcgym-proto-cause-bakeout"
+main = "src/index.ts"
+compatibility_date = "2026-09-27"
+
+[ai]
+binding = "AI"
+remote = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]

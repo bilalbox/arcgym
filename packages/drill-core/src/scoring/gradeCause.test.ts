@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TroubleshootingDrillDefinition } from '../types/drill.js';
-import { DEFAULT_CAUSE_GRADING, gradeCause } from './gradeCause.js';
+import { CAUSE_OTHER_ID, causeGradeCriteria, gradeCause } from './gradeCause.js';
 
 const DRILL: TroubleshootingDrillDefinition = {
   id: 'AGD-01001',
@@ -56,61 +56,77 @@ const DRILL: TroubleshootingDrillDefinition = {
   ],
 };
 
-describe('gradeCause', () => {
-  it('exposes the default absolute thresholds and gold margin', () => {
-    expect(DEFAULT_CAUSE_GRADING).toEqual({
-      correctThreshold: 0.62,
-      distractorThreshold: 0.55,
-      goldMargin: 0.08,
-    });
+describe('gradeCause (CLEF choice argmax)', () => {
+  it('builds CLEF criteria with gold, distractors, and other', () => {
+    const criteria = causeGradeCriteria(DRILL);
+    expect(Object.keys(criteria).sort()).toEqual(['d1', 'd2', 'd3', 'gold', 'other']);
+    expect(criteria.gold).toBe(DRILL.goldCause.text);
+    expect(criteria[CAUSE_OTHER_ID]).toMatch(/Something else/i);
   });
 
-  it('verdicts correct when gold clears the threshold and beats the best distractor by the margin', () => {
+  it('verdicts correct when gold is the CLEF argmax', () => {
     const result = gradeCause(DRILL, 'any cause text', {
-      gold: 0.8,
-      d1: 0.5,
-      d2: 0.4,
-      d3: 0.3,
+      gold: 0.9,
+      d1: 0.03,
+      d2: 0.02,
+      d3: 0.01,
+      other: 0.04,
     });
     expect(result.verdict).toBe('correct');
     expect(result.isCorrect).toBe(true);
+    expect(result.chosenId).toBe('gold');
     expect(result.matchedDistractor).toBeNull();
-    expect(result.goldScore).toBe(0.8);
-    expect(result.bestDistractorScore).toBe(0.5);
+    expect(result.goldScore).toBe(0.9);
   });
 
-  it('verdicts incorrect_distractor when a distractor clears its threshold and beats gold by the margin', () => {
+  it('verdicts incorrect_distractor when a distractor is the CLEF argmax', () => {
     const result = gradeCause(DRILL, 'warehouse guess', {
-      gold: 0.4,
+      gold: 0.1,
       d1: 0.72,
-      d2: 0.3,
-      d3: 0.2,
+      d2: 0.05,
+      d3: 0.03,
+      other: 0.1,
     });
     expect(result.verdict).toBe('incorrect_distractor');
     expect(result.isCorrect).toBe(false);
+    expect(result.chosenId).toBe('d1');
     expect(result.matchedDistractor?.id).toBe('d1');
     expect(result.matchedDistractor?.antipattern).toBe('Scale First Warehouse');
   });
 
-  it('verdicts incorrect_miss when neither gold nor a distractor wins cleanly', () => {
+  it('verdicts incorrect_miss when other is the CLEF argmax', () => {
     const result = gradeCause(DRILL, 'vague guess', {
-      gold: 0.5,
-      d1: 0.48,
-      d2: 0.45,
-      d3: 0.4,
+      gold: 0.12,
+      d1: 0.1,
+      d2: 0.08,
+      d3: 0.05,
+      other: 0.65,
     });
     expect(result.verdict).toBe('incorrect_miss');
     expect(result.isCorrect).toBe(false);
+    expect(result.chosenId).toBe('other');
     expect(result.matchedDistractor).toBeNull();
+    expect(result.otherScore).toBe(0.65);
   });
 
-  it('requires injected score maps (no live Workers AI in unit tests)', () => {
+  it('requires injected CLEF probability maps (no live Workers AI in unit tests)', () => {
     expect(() => gradeCause(DRILL, 'text without scores')).toThrow(/scoreOverrides/i);
   });
 
-  it('returns gold rationale and thresholds for teach-back', () => {
-    const result = gradeCause(DRILL, 'x', { gold: 0.9, d1: 0.1, d2: 0.1, d3: 0.1 });
+  it('requires the other catchall score', () => {
+    expect(() => gradeCause(DRILL, 'x', { gold: 0.9, d1: 0.1, d2: 0.1, d3: 0.1 })).toThrow(
+      /other/i,
+    );
+  });
+
+  it('returns gold rationale for teach-back', () => {
+    const result = gradeCause(DRILL, 'x', {
+      gold: 0.9,
+      d1: 0.02,
+      d2: 0.02,
+      d3: 0.02,
+      other: 0.04,
+    });
     expect(result.goldRationale).toBe(DRILL.goldCause.rationale);
-    expect(result.thresholds).toEqual(DEFAULT_CAUSE_GRADING);
   });
 });

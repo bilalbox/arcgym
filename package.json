@@ -21,6 +21,7 @@
     "test": "pnpm --recursive run test",
     "preview": "pnpm --filter @arcgym/web preview",
     "prototype:troubleshoot": "pnpm --filter @arcgym/web exec wrangler dev --config ../../packages/drill-core/prototypes/troubleshooting-ai/wrangler.toml",
+    "prototype:cause-bakeout": "pnpm --filter @arcgym/web exec wrangler dev --config ../../packages/drill-core/prototypes/cause-grade-bakeout/wrangler.toml",
     "deploy": "pnpm typecheck && pnpm check && pnpm build && pnpm test:diagram-qa && pnpm --filter @arcgym/web run deploy:pages",
     "prepare": "husky"
   },
