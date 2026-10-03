@@ -72,7 +72,7 @@ flowchart TD
         C3 --> D1
         D1 -->|generate-drill.ts ingest| E1
         E3 -->|Passed| D2
-        E3 -.->|Failed: Automatic Rollback| D1
+        E3 -.->|Failed: keep draft + findings sidecar| D1
         D2 -->|pnpm drill:status --status published| D3
     end
 
@@ -202,6 +202,8 @@ uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
   python scripts/crawler/crawl_architect.py
 uv run --with chromadb --with curl_cffi \
   python scripts/crawler/crawl_developer.py
+uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
+  python scripts/crawler/crawl_help.py
 
 # Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
 python scripts/crawler/crawl_trailhead.py --limit 100

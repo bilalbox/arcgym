@@ -160,7 +160,11 @@ function loadChunkIndex(chunksPath: string): ChunkIndexEntry[] {
 }
 
 function loadAllChunkIndexes(repoRoot: string): ChunkIndexEntry[] {
-  const exports = ['data/architect_chunks.json', 'data/developer_chunks.json'];
+  const exports = [
+    'data/architect_chunks.json',
+    'data/developer_chunks.json',
+    'data/help_chunks.json',
+  ];
   const seen = new Set<string>();
   const entries: ChunkIndexEntry[] = [];
   for (const rel of exports) {

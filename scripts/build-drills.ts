@@ -29,6 +29,7 @@ const WEB_PUBLIC_ROOT = path.join(ROOT_DIR, 'apps/arcgym-web/public');
 const GROUNDING_CHUNK_EXPORTS = [
   path.join(ROOT_DIR, 'data/architect_chunks.json'),
   path.join(ROOT_DIR, 'data/developer_chunks.json'),
+  path.join(ROOT_DIR, 'data/help_chunks.json'),
 ];
 
 const ARCHITECTURAL_DOMAINS = new Set([

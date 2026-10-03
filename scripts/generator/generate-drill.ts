@@ -24,7 +24,11 @@ import {
   writeIngestFindings,
 } from '../../packages/drill-core/src/index.js';
 
-const GROUNDING_CHUNK_EXPORTS = ['data/architect_chunks.json', 'data/developer_chunks.json'];
+const GROUNDING_CHUNK_EXPORTS = [
+  'data/architect_chunks.json',
+  'data/developer_chunks.json',
+  'data/help_chunks.json',
+];
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');

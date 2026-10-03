@@ -40,6 +40,19 @@ describe('Citation Manifest eligibility', () => {
     expect(isEligibleCorrectOptionCitation(DEVELOPER_URL, manifest)).toBe(true);
   });
 
+  it('allows a correct-option URL present only in help fixture chunks', () => {
+    const manifest = citationManifestUrlsFromExports([[{ metadata: { url: HELP_URL } }]]);
+    expect(isEligibleCorrectOptionCitation(HELP_URL, manifest)).toBe(true);
+  });
+
+  it('rejects an allowlisted but uncrawled help URL', () => {
+    const uncrawledHelp =
+      'https://help.salesforce.com/s/articleView?id=sf.c360_a_not_crawled.htm&type=5';
+    const manifest = citationManifestUrlsFromExports([[{ metadata: { url: HELP_URL } }]]);
+    expect(isAllowedCitationUrl(uncrawledHelp)).toBe(true);
+    expect(isEligibleCorrectOptionCitation(uncrawledHelp, manifest)).toBe(false);
+  });
+
   it('rejects an allowlisted but uncrawled URL', () => {
     const manifest = citationManifestUrlsFromExports([[{ metadata: { url: DEVELOPER_URL } }]]);
     expect(isAllowedCitationUrl(UNCRAWLED_DEV_URL)).toBe(true);
