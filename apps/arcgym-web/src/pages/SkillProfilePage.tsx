@@ -1,8 +1,8 @@
 import {
+  type ClientDrillDefinitionDTO,
   calculateProficiencyReport,
   calculateTotalPoints,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
 } from '@arcgym/drill-core';
 import type React from 'react';
 import { useMemo } from 'react';
@@ -14,7 +14,7 @@ import { WhereToStartSection } from '@/components/proficiency/WhereToStartSectio
 
 interface SkillProfilePageProps {
   completedDrills: Record<string, DrillAttemptRecord>;
-  allDrills: DrillDefinitionDTO[];
+  allDrills: ClientDrillDefinitionDTO[];
   totalPoints?: number;
   navigate: (to: string) => void;
   pathname: string;

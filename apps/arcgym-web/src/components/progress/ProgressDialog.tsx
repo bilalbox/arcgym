@@ -1,4 +1,4 @@
-import type { DrillAttemptRecord, DrillDefinitionDTO } from '@arcgym/drill-core';
+import type { ClientDrillDefinitionDTO, DrillAttemptRecord } from '@arcgym/drill-core';
 import { AlertTriangle, Calendar, RotateCcw } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
@@ -21,7 +21,7 @@ interface ProgressDialogProps {
   totalDrillsCount: number;
   totalPoints?: number;
   streakDays?: number;
-  allDrills: DrillDefinitionDTO[];
+  allDrills: ClientDrillDefinitionDTO[];
   onResetProgress: () => void;
   navigate?: (to: string) => void;
 }
@@ -43,7 +43,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   const completedCount = completedList.length;
   const percent = Math.min(100, Math.round((completedCount / (totalDrillsCount || 1)) * 100));
 
-  const drillMap = new Map<string, DrillDefinitionDTO>();
+  const drillMap = new Map<string, ClientDrillDefinitionDTO>();
   for (const d of allDrills) {
     drillMap.set(d.id, d);
   }

@@ -212,10 +212,6 @@ export interface HiddenDistractorDTO {
   rationale: string;
 }
 
-/**
- * One Incident: architecture + issue, Probe Budget discovery, then confidence-gated free-text cause.
- * Outside the daily Rapid Fire streak; single scored attempt per open.
- */
 export interface TroubleshootingDrillDefinition extends DrillDefinitionBase {
   format: 'Troubleshooting';
   architecture: TroubleshootingArchitectureDTO;
@@ -228,21 +224,49 @@ export interface TroubleshootingDrillDefinition extends DrillDefinitionBase {
   hiddenDistractors: HiddenDistractorDTO[];
 }
 
+export type ClientTroubleshootingDrillDefinition = Omit<
+  TroubleshootingDrillDefinition,
+  'goldCause' | 'hiddenDistractors'
+>;
+
 export type DrillDefinitionDTO =
   | RapidFireDrillDefinition
   | CaseFileDrillDefinition
   | TroubleshootingDrillDefinition;
 
-export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefinition {
+export type ClientDrillDefinitionDTO =
+  | RapidFireDrillDefinition
+  | CaseFileDrillDefinition
+  | ClientTroubleshootingDrillDefinition;
+
+export function isRapidFireDrill(
+  d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
+): d is RapidFireDrillDefinition {
   return d.format === 'Rapid_Fire';
 }
 
-export function isCaseFileDrill(d: DrillDefinitionDTO): d is CaseFileDrillDefinition {
+export function isCaseFileDrill(
+  d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
+): d is CaseFileDrillDefinition {
   return d.format === 'Case_File';
 }
 
-export function isTroubleshootingDrill(d: DrillDefinitionDTO): d is TroubleshootingDrillDefinition {
+export function isTroubleshootingDrill(d: DrillDefinitionDTO): d is TroubleshootingDrillDefinition;
+export function isTroubleshootingDrill(
+  d: ClientDrillDefinitionDTO,
+): d is ClientTroubleshootingDrillDefinition;
+export function isTroubleshootingDrill(
+  d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
+): d is TroubleshootingDrillDefinition | ClientTroubleshootingDrillDefinition {
   return d.format === 'Troubleshooting';
+}
+
+export function sanitizeDrillForClient(drill: DrillDefinitionDTO): ClientDrillDefinitionDTO {
+  if (drill.format === 'Troubleshooting') {
+    const { goldCause: _gold, hiddenDistractors: _distractors, ...rest } = drill;
+    return rest;
+  }
+  return drill;
 }
 
 export interface AttemptSubmissionDTO {

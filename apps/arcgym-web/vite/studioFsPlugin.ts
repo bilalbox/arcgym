@@ -12,7 +12,9 @@ import {
   type DrillDefinitionDTO,
   type DrillStatus,
   type GroundingChunkExport,
+  isTroubleshootingDrill,
   lintDrillWording,
+  StubCauseGrader,
   type ValidationFinding,
   validateDrill,
   type WordingFinding,
@@ -220,6 +222,58 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url ?? '';
+        const parsed = new URL(url, 'http://localhost');
+        const pathname = parsed.pathname;
+
+        if (pathname === '/api/troubleshoot/grade' && req.method === 'POST') {
+          if (!isLocalAddress(req.socket.remoteAddress)) {
+            sendJson(res, 403, { error: 'API is localhost-only' });
+            return;
+          }
+          try {
+            const rawBody = await readBody(req);
+            let body: unknown;
+            try {
+              body = JSON.parse(rawBody);
+            } catch {
+              sendJson(res, 400, { error: 'Invalid JSON body' });
+              return;
+            }
+
+            if (!body || typeof body !== 'object' || Array.isArray(body)) {
+              sendJson(res, 400, { error: 'Invalid JSON body' });
+              return;
+            }
+
+            const drillId = String((body as { drillId?: unknown }).drillId ?? '')
+              .trim()
+              .toUpperCase();
+            const causeText = String((body as { causeText?: unknown }).causeText ?? '').trim();
+            if (!drillId) {
+              sendJson(res, 400, { error: 'Invalid drill ID' });
+              return;
+            }
+            if (!causeText) {
+              sendJson(res, 400, { error: 'causeText is required' });
+              return;
+            }
+
+            const drill = readDrill(drillsDir, drillId);
+            if (!drill || !isTroubleshootingDrill(drill)) {
+              sendJson(res, 404, { error: 'Unknown troubleshooting drill' });
+              return;
+            }
+
+            const grader = new StubCauseGrader();
+            const result = await grader.grade({ drill, causeText });
+            sendJson(res, 200, result);
+            return;
+          } catch (err) {
+            sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+            return;
+          }
+        }
+
         if (!url.startsWith(STUDIO_PREFIX)) {
           next();
           return;
@@ -231,9 +285,6 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
         }
 
         try {
-          const parsed = new URL(url, 'http://localhost');
-          const pathname = parsed.pathname;
-
           if (req.method === 'GET' && pathname === `${STUDIO_PREFIX}/drills`) {
             const includePublished = parsed.searchParams.get('includePublished') === '1';
             sendJson(res, 200, { drills: listDrills(drillsDir, includePublished) });

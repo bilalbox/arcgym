@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { GradeCauseResult } from '../scoring/grader/types.js';
 import type { TroubleshootingDrillDefinition } from '../types/drill.js';
 import { createTroubleshootSessionState, troubleshootSessionReducer } from './reducer.js';
 
@@ -115,10 +116,22 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
     expect(state.phase).toBe('commit');
 
+    const correctGrade: GradeCauseResult = {
+      verdict: 'correct',
+      isCorrect: true,
+      chosenId: 'gold',
+      scores: [],
+      goldScore: 0.82,
+      bestDistractorScore: 0.08,
+      otherScore: 0.02,
+      matchedDistractor: null,
+      goldText: DRILL.goldCause.text,
+      goldRationale: DRILL.goldCause.rationale,
+    };
     state = troubleshootSessionReducer(state, {
       type: 'COMMIT_CONFIDENCE',
       confidence: 0.85,
-      scoreOverrides: { gold: 0.82, d1: 0.08, d2: 0.05, d3: 0.03, other: 0.02 },
+      grade: correctGrade,
     });
     expect(state.phase).toBe('feedback');
     expect(state.grade?.verdict).toBe('correct');
@@ -150,10 +163,22 @@ describe('troubleshootSessionReducer', () => {
       text: 'Formula fields overlap BDT with segment refresh.',
     });
     state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
+    const correctGrade: GradeCauseResult = {
+      verdict: 'correct',
+      isCorrect: true,
+      chosenId: 'gold',
+      scores: [],
+      goldScore: 0.9,
+      bestDistractorScore: 0.03,
+      otherScore: 0.02,
+      matchedDistractor: null,
+      goldText: DRILL.goldCause.text,
+      goldRationale: DRILL.goldCause.rationale,
+    };
     state = troubleshootSessionReducer(state, {
       type: 'COMMIT_CONFIDENCE',
       confidence: 0.7,
-      scoreOverrides: { gold: 0.9, d1: 0.03, d2: 0.03, d3: 0.02, other: 0.02 },
+      grade: correctGrade,
     });
 
     expect(state.isCorrect).toBe(true);
@@ -172,10 +197,22 @@ describe('troubleshootSessionReducer', () => {
       text: 'Warehouse is undersized.',
     });
     state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
+    const distractorGrade: GradeCauseResult = {
+      verdict: 'incorrect_distractor',
+      isCorrect: false,
+      chosenId: 'd1',
+      scores: [],
+      goldScore: 0.1,
+      bestDistractorScore: 0.7,
+      otherScore: 0.1,
+      matchedDistractor: { ...DRILL.hiddenDistractors[0], score: 0.7 },
+      goldText: DRILL.goldCause.text,
+      goldRationale: DRILL.goldCause.rationale,
+    };
     state = troubleshootSessionReducer(state, {
       type: 'COMMIT_CONFIDENCE',
       confidence: 0.95,
-      scoreOverrides: { gold: 0.1, d1: 0.7, d2: 0.05, d3: 0.05, other: 0.1 },
+      grade: distractorGrade,
     });
 
     expect(state.isCorrect).toBe(false);

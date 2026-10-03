@@ -1,11 +1,8 @@
 import { ArcGymScoringEngine } from '../scoring/brier.js';
-import {
-  type CauseScoreOverrides,
-  type GradeCauseResult,
-  gradeCause,
-} from '../scoring/gradeCause.js';
+import type { GradeCauseResult } from '../scoring/grader/types.js';
 import { calculateProbeQuality } from '../scoring/probe.js';
 import type {
+  ClientTroubleshootingDrillDefinition,
   ConfidenceAnchor,
   DrillAttemptRecord,
   MetacognitiveQuadrant,
@@ -16,7 +13,7 @@ import type {
 export type TroubleshootPhase = 'brief' | 'probes' | 'cause' | 'commit' | 'feedback';
 
 export interface TroubleshootSessionState {
-  drill: TroubleshootingDrillDefinition;
+  drill: TroubleshootingDrillDefinition | ClientTroubleshootingDrillDefinition;
   phase: TroubleshootPhase;
   selectedProbeIds: string[];
   probesLocked: boolean;
@@ -44,12 +41,12 @@ export type TroubleshootSessionAction =
   | {
       type: 'COMMIT_CONFIDENCE';
       confidence: ConfidenceAnchor;
-      scoreOverrides: CauseScoreOverrides;
+      grade: GradeCauseResult;
     }
   | { type: 'FINISH' };
 
 export function createTroubleshootSessionState(
-  drill: TroubleshootingDrillDefinition,
+  drill: TroubleshootingDrillDefinition | ClientTroubleshootingDrillDefinition,
 ): TroubleshootSessionState {
   return {
     drill,
@@ -144,7 +141,7 @@ export function troubleshootSessionReducer(
       const text = state.causeText.trim();
       if (!text) return state;
 
-      const grade = gradeCause(state.drill, text, action.scoreOverrides);
+      const grade = action.grade;
       const probe = calculateProbeQuality(state.drill.probes, state.selectedProbeIds);
       const brier = ArcGymScoringEngine.calculateDecisionScore(action.confidence, grade.isCorrect);
       const totalScore = probe.probeScore + brier.pointsAwarded;

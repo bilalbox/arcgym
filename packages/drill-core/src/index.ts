@@ -6,6 +6,7 @@ export * from './progress/streak.js';
 export * from './recommendation/engine.js';
 export * from './scoring/brier.js';
 export * from './scoring/gradeCause.js';
+export * from './scoring/grader/index.js';
 export * from './scoring/probe.js';
 export * from './session/reducer.js';
 export * from './session/types.js';

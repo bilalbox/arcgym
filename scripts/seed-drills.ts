@@ -1,9 +1,6 @@
 /**
  * ArcGym drill seeder
- * Syncs compiled drills into Cloudflare KV for edge API routes.
- *
- * Prerequisites:
- *   pnpm build   # compiles content/drills → apps/arcgym-web public + src data
+ * Syncs full authored drills into Cloudflare KV for edge API routes.
  *
  * Usage:
  *   npx tsx scripts/seed-drills.ts
@@ -16,45 +13,53 @@ import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import type { DrillDefinitionDTO } from '../packages/drill-core/src/index.js';
 
 const ROOT_DIR = process.cwd();
-const WEB_PUBLIC_DRILLS = path.join(
-  ROOT_DIR,
-  'apps/arcgym-web/public/api/drills/canonical-drills.json',
-);
+const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const KV_NAMESPACE_ID = 'c1f903c9221b40c086115dd7fc7f43d7';
 const WEB_DIR = path.join(ROOT_DIR, 'apps/arcgym-web');
 
-if (!fs.existsSync(WEB_PUBLIC_DRILLS)) {
-  console.error(
-    `Missing ${WEB_PUBLIC_DRILLS}\nRun \`pnpm build\` (or \`npx tsx scripts/build-drills.ts\`) first.`,
-  );
+if (!fs.existsSync(DRILLS_DIR)) {
+  console.error(`Missing drills directory: ${DRILLS_DIR}`);
   process.exit(1);
 }
 
-const drills = JSON.parse(fs.readFileSync(WEB_PUBLIC_DRILLS, 'utf-8')) as Array<{
-  id: string;
-  domain?: string;
-  domainLabel?: string;
-  format?: string;
-  steps?: Array<{ options?: Array<{ citationUrl?: string }> }>;
-}>;
+const drillFiles = fs
+  .readdirSync(DRILLS_DIR)
+  .filter((f) => f.endsWith('.json') && !f.endsWith('.findings.json'));
 
-if (!Array.isArray(drills) || drills.length === 0) {
-  console.error('canonical-drills.json is empty or invalid.');
+const publishedDrills: DrillDefinitionDTO[] = [];
+
+for (const file of drillFiles) {
+  const filePath = path.join(DRILLS_DIR, file);
+  try {
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as DrillDefinitionDTO;
+    if (raw.status === 'published') {
+      publishedDrills.push(raw);
+    }
+  } catch (e: unknown) {
+    console.warn(`Failed to parse ${file}: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
+if (publishedDrills.length === 0) {
+  console.error('No published drills found in content/drills/');
   process.exit(1);
 }
+
+publishedDrills.sort((a, b) => a.id.localeCompare(b.id));
 
 const kvEntries = [
-  { key: 'drill:today', value: JSON.stringify(drills[0]) },
-  ...drills.map((drill) => ({
+  { key: 'drill:today', value: JSON.stringify(publishedDrills[0]) },
+  ...publishedDrills.map((drill) => ({
     key: `drill:id:${drill.id}`,
     value: JSON.stringify(drill),
   })),
 ];
 
 const domainCounts = new Map<string, number>();
-for (const drill of drills) {
+for (const drill of publishedDrills) {
   const domain = drill.domain ?? 'unknown';
   domainCounts.set(domain, (domainCounts.get(domain) || 0) + 1);
 }
@@ -81,18 +86,18 @@ try {
     putCount += 1;
   }
 
-  // Verify a published Troubleshooting drill is readable when present.
-  const proof = drills.find((d) => d.format === 'Troubleshooting');
+  // Verify a published Troubleshooting drill is readable and includes goldCause when present.
+  const proof = publishedDrills.find((d) => d.format === 'Troubleshooting');
   if (proof) {
     const raw = execSync(
       `pnpm exec wrangler kv key get ${JSON.stringify(`drill:id:${proof.id}`)} --namespace-id=${KV_NAMESPACE_ID} --remote`,
       { cwd: WEB_DIR, encoding: 'utf-8' },
     );
-    const parsed = JSON.parse(raw) as { id?: string; format?: string };
-    if (parsed.id !== proof.id || parsed.format !== 'Troubleshooting') {
+    const parsed = JSON.parse(raw) as { id?: string; format?: string; goldCause?: unknown };
+    if (parsed.id !== proof.id || parsed.format !== 'Troubleshooting' || !parsed.goldCause) {
       throw new Error(`KV verify failed for ${proof.id}`);
     }
-    console.log(`Verified KV readback for ${proof.id} (Troubleshooting).`);
+    console.log(`Verified KV readback for ${proof.id} (Troubleshooting with goldCause).`);
   }
 
   console.log('Cloudflare KV populated.');
@@ -104,13 +109,15 @@ try {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 }
 
-const grounded = drills.filter((d) =>
-  (d.steps ?? []).some((s) =>
-    (s.options ?? []).some((o) => o.citationUrl?.includes('architect.salesforce.com')),
-  ),
+const grounded = publishedDrills.filter((d) =>
+  d.format === 'Rapid_Fire'
+    ? (d.steps ?? []).some((s) =>
+        (s.options ?? []).some((o) => o.citationUrl?.includes('architect.salesforce.com')),
+      )
+    : false,
 ).length;
 
 console.log('\n--- Grounding ---');
-console.log(` • Total drills: ${drills.length}`);
-console.log(` • With architect.salesforce.com citations: ${grounded}`);
+console.log(` • Total published drills: ${publishedDrills.length}`);
+console.log(` • Rapid Fire with architect.salesforce.com citations: ${grounded}`);
 console.log('\nSeeding complete.\n');

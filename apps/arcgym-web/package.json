@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "preview": "vite preview",
     "deploy": "pnpm --filter arcgym-monorepo deploy",
     "deploy:pages": "wrangler pages deploy dist --project-name=arcgym"
@@ -35,6 +36,7 @@
     "tailwindcss": "^4.2.0",
     "typescript": "^7.0.2",
     "vite": "^8.0.0",
+    "vitest": "^5.0.3",
     "wrangler": "^4.141.0"
   }
 }

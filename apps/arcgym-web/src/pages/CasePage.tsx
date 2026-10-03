@@ -1,7 +1,7 @@
 import {
   type CaseFileDrillDefinition,
+  type ClientDrillDefinitionDTO,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
   type DrillFormat,
   isCaseFileDrill,
   type StepAttemptTelemetry,
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 
 interface CasePageProps {
   drillId: string;
-  allDrills: DrillDefinitionDTO[];
+  allDrills: ClientDrillDefinitionDTO[];
   caseFiles: CaseFileDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
   onDrillComplete: (result: {

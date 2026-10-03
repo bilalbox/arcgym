@@ -2,6 +2,7 @@ import {
   ARCHITECTURAL_DOMAIN_LABELS,
   ARCHITECTURAL_DOMAINS,
   type ArchitecturalDomain,
+  type ClientDrillDefinitionDTO,
   type DimensionProficiency,
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
@@ -25,7 +26,9 @@ export interface ProficiencyReportData {
 /**
  * Derives the total decision reps / question steps for a given drill definition.
  */
-export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
+export function getDrillQuestionCount(
+  drill: DrillDefinitionDTO | ClientDrillDefinitionDTO,
+): number {
   if (isRapidFireDrill(drill)) return drill.steps.length || 1;
   if (isCaseFileDrill(drill)) return drill.stations.length || 1;
   if (isTroubleshootingDrill(drill)) return 1;
@@ -37,7 +40,7 @@ export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
  */
 export function calculateProficiencyReport(
   completedDrills: Record<string, DrillAttemptRecord>,
-  allDrills: DrillDefinitionDTO[],
+  allDrills: Array<DrillDefinitionDTO | ClientDrillDefinitionDTO>,
   minQuestionsThresholdOrDimension: number | ProficiencyDimension = 4,
   optionalThreshold = 4,
 ): ProficiencyReportData {
@@ -46,7 +49,7 @@ export function calculateProficiencyReport(
       ? minQuestionsThresholdOrDimension
       : optionalThreshold;
 
-  const drillMap = new Map<string, DrillDefinitionDTO>();
+  const drillMap = new Map<string, DrillDefinitionDTO | ClientDrillDefinitionDTO>();
   for (const d of allDrills) {
     drillMap.set(d.id, d);
   }

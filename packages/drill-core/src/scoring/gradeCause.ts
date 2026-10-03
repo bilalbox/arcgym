@@ -1,8 +1,7 @@
-import type {
-  CauseVerdict,
-  HiddenDistractorDTO,
-  TroubleshootingDrillDefinition,
-} from '../types/drill.js';
+import type { CauseVerdict, TroubleshootingDrillDefinition } from '../types/drill.js';
+import type { GradeCauseResult, GradedPassage } from './grader/types.js';
+
+export type { GradeCauseResult, GradedPassage };
 
 /** Catchall CLEF choice id for vague / unmatched wrong causes. */
 export const CAUSE_OTHER_ID = 'other';
@@ -15,29 +14,6 @@ export const DEFAULT_OTHER_CRITERION =
 export const CAUSE_GRADE_MODEL = '@cf/cloudflare/clef';
 
 export type CauseScoreOverrides = Record<string, number>;
-
-export interface GradedPassage {
-  id: string;
-  kind: 'gold' | 'distractor' | 'other';
-  text: string;
-  rationale: string;
-  antipattern?: string;
-  score: number;
-}
-
-export interface GradeCauseResult {
-  verdict: CauseVerdict;
-  isCorrect: boolean;
-  /** CLEF choice id with the highest probability (`gold`, a distractor id, or `other`). */
-  chosenId: string;
-  scores: GradedPassage[];
-  goldScore: number;
-  bestDistractorScore: number;
-  otherScore: number;
-  matchedDistractor: (HiddenDistractorDTO & { score: number }) | null;
-  goldRationale: string;
-  goldCitationUrl?: string;
-}
 
 /**
  * Grade a free-text cause from an injected CLEF choice probability map
@@ -122,6 +98,7 @@ export function gradeCause(
     bestDistractorScore: bestDistractor.score,
     otherScore: otherPassage.score,
     matchedDistractor,
+    goldText: drill.goldCause.text,
     goldRationale: drill.goldCause.rationale,
     goldCitationUrl: drill.goldCause.citationUrl,
   };
@@ -137,43 +114,4 @@ export function causeGradeCriteria(drill: TroubleshootingDrillDefinition): Recor
   }
   criteria[CAUSE_OTHER_ID] = DEFAULT_OTHER_CRITERION;
   return criteria;
-}
-
-/**
- * Token Jaccard stand-in for local Vite preview when the Pages CLEF grade route
- * is unavailable — never used as the production grader.
- */
-export function stubCauseScoreOverrides(
-  drill: TroubleshootingDrillDefinition,
-  causeText: string,
-): CauseScoreOverrides {
-  const tok = (s: string) =>
-    new Set(
-      String(s)
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .split(/\s+/)
-        .filter((w) => w.length > 2),
-    );
-
-  const scoreOne = (passage: string): number => {
-    const a = tok(causeText);
-    const b = tok(passage);
-    if (a.size === 0 || b.size === 0) return 0;
-    let inter = 0;
-    for (const t of a) if (b.has(t)) inter += 1;
-    const union = a.size + b.size - inter;
-    const coverage = inter / a.size;
-    return Number((0.65 * (inter / union) + 0.35 * coverage).toFixed(4));
-  };
-
-  const overrides: CauseScoreOverrides = {
-    gold: scoreOne(drill.goldCause.text),
-  };
-  for (const d of drill.hiddenDistractors) {
-    overrides[d.id] = scoreOne(d.text);
-  }
-  // Mild prior so vague answers land on other instead of a weak distractor paraphrase.
-  overrides[CAUSE_OTHER_ID] = Math.max(0.15, scoreOne(DEFAULT_OTHER_CRITERION));
-  return overrides;
 }

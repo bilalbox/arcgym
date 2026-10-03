@@ -1,10 +1,10 @@
 import {
+  type ClientDrillDefinitionDTO,
+  type ClientTroubleshootingDrillDefinition,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
   type DrillFormat,
   isTroubleshootingDrill,
   type StepAttemptTelemetry,
-  type TroubleshootingDrillDefinition,
   WELL_ARCHITECTED_PILLAR_LABELS,
 } from '@arcgym/drill-core';
 import { AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
@@ -17,8 +17,8 @@ import { Button } from '@/components/ui/button';
 
 interface TroubleshootPageProps {
   drillId: string;
-  allDrills: DrillDefinitionDTO[];
-  incidents: TroubleshootingDrillDefinition[];
+  allDrills: ClientDrillDefinitionDTO[];
+  incidents: ClientTroubleshootingDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
   onDrillComplete: (result: {
     drillId: string;

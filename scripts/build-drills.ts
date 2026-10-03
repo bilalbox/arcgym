@@ -11,6 +11,7 @@ import {
   type DrillDefinitionDTO,
   type GroundingChunkExport,
   lintDrillWording,
+  sanitizeDrillForClient,
   validateDrill,
 } from '../packages/drill-core/src/index.js';
 
@@ -126,13 +127,15 @@ if (errorCount > 0) {
 allDrills.sort((a, b) => a.id.localeCompare(b.id));
 draftDrills.sort((a, b) => a.id.localeCompare(b.id));
 
+const clientDrills = allDrills.map(sanitizeDrillForClient);
+
 const bundlePath = path.join(WEB_DATA_DIR, 'canonicalDrills.json');
-fs.writeFileSync(bundlePath, JSON.stringify(allDrills, null, 2), 'utf-8');
-console.log(`Wrote ${allDrills.length} published drills → ${bundlePath}`);
+fs.writeFileSync(bundlePath, JSON.stringify(clientDrills, null, 2), 'utf-8');
+console.log(`Wrote ${clientDrills.length} published drills → ${bundlePath}`);
 
 const publicPath = path.join(WEB_PUBLIC_DIR, 'canonical-drills.json');
-fs.writeFileSync(publicPath, JSON.stringify(allDrills, null, 2), 'utf-8');
-console.log(`Wrote ${allDrills.length} published drills → ${publicPath}`);
+fs.writeFileSync(publicPath, JSON.stringify(clientDrills, null, 2), 'utf-8');
+console.log(`Wrote ${clientDrills.length} published drills → ${publicPath}`);
 
 const byFormat = allDrills.reduce((acc: Record<string, number>, d) => {
   acc[d.format] = (acc[d.format] || 0) + 1;

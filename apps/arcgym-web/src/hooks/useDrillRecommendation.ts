@@ -1,7 +1,7 @@
 import {
   type ArchitecturalDomain,
+  type ClientDrillDefinitionDTO,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
   isRapidFireDrill,
   type RapidFireDrillDefinition,
   type RecommendedRound,
@@ -10,7 +10,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import rawCanonicalDrills from '../data/canonicalDrills.json';
 
-const ALL_DRILLS = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
+const ALL_DRILLS = rawCanonicalDrills as unknown as ClientDrillDefinitionDTO[];
 const RAPID_FIRE_DRILLS = ALL_DRILLS.filter(isRapidFireDrill);
 
 export function useDrillRecommendation(

@@ -1,4 +1,5 @@
 import {
+  type ClientTroubleshootingDrillDefinition,
   type ConfidenceAnchor,
   createTroubleshootSessionState,
   type DrillAttemptRecord,
@@ -7,7 +8,6 @@ import {
   orderOptions,
   type StepAttemptTelemetry,
   safeCitationHref,
-  type TroubleshootingDrillDefinition,
   troubleshootSessionReducer,
 } from '@arcgym/drill-core';
 import { ArrowRight, CheckCircle2, Lock, XCircle } from 'lucide-react';
@@ -16,12 +16,12 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { fetchCauseScoreOverrides } from '@/lib/gradeCauseApi';
+import { gradeCauseViaApi } from '@/lib/gradeCauseApi';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 export interface TroubleshootRunnerProps {
-  drill: TroubleshootingDrillDefinition;
+  drill: ClientTroubleshootingDrillDefinition;
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
   onDrillComplete?: (result: {
@@ -90,18 +90,18 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
 
   const unlocked = drill.probes.filter((p) => session.selectedProbeIds.includes(p.id));
   const budgetLeft = drill.probeBudget - session.selectedProbeIds.length;
-  const citationHref = safeCitationHref(drill.goldCause.citationUrl);
+  const citationHref = safeCitationHref(session.grade?.goldCitationUrl);
 
   const commitCause = async () => {
     if (!selectedConfidence || grading) return;
     setGrading(true);
     setGradeError(null);
     try {
-      const { scores } = await fetchCauseScoreOverrides(drill, session.causeText);
+      const grade = await gradeCauseViaApi(drill.id, session.causeText);
       dispatch({
         type: 'COMMIT_CONFIDENCE',
         confidence: (selectedConfidence / 100) as ConfidenceAnchor,
-        scoreOverrides: scores,
+        grade,
       });
     } catch (err) {
       setGradeError(err instanceof Error ? err.message : 'Grading failed');
@@ -329,7 +329,7 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
             </div>
 
             <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 space-y-2">
-              <p className="text-sm font-medium text-miro-primary">{drill.goldCause.text}</p>
+              <p className="text-sm font-medium text-miro-primary">{session.grade.goldText}</p>
               <p className="text-sm text-miro-slate">{session.grade.goldRationale}</p>
               {citationHref && (
                 <a

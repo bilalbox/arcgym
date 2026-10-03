@@ -1,8 +1,8 @@
 import {
   ARCHITECTURAL_DOMAIN_LABELS,
   type ArchitecturalDomain,
+  type ClientTroubleshootingDrillDefinition,
   type DrillAttemptRecord,
-  type TroubleshootingDrillDefinition,
 } from '@arcgym/drill-core';
 import { ArrowRight } from 'lucide-react';
 import type React from 'react';
@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 interface TroubleshootCatalogPageProps {
-  incidents: TroubleshootingDrillDefinition[];
+  incidents: ClientTroubleshootingDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
   navigate: (to: string) => void;
   pathname: string;
@@ -101,7 +101,7 @@ function IncidentCard({
   completed,
   onOpen,
 }: {
-  drill: TroubleshootingDrillDefinition;
+  drill: ClientTroubleshootingDrillDefinition;
   completed?: DrillAttemptRecord;
   onOpen: () => void;
 }) {
