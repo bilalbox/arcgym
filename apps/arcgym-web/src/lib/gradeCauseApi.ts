@@ -22,16 +22,18 @@ export async function fetchCauseScoreOverrides(
         causeText,
       }),
     });
-    if (!res.ok) throw new Error(`grade ${res.status}`);
-    const data = (await res.json()) as { scores?: CauseScoreOverrides };
+    const data = (await res.json()) as { scores?: CauseScoreOverrides; error?: string };
+    if (!res.ok) {
+      throw new Error(data.error || `grade ${res.status}`);
+    }
     if (!data.scores || typeof data.scores.gold !== 'number') {
       throw new Error('invalid grade payload');
     }
     return { scores: data.scores, source: 'api' };
-  } catch {
+  } catch (err) {
     if (import.meta.env.DEV) {
       return { scores: stubCauseScoreOverrides(drill, causeText), source: 'stub' };
     }
-    throw new Error('Cause grading unavailable');
+    throw err instanceof Error ? err : new Error('Cause grading unavailable');
   }
 }
