@@ -1,6 +1,6 @@
 export type ConfidenceAnchor = 0.5 | 0.7 | 0.85 | 0.95;
 
-export type DrillFormat = 'Rapid_Fire' | 'Case_File';
+export type DrillFormat = 'Rapid_Fire' | 'Case_File' | 'Troubleshooting';
 
 /** Practice category from Salesforce Architect Fundamentals. Orthogonal to Well-Architected pillars. */
 export type ArchitecturalDomain =
@@ -170,7 +170,50 @@ export interface CaseFileDrillDefinition extends DrillDefinitionBase {
   stations: CaseFileStationDTO[];
 }
 
-export type DrillDefinitionDTO = RapidFireDrillDefinition | CaseFileDrillDefinition;
+/** Topology synopsis + required diagram for a Troubleshooting Incident. */
+export interface TroubleshootingArchitectureDTO {
+  synopsis: string;
+  /** Absolute path to diagram asset (e.g. /diagrams/...). */
+  diagramUrl: string;
+  diagramLabel?: string;
+}
+
+/** Authored gold root cause — free-text grading target; never shown as an MCQ. */
+export interface GoldCauseDTO {
+  text: string;
+  rationale: string;
+  /** Optional Citation Manifest URL when the failure class is documentation-backed. */
+  citationUrl?: string;
+}
+
+/** Hidden antipattern distractor for free-text cause grading — never rendered as a choice. */
+export interface HiddenDistractorDTO {
+  id: string;
+  text: string;
+  antipattern: string;
+  rationale: string;
+}
+
+/**
+ * One Incident: architecture + issue, Probe Budget discovery, then confidence-gated free-text cause.
+ * Outside the daily Rapid Fire streak; single scored attempt per open.
+ */
+export interface TroubleshootingDrillDefinition extends DrillDefinitionBase {
+  format: 'Troubleshooting';
+  architecture: TroubleshootingArchitectureDTO;
+  issue: string;
+  /** Clarifying-question budget before cause commit (v1: 3). */
+  probeBudget: number;
+  probes: ProbeOptionDTO[];
+  goldCause: GoldCauseDTO;
+  /** Exactly three hidden distractors for antipattern-aware grading. */
+  hiddenDistractors: HiddenDistractorDTO[];
+}
+
+export type DrillDefinitionDTO =
+  | RapidFireDrillDefinition
+  | CaseFileDrillDefinition
+  | TroubleshootingDrillDefinition;
 
 export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefinition {
   return d.format === 'Rapid_Fire';
@@ -178,6 +221,10 @@ export function isRapidFireDrill(d: DrillDefinitionDTO): d is RapidFireDrillDefi
 
 export function isCaseFileDrill(d: DrillDefinitionDTO): d is CaseFileDrillDefinition {
   return d.format === 'Case_File';
+}
+
+export function isTroubleshootingDrill(d: DrillDefinitionDTO): d is TroubleshootingDrillDefinition {
+  return d.format === 'Troubleshooting';
 }
 
 export interface AttemptSubmissionDTO {
@@ -189,6 +236,8 @@ export interface AttemptSubmissionDTO {
   timeToCommitMs: number;
 }
 
+export type CauseVerdict = 'correct' | 'incorrect_distractor' | 'incorrect_miss';
+
 export interface StepAttemptTelemetry {
   stepId: string;
   confidence: ConfidenceAnchor;
@@ -196,11 +245,13 @@ export interface StepAttemptTelemetry {
   score: number;
   selectedOptionId?: string;
   distractorAntipattern?: string;
-  /** Case File: selected clarifying-question ids. */
+  /** Case File / Troubleshooting: selected clarifying-question ids. */
   selectedProbeIds?: string[];
   probeScore?: number;
   recommendationScore?: number;
   missedPivotal?: boolean;
+  /** Troubleshooting: free-text cause grading verdict. */
+  causeVerdict?: CauseVerdict;
 }
 
 export interface DrillAttemptRecord {

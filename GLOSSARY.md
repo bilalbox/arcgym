@@ -25,7 +25,7 @@ A design tension evaluated across the Salesforce Well-Architected Framework pill
 _Avoid_: Feature preference, single right answer
 
 ### Drill Format
-The interaction archetype for a Drill. ArcGym supports two formats: Rapid Fire (daily streak) and Case File (Evaluation-scale CTA practice). Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains. Topology-choice drills embed optional `diagramUrl` previews inside options (with Inspect lightbox), rather than a separate Diagram runner.
+The interaction archetype for a Drill. ArcGym supports three formats: Rapid Fire (daily streak), Case File (Evaluation-scale CTA practice), and Troubleshooting (scarce-probe diagnosis with free-text cause). Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains. Topology-choice Rapid Fire drills embed optional `diagramUrl` previews inside options (with Inspect lightbox), rather than a separate Diagram runner.
 _Avoid_: Question type, quiz mode, Currency, Scenario, Lesson, Diagram-as-separate-format
 
 ### Rapid Fire Drill
@@ -45,12 +45,24 @@ One CTA-board-domain decision inside a Case File: Probe Budget discovery, then a
 _Avoid_: Question, quiz item, solo drill, Board Probe station
 
 ### Probe Budget
-The limited number of clarifying questions an architect may ask before committing a Case File Station recommendation. Pivotal probes narrow the decision space; distractor probes waste budget on irrelevant fishing.
+The limited number of clarifying questions an architect may ask before committing a Case File Station recommendation or a Troubleshooting Incident cause. Pivotal probes narrow the decision space; distractor probes waste budget on irrelevant fishing.
 _Avoid_: Hint unlock, investigation credits, Currency spend
 
 ### Cases
 The learner-facing mode for Case File practice, separate from the daily Rapid Fire streak.
 _Avoid_: Board Eval, Review Board mock, exam mode
+
+### Troubleshooting Drill
+A diagnosis practice format: architecture synopsis + required diagram + issue, a scarce Probe Budget of clarifying questions that unlock scenario facts, then a confidence-gated free-text root-cause commit. Graded against one gold cause and three hidden antipattern distractors (never MCQ). Outside the daily Rapid Fire streak; no separate Troubleshoot streak in v1. See ADR 0004.
+_Avoid_: Quiz, Scenario, Lesson, remediation step (v1), LLM-as-judge
+
+### Incident
+One complete Troubleshooting Drill — the unit of Troubleshoot practice (not a multi-station Case File, not a three-rep Rapid Fire pack).
+_Avoid_: Station, Brief pack, streak rep
+
+### Troubleshoot
+The learner-facing mode for Troubleshooting / Incident practice, peer to Cases in app chrome (`/troubleshoot`).
+_Avoid_: Cases submenu, Quiz mode, daily streak entry
 
 ### UI Copy Minimalism
 Learner-facing strings stay sparse. Structure and controls carry meaning; captions that restate the route, format, or mechanic are deleted. Prefer short verbs over tutorials. See `design.md` §7.
@@ -73,7 +85,7 @@ The set of exact documentation URLs eligible to ground a correct option. Built o
 _Avoid_: Host allowlist alone, uncrawled URL, blog URL
 
 ### Universal Pre-Submit Gate
-The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps and Case File Station recommendations.
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps, Case File Station recommendations, and Troubleshooting cause commits.
 _Avoid_: Feedback prompt, post-quiz survey
 
 ### Architect Linter

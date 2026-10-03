@@ -105,7 +105,11 @@ export const StudioDrillsPage: React.FC<StudioDrillsPageProps> = ({ navigate }) 
                       {drill.status}
                     </Badge>
                     <Badge variant="outline" className="text-[11px]">
-                      {drill.format === 'Rapid_Fire' ? 'Rapid Fire' : 'Case File'}
+                      {drill.format === 'Rapid_Fire'
+                        ? 'Rapid Fire'
+                        : drill.format === 'Case_File'
+                          ? 'Case File'
+                          : 'Troubleshooting'}
                     </Badge>
                     {drill.findingCount > 0 && (
                       <Badge variant="destructive" className="text-[11px]">

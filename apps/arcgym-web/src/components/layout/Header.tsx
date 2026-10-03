@@ -29,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isHome = pathname === '/' || pathname === '';
   const isSkills = pathname === '/skills';
   const isCases = pathname === '/cases' || pathname.startsWith('/cases/');
+  const isTroubleshoot = pathname === '/troubleshoot' || pathname.startsWith('/troubleshoot/');
   const isStudio = pathname === '/dev/drills' || pathname.startsWith('/dev/drills/');
   const { resolved, toggle } = useTheme();
 
@@ -86,6 +87,17 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Cases
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/troubleshoot')}
+              className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
+                isTroubleshoot
+                  ? 'border-miro-primary text-miro-primary font-medium'
+                  : 'border-transparent text-miro-muted hover:text-miro-primary'
+              }`}
+            >
+              Troubleshoot
             </button>
             {import.meta.env.DEV && (
               <button

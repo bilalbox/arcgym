@@ -5,6 +5,7 @@ import {
   type DrillFormat,
   isCaseFileDrill,
   isRapidFireDrill,
+  isTroubleshootingDrill,
   type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
 import type React from 'react';
@@ -29,6 +30,14 @@ const SkillProfilePage = lazy(() =>
 const DrillPage = lazy(() => import('@/pages/DrillPage').then((m) => ({ default: m.DrillPage })));
 const CasesPage = lazy(() => import('@/pages/CasesPage').then((m) => ({ default: m.CasesPage })));
 const CasePage = lazy(() => import('@/pages/CasePage').then((m) => ({ default: m.CasePage })));
+const TroubleshootCatalogPage = lazy(() =>
+  import('@/pages/TroubleshootCatalogPage').then((m) => ({
+    default: m.TroubleshootCatalogPage,
+  })),
+);
+const TroubleshootPage = lazy(() =>
+  import('@/pages/TroubleshootPage').then((m) => ({ default: m.TroubleshootPage })),
+);
 const StudioDrillsPage = import.meta.env.DEV
   ? lazy(() =>
       import('@/pages/studio/StudioDrillsPage').then((m) => ({ default: m.StudioDrillsPage })),
@@ -71,6 +80,7 @@ export const App: React.FC = () => {
   } = useVisitorProgress();
 
   const caseFiles = useMemo(() => ALL_DRILLS.filter(isCaseFileDrill), []);
+  const incidents = useMemo(() => ALL_DRILLS.filter(isTroubleshootingDrill), []);
   const rapidFireCatalog = useMemo(() => ALL_DRILLS.filter(isRapidFireDrill), []);
 
   useEffect(() => {
@@ -173,6 +183,9 @@ export const App: React.FC = () => {
   const caseMatch = pathname.match(/^\/cases\/([^/]+)$/i);
   const routeCaseId = caseMatch ? caseMatch[1] : null;
 
+  const troubleshootMatch = pathname.match(/^\/troubleshoot\/([^/]+)$/i);
+  const routeTroubleshootId = troubleshootMatch ? troubleshootMatch[1] : null;
+
   const studioDrillMatch = import.meta.env.DEV ? pathname.match(/^\/dev\/drills\/([^/]+)$/i) : null;
   const routeStudioDrillId = studioDrillMatch ? studioDrillMatch[1] : null;
 
@@ -187,6 +200,8 @@ export const App: React.FC = () => {
     const found = ALL_DRILLS.find((d) => d.id.toUpperCase() === routeDrillId.toUpperCase());
     if (found && isCaseFileDrill(found)) {
       navigate(`/cases/${found.id}`);
+    } else if (found && isTroubleshootingDrill(found)) {
+      navigate(`/troubleshoot/${found.id}`);
     }
   }, [routeDrillId, navigate]);
 
@@ -248,6 +263,35 @@ export const App: React.FC = () => {
           drillId={routeCaseId}
           allDrills={ALL_DRILLS}
           caseFiles={caseFiles}
+          completedDrills={completedDrills}
+          onDrillComplete={handleDrillComplete}
+          navigate={navigate}
+          pathname={pathname}
+        />
+      </Suspense>,
+    );
+  }
+
+  if (pathname === '/troubleshoot') {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <TroubleshootCatalogPage
+          incidents={incidents}
+          completedDrills={completedDrills}
+          navigate={navigate}
+          pathname={pathname}
+        />
+      </Suspense>,
+    );
+  }
+
+  if (routeTroubleshootId) {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <TroubleshootPage
+          drillId={routeTroubleshootId}
+          allDrills={ALL_DRILLS}
+          incidents={incidents}
           completedDrills={completedDrills}
           onDrillComplete={handleDrillComplete}
           navigate={navigate}

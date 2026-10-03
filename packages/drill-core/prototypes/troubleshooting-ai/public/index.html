@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PROTOTYPE — Troubleshooting Probe → Cause Grade</title>
+  <style>
+    :root {
+      --ink: #14201c;
+      --muted: #5a6b63;
+      --line: #d5ddd8;
+      --paper: #f7f5f0;
+      --panel: #ffffff;
+      --accent: #0f6b4c;
+      --accent-soft: #e4f3ec;
+      --warn: #8a4b12;
+      --warn-soft: #f8ecd9;
+      --bad: #8b2430;
+      --bad-soft: #f8e6e8;
+      --good: #0f6b4c;
+      --good-soft: #e4f3ec;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #e8f2ec 0%, transparent 55%),
+        radial-gradient(900px 400px at 100% 0%, #efe8dc 0%, transparent 50%),
+        var(--paper);
+      line-height: 1.45;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 { font-size: 1.55rem; margin: 0 0 0.4rem; letter-spacing: -0.02em; }
+    .lede { color: var(--muted); max-width: 62ch; margin: 0 0 1.25rem; }
+    .banner {
+      border: 1px solid var(--line);
+      background: var(--warn-soft);
+      color: var(--warn);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      margin-bottom: 1.5rem;
+    }
+    .banner strong { color: var(--ink); }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.1rem 1.2rem;
+      margin-bottom: 1rem;
+    }
+    section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .state-grid {
+      display: grid;
+      gap: 0.65rem;
+    }
+    .field {
+      display: grid;
+      grid-template-columns: 11rem 1fr;
+      gap: 0.75rem;
+      padding: 0.45rem 0;
+      border-bottom: 1px solid #eef1ef;
+      font-size: 0.95rem;
+    }
+    .field:last-child { border-bottom: 0; }
+    .field .k { color: var(--muted); }
+    .field .v { word-break: break-word; }
+    .changed { background: #fff8d6; box-shadow: inset 3px 0 0 #d4a017; padding-left: 0.5rem; }
+    .pill {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #eef1ef;
+    }
+    .pill.good { background: var(--good-soft); color: var(--good); }
+    .pill.bad { background: var(--bad-soft); color: var(--bad); }
+    .pill.warn { background: var(--warn-soft); color: var(--warn); }
+    .pill.idle { background: #eef1ef; color: var(--muted); }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    button, .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0.55rem 0.8rem;
+      font: inherit;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    button.ghost { background: transparent; }
+    textarea {
+      width: 100%;
+      min-height: 96px;
+      font: inherit;
+      padding: 0.7rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      resize: vertical;
+    }
+    .scenario-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 0.85rem;
+    }
+    .scenario-tabs button[aria-selected="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .scenario-body p { margin: 0 0 0.75rem; color: var(--muted); max-width: 70ch; }
+    .steps { display: flex; flex-direction: column; gap: 0.45rem; }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      border: 1px dashed transparent;
+    }
+    .step.done { opacity: 0.55; }
+    .step.current {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .step-num {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      min-width: 1.5rem;
+    }
+    .brief-box {
+      background: #f3f6f4;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .brief-box h3 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+    .brief-box .issue { margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid var(--line); }
+    .diagram {
+      margin-top: 0.75rem;
+      border: 1px dashed #b9c7bf;
+      border-radius: 8px;
+      padding: 0.85rem;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      white-space: pre;
+      line-height: 1.35;
+      color: #334840;
+      background: #fbfcfa;
+      overflow-x: auto;
+    }
+    .probe-list { display: grid; gap: 0.45rem; }
+    .probe {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+      display: grid;
+      gap: 0.25rem;
+    }
+    .probe.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .probe .meta { font-size: 0.8rem; color: var(--muted); }
+    .answer {
+      margin-top: 0.35rem;
+      padding: 0.45rem 0.55rem;
+      background: #fff;
+      border-left: 3px solid var(--accent);
+      font-size: 0.9rem;
+    }
+    .score-row {
+      display: grid;
+      grid-template-columns: 9rem 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.9rem;
+      margin: 0.35rem 0;
+    }
+    .bar {
+      height: 8px;
+      background: #e8ece9;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+    .bar.warn > i { background: var(--warn); }
+    .bar.bad > i { background: var(--bad); }
+    .hint { font-size: 0.85rem; color: var(--muted); margin: 0.35rem 0 0; }
+    .feedback {
+      border-radius: 8px;
+      padding: 0.8rem 0.9rem;
+      margin-top: 0.5rem;
+    }
+    .feedback.correct { background: var(--good-soft); }
+    .feedback.incorrect { background: var(--bad-soft); }
+    .feedback h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    details { margin-top: 0.5rem; }
+    summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; }
+    pre.dump {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      background: #f3f6f4;
+      padding: 0.75rem;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 280px;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>PROTOTYPE — Troubleshooting Probe → Cause Grade</h1>
+  <p class="lede">
+    Validated shape: Probe Budget → free-text root cause → BGE reranker vs gold + hidden distractors.
+    Use the walkthroughs; then grill the product questions this raises.
+  </p>
+  <div class="banner">
+    <strong>PROTOTYPE — not production.</strong>
+    <code>pnpm prototype:troubleshoot</code> → Workers AI
+    <code>@cf/baai/bge-reranker-base</code> (default). Embed + stub kept for comparison.
+    Liftable: session reducer + <code>gradeCause()</code>.
+  </div>
+
+  <section>
+    <h2>Current state</h2>
+    <div id="state-panel" class="state-grid"></div>
+    <details>
+      <summary>Full state dump</summary>
+      <pre id="state-dump" class="dump"></pre>
+    </details>
+  </section>
+
+  <section>
+    <h2>Scenario surface</h2>
+    <div id="scenario-surface"></div>
+  </section>
+
+  <section>
+    <h2>Scorer</h2>
+    <div class="actions" id="scorer-picker" style="margin-bottom:0.5rem"></div>
+    <p class="hint" id="scorer-hint"></p>
+  </section>
+
+  <section>
+    <h2>Free play</h2>
+    <p class="hint">Any order. Illegal actions stay disabled so you can feel the gate.</p>
+    <div class="actions" id="freeplay" style="margin-bottom:0.75rem"></div>
+    <label for="cause-input" class="hint">Cause draft (used by Commit cause)</label>
+    <textarea id="cause-input" placeholder="Describe the likely root cause…"></textarea>
+    <p class="hint" id="score-status"></p>
+    <details>
+      <summary>Stub score overrides</summary>
+      <p class="hint">JSON only used when Scorer is Stub: <code>{"gold":0.82,"d1":0.41,"d2":0.33}</code></p>
+      <textarea id="score-override" placeholder='{"gold":0.82,"d1":0.41,"d2":0.33}' style="min-height:56px"></textarea>
+    </details>
+  </section>
+
+  <section>
+    <h2>Guided walkthroughs</h2>
+    <div class="scenario-tabs" id="scenario-tabs" role="tablist"></div>
+    <div class="scenario-body" id="scenario-body"></div>
+  </section>
+</main>
+
+<script>
+/**
+ * =============================================================================
+ * LIFTABLE MODULE — TroubleshootSession
+ * Pure reducer + grading policy. No DOM. Could drop into packages/drill-core later.
+ * =============================================================================
+ */
+(function TroubleshootSessionModule(global) {
+  'use strict';
+
+  /** @typedef {'brief'|'probes'|'cause'|'feedback'} Phase */
+  /** @typedef {'pivotal'|'useful'|'distractor'} ProbeTier */
+  /** @typedef {'correct'|'incorrect_distractor'|'incorrect_miss'} VerdictKind */
+
+  /**
+   * Sample drill. Cause is non-obvious from the brief alone — pivotal probes unlock it.
+   * Hidden distractors are never shown as MCQ options; they only exist for grading.
+   */
+  const SAMPLE_DRILL = {
+    id: 'proto-ts-001',
+    title: 'Intermittent Zero-Copy segment refresh timeouts',
+    domain: 'Data_Architecture',
+    architecture: {
+      synopsis:
+        'CRM Core feeds identity into Data Cloud. A Zero Copy Data Stream reads curated tables in Snowflake. Segment refresh jobs run hourly. A batch Data Transform (BDT) rebuilds a curated DLO used by two high-value segments.',
+      diagramAscii:
+`[CRM] --identity--> [Data Cloud]
+                         |
+                    Zero Copy DS
+                         v
+              [Snowflake curated tables]
+                         ^
+                   BDT (hourly)
+                         |
+              [Curated DLO + segments]`,
+    },
+    issue:
+      'For two weeks, segment refresh was stable. Now refreshes intermittently fail with query timeout near the top of the hour. Ops already enlarged the Snowflake warehouse once; failures continue.',
+    probeBudget: 3,
+    probes: [
+      {
+        id: 'p1',
+        tier: 'pivotal',
+        label: 'What changed in the curated DLO definition in the last sprint?',
+        answer:
+          'Two formula fields were added that expand nested account attributes at query time against the Zero Copy source.',
+      },
+      {
+        id: 'p2',
+        tier: 'pivotal',
+        label: 'Do BDT runs overlap the segment refresh window?',
+        answer:
+          'Yes. After a scheduler change, BDT start slipped 12 minutes and now overlaps the hourly segment refresh.',
+      },
+      {
+        id: 'p3',
+        tier: 'useful',
+        label: 'Are timeouts correlated with a specific segment?',
+        answer:
+          'Both failing segments read the same curated DLO; other segments on different DLOs are fine.',
+      },
+      {
+        id: 'p4',
+        tier: 'useful',
+        label: 'What does the Snowflake query profile show during failures?',
+        answer:
+          'Long scan + remote spill while evaluating expressions over the Zero Copy external path.',
+      },
+      {
+        id: 'p5',
+        tier: 'distractor',
+        label: 'Is the Zero Copy connector hitting documented API rate limits?',
+        answer:
+          'No sustained 429s. Connector health looks normal between failures.',
+      },
+      {
+        id: 'p6',
+        tier: 'distractor',
+        label: 'Did the CRM → Data Cloud identity sync lag increase?',
+        answer:
+          'Identity sync lag is unchanged and within SLO; failures are on segment refresh, not identity.',
+      },
+      {
+        id: 'p7',
+        tier: 'distractor',
+        label: 'Is cross-region network latency elevated?',
+        answer:
+          'Cloud monitoring shows no latency incident in the window. Timeouts are query-side.',
+      },
+    ],
+    goldCause: {
+      id: 'gold',
+      text:
+        'Formula fields on the curated DLO force expensive Zero Copy evaluation, and after the BDT schedule slip those scans overlap segment refresh, causing intermittent timeouts.',
+      rationale:
+        'The failure mode is concurrent heavy evaluation against Zero Copy plus a schedule collision—not warehouse size. Fix the formula materialization path and/or separate the BDT window from segment refresh.',
+    },
+    /** Hidden MCQ-style antipattern targets — learner never sees these as choices. */
+    hiddenDistractors: [
+      {
+        id: 'd1',
+        text:
+          'The Snowflake warehouse is still undersized for peak concurrent segment refresh load.',
+        antipattern: 'Scale-first warehouse bump',
+        rationale:
+          'Warehouse was already enlarged with no relief. Capacity masks the real overlap + formula expansion cost.',
+      },
+      {
+        id: 'd2',
+        text:
+          'Zero Copy connector rate limiting is throttling the segment refresh queries.',
+        antipattern: 'Blame the connector ceiling',
+        rationale:
+          'No rate-limit evidence. Timeouts track query evaluation cost during BDT overlap.',
+      },
+      {
+        id: 'd3',
+        text:
+          'Cross-region network latency between Data Cloud and Snowflake is causing the timeouts.',
+        antipattern: 'Network ghost hunt',
+        rationale:
+          'No latency incident. Failures are selective to one curated DLO path.',
+      },
+    ],
+    grading: {
+      /** Min gold similarity to count as correct (0–1). */
+      correctThreshold: 0.62,
+      /** Min distractor similarity to treat as a matched antipattern. */
+      distractorThreshold: 0.55,
+      /** Gold must beat the best distractor by this margin. */
+      goldMargin: 0.08,
+    },
+  };
+
+  function createInitialState(drill) {
+    return {
+      drill,
+      phase: /** @type {Phase} */ ('brief'),
+      selectedProbeIds: [],
+      probesLocked: false,
+      causeText: '',
+      grade: null,
+      lastChange: 'session started',
+      scorerMode: 'stub',
+    };
+  }
+
+  /** Token Jaccard — stand-in for BGE cross-encoder relevance. Not production-grade. */
+  function stubRerankScore(query, passage) {
+    const tok = (s) =>
+      new Set(
+        String(s)
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, ' ')
+          .split(/\s+/)
+          .filter((w) => w.length > 2),
+      );
+    const a = tok(query);
+    const b = tok(passage);
+    if (a.size === 0 || b.size === 0) return 0;
+    let inter = 0;
+    for (const t of a) if (b.has(t)) inter += 1;
+    const union = a.size + b.size - inter;
+    // Mild length prior so short distractor paraphrases don't dominate.
+    const coverage = inter / a.size;
+    return Number((0.65 * (inter / union) + 0.35 * coverage).toFixed(4));
+  }
+
+  /**
+   * Grade a free-text cause against gold + hidden distractors.
+   * `scores` may be injected (real BGE later); otherwise stubRerankScore fills them.
+   */
+  function gradeCause(drill, causeText, scoreOverrides) {
+    const targets = [
+      { id: 'gold', kind: 'gold', text: drill.goldCause.text, rationale: drill.goldCause.rationale },
+      ...drill.hiddenDistractors.map((d) => ({
+        id: d.id,
+        kind: 'distractor',
+        text: d.text,
+        rationale: d.rationale,
+        antipattern: d.antipattern,
+      })),
+    ];
+
+    const scores = targets.map((t) => {
+      const key = t.id;
+      const override =
+        scoreOverrides && typeof scoreOverrides[key] === 'number' ? scoreOverrides[key] : null;
+      const score = override !== null ? override : stubRerankScore(causeText, t.text);
+      return { ...t, score };
+    });
+
+    const gold = scores.find((s) => s.kind === 'gold');
+    const distractors = scores.filter((s) => s.kind === 'distractor');
+    const bestDistractor = distractors.reduce((a, b) => (b.score > a.score ? b : a), distractors[0]);
+    const { correctThreshold, distractorThreshold, goldMargin } = drill.grading;
+
+    /** @type {VerdictKind} */
+    let verdict;
+    let matchedDistractor = null;
+
+    // Relative margin both ways: embeddings often score same-domain text high,
+    // so "barely above gold" must not count as a confident distractor match.
+    const beatsDistractor = gold.score >= bestDistractor.score + goldMargin;
+    const distractorBeatsGold =
+      bestDistractor.score >= gold.score + goldMargin;
+    if (gold.score >= correctThreshold && beatsDistractor) {
+      verdict = 'correct';
+    } else if (
+      bestDistractor.score >= distractorThreshold &&
+      distractorBeatsGold
+    ) {
+      verdict = 'incorrect_distractor';
+      matchedDistractor = bestDistractor;
+    } else {
+      verdict = 'incorrect_miss';
+    }
+
+    return {
+      verdict,
+      isCorrect: verdict === 'correct',
+      scores: scores.sort((a, b) => b.score - a.score),
+      goldScore: gold.score,
+      bestDistractorScore: bestDistractor.score,
+      matchedDistractor,
+      goldRationale: drill.goldCause.rationale,
+      thresholds: { correctThreshold, distractorThreshold, goldMargin },
+      scorerMode: scoreOverrides ? 'override' : 'stub',
+    };
+  }
+
+  function calculateProbeQuality(drill, selectedProbeIds) {
+    const selected = new Set(selectedProbeIds);
+    const pivotal = drill.probes.filter((p) => p.tier === 'pivotal');
+    const useful = drill.probes.filter((p) => p.tier === 'useful');
+    const distractors = drill.probes.filter((p) => p.tier === 'distractor');
+    const pivotalHit = pivotal.filter((p) => selected.has(p.id)).length;
+    const usefulHit = useful.filter((p) => selected.has(p.id)).length;
+    const distractorCount = distractors.filter((p) => selected.has(p.id)).length;
+    return {
+      pivotalHit,
+      pivotalTotal: pivotal.length,
+      usefulHit,
+      distractorCount,
+      missedAllPivotal: pivotal.length > 0 && pivotalHit === 0,
+    };
+  }
+
+  function reduce(state, action) {
+    const drill = state.drill;
+
+    switch (action.type) {
+      case 'RESET':
+        return { ...createInitialState(drill), lastChange: 'reset' };
+
+      case 'BEGIN_PROBES': {
+        if (state.phase !== 'brief') return state;
+        return { ...state, phase: 'probes', lastChange: 'entered probe phase' };
+      }
+
+      case 'TOGGLE_PROBE': {
+        if (state.phase !== 'probes' || state.probesLocked) return state;
+        const id = action.probeId;
+        const exists = drill.probes.some((p) => p.id === id);
+        if (!exists) return state;
+        const set = new Set(state.selectedProbeIds);
+        if (set.has(id)) {
+          set.delete(id);
+          return {
+            ...state,
+            selectedProbeIds: [...set],
+            lastChange: `deselected probe ${id}`,
+          };
+        }
+        if (set.size >= drill.probeBudget) return state;
+        set.add(id);
+        return {
+          ...state,
+          selectedProbeIds: [...set],
+          lastChange: `selected probe ${id}`,
+        };
+      }
+
+      case 'LOCK_PROBES': {
+        if (state.phase !== 'probes' || state.probesLocked) return state;
+        if (state.selectedProbeIds.length === 0) return state;
+        return {
+          ...state,
+          probesLocked: true,
+          phase: 'cause',
+          lastChange: 'locked probes; entered cause phase',
+        };
+      }
+
+      case 'SET_CAUSE_TEXT': {
+        if (state.phase !== 'cause') return state;
+        return {
+          ...state,
+          causeText: action.text,
+          lastChange: 'updated cause draft',
+        };
+      }
+
+      case 'COMMIT_CAUSE': {
+        if (state.phase !== 'cause') return state;
+        const text = (action.text ?? state.causeText).trim();
+        if (!text) return state;
+        const grade = gradeCause(drill, text, action.scoreOverrides || null);
+        if (action.scorerMode) grade.scorerMode = action.scorerMode;
+        if (action.model) grade.model = action.model;
+        const probe = calculateProbeQuality(drill, state.selectedProbeIds);
+        return {
+          ...state,
+          causeText: text,
+          phase: 'feedback',
+          grade: { ...grade, probe },
+          scorerMode: grade.scorerMode,
+          lastChange: `graded → ${grade.verdict} (${grade.scorerMode})`,
+        };
+      }
+
+      default:
+        return state;
+    }
+  }
+
+  function can(state, type, payload) {
+    switch (type) {
+      case 'BEGIN_PROBES':
+        return state.phase === 'brief';
+      case 'TOGGLE_PROBE':
+        return (
+          state.phase === 'probes' &&
+          !state.probesLocked &&
+          (state.selectedProbeIds.includes(payload) ||
+            state.selectedProbeIds.length < state.drill.probeBudget)
+        );
+      case 'LOCK_PROBES':
+        return state.phase === 'probes' && !state.probesLocked && state.selectedProbeIds.length > 0;
+      case 'COMMIT_CAUSE':
+        return state.phase === 'cause' && String(payload || state.causeText).trim().length > 0;
+      case 'RESET':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  global.TroubleshootSession = {
+    SAMPLE_DRILL,
+    createInitialState,
+    reduce,
+    can,
+    gradeCause,
+    stubRerankScore,
+    calculateProbeQuality,
+  };
+})(window);
+
+/**
+ * =============================================================================
+ * THROWAWAY PAGE SHELL — buttons, walkthroughs, state render
+ * =============================================================================
+ */
+(function Page() {
+  const TS = window.TroubleshootSession;
+  let state = TS.createInitialState(TS.SAMPLE_DRILL);
+  let lastSnapshot = null;
+  /** @type {'embed'|'rerank'|'stub'} */
+  let scorer = location.protocol === 'file:' ? 'stub' : 'rerank';
+  let scoringBusy = false;
+  let apiReady = location.protocol !== 'file:';
+
+  const PRESET_ANSWERS = {
+    goldish:
+      'Formula fields on the curated DLO make Zero Copy evaluation expensive, and the slipped BDT window now overlaps segment refresh so we get intermittent timeouts.',
+    warehouse:
+      'The Snowflake warehouse is still undersized for peak concurrent segment refresh load and needs another scale-up.',
+    connector:
+      'Zero Copy connector rate limiting is throttling the segment refresh queries at the top of the hour.',
+    vague:
+      'Something is slow in Data Cloud when segments refresh near the top of the hour.',
+    ambiguous:
+      'Timeouts come from heavy Snowflake load during segment refresh; warehouse pressure and Zero Copy cost are both in play.',
+  };
+
+  const STUB_OVERRIDES = {
+    distractor: { gold: 0.38, d1: 0.84, d2: 0.31, d3: 0.22 },
+    ambiguous: { gold: 0.66, d1: 0.64, d2: 0.4, d3: 0.2 },
+    miss: { gold: 0.28, d1: 0.24, d2: 0.21, d3: 0.19 },
+    discovery: { gold: 0.88, d1: 0.3, d2: 0.25, d3: 0.2 },
+  };
+
+  function usesLiveAi() {
+    return scorer === 'embed' || scorer === 'rerank';
+  }
+
+  async function commitCause(text, forcedOverrides) {
+    const trimmed = String(text || '').trim();
+    if (!trimmed || state.phase !== 'cause' || scoringBusy) return;
+
+    let scoreOverrides = forcedOverrides || null;
+    let model = null;
+    let modeLabel = scorer;
+
+    if (usesLiveAi() && !forcedOverrides) {
+      scoringBusy = true;
+      setScoreStatus('Scoring via Workers AI…');
+      renderFreeplay();
+      try {
+        const res = await fetch('/api/score', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            query: trimmed,
+            mode: scorer === 'rerank' ? 'rerank' : 'embed',
+            passages: [
+              { id: 'gold', text: state.drill.goldCause.text },
+              ...state.drill.hiddenDistractors.map((d) => ({ id: d.id, text: d.text })),
+            ],
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        scoreOverrides = data.scores;
+        model = data.model;
+        modeLabel = data.mode === 'rerank' ? 'workers-ai-rerank' : 'workers-ai-embed';
+        setScoreStatus(`Workers AI ok · ${data.model}`);
+      } catch (err) {
+        setScoreStatus(`Workers AI failed: ${err.message || err}. Falling back to stub.`);
+        modeLabel = 'stub-fallback';
+        scoreOverrides = null;
+      } finally {
+        scoringBusy = false;
+      }
+    } else if (forcedOverrides) {
+      modeLabel = 'override';
+      document.getElementById('score-override').value = JSON.stringify(forcedOverrides);
+    }
+
+    dispatch({
+      type: 'COMMIT_CAUSE',
+      text: trimmed,
+      scoreOverrides,
+      scorerMode: modeLabel,
+      model,
+    });
+  }
+
+  function setScoreStatus(msg) {
+    const el = document.getElementById('score-status');
+    if (el) el.textContent = msg || '';
+  }
+
+  const scenarios = [
+    {
+      id: 'happy',
+      name: 'Happy path',
+      blurb:
+        'Ask both pivotal probes (and one useful), then commit a paraphrased gold cause. Reranker should put gold near 1.0.',
+      steps: [
+        { label: 'Start probes', run: () => dispatch({ type: 'BEGIN_PROBES' }) },
+        { label: 'Ask: DLO definition change (pivotal)', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p1' }) },
+        { label: 'Ask: BDT overlap (pivotal)', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p2' }) },
+        { label: 'Ask: which segments fail (useful)', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p3' }) },
+        { label: 'Lock probes', run: () => dispatch({ type: 'LOCK_PROBES' }) },
+        {
+          label: 'Commit near-gold cause',
+          run: () => {
+            document.getElementById('cause-input').value = PRESET_ANSWERS.goldish;
+            return commitCause(PRESET_ANSWERS.goldish);
+          },
+        },
+      ],
+    },
+    {
+      id: 'distractor',
+      name: 'Distractor trap',
+      blurb:
+        'Waste budget on distractor probes, then blame warehouse size. Reranker should match hidden distractor d1; stub uses forced scores.',
+      steps: [
+        { label: 'Start probes', run: () => dispatch({ type: 'BEGIN_PROBES' }) },
+        { label: 'Ask rate limits (distractor)', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p5' }) },
+        { label: 'Ask identity lag (distractor)', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p6' }) },
+        { label: 'Ask network latency (distractor)', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p7' }) },
+        { label: 'Lock probes', run: () => dispatch({ type: 'LOCK_PROBES' }) },
+        {
+          label: 'Commit warehouse distractor',
+          run: () => {
+            const text = PRESET_ANSWERS.warehouse;
+            document.getElementById('cause-input').value = text;
+            return commitCause(text, usesLiveAi() ? null : STUB_OVERRIDES.distractor);
+          },
+        },
+      ],
+    },
+    {
+      id: 'ambiguous',
+      name: 'Gold vs distractor tie',
+      blurb:
+        'Ambiguous cause. Stub forces a margin fail; live rerank shows whether gold and warehouse pressure actually separate.',
+      steps: [
+        { label: 'Start probes', run: () => dispatch({ type: 'BEGIN_PROBES' }) },
+        { label: 'Ask DLO change', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p1' }) },
+        { label: 'Ask BDT overlap', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p2' }) },
+        { label: 'Ask query profile', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p4' }) },
+        { label: 'Lock probes', run: () => dispatch({ type: 'LOCK_PROBES' }) },
+        {
+          label: 'Commit ambiguous cause',
+          run: () => {
+            const text = PRESET_ANSWERS.ambiguous;
+            document.getElementById('cause-input').value = text;
+            return commitCause(text, usesLiveAi() ? null : STUB_OVERRIDES.ambiguous);
+          },
+        },
+      ],
+    },
+    {
+      id: 'miss',
+      name: 'Vague miss',
+      blurb:
+        'Symptom restatement, no clear cause. Reranker should stay below distractor threshold → miss, not a false distractor callout.',
+      steps: [
+        { label: 'Start probes', run: () => dispatch({ type: 'BEGIN_PROBES' }) },
+        { label: 'Ask which segments fail', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p3' }) },
+        { label: 'Lock probes', run: () => dispatch({ type: 'LOCK_PROBES' }) },
+        {
+          label: 'Commit vague cause',
+          run: () => {
+            const text = PRESET_ANSWERS.vague;
+            document.getElementById('cause-input').value = text;
+            return commitCause(text, usesLiveAi() ? null : STUB_OVERRIDES.miss);
+          },
+        },
+      ],
+    },
+    {
+      id: 'discovery',
+      name: 'Right cause, zero pivotal',
+      blurb:
+        'Commit a correct cause after only distractor probes. Grade may be correct, but probe quality flags missedAllPivotal — should discoveryFailure still punish?',
+      steps: [
+        { label: 'Start probes', run: () => dispatch({ type: 'BEGIN_PROBES' }) },
+        { label: 'Ask rate limits', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p5' }) },
+        { label: 'Ask identity lag', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p6' }) },
+        { label: 'Ask network', run: () => dispatch({ type: 'TOGGLE_PROBE', probeId: 'p7' }) },
+        { label: 'Lock probes', run: () => dispatch({ type: 'LOCK_PROBES' }) },
+        {
+          label: 'Commit gold cause anyway',
+          run: () => {
+            const text = PRESET_ANSWERS.goldish;
+            document.getElementById('cause-input').value = text;
+            return commitCause(text, usesLiveAi() ? null : STUB_OVERRIDES.discovery);
+          },
+        },
+      ],
+    },
+  ];
+
+  let activeScenario = 0;
+  let stepIndex = 0;
+
+  function dispatch(action) {
+    lastSnapshot = JSON.parse(JSON.stringify(state));
+    state = TS.reduce(state, action);
+    render();
+  }
+
+  function parseOverrides() {
+    const raw = document.getElementById('score-override').value.trim();
+    if (!raw) return null;
+    try {
+      const obj = JSON.parse(raw);
+      return obj && typeof obj === 'object' ? obj : null;
+    } catch {
+      alert('Score override is not valid JSON');
+      return undefined; // signal abort
+    }
+  }
+
+  function changed(path) {
+    if (!lastSnapshot) return false;
+    const get = (obj, p) => p.split('.').reduce((a, k) => (a == null ? a : a[k]), obj);
+    return JSON.stringify(get(lastSnapshot, path)) !== JSON.stringify(get(state, path));
+  }
+
+  function phasePill(phase) {
+    const map = { brief: 'idle', probes: 'warn', cause: 'warn', feedback: 'good' };
+    return `<span class="pill ${map[phase] || 'idle'}">${phase}</span>`;
+  }
+
+  function verdictPill(grade) {
+    if (!grade) return `<span class="pill idle">—</span>`;
+    if (grade.verdict === 'correct') return `<span class="pill good">correct</span>`;
+    if (grade.verdict === 'incorrect_distractor')
+      return `<span class="pill bad">incorrect (distractor match)</span>`;
+    return `<span class="pill bad">incorrect (miss)</span>`;
+  }
+
+  function renderStatePanel() {
+    const d = state.drill;
+    const probe = state.grade
+      ? state.grade.probe
+      : TS.calculateProbeQuality(d, state.selectedProbeIds);
+    const rows = [
+      ['Phase', phasePill(state.phase), 'phase'],
+      ['Probe budget used', `${state.selectedProbeIds.length} / ${d.probeBudget}`, 'selectedProbeIds'],
+      ['Probes locked', state.probesLocked ? 'yes' : 'no', 'probesLocked'],
+      [
+        'Probe quality',
+        `pivotal ${probe.pivotalHit}/${probe.pivotalTotal} · useful ${probe.usefulHit} · distractors ${probe.distractorCount}` +
+          (probe.missedAllPivotal ? ' · missedAllPivotal' : ''),
+        'selectedProbeIds',
+      ],
+      ['Cause draft', state.causeText ? escapeHtml(state.causeText) : '<em>empty</em>', 'causeText'],
+      ['Verdict', verdictPill(state.grade), 'grade'],
+      [
+        'Scores',
+        state.grade
+          ? `gold ${state.grade.goldScore} · best distractor ${state.grade.bestDistractorScore} (${state.grade.scorerMode})`
+          : '—',
+        'grade',
+      ],
+      ['Active scorer', usesLiveAi() ? `workers-ai · ${scorer}` : 'stub', 'lastChange'],
+      [
+        'Model',
+        state.grade && state.grade.model ? escapeHtml(state.grade.model) : '—',
+        'grade',
+      ],
+      ['Last change', escapeHtml(state.lastChange), 'lastChange'],
+    ];
+    document.getElementById('state-panel').innerHTML = rows
+      .map(
+        ([k, v, path]) =>
+          `<div class="field ${changed(path) ? 'changed' : ''}"><div class="k">${k}</div><div class="v">${v}</div></div>`,
+      )
+      .join('');
+    document.getElementById('state-dump').textContent = JSON.stringify(state, null, 2);
+  }
+
+  function renderSurface() {
+    const d = state.drill;
+    const unlocked = new Set(state.selectedProbeIds);
+    let html = `
+      <div class="brief-box">
+        <h3>${escapeHtml(d.title)}</h3>
+        <div>${escapeHtml(d.architecture.synopsis)}</div>
+        <div class="diagram">${escapeHtml(d.architecture.diagramAscii)}</div>
+        <div class="issue"><strong>Current issue.</strong> ${escapeHtml(d.issue)}</div>
+      </div>`;
+
+    if (state.phase === 'brief') {
+      html += `<p class="hint">Architecture + issue are visible. Cause is not obvious yet — start probes.</p>`;
+    }
+
+    if (state.phase === 'probes' || state.phase === 'cause' || state.phase === 'feedback') {
+      html += `<div class="probe-list">`;
+      for (const p of d.probes) {
+        const selected = unlocked.has(p.id);
+        const showAnswer = selected && (state.probesLocked || state.phase !== 'brief');
+        html += `<div class="probe ${selected ? 'selected' : ''}">
+          <div><strong>${escapeHtml(p.label)}</strong></div>
+          <div class="meta">${selected ? 'asked' : 'available'} · tier hidden from learner in production; shown here for the prototype: <code>${p.tier}</code></div>
+          ${showAnswer ? `<div class="answer">${escapeHtml(p.answer)}</div>` : ''}
+        </div>`;
+      }
+      html += `</div>`;
+    }
+
+    if (state.phase === 'cause') {
+      html += `<p class="hint" style="margin-top:0.75rem">Probes locked. Type the likely root cause, then commit. Hidden distractors are not shown.</p>`;
+    }
+
+    if (state.phase === 'feedback' && state.grade) {
+      const g = state.grade;
+      const cls = g.isCorrect ? 'correct' : 'incorrect';
+      const title =
+        g.verdict === 'correct'
+          ? 'Correct'
+          : g.verdict === 'incorrect_distractor'
+            ? 'Incorrect — matched a hidden antipattern'
+            : 'Incorrect';
+      html += `<div class="feedback ${cls}"><h3>${title}</h3>`;
+      if (g.matchedDistractor) {
+        html += `<p><strong>Closest distractor (${escapeHtml(g.matchedDistractor.antipattern)}).</strong> ${escapeHtml(g.matchedDistractor.rationale)}</p>`;
+      }
+      html += `<p><strong>Correct cause.</strong> ${escapeHtml(d.goldCause.text)}</p>`;
+      html += `<p><strong>Rationale.</strong> ${escapeHtml(g.goldRationale)}</p>`;
+      if (g.probe.missedAllPivotal) {
+        html += `<p><strong>Discovery flag.</strong> No pivotal probes were asked. Cause grade and discovery quality are separate signals — open question whether this should hard-fail.</p>`;
+      }
+      html += `<div style="margin-top:0.75rem">`;
+      for (const s of g.scores) {
+        const barCls = s.kind === 'gold' ? '' : s.score >= g.thresholds.distractorThreshold ? 'warn' : 'bad';
+        html += `<div class="score-row">
+          <div>${s.id}${s.kind === 'distractor' ? ' · distractor' : ''}</div>
+          <div class="bar ${barCls}"><i style="width:${Math.round(s.score * 100)}%"></i></div>
+          <div>${s.score.toFixed(2)}</div>
+        </div>`;
+      }
+      html += `<p class="hint">Thresholds: correct ≥ ${g.thresholds.correctThreshold}, distractor ≥ ${g.thresholds.distractorThreshold}, gold margin ≥ ${g.thresholds.goldMargin}</p>`;
+      html += `</div></div>`;
+    }
+
+    document.getElementById('scenario-surface').innerHTML = html;
+  }
+
+  function renderScorerPicker() {
+    const el = document.getElementById('scorer-picker');
+    const hint = document.getElementById('scorer-hint');
+    if (!el) return;
+    el.innerHTML = '';
+    const options = [
+      { id: 'rerank', label: 'BGE rerank (default)' },
+      { id: 'embed', label: 'BGE embed' },
+      { id: 'stub', label: 'Stub (offline)' },
+    ];
+    for (const opt of options) {
+      const b = btn(opt.label, () => {
+        scorer = opt.id;
+        if (usesLiveAi() && !apiReady) {
+          setScoreStatus('Workers AI API not reachable — start with pnpm prototype:troubleshoot');
+        }
+        render();
+      }, !scoringBusy, opt.id === scorer);
+      if (opt.id === scorer) b.classList.add('primary');
+      el.appendChild(b);
+    }
+    if (hint) {
+      hint.textContent = usesLiveAi()
+        ? apiReady
+          ? scorer === 'rerank'
+            ? 'Live @cf/baai/bge-reranker-base via POST /api/score (billed even in wrangler dev).'
+            : 'Live @cf/baai/bge-base-en-v1.5 cosine via POST /api/score (billed even in wrangler dev).'
+          : 'API health check failed. Run pnpm prototype:troubleshoot and reload.'
+        : 'Token-overlap stand-in. Guided scenarios may inject forced scores.';
+    }
+  }
+
+  function renderFreeplay() {
+    const d = state.drill;
+    const el = document.getElementById('freeplay');
+    const buttons = [];
+
+    buttons.push(btn('Reset', () => {
+      document.getElementById('cause-input').value = '';
+      document.getElementById('score-override').value = '';
+      setScoreStatus('');
+      dispatch({ type: 'RESET' });
+      stepIndex = 0;
+      renderWalkthrough();
+    }, !scoringBusy));
+
+    buttons.push(
+      btn('Begin probes', () => dispatch({ type: 'BEGIN_PROBES' }), !scoringBusy && TS.can(state, 'BEGIN_PROBES')),
+    );
+
+    for (const p of d.probes) {
+      const selected = state.selectedProbeIds.includes(p.id);
+      const label = `${selected ? 'Deselect' : 'Ask'}: ${short(p.label, 42)}`;
+      buttons.push(
+        btn(
+          label,
+          () => dispatch({ type: 'TOGGLE_PROBE', probeId: p.id }),
+          !scoringBusy && TS.can(state, 'TOGGLE_PROBE', p.id),
+        ),
+      );
+    }
+
+    buttons.push(
+      btn(
+        'Lock probes → cause',
+        () => dispatch({ type: 'LOCK_PROBES' }),
+        !scoringBusy && TS.can(state, 'LOCK_PROBES'),
+        true,
+      ),
+    );
+
+    buttons.push(
+      btn(
+        scoringBusy ? 'Scoring…' : 'Commit cause',
+        () => {
+          const text = document.getElementById('cause-input').value;
+          if (usesLiveAi()) {
+            return commitCause(text, null);
+          }
+          const overrides = parseOverrides();
+          if (overrides === undefined) return;
+          return commitCause(text, overrides);
+        },
+        !scoringBusy && TS.can(state, 'COMMIT_CAUSE', document.getElementById('cause-input').value),
+        true,
+      ),
+    );
+
+    buttons.push(
+      btn('Fill near-gold draft', () => {
+        document.getElementById('cause-input').value = PRESET_ANSWERS.goldish;
+      }, !scoringBusy && state.phase === 'cause'),
+    );
+    buttons.push(
+      btn('Fill warehouse distractor draft', () => {
+        document.getElementById('cause-input').value = PRESET_ANSWERS.warehouse;
+      }, !scoringBusy && state.phase === 'cause'),
+    );
+
+    el.innerHTML = '';
+    buttons.forEach((b) => el.appendChild(b));
+  }
+
+  function renderWalkthrough() {
+    const tabs = document.getElementById('scenario-tabs');
+    tabs.innerHTML = '';
+    scenarios.forEach((s, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = s.name;
+      b.setAttribute('aria-selected', i === activeScenario ? 'true' : 'false');
+      b.onclick = () => {
+        activeScenario = i;
+        stepIndex = 0;
+        document.getElementById('cause-input').value = '';
+        document.getElementById('score-override').value = '';
+        lastSnapshot = null;
+        state = TS.createInitialState(TS.SAMPLE_DRILL);
+        render({ rebuildWalkthrough: true });
+      };
+      tabs.appendChild(b);
+    });
+
+    const sc = scenarios[activeScenario];
+    const body = document.getElementById('scenario-body');
+    let html = `<p>${escapeHtml(sc.blurb)}</p><div class="steps">`;
+    sc.steps.forEach((step, i) => {
+      const cls = i < stepIndex ? 'done' : i === stepIndex ? 'current' : '';
+      html += `<div class="step ${cls}">
+        <span class="step-num">${i + 1}</span>
+        <button type="button" data-step="${i}" ${i !== stepIndex ? 'disabled' : ''}>${escapeHtml(step.label)}</button>
+      </div>`;
+    });
+    html += `</div>`;
+    body.innerHTML = html;
+    body.querySelectorAll('button[data-step]').forEach((b) => {
+      b.onclick = async () => {
+        const i = Number(b.getAttribute('data-step'));
+        if (i !== stepIndex || scoringBusy) return;
+        b.disabled = true;
+        await sc.steps[i].run();
+        stepIndex += 1;
+        render({ rebuildWalkthrough: true });
+      };
+    });
+  }
+
+  function btn(label, onClick, enabled, primary) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    b.disabled = !enabled;
+    if (primary) b.className = 'primary';
+    b.onclick = onClick;
+    return b;
+  }
+
+  function short(s, n) {
+    return s.length <= n ? s : s.slice(0, n - 1) + '…';
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function render(opts) {
+    renderScorerPicker();
+    renderStatePanel();
+    renderSurface();
+    renderFreeplay();
+    if (opts && opts.rebuildWalkthrough) {
+      renderWalkthrough();
+    } else {
+      const body = document.getElementById('scenario-body');
+      body.querySelectorAll('.step').forEach((el, i) => {
+        el.classList.toggle('done', i < stepIndex);
+        el.classList.toggle('current', i === stepIndex);
+        const b = el.querySelector('button');
+        if (b) b.disabled = i !== stepIndex || scoringBusy;
+      });
+    }
+  }
+
+  document.getElementById('cause-input').addEventListener('input', (e) => {
+    if (state.phase === 'cause') {
+      lastSnapshot = JSON.parse(JSON.stringify(state));
+      state = TS.reduce(state, { type: 'SET_CAUSE_TEXT', text: e.target.value });
+      renderStatePanel();
+      renderFreeplay();
+    }
+  });
+
+  async function probeApi() {
+    if (location.protocol === 'file:') {
+      apiReady = false;
+      scorer = 'stub';
+      setScoreStatus('Opened as file:// — stub scorer only. Use pnpm prototype:troubleshoot for Workers AI.');
+      render({ rebuildWalkthrough: true });
+      return;
+    }
+    try {
+      const res = await fetch('/api/health');
+      apiReady = res.ok;
+      if (!apiReady) throw new Error(res.statusText);
+      const data = await res.json();
+      setScoreStatus(`API ready · default rerank ${data.rerankModel}`);
+    } catch {
+      apiReady = false;
+      setScoreStatus('API health check failed.');
+    }
+    render({ rebuildWalkthrough: true });
+  }
+
+  render({ rebuildWalkthrough: true });
+  probeApi();
+})();
+</script>
+</body>
+</html>

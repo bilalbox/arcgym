@@ -9,8 +9,15 @@ export interface DrillKvNamespace {
   list(options?: { prefix?: string }): Promise<{ keys: Array<{ name: string }> }>;
 }
 
+/** Minimal Workers AI binding surface for BGE reranker grading. */
+export interface AiBinding {
+  run(model: string, inputs: Record<string, unknown>): Promise<unknown>;
+}
+
 export interface Env {
   DRILL_KV?: DrillKvNamespace;
+  /** Workers AI binding for Troubleshooting cause grading. */
+  AI?: AiBinding;
   /** HMAC secret for publish-drill webhook signatures. */
   ARCGYM_HMAC_SECRET?: string;
   /** Bearer key for /api/admin/* (header X-ArcGym-Admin-Key only). */

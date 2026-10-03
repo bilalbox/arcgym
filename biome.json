@@ -12,7 +12,8 @@
       "!**/apps/arcgym-web/src/data/canonicalDrills.json",
       "!**/apps/arcgym-web/public/api/drills/canonical-drills.json",
       "!**/content/drills",
-      "!**/data"
+      "!**/data",
+      "!**/packages/drill-core/prototypes"
     ]
   },
   "formatter": {

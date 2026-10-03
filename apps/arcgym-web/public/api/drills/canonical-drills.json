@@ -2189,5 +2189,98 @@
         ]
       }
     ]
+  },
+  {
+    "id": "AGD-01001",
+    "title": "Intermittent Zero-Copy segment refresh timeouts",
+    "format": "Troubleshooting",
+    "domain": "Data_Architecture",
+    "domainLabel": "Data 360 Zero Copy & Segments",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Reliability",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "status": "published",
+    "architecture": {
+      "synopsis": "CRM Core feeds identity into Data Cloud. A Zero Copy Data Stream reads curated tables in Snowflake. Segment refresh jobs run hourly. A batch Data Transform (BDT) rebuilds a curated DLO used by two high-value segments.",
+      "diagramUrl": "/diagrams/agd-00807-bdt-materialization-topology.svg",
+      "diagramLabel": "Zero Copy, BDT, curated DLO, segments"
+    },
+    "issue": "For two weeks, segment refresh was stable. Now refreshes intermittently fail with query timeout near the top of the hour. Ops already enlarged the Snowflake warehouse once; failures continue.",
+    "probeBudget": 3,
+    "probes": [
+      {
+        "id": "p1",
+        "tier": "pivotal",
+        "label": "What changed in the curated DLO definition in the last sprint?",
+        "answer": "Two formula fields were added that expand nested account attributes at query time against the Zero Copy source."
+      },
+      {
+        "id": "p2",
+        "tier": "pivotal",
+        "label": "Do BDT runs overlap the segment refresh window?",
+        "answer": "Yes. After a scheduler change, BDT start slipped 12 minutes and now overlaps the hourly segment refresh."
+      },
+      {
+        "id": "p3",
+        "tier": "useful",
+        "label": "Are timeouts correlated with a specific segment?",
+        "answer": "Both failing segments read the same curated DLO; other segments on different DLOs are fine."
+      },
+      {
+        "id": "p4",
+        "tier": "useful",
+        "label": "What does the Snowflake query profile show during failures?",
+        "answer": "Long scan plus remote spill while evaluating expressions over the Zero Copy external path."
+      },
+      {
+        "id": "p5",
+        "tier": "distractor",
+        "label": "Is the Zero Copy connector hitting documented API rate limits?",
+        "answer": "No sustained 429s. Connector health looks normal between failures.",
+        "distractorAntipattern": "Blame Connector Ceiling"
+      },
+      {
+        "id": "p6",
+        "tier": "distractor",
+        "label": "Did the CRM to Data Cloud identity sync lag increase?",
+        "answer": "Identity sync lag is unchanged and within SLO; failures are on segment refresh, not identity.",
+        "distractorAntipattern": "Identity Sync Distraction"
+      },
+      {
+        "id": "p7",
+        "tier": "distractor",
+        "label": "Is cross-region network latency elevated?",
+        "answer": "Cloud monitoring shows no latency incident in the window. Timeouts are query-side.",
+        "distractorAntipattern": "Network Ghost Hunt"
+      }
+    ],
+    "goldCause": {
+      "text": "Formula fields on the curated DLO force expensive Zero Copy evaluation, and after the BDT schedule slip those scans overlap segment refresh, causing intermittent timeouts.",
+      "rationale": "The failure mode is concurrent heavy evaluation against Zero Copy plus a schedule collision—not warehouse size. Fix the formula materialization path and/or separate the BDT window from segment refresh.",
+      "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+    },
+    "hiddenDistractors": [
+      {
+        "id": "d1",
+        "text": "The Snowflake warehouse is still undersized for peak concurrent segment refresh load.",
+        "antipattern": "Scale First Warehouse",
+        "rationale": "Warehouse was already enlarged with no relief. Capacity masks the real overlap and formula expansion cost."
+      },
+      {
+        "id": "d2",
+        "text": "Zero Copy connector rate limiting is throttling the segment refresh queries.",
+        "antipattern": "Blame Connector Ceiling",
+        "rationale": "No rate-limit evidence. Timeouts track query evaluation cost during BDT overlap."
+      },
+      {
+        "id": "d3",
+        "text": "Cross-region network latency between Data Cloud and Snowflake is causing the timeouts.",
+        "antipattern": "Network Ghost Hunt",
+        "rationale": "No latency incident. Failures are selective to one curated DLO path."
+      }
+    ]
   }
 ]

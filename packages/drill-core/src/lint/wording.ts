@@ -3,8 +3,9 @@ import type {
   DrillDefinitionDTO,
   DrillFormat,
   RapidFireDrillDefinition,
+  TroubleshootingDrillDefinition,
 } from '../types/drill.js';
-import { isCaseFileDrill, isRapidFireDrill } from '../types/drill.js';
+import { isCaseFileDrill, isRapidFireDrill, isTroubleshootingDrill } from '../types/drill.js';
 
 export type WordingRuleId =
   | 'length-tell'
@@ -14,7 +15,9 @@ export type WordingRuleId =
   | 'self-refuting-distractor'
   | 'long-stem'
   | 'pivotal-leak'
-  | 'probe-not-question';
+  | 'probe-not-question'
+  | 'cause-leak'
+  | 'gold-too-long';
 
 export interface WordingFinding {
   ruleId: WordingRuleId;
@@ -48,6 +51,13 @@ const MAX_STEM_WORDS = 55;
 /** Case File briefs are Evaluation-scale narratives. */
 const MAX_BRIEF_WORDS = 220;
 const MAX_STATION_PROMPT_WORDS = 55;
+/** Troubleshooting architecture synopsis stays shorter than a Case File brief. */
+const MAX_ARCHITECTURE_WORDS = 120;
+const MAX_ISSUE_WORDS = 80;
+/** Gold cause must stay short for stable BGE reranker matching (~2 sentences). */
+const MAX_GOLD_CAUSE_SENTENCES = 2;
+const MAX_GOLD_CAUSE_WORDS = 55;
+const CAUSE_LEAK_JACCARD = 0.45;
 const VERDICT_PREFIX = /^[A-Z][A-Za-z ]{0,24}[!:]\s/;
 const SELF_REFUTING = /\b(entirely|blindly|immediately|always|never|directly to production)\b/i;
 const QUESTION_MARK = /\?/;
@@ -75,6 +85,13 @@ const STOPWORDS = new Set([
 
 function wordCount(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
+}
+
+function sentenceCount(text: string): number {
+  return text
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean).length;
 }
 
 function contentWords(text: string): Set<string> {
@@ -250,6 +267,110 @@ function lintCaseFileExtras(drill: CaseFileDrillDefinition): WordingFinding[] {
   return findings;
 }
 
+function lintTroubleshootingExtras(drill: TroubleshootingDrillDefinition): WordingFinding[] {
+  const findings: WordingFinding[] = [];
+
+  const archWords = wordCount(drill.architecture.synopsis);
+  if (archWords > MAX_ARCHITECTURE_WORDS) {
+    findings.push({
+      ruleId: 'long-stem',
+      where: 'architecture.synopsis',
+      message: `architecture synopsis has ${archWords} words (max ${MAX_ARCHITECTURE_WORDS}); keep topology, not the diagnosis`,
+    });
+  }
+
+  const issueWords = wordCount(drill.issue);
+  if (issueWords > MAX_ISSUE_WORDS) {
+    findings.push({
+      ruleId: 'long-stem',
+      where: 'issue',
+      message: `issue has ${issueWords} words (max ${MAX_ISSUE_WORDS}); state the failure, not the cause`,
+    });
+  }
+
+  const goldSentences = sentenceCount(drill.goldCause.text);
+  const goldWords = wordCount(drill.goldCause.text);
+  if (goldSentences > MAX_GOLD_CAUSE_SENTENCES || goldWords > MAX_GOLD_CAUSE_WORDS) {
+    findings.push({
+      ruleId: 'gold-too-long',
+      where: 'goldCause.text',
+      message: `gold cause has ${goldSentences} sentences / ${goldWords} words (max ${MAX_GOLD_CAUSE_SENTENCES} sentences, ${MAX_GOLD_CAUSE_WORDS} words); keep ~2 sentences for reranker stability`,
+    });
+  }
+
+  const briefSurface = `${drill.architecture.synopsis}\n${drill.issue}`;
+  const briefLower = briefSurface.toLowerCase();
+  const goldOverlap = contentWordJaccard(drill.goldCause.text, briefSurface);
+  if (goldOverlap >= CAUSE_LEAK_JACCARD) {
+    findings.push({
+      ruleId: 'cause-leak',
+      where: 'architecture/issue',
+      message: `gold cause content-word overlap with brief surface is ${goldOverlap.toFixed(2)}; leave the diagnosis behind pivotal probes`,
+    });
+  }
+
+  for (const probe of drill.probes) {
+    if (!QUESTION_MARK.test(probe.label)) {
+      findings.push({
+        ruleId: 'probe-not-question',
+        where: `probe ${probe.id}`,
+        message: 'probe label must be a clarifying question ending with ?',
+      });
+    }
+    if (probe.tier === 'pivotal') {
+      const answer = probe.answer.trim();
+      if (answer.length >= 8 && briefLower.includes(answer.toLowerCase())) {
+        findings.push({
+          ruleId: 'pivotal-leak',
+          where: `probe ${probe.id}`,
+          message:
+            'pivotal probe answer appears in architecture/issue; leave critical facts behind the Probe Budget',
+        });
+      }
+    }
+    if (probe.tier === 'distractor' && probe.distractorAntipattern) {
+      const words = wordCount(probe.distractorAntipattern);
+      if (words < 2 || words > 5 || /[.!?]/.test(probe.distractorAntipattern)) {
+        findings.push({
+          ruleId: 'antipattern-name',
+          where: `probe ${probe.id}`,
+          message: `distractorAntipattern "${probe.distractorAntipattern}" must be a 2–5 word name, not a sentence`,
+        });
+      }
+    }
+  }
+
+  for (const distractor of drill.hiddenDistractors) {
+    const words = wordCount(distractor.antipattern);
+    if (words < 2 || words > 5 || /[.!?]/.test(distractor.antipattern)) {
+      findings.push({
+        ruleId: 'antipattern-name',
+        where: `hiddenDistractor ${distractor.id}`,
+        message: `antipattern "${distractor.antipattern}" must be a 2–5 word name, not a sentence`,
+      });
+    }
+    const prefix = distractor.rationale.match(VERDICT_PREFIX);
+    if (prefix) {
+      findings.push({
+        ruleId: 'verdict-prefix',
+        where: `hiddenDistractor ${distractor.id} rationale`,
+        message: `opens with the verdict "${prefix[0].trim()}"; the UI already shows the verdict`,
+      });
+    }
+  }
+
+  const goldPrefix = drill.goldCause.rationale.match(VERDICT_PREFIX);
+  if (goldPrefix) {
+    findings.push({
+      ruleId: 'verdict-prefix',
+      where: 'goldCause.rationale',
+      message: `opens with the verdict "${goldPrefix[0].trim()}"; the UI already shows the verdict`,
+    });
+  }
+
+  return findings;
+}
+
 /** Answer tells and feedback defects that let a learner find the answer without architectural judgment. */
 export function lintDrillWording(drill: DrillDefinitionDTO): WordingFinding[] {
   if (isRapidFireDrill(drill)) {
@@ -257,6 +378,9 @@ export function lintDrillWording(drill: DrillDefinitionDTO): WordingFinding[] {
   }
   if (isCaseFileDrill(drill)) {
     return [...questionsOfCaseFile(drill).flatMap(lintQuestion), ...lintCaseFileExtras(drill)];
+  }
+  if (isTroubleshootingDrill(drill)) {
+    return lintTroubleshootingExtras(drill);
   }
   return [];
 }

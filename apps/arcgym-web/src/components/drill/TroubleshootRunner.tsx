@@ -1,0 +1,368 @@
+import {
+  type ConfidenceAnchor,
+  createTroubleshootSessionState,
+  type DrillAttemptRecord,
+  type DrillFormat,
+  optionSeed,
+  orderOptions,
+  type StepAttemptTelemetry,
+  safeCitationHref,
+  type TroubleshootingDrillDefinition,
+  troubleshootSessionReducer,
+} from '@arcgym/drill-core';
+import { ArrowRight, CheckCircle2, Lock, XCircle } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { fetchCauseScoreOverrides } from '@/lib/gradeCauseApi';
+import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
+import { DrillFeedbackWidget } from './DrillFeedbackWidget';
+
+export interface TroubleshootRunnerProps {
+  drill: TroubleshootingDrillDefinition;
+  isReviewMode?: boolean;
+  previousAttempt?: DrillAttemptRecord;
+  onDrillComplete?: (result: {
+    drillId: string;
+    format: DrillFormat;
+    score: number;
+    accuracy: number;
+    streakDays: number;
+    steps?: StepAttemptTelemetry[];
+  }) => void;
+  onNextDrill?: () => void;
+}
+
+export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
+  drill,
+  isReviewMode = false,
+  previousAttempt,
+  onDrillComplete,
+  onNextDrill,
+}) => {
+  const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
+  const [grading, setGrading] = useState(false);
+  const [gradeError, setGradeError] = useState<string | null>(null);
+  const [session, dispatch] = useReducer(
+    troubleshootSessionReducer,
+    drill,
+    createTroubleshootSessionState,
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset when drill id changes
+  useEffect(() => {
+    dispatch({ type: 'RESET_SESSION' });
+    setSelectedConfidence(null);
+    setGradeError(null);
+  }, [drill.id]);
+
+  const completedRef = useRef(false);
+
+  useEffect(() => {
+    if (session.isCompleted && session.attempt && !completedRef.current) {
+      completedRef.current = true;
+      onDrillComplete?.({
+        drillId: drill.id,
+        format: 'Troubleshooting',
+        score: session.totalScore,
+        accuracy: session.isCorrect ? 1 : 0,
+        streakDays: 0,
+        steps: session.attempt.steps,
+      });
+    } else if (!session.isCompleted) {
+      completedRef.current = false;
+    }
+  }, [
+    session.isCompleted,
+    session.attempt,
+    session.totalScore,
+    session.isCorrect,
+    drill.id,
+    onDrillComplete,
+  ]);
+
+  const orderedProbes = useMemo(
+    () => orderOptions(drill.probes, optionSeed(drill.id, 'probes')),
+    [drill],
+  );
+
+  const unlocked = drill.probes.filter((p) => session.selectedProbeIds.includes(p.id));
+  const budgetLeft = drill.probeBudget - session.selectedProbeIds.length;
+  const citationHref = safeCitationHref(drill.goldCause.citationUrl);
+
+  const commitCause = async () => {
+    if (!selectedConfidence || grading) return;
+    setGrading(true);
+    setGradeError(null);
+    try {
+      const { scores } = await fetchCauseScoreOverrides(drill, session.causeText);
+      dispatch({
+        type: 'COMMIT_CONFIDENCE',
+        confidence: (selectedConfidence / 100) as ConfidenceAnchor,
+        scoreOverrides: scores,
+      });
+    } catch (err) {
+      setGradeError(err instanceof Error ? err.message : 'Grading failed');
+    } finally {
+      setGrading(false);
+    }
+  };
+
+  if (session.phase === 'brief') {
+    return (
+      <Card className="border-miro-hairline bg-miro-card shadow-xs">
+        <CardContent className="space-y-5 pt-6">
+          <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed whitespace-pre-wrap">
+            {drill.architecture.synopsis}
+          </div>
+          <figure className="rounded-xl border border-miro-hairline bg-miro-surface overflow-hidden">
+            <img
+              src={drill.architecture.diagramUrl}
+              alt={drill.architecture.diagramLabel ?? 'Architecture diagram'}
+              className="w-full h-auto"
+            />
+          </figure>
+          <div className="rounded-xl border border-miro-hairline p-4 text-sm text-miro-slate leading-relaxed">
+            {drill.issue}
+          </div>
+          <Button
+            onClick={() => dispatch({ type: 'BEGIN_PROBES' })}
+            className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+          >
+            Begin <ArrowRight className="h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (session.isCompleted) {
+    return (
+      <Card className="border-miro-hairline bg-miro-card shadow-xs">
+        <CardHeader className="text-center pb-4">
+          <div
+            className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
+              session.isCorrect
+                ? 'bg-miro-successLight text-miro-successText'
+                : 'bg-miro-dangerLight text-miro-dangerText'
+            }`}
+          >
+            {session.isCorrect ? (
+              <CheckCircle2 className="h-6 w-6" />
+            ) : (
+              <XCircle className="h-6 w-6" />
+            )}
+          </div>
+          <h2 className="text-xl sm:text-2xl font-medium text-miro-primary">Complete</h2>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-0">
+          <div className="grid grid-cols-3 gap-3 text-center p-4 bg-miro-surface rounded-2xl border border-miro-hairlineSoft">
+            <div>
+              <span className="text-xs text-miro-slate font-medium">Score</span>
+              <p className="text-2xl font-medium text-miro-primary mt-0.5">{session.totalScore}</p>
+            </div>
+            <div>
+              <span className="text-xs text-miro-slate font-medium">Cause</span>
+              <p
+                className={`text-sm font-medium mt-1.5 ${
+                  session.isCorrect ? 'text-miro-successText' : 'text-miro-dangerText'
+                }`}
+              >
+                {session.isCorrect ? 'Correct' : 'Incorrect'}
+              </p>
+            </div>
+            <div>
+              <span className="text-xs text-miro-slate font-medium">Discovery</span>
+              <p
+                className={`text-sm font-medium mt-1.5 ${
+                  session.missedAllPivotal ? 'text-miro-dangerText' : 'text-miro-successText'
+                }`}
+              >
+                {session.missedAllPivotal ? 'Missed pivotal' : 'Pivotal hit'}
+              </p>
+            </div>
+          </div>
+
+          {isReviewMode && previousAttempt && (
+            <div className="p-3 bg-miro-yellowLight border border-miro-yellowBorder rounded-xl text-xs text-miro-yellowText flex items-center justify-between">
+              <span>
+                Previously completed on {new Date(previousAttempt.completedAt).toLocaleDateString()}
+              </span>
+              <span className="font-semibold">Prior score: +{previousAttempt.score} pts</span>
+            </div>
+          )}
+
+          <DrillFeedbackWidget drillId={drill.id} />
+
+          {onNextDrill && (
+            <div className="pt-1">
+              <Button
+                onClick={onNextDrill}
+                className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+              >
+                Next <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-miro-hairline bg-miro-card shadow-xs">
+      {(session.phase === 'probes' || session.probesLocked) && (
+        <CardHeader className="pb-3">
+          <Badge variant="outline" className="text-[11px] font-mono w-fit">
+            {budgetLeft} / {drill.probeBudget}
+          </Badge>
+        </CardHeader>
+      )}
+
+      <CardContent className="space-y-5">
+        {(session.phase === 'probes' || session.probesLocked) && (
+          <div className="space-y-3">
+            <div className="space-y-2">
+              {orderedProbes.map((probe) => {
+                const selected = session.selectedProbeIds.includes(probe.id);
+                const disabled = session.probesLocked || (!selected && budgetLeft <= 0);
+                return (
+                  <button
+                    key={probe.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => dispatch({ type: 'TOGGLE_PROBE', probeId: probe.id })}
+                    className={`w-full text-left rounded-xl border px-3.5 py-3 text-sm transition-colors ${
+                      selected
+                        ? 'border-miro-primary bg-miro-surface text-miro-primary'
+                        : 'border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong'
+                    } ${disabled && !selected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className="font-medium">{probe.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {session.phase === 'probes' && (
+              <Button
+                onClick={() => dispatch({ type: 'LOCK_PROBES' })}
+                disabled={session.selectedProbeIds.length === 0}
+                className="w-full gap-2"
+              >
+                <Lock className="h-4 w-4" /> Lock probes
+              </Button>
+            )}
+          </div>
+        )}
+
+        {session.probesLocked && unlocked.length > 0 && (
+          <div className="rounded-xl border border-miro-hairline bg-miro-surface p-3.5 space-y-2.5">
+            {unlocked.map((probe) => (
+              <div key={probe.id} className="text-sm">
+                <p className="font-medium text-miro-primary">{probe.label}</p>
+                <p className="text-miro-slate mt-0.5">{probe.answer}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {session.phase === 'cause' && (
+          <div className="space-y-3">
+            <textarea
+              value={session.causeText}
+              onChange={(e) => dispatch({ type: 'SET_CAUSE_TEXT', text: e.target.value })}
+              placeholder="Likely root cause…"
+              className="w-full min-h-[120px] rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary resize-y"
+            />
+            <Button
+              onClick={() => dispatch({ type: 'BEGIN_COMMIT' })}
+              disabled={!session.causeText.trim()}
+              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary"
+            >
+              Commit
+            </Button>
+          </div>
+        )}
+
+        {session.phase === 'commit' && (
+          <div className="space-y-4">
+            <p className="text-sm text-miro-slate whitespace-pre-wrap">{session.causeText}</p>
+            {gradeError && (
+              <p className="text-sm text-miro-dangerText border border-miro-dangerBorder rounded-md px-3 py-2">
+                {gradeError}
+              </p>
+            )}
+            <ConfidenceGate
+              selectedConfidence={selectedConfidence}
+              onSelectConfidence={setSelectedConfidence}
+              hasSelectedAnswer={Boolean(session.causeText.trim())}
+              disabled={grading}
+              onSubmit={() => void commitCause()}
+              submitLabel={grading ? 'Grading…' : 'Submit'}
+            />
+          </div>
+        )}
+
+        {session.phase === 'feedback' && session.grade && (
+          <div className="space-y-4">
+            <div
+              className={`rounded-xl border p-4 ${
+                session.isCorrect
+                  ? 'border-miro-successBorder bg-miro-successLight'
+                  : 'border-miro-dangerBorder bg-miro-dangerLight'
+              }`}
+            >
+              <p className="text-sm font-medium text-miro-primary">
+                {session.grade.verdict === 'correct'
+                  ? 'Correct'
+                  : session.grade.verdict === 'incorrect_distractor'
+                    ? (session.distractorAntipattern ?? 'Incorrect')
+                    : 'Incorrect'}
+              </p>
+              {session.grade.matchedDistractor && (
+                <p className="text-sm text-miro-slate mt-2">
+                  {session.grade.matchedDistractor.rationale}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 space-y-2">
+              <p className="text-sm font-medium text-miro-primary">{drill.goldCause.text}</p>
+              <p className="text-sm text-miro-slate">{session.grade.goldRationale}</p>
+              {citationHref && (
+                <a
+                  href={citationHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-miro-blue hover:underline"
+                >
+                  {new URL(citationHref).hostname}
+                </a>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-miro-hairline p-3 text-sm text-miro-slate flex flex-wrap gap-3">
+              <span className="font-mono">Probe {session.probeScore ?? 0}</span>
+              <span className="font-mono">Cause {session.causeScore ?? 0}</span>
+              <span className="font-mono">Total {session.totalScore}</span>
+              {session.missedAllPivotal && (
+                <Badge variant="destructive" className="text-[10px]">
+                  Missed pivotal
+                </Badge>
+              )}
+            </div>
+
+            <Button
+              onClick={() => dispatch({ type: 'FINISH' })}
+              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary"
+            >
+              Finish
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

@@ -102,7 +102,11 @@ export function useVisitorProgress() {
       const yesterday = getYesterdayString();
 
       setState((prev) => {
-        const newStreak = computeNewStreak(prev.streakDays, prev.lastActiveDate, today, yesterday);
+        // Only Rapid Fire advances the daily streak; Cases / Troubleshoot stay on-demand.
+        const countsForStreak = params.format === 'Rapid_Fire';
+        const newStreak = countsForStreak
+          ? computeNewStreak(prev.streakDays, prev.lastActiveDate, today, yesterday)
+          : prev.streakDays;
 
         const existingRecord = prev.completedDrills[params.drillId];
         const newRecord: DrillAttemptRecord = {
@@ -118,7 +122,7 @@ export function useVisitorProgress() {
         const updated: VisitorProgressState = {
           ...prev,
           streakDays: newStreak,
-          lastActiveDate: today,
+          lastActiveDate: countsForStreak ? today : prev.lastActiveDate,
           completedDrills: {
             ...prev.completedDrills,
             [params.drillId]: newRecord,

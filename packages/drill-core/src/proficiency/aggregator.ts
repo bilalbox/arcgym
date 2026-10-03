@@ -7,6 +7,7 @@ import {
   type DrillDefinitionDTO,
   isCaseFileDrill,
   isRapidFireDrill,
+  isTroubleshootingDrill,
   type ProficiencyDimension,
 } from '../types/drill.js';
 
@@ -27,6 +28,7 @@ export interface ProficiencyReportData {
 export function getDrillQuestionCount(drill: DrillDefinitionDTO): number {
   if (isRapidFireDrill(drill)) return drill.steps.length || 1;
   if (isCaseFileDrill(drill)) return drill.stations.length || 1;
+  if (isTroubleshootingDrill(drill)) return 1;
   return 1;
 }
 

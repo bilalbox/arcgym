@@ -3,6 +3,7 @@ import {
   type DrillOptionDTO,
   lintDrillWording,
   type RapidFireDrillDefinition,
+  type TroubleshootingDrillDefinition,
   type WordingRuleId,
 } from '../index.js';
 
@@ -154,6 +155,86 @@ describe('lintDrillWording', () => {
     it('flags stems over 55 words', () => {
       const long = Array(56).fill('word').join(' ');
       expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS, long)))).toContain('long-stem');
+    });
+  });
+
+  describe('Troubleshooting cause-leak and gold-too-long', () => {
+    const incident = (): TroubleshootingDrillDefinition => ({
+      ...BASE,
+      id: 'AGD-01099',
+      format: 'Troubleshooting',
+      architecture: {
+        synopsis:
+          'CRM feeds Data Cloud. Zero Copy reads Snowflake curated tables. Segments refresh hourly.',
+        diagramUrl: '/diagrams/fixture.svg',
+      },
+      issue: 'Segment refreshes intermittently time out near the top of the hour.',
+      probeBudget: 3,
+      probes: [
+        {
+          id: 'p1',
+          label: 'What changed in the curated DLO?',
+          tier: 'pivotal',
+          answer: 'Two formula fields were added',
+        },
+        {
+          id: 'p2',
+          label: 'Do BDT runs overlap segment refresh?',
+          tier: 'pivotal',
+          answer: 'Yes after a scheduler change',
+        },
+        { id: 'p3', label: 'Which segments fail?', tier: 'useful', answer: 'Same curated DLO' },
+        {
+          id: 'p4',
+          label: 'Is the connector rate limited?',
+          tier: 'distractor',
+          answer: 'No',
+          distractorAntipattern: 'Blame Connector Ceiling',
+        },
+      ],
+      goldCause: {
+        text: 'Formula fields force expensive Zero Copy evaluation overlapping segment refresh.',
+        rationale: 'Concurrent evaluation plus schedule collision, not warehouse size.',
+      },
+      hiddenDistractors: [
+        {
+          id: 'd1',
+          text: 'Warehouse undersized.',
+          antipattern: 'Scale First Warehouse',
+          rationale: 'Already enlarged with no relief.',
+        },
+        {
+          id: 'd2',
+          text: 'Connector rate limits.',
+          antipattern: 'Blame Connector Ceiling',
+          rationale: 'No rate-limit evidence.',
+        },
+        {
+          id: 'd3',
+          text: 'Network latency.',
+          antipattern: 'Network Ghost Hunt',
+          rationale: 'No latency incident.',
+        },
+      ],
+    });
+
+    it('accepts a clean Incident brief that withholds the gold cause', () => {
+      expect(ruleIds(lintDrillWording(incident()))).not.toContain('cause-leak');
+      expect(ruleIds(lintDrillWording(incident()))).not.toContain('gold-too-long');
+    });
+
+    it('flags when the brief surface restates the gold cause', () => {
+      const leaky = incident();
+      leaky.architecture.synopsis =
+        'Formula fields force expensive Zero Copy evaluation overlapping segment refresh on the curated path.';
+      expect(ruleIds(lintDrillWording(leaky))).toContain('cause-leak');
+    });
+
+    it('flags a gold cause longer than about two sentences', () => {
+      const long = incident();
+      long.goldCause.text =
+        'Formula fields force expensive Zero Copy evaluation. The BDT window overlaps segment refresh. Ops already enlarged the warehouse once with no relief.';
+      expect(ruleIds(lintDrillWording(long))).toContain('gold-too-long');
     });
   });
 });

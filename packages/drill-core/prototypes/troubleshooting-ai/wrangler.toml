@@ -1,0 +1,15 @@
+# PROTOTYPE ONLY — throwaway Workers AI scorer for troubleshooting grade demo.
+# Run: pnpm prototype:troubleshoot
+name = "arcgym-proto-troubleshoot"
+main = "src/index.ts"
+compatibility_date = "2026-09-27"
+
+[ai]
+binding = "AI"
+remote = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# Hit the Worker for API routes; everything else stays asset-first.
+run_worker_first = ["/api/*"]

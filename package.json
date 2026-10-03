@@ -20,6 +20,7 @@
     "feedback:pull": "npx tsx scripts/feedback-report.ts --pull",
     "test": "pnpm --recursive run test",
     "preview": "pnpm --filter @arcgym/web preview",
+    "prototype:troubleshoot": "pnpm --filter @arcgym/web exec wrangler dev --config ../../packages/drill-core/prototypes/troubleshooting-ai/wrangler.toml",
     "deploy": "pnpm typecheck && pnpm check && pnpm build && pnpm test:diagram-qa && pnpm --filter @arcgym/web run deploy:pages",
     "prepare": "husky"
   },

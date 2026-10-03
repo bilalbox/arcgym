@@ -15,6 +15,7 @@ import {
   isEligibleCorrectOptionCitation,
   lintDrillWording,
   type RapidFireDrillDefinition,
+  type TroubleshootingDrillDefinition,
 } from '../packages/drill-core/src/index.js';
 
 /** When true, wording findings on published drills fail the build; drafts only ever warn. */
@@ -53,7 +54,7 @@ const BOARD_DOMAINS = new Set([
 ]);
 
 const PROBE_TIERS = new Set(['pivotal', 'useful', 'distractor']);
-const FORMATS = new Set(['Rapid_Fire', 'Case_File']);
+const FORMATS = new Set(['Rapid_Fire', 'Case_File', 'Troubleshooting']);
 const STATUSES = new Set(['draft', 'published']);
 const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
 const PILLARS = new Set([
@@ -65,6 +66,10 @@ const PILLARS = new Set([
 ]);
 const CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
 const DEFAULT_PIVOTAL_COUNT = 2;
+const TROUBLESHOOT_PROBE_BUDGET = 3;
+const TROUBLESHOOT_HIDDEN_DISTRACTORS = 3;
+const TROUBLESHOOT_MIN_PROBES = 5;
+const TROUBLESHOOT_MIN_PIVOTAL = 2;
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
@@ -288,6 +293,109 @@ function validateCaseFile(file: string, drill: CaseFileDrillDefinition) {
   }
 }
 
+function validateTroubleshooting(file: string, drill: TroubleshootingDrillDefinition) {
+  if (
+    !drill.architecture ||
+    typeof drill.architecture.synopsis !== 'string' ||
+    !drill.architecture.synopsis
+  ) {
+    err(file, 'Troubleshooting requires architecture.synopsis');
+  }
+  if (!drill.architecture?.diagramUrl) {
+    err(file, 'Troubleshooting requires architecture.diagramUrl');
+  } else {
+    validateDiagramUrl(file, 'architecture', drill.architecture.diagramUrl);
+  }
+
+  if (typeof drill.issue !== 'string' || !drill.issue) {
+    err(file, 'Troubleshooting requires issue');
+  }
+
+  if (drill.probeBudget !== TROUBLESHOOT_PROBE_BUDGET) {
+    err(file, `Troubleshooting probeBudget must be ${TROUBLESHOOT_PROBE_BUDGET}`);
+  }
+
+  if (!drill.goldCause || typeof drill.goldCause.text !== 'string' || !drill.goldCause.text) {
+    err(file, 'Troubleshooting requires goldCause.text');
+  }
+  if (
+    !drill.goldCause ||
+    typeof drill.goldCause.rationale !== 'string' ||
+    !drill.goldCause.rationale
+  ) {
+    err(file, 'Troubleshooting requires goldCause.rationale');
+  }
+  if (
+    drill.goldCause?.citationUrl !== undefined &&
+    !isEligibleCorrectOptionCitation(drill.goldCause.citationUrl, citationManifestUrls)
+  ) {
+    err(
+      file,
+      `goldCause.citationUrl must be an exact Citation Manifest URL (got ${drill.goldCause.citationUrl})`,
+    );
+  }
+
+  if (
+    !Array.isArray(drill.hiddenDistractors) ||
+    drill.hiddenDistractors.length !== TROUBLESHOOT_HIDDEN_DISTRACTORS
+  ) {
+    err(
+      file,
+      `Troubleshooting requires exactly ${TROUBLESHOOT_HIDDEN_DISTRACTORS} hiddenDistractors`,
+    );
+  } else {
+    validateOptionIds(file, 'hiddenDistractors', drill.hiddenDistractors);
+    for (const d of drill.hiddenDistractors) {
+      if (!d.text || !d.antipattern || !d.rationale) {
+        err(file, `hiddenDistractor ${d.id} requires text, antipattern, and rationale`);
+      }
+    }
+  }
+
+  if (!Array.isArray(drill.probes) || drill.probes.length < TROUBLESHOOT_MIN_PROBES) {
+    err(file, `Troubleshooting requires at least ${TROUBLESHOOT_MIN_PROBES} probes`);
+    return;
+  }
+
+  validateOptionIds(file, 'probes', drill.probes);
+
+  let pivotalCount = 0;
+  let hasUseful = false;
+  let hasDistractor = false;
+  for (const probe of drill.probes) {
+    if (!probe.label || !probe.answer) {
+      err(file, `probe ${probe.id} missing label or answer`);
+    }
+    if (!PROBE_TIERS.has(probe.tier)) {
+      err(file, `probe ${probe.id} invalid tier: ${probe.tier}`);
+    }
+    if (probe.tier === 'pivotal') pivotalCount++;
+    if (probe.tier === 'useful') hasUseful = true;
+    if (probe.tier === 'distractor') {
+      hasDistractor = true;
+      if (!probe.distractorAntipattern) {
+        err(file, `distractor probe ${probe.id} missing distractorAntipattern`);
+      }
+    }
+  }
+
+  if (pivotalCount < TROUBLESHOOT_MIN_PIVOTAL) {
+    err(
+      file,
+      `Troubleshooting requires at least ${TROUBLESHOOT_MIN_PIVOTAL} pivotal probes (got ${pivotalCount})`,
+    );
+  }
+  if (!hasUseful) {
+    err(file, 'Troubleshooting requires at least one useful probe');
+  }
+  if (!hasDistractor) {
+    err(file, 'Troubleshooting requires at least one distractor probe');
+  }
+  if (drill.probeBudget > drill.probes.length) {
+    err(file, 'Troubleshooting probeBudget exceeds probe pool size');
+  }
+}
+
 for (const file of drillFiles) {
   const filePath = path.join(DRILLS_DIR, file);
   try {
@@ -326,6 +434,8 @@ for (const file of drillFiles) {
       validateRapidFire(file, drill as RapidFireDrillDefinition);
     } else if (drill.format === 'Case_File') {
       validateCaseFile(file, drill as CaseFileDrillDefinition);
+    } else if (drill.format === 'Troubleshooting') {
+      validateTroubleshooting(file, drill as TroubleshootingDrillDefinition);
     }
 
     lintWording(file, drill);

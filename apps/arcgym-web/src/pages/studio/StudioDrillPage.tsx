@@ -3,19 +3,23 @@ import {
   type DrillDefinitionDTO,
   isCaseFileDrill,
   isRapidFireDrill,
+  isTroubleshootingDrill,
   lintDrillWording,
   type RapidFireDrillDefinition,
+  type TroubleshootingDrillDefinition,
   type WordingFinding,
 } from '@arcgym/drill-core';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CaseFileRunner } from '@/components/drill/CaseFileRunner';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
+import { TroubleshootRunner } from '@/components/drill/TroubleshootRunner';
 import { CaseFileEditor } from '@/components/studio/CaseFileEditor';
 import { JsonHatch } from '@/components/studio/JsonHatch';
 import { MetadataForm } from '@/components/studio/MetadataForm';
 import { RapidFireEditor } from '@/components/studio/RapidFireEditor';
 import { StudioBanner } from '@/components/studio/StudioBanner';
+import { TroubleshootingEditor } from '@/components/studio/TroubleshootingEditor';
 import { WordingFindings } from '@/components/studio/WordingFindings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -310,6 +314,9 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
             {isCaseFileDrill(drill) && (
               <CaseFileRunner key={`cf-${drill.id}-${playRevision}`} drill={drill} />
             )}
+            {isTroubleshootingDrill(drill) && (
+              <TroubleshootRunner key={`ts-${drill.id}-${playRevision}`} drill={drill} />
+            )}
           </div>
         )}
 
@@ -363,6 +370,12 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
                     <CaseFileEditor
                       drill={drill}
                       onChange={(next: CaseFileDrillDefinition) => onDrillChange(next)}
+                    />
+                  )}
+                  {isTroubleshootingDrill(drill) && (
+                    <TroubleshootingEditor
+                      drill={drill}
+                      onChange={(next: TroubleshootingDrillDefinition) => onDrillChange(next)}
                     />
                   )}
                 </section>

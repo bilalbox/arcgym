@@ -26,10 +26,12 @@ Deterministic `ingest` / `build-drills` / CI stay schema + wording only. This sk
 
    | `ruleId` | Trap |
    | :--- | :--- |
-   | `giveaway-stem` | Stem / Case File brief leaks the correct choice |
-   | `dual-grounding` | Correct option rests on Trailhead, blog, Friction Card, or other non–Citation-Manifest authority |
-   | `distractor-restates-correct` | Wrong option text or rationale restates the correct option’s governing rationale |
-   | `correct-too-obvious` | Correct option uniquely telegraphs via officialese, length, or tone beyond mechanical wording lint |
+   | `giveaway-stem` | Stem / Case File brief / Troubleshooting architecture+issue leaks the correct choice or gold cause |
+   | `dual-grounding` | Correct option or goldCause rests on Trailhead, blog, Friction Card, or other non–Citation-Manifest authority |
+   | `distractor-restates-correct` | Wrong option / hidden distractor text or rationale restates the correct / gold governing rationale |
+   | `correct-too-obvious` | Correct option or gold cause uniquely telegraphs via officialese, length, or tone beyond mechanical wording lint |
+
+   For Troubleshooting Incidents also check: diagram required and useful; ≥2 pivotal probes; exactly 3 hidden distractors never implied as MCQ; gold ≤ ~2 sentences; probe answers stay scenario fiction.
 
    Well-Architected Grounding / Citation Manifest rules are unchanged: correct options must cite exact Citation Manifest URLs from retrieved chunks. Optional hosted model calls are allowed only if keys already exist in the environment; do not require them.
 

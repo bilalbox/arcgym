@@ -10,12 +10,14 @@ You are the model. `generate-drill.ts prompt` retrieves Well-Architected Groundi
 
    ```bash
    mkdir -p /tmp/arcgym
-   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<id> [--format Rapid_Fire|Case_File] [--stations N] > /tmp/arcgym/drill-prompt.md
+   npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<id> [--format Rapid_Fire|Case_File|Troubleshooting] [--stations N] > /tmp/arcgym/drill-prompt.md
    ```
 
    Stderr lists the drill id and the retrieved chunk titles. Pass one or more `--query "<sharper doc search>"` flags until the chunks govern the problem (multiple `--query` values are merged and deduped).
 
    **Case File rule:** supply a separate `--query` for each Station/dilemma you plan to write (the generator does not auto-decompose a single query into Stations). Rapid Fire may use one or more `--query` values as needed. Done when every step or station you plan to write has a chunk that states its governing guidance. Case Files always have a Brief and at least three Stations (`--stations N`, default 3).
+
+   **Troubleshooting rule:** one Incident — architecture + required diagram + issue, Probe Budget, gold cause (≤ ~2 sentences), exactly three hidden distractors. Prefer Friction Card failed approaches as hidden distractors. Brief surface must not leak the gold cause; pivotal facts stay behind probes.
 
    Example (Case File, three Stations):
 

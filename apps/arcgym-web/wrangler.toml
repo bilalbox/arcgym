@@ -6,6 +6,10 @@ compatibility_date = "2026-09-27"
 binding = "DRILL_KV"
 id = "c1f903c9221b40c086115dd7fc7f43d7"
 
+# Workers AI — Troubleshooting free-text cause grading (`@cf/baai/bge-reranker-base`).
+[ai]
+binding = "AI"
+
 # Secrets (never commit values — use Wrangler secrets or .dev.vars locally):
 #   ARCGYM_HMAC_SECRET       — publish-drill webhook HMAC
 #   ARCGYM_ADMIN_KEY         — X-ArcGym-Admin-Key for /api/admin/*

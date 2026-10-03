@@ -41,7 +41,7 @@ const WELL_ARCHITECTED_PILLARS = [
   'Cost_Optimization',
   'Fairness',
 ];
-const SUPPORTED_FORMATS = ['Rapid_Fire', 'Case_File'] as const;
+const SUPPORTED_FORMATS = ['Rapid_Fire', 'Case_File', 'Troubleshooting'] as const;
 const DIFFICULTIES = ['Associate_Domain_Architect', 'Lead_CTA'] as const;
 
 interface ChromaChunk {
@@ -362,6 +362,88 @@ function buildRapidFireSchema(
 }`;
 }
 
+function buildTroubleshootingSchema(
+  drillId: string,
+  args: PromptArgs,
+  domain: string,
+  domainLabel: string,
+  pillarExample: string,
+  sourceCardLine: string,
+  citationUrl: string,
+): string {
+  return `{
+  "id": "${drillId}",
+  "title": "Clear Incident title (failure under topology stress)",
+  "format": "Troubleshooting",
+  "domain": "${domain}",
+  "domainLabel": "${domainLabel}",
+  "difficulty": "${args.difficulty}",
+  "pillars": ${pillarExample},
+  "version": 1,
+  "status": "draft",${sourceCardLine}
+  "architecture": {
+    "synopsis": "Topology narrative without the diagnosis (max ~120 words)",
+    "diagramUrl": "/diagrams/<exported-topology>.svg",
+    "diagramLabel": "Short diagram caption"
+  },
+  "issue": "Current failure symptom statement; do not leak the gold cause",
+  "probeBudget": 3,
+  "probes": [
+    {
+      "id": "p1",
+      "label": "Pivotal clarifying question?",
+      "tier": "pivotal",
+      "answer": "Scenario fact that unlocks the diagnosis (must NOT appear in architecture/issue)"
+    },
+    {
+      "id": "p2",
+      "label": "Second pivotal clarifying question?",
+      "tier": "pivotal",
+      "answer": "Another scenario fact"
+    },
+    {
+      "id": "p3",
+      "label": "Useful clarifying question?",
+      "tier": "useful",
+      "answer": "Helpful but not required fact"
+    },
+    {
+      "id": "p4",
+      "label": "Distractor clarifying question?",
+      "tier": "distractor",
+      "answer": "Irrelevant fact",
+      "distractorAntipattern": "Short Antipattern Name"
+    }
+  ],
+  "goldCause": {
+    "text": "One to two sentences naming the root cause",
+    "rationale": "Why this failure class holds; cite the platform rule when documentation-backed",
+    "citationUrl": "${citationUrl}"
+  },
+  "hiddenDistractors": [
+    {
+      "id": "d1",
+      "text": "Plausible wrong cause modeled on a failed practitioner approach",
+      "antipattern": "Short Antipattern Name",
+      "rationale": "Why this near-miss fails under the unlocked facts"
+    },
+    {
+      "id": "d2",
+      "text": "Second hidden antipattern cause",
+      "antipattern": "Short Antipattern Name",
+      "rationale": "Why it fails"
+    },
+    {
+      "id": "d3",
+      "text": "Third hidden antipattern cause",
+      "antipattern": "Short Antipattern Name",
+      "rationale": "Why it fails"
+    }
+  ]
+}
+Write exactly 3 hiddenDistractors. Require ≥2 pivotal probes, mix useful + distractor probes (~7 total), probeBudget 3. diagramUrl is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Probe answers are scenario fiction; only goldCause.citationUrl cites Well-Architected Grounding when the failure class is doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
+}
+
 function buildCaseFileSchema(
   drillId: string,
   args: PromptArgs,
@@ -484,15 +566,25 @@ ${c.content}
           sourceCardLine,
           citationUrl,
         )
-      : buildRapidFireSchema(
-          drillId,
-          args,
-          domain,
-          domainLabel,
-          pillarExample,
-          sourceCardLine,
-          citationUrl,
-        );
+      : args.format === 'Troubleshooting'
+        ? buildTroubleshootingSchema(
+            drillId,
+            args,
+            domain,
+            domainLabel,
+            pillarExample,
+            sourceCardLine,
+            citationUrl,
+          )
+        : buildRapidFireSchema(
+            drillId,
+            args,
+            domain,
+            domainLabel,
+            pillarExample,
+            sourceCardLine,
+            citationUrl,
+          );
 
   const formatNotes =
     args.format === 'Case_File'
@@ -500,7 +592,13 @@ ${c.content}
 - Probe Budget: 3 picks from ~7 clarifying questions per station
 - Dual scoring: probe quality + confidence-gated recommendation
 - Grounding: only final correct options cite chunks; probe answers are scenario fiction`
-      : `- Number of Steps: up to ${args.steps}`;
+      : args.format === 'Troubleshooting'
+        ? `- One Incident: architecture synopsis + required diagram + issue
+- Probe Budget: 3 picks from ~7 clarifying questions (≥2 pivotal)
+- Free-text cause graded against gold + exactly 3 hidden distractors (never MCQ)
+- Dual scoring: probe quality + Brier on cause correct/incorrect
+- Grounding: probe answers are scenario fiction; goldCause.citationUrl optional when failure class is doc-backed`
+        : `- Number of Steps: up to ${args.steps}`;
 
   return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
 Generate a high-stakes, realistic architectural judgment drill formatted as valid JSON strictly adhering to the ArcGym schema.

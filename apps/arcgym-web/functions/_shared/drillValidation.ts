@@ -5,7 +5,7 @@ import {
   isValidDrillId,
 } from '@arcgym/drill-core';
 
-const ALLOWED_FORMATS = new Set<DrillFormat>(['Rapid_Fire', 'Case_File']);
+const ALLOWED_FORMATS = new Set<DrillFormat>(['Rapid_Fire', 'Case_File', 'Troubleshooting']);
 
 const MAX_STRING = 8_000;
 const MAX_TITLE = 300;
