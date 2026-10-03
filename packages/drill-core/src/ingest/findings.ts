@@ -1,12 +1,27 @@
 import * as fs from 'node:fs';
 import type { WordingFinding } from '../lint/wording.js';
 
-/** Editorial sidecar written beside a draft when ingest fails. Not learner-facing. */
+/** Closed set of Adversarial CTA Red-Team traps for this wave. */
+export type RedTeamRuleId =
+  | 'giveaway-stem'
+  | 'dual-grounding'
+  | 'distractor-restates-correct'
+  | 'correct-too-obvious';
+
+/** One red-team finding; same seam shape as wording findings. */
+export type RedTeamFinding = {
+  ruleId: RedTeamRuleId;
+  where: string;
+  message: string;
+};
+
+/** Editorial sidecar written beside a draft when ingest or red-team fails. Not learner-facing. */
 export type IngestFindings = {
   drillId: string;
   failedAt: string;
-  reasons: Array<'validation' | 'wording'>;
+  reasons: Array<'validation' | 'wording' | 'redteam'>;
   wordingFindings?: WordingFinding[];
+  redteamFindings?: RedTeamFinding[];
   buildError?: string;
 };
 
@@ -112,9 +127,13 @@ export function parseBuildErrorHints(buildError: string): BuildErrorRepairHint[]
 
 /**
  * True when findings include a Citation Manifest / missing-grounding mismatch
- * that cannot be fixed by editing the draft alone — hand off to generating-drills.
+ * or a dual-grounding red-team finding that cannot be fixed by editing the draft
+ * alone — hand off to generating-drills.
  */
 export function findingsRequireGroundingHandoff(findings: IngestFindings): boolean {
+  if (findings.redteamFindings?.some((f) => f.ruleId === 'dual-grounding')) {
+    return true;
+  }
   if (!findings.buildError) return false;
   return parseBuildErrorHints(findings.buildError).some((h) => !h.surgicallyFixable);
 }

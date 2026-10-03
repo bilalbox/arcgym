@@ -59,11 +59,12 @@ flowchart TD
     subgraph Engine ["3. Drill Engine & Multi-Tier Validation"]
         D1["🤖 Coding Agent / LLM<br/><b>Architect Author</b><br/>• Synthesizes architectural trade-offs<br/>• Models distractors on naive failures<br/>• Grounds optimal answer in official chunks"]
         
-        subgraph Linter ["3-Tier Architect Linter (ingest / build)"]
-            E1["Tier 1: Schema & Format Guard<br/>• Rapid Fire only<br/>• Step, option, and ID structure"]
-            E2["Tier 2: Official Citation Verifier<br/>• Enforces exact chunk URL from crawl<br/>• Zero hallucinated documentation"]
-            E3["Tier 3: Wording & Antipattern Linter<br/><code>packages/drill-core/src/lint/wording.ts</code><br/>• ±25% option length balance<br/>• Named distractor antipatterns (2–5 words)<br/>• Purge giveaway words ('always', 'never')<br/>• Scenarios capped at ≤55 words"]
-            E1 --> E2 --> E3
+        subgraph Linter ["3-Tier Architect Linter"]
+            E1["Tier 1: Schema & Citation Manifest<br/>• Soft ingest / <code>build-drills</code><br/>• Exact crawled URL membership"]
+            E2["Tier 2: Deterministic Wording Lint<br/><code>packages/drill-core/src/lint/wording.ts</code><br/>• ±25% option length balance<br/>• Named distractor antipatterns<br/>• Verdict / giveaway mechanical checks"]
+            E3["Tier 3: Adversarial CTA Red-Team<br/><code>redteaming-drills</code> skill / subagent<br/>• Giveaway stems, dual grounding<br/>• Distractor restates correct<br/>• Correct too obvious"]
+            E1 --> E2
+            E2 -->|Clean ingest| E3
         end
 
         D2["💾 Content Draft Store<br/><code>content/drills/AGD-xxxxx.json</code><br/>• Status: <code>draft</code>"]
@@ -71,8 +72,9 @@ flowchart TD
 
         C3 --> D1
         D1 -->|generate-drill.ts ingest| E1
-        E3 -->|Passed| D2
-        E3 -.->|Failed: keep draft + findings sidecar| D1
+        E2 -.->|Failed: keep draft + findings sidecar| D1
+        E3 -.->|Failed: redteam findings sidecar| D1
+        E3 -->|Passed (no sidecar)| D2
         D2 -->|pnpm drill:status --status published| D3
     end
 
@@ -114,7 +116,7 @@ flowchart TD
 | **Official Truth** | [`crawl_architect.py`](./scripts/crawler/crawl_architect.py) & ChromaDB | Slices official documentation into hierarchical chunks tagged by Well-Architected pillar (*Trust*, *Reliability*, *Operational Excellence*, *Cost Optimization*, *Fairness*). | **Well-Architected Grounding**: Official docs are the *sole* authority for correct options. Every correct answer must cite an exact, crawled URL. |
 | **Practitioner Friction** | [`crawl_trailhead.py`](./scripts/crawler/crawl_trailhead.py) & [`friction_cards.py`](./scripts/crawler/friction_cards.py) | Ingests real-world discussions from select groups (such as `* Data 360 *`) into SQLite and synthesizes [Friction Cards](./CONTEXT.md#language). | **Distractor Antipatterns**: Community resolutions are *never* used as official grounding; they strictly source realistic scenario tension and plausible failure modes. |
 | **RAG Retrieval** | [`generate-drill.ts`](./scripts/generator/generate-drill.ts) & [`search_chroma.py`](./scripts/crawler/search_chroma.py) | Executes vector search via `official_doc_query` and builds a constrained prompt pairing official guidance with practitioner friction. | **No Unanchored Prompts**: If Chroma cannot retrieve chunks governing the decision, prompt authoring declines. |
-| **3-Tier Linter** | [`wording.ts`](./packages/drill-core/src/lint/wording.ts) & [`build-drills.ts`](./scripts/build-drills.ts) | Validates schema, citation URLs, option length parity (±25%), concise prompts (≤55 words), and distractor antipattern tags. | **Zero AI Visual Tells**: Prohibits giveaway words (*always*, *never*, *blindly*), verdict prefixes (*Correct!*, *Antipattern:*), and unbalanced answer lengths. |
+| **3-Tier Linter** | Soft ingest + [`wording.ts`](./packages/drill-core/src/lint/wording.ts) + [`redteaming-drills`](./.agents/skills/redteaming-drills/SKILL.md) | Schema/Citation Manifest and wording lint in ingest/build; Adversarial CTA Red-Team as a skill/subagent that writes `redteam` findings sidecars (not a CI hard gate). | **Zero AI Visual Tells**: Mechanical wording lint plus CTA traps (giveaway stems, dual grounding, distractor restates correct, correct too obvious). Soft ingest keeps drafts + findings on failure — no hard rollback. |
 | **Learner Practice** | [`apps/arcgym-web`](./apps/arcgym-web) & [`@arcgym/drill-core`](./packages/drill-core) | Delivers 4 interaction formats with the **Universal Pre-Submit Confidence Gate** (50%, 70%, 85%, 95%). | **Metacognitive Calibration**: Tracks Brier scores across four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate architectural blind spots without org dependencies. |
 
 ## Monorepo layout
@@ -208,10 +210,12 @@ uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
 # Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
 python scripts/crawler/crawl_trailhead.py --limit 100
 
-# Friction Cards and drills are written by your coding agent (no LLM API keys). Project skills:
+# Friction Cards and drills are written by your coding agent (no mandatory hosted LLM API). Project skills:
 #   .cursor/skills/extracting-friction-cards  — agent answers `friction_cards.py prompt`, then `import`s
 #   .cursor/skills/reviewing-friction-cards   — agent audits pending cards via `audit-prompt` / `apply-verdicts`
 #   .cursor/skills/generating-drills          — agent answers `generate-drill.ts prompt`, then `ingest`s
+#   .cursor/skills/reviewing-drills           — repair soft-ingest / red-team findings sidecars, re-ingest
+#   .cursor/skills/redteaming-drills          — Adversarial CTA Red-Team after clean ingest (skill/subagent)
 # Human steps: review/approve cards (or apply agent verdicts), then export to data/friction_cards.json (gitignored)
 python scripts/crawler/friction_cards.py audit-prompt --tier A --limit 20 --preview-docs > /tmp/audit.md
 python scripts/crawler/friction_cards.py apply-verdicts /tmp/verdicts.json

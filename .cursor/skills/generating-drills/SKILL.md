@@ -37,4 +37,6 @@ You are the model. `generate-drill.ts prompt` retrieves Well-Architected Groundi
 
    On failure, the draft is kept at `content/drills/<id>.json` and a findings sidecar is written to `content/drills/<id>.findings.json`; ingest still exits non-zero. Hand off to the `reviewing-drills` skill to repair from that sidecar and re-ingest with `--force` (do not re-author from scratch unless that skill stops for missing Well-Architected Grounding). A clean successful ingest removes any prior findings sidecar. Reserve `--force` for replacing a drill from this session. Done when ingest prints `✓ Saved draft drill`.
 
-5. **Report** the drill id, the chunks cited, and, for a card, which naive approach each distractor models.
+5. **Red-team.** After each clean ingest (exit 0, no findings sidecar), run the `redteaming-drills` skill before treating the draft as ready for human publish. If it writes a red-team sidecar, hand off to `reviewing-drills`, then re-run red-team after the next clean ingest. Never auto-publish; human publish stays `pnpm drill:status`.
+
+6. **Report** the drill id, the chunks cited, red-team pass/fail, and, for a card, which naive approach each distractor models.

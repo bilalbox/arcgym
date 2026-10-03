@@ -151,6 +151,23 @@ describe('findingsRequireGroundingHandoff', () => {
     expect(findingsRequireGroundingHandoff(findings)).toBe(true);
   });
 
+  it('is true when redteamFindings include dual-grounding', () => {
+    expect(
+      findingsRequireGroundingHandoff({
+        drillId: 'AGD-00990',
+        failedAt: '2026-10-03T00:00:00.000Z',
+        reasons: ['redteam'],
+        redteamFindings: [
+          {
+            ruleId: 'dual-grounding',
+            where: 'steps[0].options[0].rationale',
+            message: 'correct option rests on Trailhead, not Citation Manifest',
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
   it('is false for wording-only or surgically fixable validation findings', () => {
     expect(
       findingsRequireGroundingHandoff({
@@ -170,5 +187,49 @@ describe('findingsRequireGroundingHandoff', () => {
         buildError: '  [ERROR] AGD-00992.json: option opt-b is missing rationale',
       }),
     ).toBe(false);
+    expect(
+      findingsRequireGroundingHandoff({
+        drillId: 'AGD-00989',
+        failedAt: '2026-10-03T00:00:00.000Z',
+        reasons: ['redteam'],
+        redteamFindings: [
+          {
+            ruleId: 'giveaway-stem',
+            where: 'steps[0].prompt',
+            message: 'stem leaks the correct choice',
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('redteam findings sidecar', () => {
+  it('writes and clears redteam findings via the ingest findings helpers', () => {
+    const drillPath = tempDrillPath('AGD-00988');
+    const findings: IngestFindings = {
+      drillId: 'AGD-00988',
+      failedAt: '2026-10-03T00:00:00.000Z',
+      reasons: ['redteam'],
+      redteamFindings: [
+        {
+          ruleId: 'correct-too-obvious',
+          where: 'steps[0].options[1].text',
+          message: 'correct option telegraphs via officialese',
+        },
+        {
+          ruleId: 'distractor-restates-correct',
+          where: 'steps[0].options[2].rationale',
+          message: 'wrong option restates the correct rationale',
+        },
+      ],
+    };
+
+    writeIngestFindings(drillPath, findings);
+
+    expect(JSON.parse(fs.readFileSync(findingsSidecarPath(drillPath), 'utf-8'))).toEqual(findings);
+
+    clearIngestFindings(drillPath);
+    expect(fs.existsSync(findingsSidecarPath(drillPath))).toBe(false);
   });
 });

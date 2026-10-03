@@ -77,8 +77,8 @@ The mandatory calibration step requiring selection of a confidence anchor before
 _Avoid_: Feedback prompt, post-quiz survey
 
 ### Architect Linter
-The 3-tier automated validation pipeline (Schema, Deterministic Platform Rule Linter, Adversarial CTA Red-Team LLM) that verifies generated drills prior to human editorial review.
-_Avoid_: Code checker, syntax validator
+The 3-tier validation pipeline that verifies generated drills prior to human editorial review: (1) schema & Citation Manifest via soft ingest / `build-drills`, (2) deterministic wording lint, (3) Adversarial CTA Red-Team as a skill/subagent pass that writes structured `redteam` findings into the soft-ingest sidecar on failure.
+_Avoid_: Code checker, syntax validator; mandatory hosted LLM inside ingest/CI
 
 ### Drill Status
 Editorial lifecycle on a Drill source file: `draft` (in `content/drills/`, excluded from the learner catalog) or `published` (compiled into `canonicalDrills.json` and seedable to KV). Toggle with `pnpm drill:status`.
