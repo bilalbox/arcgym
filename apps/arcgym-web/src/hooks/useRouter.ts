@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 /**
  * Lightweight client-side router hook for ArcGym.
- * Handles client-side navigation between '/', '/skills', '/privacy', '/cases', '/cases/:id', and '/drills/:id'
- * with HTML5 History API (pushState/popstate) support and search query handling.
+ * Handles client-side navigation between '/', '/skills', '/privacy', '/cases', '/cases/:id',
+ * '/drills/:id', and (DEV only) '/dev/drills' with HTML5 History API support.
  */
 function getPath() {
   if (typeof window === 'undefined') return '/';

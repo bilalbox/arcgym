@@ -8,13 +8,14 @@ import {
   type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
 import type React from 'react';
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import { useRouter } from '@/hooks/useRouter';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
+import { allowStudioNavigation } from '@/studio/navBlock';
 
 const ProgressDialog = lazy(() =>
   import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog })),
@@ -28,6 +29,16 @@ const SkillProfilePage = lazy(() =>
 const DrillPage = lazy(() => import('@/pages/DrillPage').then((m) => ({ default: m.DrillPage })));
 const CasesPage = lazy(() => import('@/pages/CasesPage').then((m) => ({ default: m.CasesPage })));
 const CasePage = lazy(() => import('@/pages/CasePage').then((m) => ({ default: m.CasePage })));
+const StudioDrillsPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('@/pages/studio/StudioDrillsPage').then((m) => ({ default: m.StudioDrillsPage })),
+    )
+  : null;
+const StudioDrillPage = import.meta.env.DEV
+  ? lazy(() =>
+      import('@/pages/studio/StudioDrillPage').then((m) => ({ default: m.StudioDrillPage })),
+    )
+  : null;
 
 const RouteFallback: React.FC = () => (
   <div className="min-h-screen bg-miro-surface flex items-center justify-center">
@@ -36,7 +47,14 @@ const RouteFallback: React.FC = () => (
 );
 
 export const App: React.FC = () => {
-  const { pathname, search, navigate } = useRouter();
+  const { pathname, search, navigate: rawNavigate } = useRouter();
+  const navigate = useCallback(
+    (to: string) => {
+      if (!allowStudioNavigation()) return;
+      rawNavigate(to);
+    },
+    [rawNavigate],
+  );
   const [activeDomain, setActiveDomain] = useState<ArchitecturalDomain | undefined>(undefined);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [progressDialogLoaded, setProgressDialogLoaded] = useState(false);
@@ -155,6 +173,9 @@ export const App: React.FC = () => {
   const caseMatch = pathname.match(/^\/cases\/([^/]+)$/i);
   const routeCaseId = caseMatch ? caseMatch[1] : null;
 
+  const studioDrillMatch = import.meta.env.DEV ? pathname.match(/^\/dev\/drills\/([^/]+)$/i) : null;
+  const routeStudioDrillId = studioDrillMatch ? studioDrillMatch[1] : null;
+
   useEffect(() => {
     if (pathname === '/drills' || pathname === '/drill') {
       navigate('/');
@@ -168,6 +189,22 @@ export const App: React.FC = () => {
       navigate(`/cases/${found.id}`);
     }
   }, [routeDrillId, navigate]);
+
+  if (import.meta.env.DEV && StudioDrillsPage && pathname === '/dev/drills') {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <StudioDrillsPage navigate={navigate} />
+      </Suspense>,
+    );
+  }
+
+  if (import.meta.env.DEV && StudioDrillPage && routeStudioDrillId) {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <StudioDrillPage drillId={routeStudioDrillId} navigate={navigate} />
+      </Suspense>,
+    );
+  }
 
   if (pathname === '/privacy') {
     return shell(
