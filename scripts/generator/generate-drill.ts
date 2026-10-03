@@ -16,7 +16,15 @@
 import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { type DrillDefinitionDTO, lintDrillWording } from '../../packages/drill-core/src/index.js';
+import {
+  clearIngestFindings,
+  type DrillDefinitionDTO,
+  findingsSidecarPath,
+  lintDrillWording,
+  writeIngestFindings,
+} from '../../packages/drill-core/src/index.js';
+
+const GROUNDING_CHUNK_EXPORTS = ['data/architect_chunks.json', 'data/developer_chunks.json'];
 
 const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
@@ -200,11 +208,18 @@ function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[
     console.error(
       `[WARN] Chroma search failed (${msg}). Falling back to flat JSON data if available.`,
     );
-    const fallbackPath = path.join(ROOT_DIR, 'data/architect_chunks.json');
-    if (!fs.existsSync(fallbackPath)) return [];
-    const allChunks: { document: string; metadata: ChromaChunk['metadata'] }[] = JSON.parse(
-      fs.readFileSync(fallbackPath, 'utf-8'),
-    );
+    const allChunks: { document: string; metadata: ChromaChunk['metadata'] }[] = [];
+    for (const rel of GROUNDING_CHUNK_EXPORTS) {
+      const fallbackPath = path.join(ROOT_DIR, rel);
+      if (!fs.existsSync(fallbackPath)) continue;
+      allChunks.push(
+        ...(JSON.parse(fs.readFileSync(fallbackPath, 'utf-8')) as {
+          document: string;
+          metadata: ChromaChunk['metadata'];
+        }[]),
+      );
+    }
+    if (allChunks.length === 0) return [];
     const queryLower = query.toLowerCase();
     return allChunks
       .filter((c) => !pillar || c.metadata.pillar === pillar)
@@ -590,21 +605,36 @@ function runIngest(argv: string[]) {
     );
   }
 
+  // Soft ingest: keep the attempted draft on failure and write a findings sidecar for repair.
   drill.status = 'draft';
   fs.writeFileSync(outPath, `${JSON.stringify(drill, null, 2)}\n`, 'utf-8');
-  const rollBack = (reason: string): never => {
-    if (previous === null) {
-      fs.unlinkSync(outPath);
-    } else {
-      fs.writeFileSync(outPath, previous, 'utf-8');
-    }
-    fail(`${reason}; ${outPath} was rolled back. Fix ${file} and rerun ingest.`);
+
+  const failWithFindings = (
+    reasons: Array<'validation' | 'wording'>,
+    extras: { buildError?: string; wordingFindings?: ReturnType<typeof lintDrillWording> },
+    message: string,
+  ): never => {
+    writeIngestFindings(outPath, {
+      drillId: drill.id as string,
+      failedAt: new Date().toISOString(),
+      reasons,
+      ...extras,
+    });
+    fail(`${message}; draft kept at ${outPath}. See ${findingsSidecarPath(outPath)}.`);
   };
 
   try {
-    execFileSync('npx', ['tsx', 'scripts/build-drills.ts'], { stdio: 'inherit', cwd: ROOT_DIR });
-  } catch {
-    rollBack('Validation failed');
+    const buildOutput = execFileSync('npx', ['tsx', 'scripts/build-drills.ts'], {
+      cwd: ROOT_DIR,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    if (buildOutput.trim()) process.stderr.write(buildOutput);
+  } catch (err: unknown) {
+    const e = err as { stdout?: string; stderr?: string; message?: string };
+    const buildError = `${e.stdout ?? ''}\n${e.stderr ?? e.message ?? String(err)}`.trim();
+    if (buildError) process.stderr.write(`${buildError}\n`);
+    failWithFindings(['validation'], { buildError }, 'Validation failed');
   }
 
   const wordingFindings = lintDrillWording(drill as unknown as DrillDefinitionDTO);
@@ -612,8 +642,14 @@ function runIngest(argv: string[]) {
     for (const f of wordingFindings) {
       console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
     }
-    rollBack(`${wordingFindings.length} wording findings (new drills must have none)`);
+    failWithFindings(
+      ['wording'],
+      { wordingFindings },
+      `${wordingFindings.length} wording findings (new drills must have none)`,
+    );
   }
+
+  clearIngestFindings(outPath);
   console.error(`\n✓ Saved draft drill: ${outPath}`);
 }
 

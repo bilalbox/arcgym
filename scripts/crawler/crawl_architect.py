@@ -16,17 +16,17 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse
 
-from bs4 import BeautifulSoup
 from curl_cffi import requests
-import chromadb
+
+from chroma_index import assign_stable_ids, upsert_chunks
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 DATA_DIR = os.path.join(ROOT_DIR, "data")
 CHROMA_DIR = os.path.join(DATA_DIR, "chroma")
 CHUNKS_JSON_PATH = os.path.join(DATA_DIR, "architect_chunks.json")
+SOURCE_DOMAIN = "architect.salesforce.com"
 
 SITEMAP_URL = "https://architect.salesforce.com/sitemap-1.xml"
-COLLECTION_NAME = "salesforce_architect_docs"
 
 # Categories to keep from canonical English docs
 KNOWN_CATEGORIES = [
@@ -103,6 +103,8 @@ def get_english_urls() -> list[str]:
     return unique_urls
 
 def parse_page_chunks(url: str, html: str) -> list[dict]:
+    from bs4 import BeautifulSoup
+
     soup = BeautifulSoup(html, "lxml")
     
     raw_title = soup.title.string if soup.title else ""
@@ -297,48 +299,21 @@ def main():
         elapsed = time.time() - start_time
         print(f"\n✓ Crawl finished in {elapsed:.1f}s. Extracted {len(all_chunks)} structured knowledge chunks.")
         
-    # Assign guaranteed globally unique IDs
-    for idx, c in enumerate(all_chunks):
-        url_part = c.get("metadata", {}).get("url", "")
-        sec_part = c.get("metadata", {}).get("section_title", "")
-        c["id"] = f"arc_{idx:05d}_{hashlib.sha256(f'{url_part}_{sec_part}_{idx}'.encode()).hexdigest()[:10]}"
-        
+    # Stable ids so multi-source upserts do not collide or wipe sibling corpora
+    assign_stable_ids(all_chunks, "arc")
+    for c in all_chunks:
+        c.setdefault("metadata", {})["source_domain"] = SOURCE_DOMAIN
+
     # Save JSON backup
     print(f"Saving JSON dump to {CHUNKS_JSON_PATH}...")
     with open(CHUNKS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(all_chunks, f, indent=2)
     print(f"✓ Saved {len(all_chunks)} chunks to {CHUNKS_JSON_PATH} ({os.path.getsize(CHUNKS_JSON_PATH) / 1024 / 1024:.2f} MB)")
-    
-    # Store into ChromaDB
-    print(f"\nConnecting to ChromaDB at: {CHROMA_DIR}...")
-    client = chromadb.PersistentClient(path=CHROMA_DIR)
-    
-    # Reset/recreate collection
-    try:
-        client.delete_collection(COLLECTION_NAME)
-    except Exception:
-        pass
-        
-    collection = client.create_collection(
-        name=COLLECTION_NAME,
-        metadata={"hnsw:space": "cosine", "source": "architect.salesforce.com"}
-    )
-    
-    print(f"Ingesting {len(all_chunks)} chunks into ChromaDB collection '{COLLECTION_NAME}'...")
-    batch_size = 100
-    for i in range(0, len(all_chunks), batch_size):
-        batch = all_chunks[i:i + batch_size]
-        collection.add(
-            ids=[c["id"] for c in batch],
-            documents=[c["document"] for c in batch],
-            metadatas=[c["metadata"] for c in batch]
-        )
-        sys.stdout.write(f"\r  Indexed {min(i + batch_size, len(all_chunks))}/{len(all_chunks)} chunks")
-        sys.stdout.flush()
-        
-    print(f"\n✓ ChromaDB indexing complete! Collection count: {collection.count()} vectors.")
 
-    
+    print(f"\nUpserting into ChromaDB at: {CHROMA_DIR}...")
+    count = upsert_chunks(CHROMA_DIR, all_chunks, source_domain=SOURCE_DOMAIN)
+    print(f"✓ ChromaDB upsert complete! Collection count: {count} vectors.")
+
     # Domain & Pillar summary
     pillar_counts = {}
     cat_counts = {}
@@ -347,15 +322,15 @@ def main():
         cat = c["metadata"].get("category", "Other")
         pillar_counts[p] = pillar_counts.get(p, 0) + 1
         cat_counts[cat] = cat_counts.get(cat, 0) + 1
-        
+
     print("\n--- Knowledge Distribution by Pillar ---")
     for p, cnt in sorted(pillar_counts.items(), key=lambda x: -x[1]):
         print(f" • {p.ljust(25)} : {cnt} chunks")
-        
+
     print("\n--- Knowledge Distribution by Category ---")
     for cat, cnt in sorted(cat_counts.items(), key=lambda x: -x[1]):
         print(f" • {cat.ljust(25)} : {cnt} chunks")
-        
+
     print(f"\nAll operations complete. Chroma DB persisted at: {CHROMA_DIR}\n")
 
 if __name__ == "__main__":

@@ -8,8 +8,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   type CaseFileDrillDefinition,
+  citationManifestUrlsFromExports,
   type DrillDefinitionDTO,
   type DrillOptionDTO,
+  type GroundingChunkExport,
+  isEligibleCorrectOptionCitation,
   lintDrillWording,
   type RapidFireDrillDefinition,
 } from '../packages/drill-core/src/index.js';
@@ -22,7 +25,11 @@ const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const WEB_DATA_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/src/data');
 const WEB_PUBLIC_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/public/api/drills');
 const WEB_PUBLIC_ROOT = path.join(ROOT_DIR, 'apps/arcgym-web/public');
-const ARCHITECT_CHUNKS_PATH = path.join(ROOT_DIR, 'data/architect_chunks.json');
+/** Per-source grounding chunk exports; Citation Manifest is their URL union at build time. */
+const GROUNDING_CHUNK_EXPORTS = [
+  path.join(ROOT_DIR, 'data/architect_chunks.json'),
+  path.join(ROOT_DIR, 'data/developer_chunks.json'),
+];
 
 const ARCHITECTURAL_DOMAINS = new Set([
   'Platform_Core',
@@ -68,7 +75,9 @@ console.log('\n======================================================');
 console.log('   ArcGym: Building & Validating Content Drills');
 console.log('======================================================\n');
 
-const drillFiles = fs.readdirSync(DRILLS_DIR).filter((f) => f.endsWith('.json'));
+const drillFiles = fs
+  .readdirSync(DRILLS_DIR)
+  .filter((f) => f.endsWith('.json') && !f.endsWith('.findings.json'));
 console.log(`Found ${drillFiles.length} drill JSON files in ${DRILLS_DIR}`);
 
 const allDrills: DrillDefinitionDTO[] = [];
@@ -94,16 +103,16 @@ function lintWording(file: string, drill: DrillDefinitionDTO) {
   }
 }
 
-const crawledCitationUrls = new Set<string>(
-  JSON.parse(fs.readFileSync(ARCHITECT_CHUNKS_PATH, 'utf-8')).map(
-    (c: { metadata: { url: string } }) => c.metadata.url,
-  ),
-);
-
-/** A citation must be the exact (anchored) URL of a crawled chunk, so learners land on the governing section. */
-function isOfficialCitation(url: unknown): boolean {
-  return typeof url === 'string' && crawledCitationUrls.has(url);
+function loadGroundingChunkExports(): GroundingChunkExport[][] {
+  return GROUNDING_CHUNK_EXPORTS.filter((p) => fs.existsSync(p)).map(
+    (p) => JSON.parse(fs.readFileSync(p, 'utf-8')) as GroundingChunkExport[],
+  );
 }
+
+const citationManifestUrls = citationManifestUrlsFromExports(loadGroundingChunkExports());
+console.log(
+  `Citation Manifest: ${citationManifestUrls.size} URLs from ${GROUNDING_CHUNK_EXPORTS.filter((p) => fs.existsSync(p)).length} chunk export(s)`,
+);
 
 function validateOptionIds(file: string, where: string, options: Array<{ id: string }>) {
   const ids = options.map((o) => o.id);
@@ -143,10 +152,13 @@ function validateMcqOptions(file: string, where: string, options: DrillOptionDTO
     if (!option.isCorrect && !option.distractorAntipattern) {
       err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
     }
-    if (option.isCorrect && !isOfficialCitation(option.citationUrl)) {
+    if (
+      option.isCorrect &&
+      !isEligibleCorrectOptionCitation(option.citationUrl, citationManifestUrls)
+    ) {
       err(
         file,
-        `correct option ${option.id} must cite a crawled chunk URL from ${ARCHITECT_CHUNKS_PATH} (got ${option.citationUrl ?? 'none'})`,
+        `correct option ${option.id} must cite an exact Citation Manifest URL from grounding chunk exports (got ${option.citationUrl ?? 'none'})`,
       );
     }
     validateDiagramUrl(file, `option ${option.id}`, option.diagramUrl);

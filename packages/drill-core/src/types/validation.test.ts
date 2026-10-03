@@ -17,11 +17,19 @@ describe('validation helpers', () => {
     expect(isValidDrillId(null)).toBe(false);
   });
 
-  it('allows https citation urls on Salesforce doc hosts only', () => {
+  it('allows https citation urls on Well-Architected Grounding hosts only', () => {
     expect(
       isAllowedCitationUrl('https://architect.salesforce.com/design/decision-guides/event-driven'),
     ).toBe(true);
     expect(isAllowedCitationUrl('https://help.salesforce.com/s/articleView?id=000')).toBe(true);
+    expect(
+      isAllowedCitationUrl(
+        'https://developer.salesforce.com/docs/data/data-cloud-dev/guide/x.html',
+      ),
+    ).toBe(true);
+    expect(isAllowedCitationUrl('https://trailhead.salesforce.com/content/learn/modules/x')).toBe(
+      false,
+    );
     expect(isAllowedCitationUrl('https://evil.example/phish')).toBe(false);
     expect(isAllowedCitationUrl('javascript:alert(1)')).toBe(false);
     expect(isAllowedCitationUrl('http://architect.salesforce.com/x')).toBe(false);

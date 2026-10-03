@@ -65,8 +65,12 @@ The state machine governing rep progression, option selection, confidence commit
 _Avoid_: Quiz runner, game controller, test runner
 
 ### Well-Architected Grounding
-The architectural rationale, citations, and decision trees anchored directly in official documentation from architect.salesforce.com. Case File clarifying answers are scenario fiction; only the final recommendation cites Well-Architected sources.
-_Avoid_: Opinion, editorializing
+The architectural rationale, citations, and decision trees anchored in official Salesforce documentation on architect.salesforce.com, developer.salesforce.com, and help.salesforce.com. A correct option's citation must be an exact URL present in the Citation Manifest (the crawled grounding corpus). Trailhead, engineering blogs, practitioner blogs, and Friction Cards are never Well-Architected Grounding; they may inform scenario realism and Antipattern Distractors only. Case File clarifying answers are scenario fiction; only the final recommendation cites Well-Architected Grounding.
+_Avoid_: Opinion, editorializing, dual grounding via Trailhead, community, or blog posts
+
+### Citation Manifest
+The set of exact documentation URLs eligible to ground a correct option. Built only from crawled Well-Architected Grounding sources; membership is required at build time, not merely host allowlisting.
+_Avoid_: Host allowlist alone, uncrawled URL, blog URL
 
 ### Universal Pre-Submit Gate
 The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps and Case File Station recommendations.

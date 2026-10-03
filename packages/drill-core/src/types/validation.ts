@@ -5,12 +5,11 @@ export function isValidDrillId(id: unknown): id is string {
   return typeof id === 'string' && DRILL_ID_PATTERN.test(id);
 }
 
-/** Hosts allowed in drill citation / source links (https only). */
+/** Well-Architected Grounding hosts allowed in drill citation / source links (https only). */
 export const ALLOWED_CITATION_HOSTS = [
   'architect.salesforce.com',
   'help.salesforce.com',
   'developer.salesforce.com',
-  'trailhead.salesforce.com',
 ] as const;
 
 /**

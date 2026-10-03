@@ -194,8 +194,14 @@ pnpm build:drills
 pnpm drill:status --status draft --all
 pnpm drill:status --status published --domain-label "Data 360"
 
-# RAG crawl / index official docs (Python + Chroma under data/chroma/, gitignored)
-python scripts/crawler/crawl_architect.py
+# RAG crawl / index Well-Architected Grounding (Python + Chroma under data/chroma/, gitignored).
+# Architect + Data 360 developer guides share one collection via non-destructive upsert
+# (metadata.source_domain). Citation Manifest = URL union of data/*_chunks.json at build time.
+# If upgrading from an older wipe-based index, remove data/chroma/ once before reindexing.
+uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
+  python scripts/crawler/crawl_architect.py
+uv run --with chromadb --with curl_cffi \
+  python scripts/crawler/crawl_developer.py
 
 # Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
 python scripts/crawler/crawl_trailhead.py --limit 100

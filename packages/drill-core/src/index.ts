@@ -1,4 +1,5 @@
 export * from './caseSession/reducer.js';
+export * from './ingest/findings.js';
 export * from './lint/wording.js';
 export * from './proficiency/aggregator.js';
 export * from './progress/streak.js';
@@ -7,6 +8,7 @@ export * from './scoring/brier.js';
 export * from './scoring/probe.js';
 export * from './session/reducer.js';
 export * from './session/types.js';
+export * from './types/citationManifest.js';
 export * from './types/drill.js';
 export * from './types/feedback.js';
 export * from './types/validation.js';
