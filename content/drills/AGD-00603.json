@@ -40,7 +40,7 @@
           "label": "Merge the three Salesforce CRM orgs into a single production org before deploying Data Cloud capabilities.",
           "isCorrect": false,
           "distractorAntipattern": "Monolithic Consolidation Delay",
-          "rationale": "Forcing a multi-year CRM consolidation project stalls enterprise data unification when zero-copy multi-org federation addresses the requirement immediately."
+          "rationale": "Forcing a multi-year CRM consolidation project stalls enterprise data unification and exceeds the delivery window when the orgs must stay operationally separate."
         }
       ]
     },
@@ -87,7 +87,7 @@
           "label": "Grant Companion Org administrators delegated system privileges on the Home Org to create remote streams directly.",
           "isCorrect": false,
           "distractorAntipattern": "Permission Governance Bypass",
-          "rationale": "Elevating companion administrator permissions compromises environment boundaries without resolving the architectural constraint that enrichments must originate in the home org."
+          "rationale": "Elevating companion administrator permissions compromises environment boundaries and still leaves companion sandboxes unable to author the blocked enrichment and stream configurations."
         },
         {
           "id": "s3_c",

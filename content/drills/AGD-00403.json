@@ -3,7 +3,7 @@
   "title": "Northline Cart Abandon",
   "format": "Case_File",
   "domain": "Data_Architecture",
-  "domainLabel": "Case File \u2014 Northline",
+  "domainLabel": "Case File — Northline",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
@@ -162,7 +162,7 @@
           "label": "Map stream DLOs only to custom DMOs that mirror website JSON keys",
           "isCorrect": false,
           "distractorAntipattern": "Source-Shaped Custom Model",
-          "rationale": "Custom source-shaped DMOs leave party and engagement data outside the standard Customer 360 model that unification and activation treat as the single source of truth."
+          "rationale": "Custom source-shaped DMOs lock party and engagement fields to website JSON shapes that break whenever storefront keys change, so remaps become perpetual schema chases."
         },
         {
           "id": "st_map_c",
@@ -325,7 +325,7 @@
           "label": "Rapid Publish segment of carts abandoned within 20 minutes",
           "isCorrect": false,
           "distractorAntipattern": "Segment Cadence Mismatch",
-          "rationale": "Rapid Publish is the fastest standard segment cadence at every 1 to 4 hours, so membership still lags a per-cart 20-minute abandon window Streaming Insights are built to express."
+          "rationale": "Rapid Publish is the fastest standard segment cadence at every 1 to 4 hours, so membership still lags a per-cart 20-minute abandon window."
         }
       ]
     },

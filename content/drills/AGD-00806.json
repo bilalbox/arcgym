@@ -5,17 +5,20 @@
   "domain": "Data_Architecture",
   "domainLabel": "Lakehouse File Federation & Open Formats",
   "difficulty": "Lead_CTA",
-  "pillars": ["Cost_Optimization", "Operational_Excellence"],
+  "pillars": [
+    "Cost_Optimization",
+    "Operational_Excellence"
+  ],
   "version": 2,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An enterprise stores 400 TB of IoT diagnostic telemetry in an Amazon S3 bucket using Apache Iceberg tables in the same AWS region as its Data Cloud tenant. Data Science and Agentforce teams need read access for customer anomaly scoring. Which architecture provides access while avoiding data movement and egress costs?",
+      "prompt": "An enterprise stores 400 TB of IoT diagnostic telemetry in an Amazon S3 bucket using Apache Iceberg tables in the same AWS region as its Data Cloud tenant. Data Science and Agentforce teams need read access for customer anomaly scoring. Which architecture should the CTA recommend?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Zero Copy File Federation via S3 Iceberg Catalog",
+          "label": "External Open-Table Catalog Federation into Data Cloud",
           "diagramUrl": "/diagrams/agd-00806-iceberg-topology.svg",
           "isCorrect": true,
           "rationale": "File federation allows Data Cloud to read open-table Parquet files directly from object storage without copying bytes. When co-located in the same cloud region, row-access credit consumption is avoided, and partition pruning minimizes network scan overhead.",

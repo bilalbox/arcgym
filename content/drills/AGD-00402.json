@@ -1,6 +1,6 @@
 {
   "id": "AGD-00402",
-  "title": "Data Cloud Data Kit Promotion and Connector Decoupling",
+  "title": "Data Kit Promotion: Package Boundaries and Target Binding",
   "format": "Rapid_Fire",
   "domain": "Devops_Lifecycle",
   "domainLabel": "DevOps & Governance",
@@ -9,7 +9,7 @@
     "Operational_Excellence",
     "Reliability"
   ],
-  "version": 1,
+  "version": 2,
   "status": "published",
   "sourceCardIds": [
     "FC-0D5KX00000j9Gcu0AE",
@@ -18,82 +18,82 @@
   "steps": [
     {
       "id": "s1",
-      "prompt": "A delivery team promotes Data Cloud assets across environments using Data Kits. In sandbox, ingestion streams bind to an external Redshift connector named RedshiftDEV, whereas production runs RedshiftPROD. After deploying the kit to production, data streams fail to connect. Which deployment practice prevents this configuration failure?",
+      "prompt": "A release must promote Data 360 stream and insight definitions plus Apex and custom objects into production. Winter '25 packaging rules apply, and the team wants a single installable artifact. How should the architect structure the packages?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Package the production connection credentials inside the Data Kit metadata archive before deployment.",
+          "label": "Put Apex, custom objects, and Data 360 definitions into one unlocked package for a single install",
           "isCorrect": false,
-          "distractorAntipattern": "Packaged Secret Exposure",
-          "rationale": "Data Kits package metadata definitions rather than connection credentials, and bundling credentials exposes environment secrets."
+          "distractorAntipattern": "Unlocked Package Mixing",
+          "rationale": "Data 360 metadata cannot go in an unlocked package, and Winter '25 blocks mixing Data 360 metadata with Platform metadata in one package."
         },
         {
           "id": "s1_b",
-          "label": "Enforce matching connector developer names across all environments and pre-provision target endpoints before deploying the Data Kit.",
+          "label": "Ship Data 360 definitions in a data-kit package and Platform metadata in a separate package",
           "isCorrect": true,
-          "rationale": "Uniform connector naming enables automated metadata binding during promotion, decoupling transport schema definitions from physical environment endpoints.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-360-connector-framework"
+          "rationale": "Data 360 metadata must enter a data kit before that kit is added to a package, and packaging Data 360 with Platform metadata requires two packages. Winter '25 disallows combining both metadata classes in one package.",
+          "citationUrl": "https://developer.salesforce.com/docs/data/data-cloud-dev/guide/packages-data-kits.html"
         },
         {
           "id": "s1_c",
-          "label": "Manually edit the ingested Data Stream definition in production to re-point its schema toward RedshiftPROD.",
+          "label": "Add Apex and custom objects into the data kit alongside stream and insight definitions",
           "isCorrect": false,
-          "distractorAntipattern": "Production Manual Configuration",
-          "rationale": "Modifying stream connectors manually in production introduces configuration drift and breaks automated release reproducibility."
+          "distractorAntipattern": "Kit Scope Overreach",
+          "rationale": "A data kit is a portable container of packageable Data 360 metadata such as stream templates and insight definitions, not Platform Apex or custom objects."
         }
       ]
     },
     {
       "id": "s2",
-      "prompt": "A pipeline deploys data transforms utilizing custom Python code extensions between environments. The practitioner adds the extension metadata to a Data Kit and installs it in UAT. The extension objects import, but transforms fail to run. Which mechanism explains this deployment outcome?",
+      "prompt": "A data kit with CRM stream templates is installed in production, and marketing needs live CRM ingestion this week. Which prerequisite must the architect complete so those streams can ingest?",
       "options": [
         {
           "id": "s2_a",
-          "label": "Data Kits require an accompanying change set to activate Python runtime containers within the target environment.",
+          "label": "Rely on the kit install alone to materialize streams and pull CRM rows into production",
           "isCorrect": false,
-          "distractorAntipattern": "Change Set Conflation",
-          "rationale": "Change sets do not manage Data Cloud container runtimes, and mixing deployment mechanisms fails to provision runtime dependencies."
+          "distractorAntipattern": "Install Equals Ingest",
+          "rationale": "Kit metadata is component definitions, not live data or connections, so install alone neither creates ingesting streams nor copies CRM rows."
         },
         {
           "id": "s2_b",
-          "label": "Data Kits transfer metadata references only, requiring container environments and dependencies to be provisioned through automated pipeline tasks.",
-          "isCorrect": true,
-          "rationale": "Executable environments operate outside metadata packaging boundaries, requiring external deployment scripts to configure runtime libraries and credentials.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-360-connector-framework"
+          "label": "Export sandbox CRM records into the kit so production streams hydrate on install",
+          "isCorrect": false,
+          "distractorAntipattern": "Packaged Record Payload",
+          "rationale": "Data kits carry definitions of streams and models rather than the underlying CRM records, so exporting rows into the kit cannot hydrate production."
         },
         {
           "id": "s2_c",
-          "label": "Python extensions remain in inactive status until the Data Cloud admin user executes a manual schema compile.",
-          "isCorrect": false,
-          "distractorAntipattern": "Manual Lifecycle Gate",
-          "rationale": "Execution failures stem from missing runtime environments rather than an uncompiled schema state in the target org."
+          "label": "Create the production CRM connection first, then create data streams from the installed kit",
+          "isCorrect": true,
+          "rationale": "After the data kit is installed, streams are created in the target org to flow from a Salesforce CRM source. Creating that stream from the kit makes the data model objects available automatically.",
+          "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_install_package_kit.htm&language=en_US&type=5"
         }
       ]
     },
     {
       "id": "s3",
-      "prompt": "An enterprise with 12 development sandboxes must support developers writing Apex queries against Data Model Objects. Data Cloud credit usage is pooled across all sandboxes and production. Which environment strategy controls credit burn while enabling developer unit testing?",
+      "prompt": "Production has an authorized Connector Framework connection named RetailLake. A DevOps data kit holds the stream bundle, and deploy uses the Connect REST API with asyncMode. How should the architect bind the stream during deploy?",
       "options": [
         {
           "id": "s3_a",
-          "label": "Enable full Data Cloud ingestion in every developer sandbox with scheduled hourly batch synchronization.",
-          "isCorrect": false,
-          "distractorAntipattern": "Unbounded Sandbox Ingestion",
-          "rationale": "Enabling full data pipelines in every lower sandbox rapidly exhausts enterprise credit allotments through redundant compute cycles."
+          "label": "Post a DataStreamBundle whose bundleConfig.connectionName references the RetailLake connection",
+          "isCorrect": true,
+          "rationale": "Connector Framework stream deploy payloads supply connectionName inside bundleConfig, so the target deploy binds the bundle to a connection that already exists in that org.",
+          "citationUrl": "https://developer.salesforce.com/docs/data/connectapi/guide/deploy-data-kit-payloads.html"
         },
         {
           "id": "s3_b",
-          "label": "Provision Data Cloud in a dedicated integration sandbox with sampled datasets while developers use mock Apex interfaces locally.",
-          "isCorrect": true,
-          "rationale": "Centralizing Data Cloud testing in one shared lower environment preserves pooled credits while interfaces allow isolated test execution.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-devops-patterns.html#sandbox-strategy"
+          "label": "Omit connectionName so Connect API copies sandbox connector credentials into production",
+          "isCorrect": false,
+          "distractorAntipattern": "Credential Auto-Copy Myth",
+          "rationale": "The Connector Framework deploy shape expects connectionName in bundleConfig; omitting it does not migrate sandbox authorization into production."
         },
         {
           "id": "s3_c",
-          "label": "Configure Data Cloud directly in production and grant developers administrative access to test query performance.",
+          "label": "Redeploy the managed package version so connector credentials refresh from the kit",
           "isCorrect": false,
-          "distractorAntipattern": "Production Environment Testing",
-          "rationale": "Authoring and testing unverified queries in production threatens tenant performance and breaches enterprise governance guardrails."
+          "distractorAntipattern": "Package Credential Refresh",
+          "rationale": "Packages and data kits move metadata definitions, not sensitive connection authorization, so a package redeploy does not rebind or refresh the target connection."
         }
       ]
     }

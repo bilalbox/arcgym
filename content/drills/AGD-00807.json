@@ -5,13 +5,16 @@
   "domain": "Data_Architecture",
   "domainLabel": "Lakehouse Federation & Transformation",
   "difficulty": "Lead_CTA",
-  "pillars": ["Cost_Optimization", "Operational_Excellence"],
+  "pillars": [
+    "Cost_Optimization",
+    "Operational_Excellence"
+  ],
   "version": 1,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "An architect integrates a 500-million-row Snowflake order table via Zero Copy federation. Because raw fields contain malformed dates, an engineer proposes running a Batch Data Transform in Data Cloud to clean and persist the records into the canonical SalesOrder object. Why does this design undermine the core objective of Zero Copy?",
+      "prompt": "An architect integrates a 500-million-row Snowflake order table via Zero Copy federation. Because raw fields contain malformed dates, an engineer proposes running a Batch Data Transform in Data Cloud against the federated lake object. Why does this design undermine the core objective of Zero Copy?",
       "options": [
         {
           "id": "s1_a",

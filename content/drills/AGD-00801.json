@@ -5,17 +5,20 @@
   "domain": "Data_Architecture",
   "domainLabel": "Data 360 Architecture",
   "difficulty": "Lead_CTA",
-  "pillars": ["Trust", "Reliability"],
+  "pillars": [
+    "Trust",
+    "Reliability"
+  ],
   "version": 4,
   "status": "published",
   "steps": [
     {
       "id": "s1",
-      "prompt": "Nightly identity jobs run, but marketing campaigns are still delivering duplicate messages to the same person under different CRM and web IDs. Which architecture topology ensures activations deliver unified individuals without duplicate channel contacts?",
+      "prompt": "Nightly identity jobs run, but marketing campaigns are still delivering duplicate messages to the same person under different CRM and web IDs. Which architecture topology ensures activations reach each person once across channels?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Unified Individual Segment Activation",
+          "label": "Resolved-Profile Segment Activation",
           "diagramUrl": "/diagrams/agd-00801-unified-topology.svg",
           "isCorrect": true,
           "rationale": "Activations built on segments of the Unified Individual data model object guarantee that deduplicated enterprise identities govern channel reach, eliminating source-key duplicates.",
@@ -27,7 +30,7 @@
           "diagramUrl": "/diagrams/agd-00801-direct-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Identity Resolution Bypass",
-          "rationale": "Directly activating from source Contact DMOs completely bypasses the Identity Resolution engine and Unified Individual profiles, causing channel activations to treat CRM and web records as separate individuals."
+          "rationale": "Directly activating from source Contact DMOs keeps CRM and web keys as separate activation members, so the same person still receives duplicate channel messages under each source identity."
         },
         {
           "id": "s1_c",

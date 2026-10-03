@@ -1,156 +1,100 @@
 {
   "id": "AGD-00602",
-  "title": "B2B ABM Go-Live: Relationship-Grain Activation Under a Deadline",
+  "title": "B2B ABM Go-Live: Relationship Grain and Filtered Activation",
   "format": "Rapid_Fire",
   "domain": "Data_Architecture",
-  "domainLabel": "Data 360 & Data Cloud Zero Copy",
+  "domainLabel": "Data Architecture & Virtualization",
   "difficulty": "Lead_CTA",
   "pillars": [
     "Reliability",
     "Operational_Excellence"
   ],
-  "version": 5,
+  "version": 6,
   "status": "published",
   "sourceCardIds": [
     "FC-0D54V00007bLMAFSA4",
-    "FC-0D5KX00000j8v9e0AA",
     "FC-0D5KX00000j8twP0AQ",
-    "FC-0D5KX00000jAOxu0AG",
-    "FC-0D54V00007er4NUSAY"
+    "FC-0D5KX00000jAOxu0AG"
   ],
   "steps": [
     {
       "id": "s1",
-      "prompt": "An Account-Based Marketing rollout launches in two weeks, where buyers associate one Contact with multiple Accounts. Mapping a true Account-Contact relationship requires data harmonization effort. The CRM architect asks whether mapping Account Contact directly from Contact is sufficient. What should the architect decide?",
+      "prompt": "An ABM launch in two weeks must reach buyers who hold distinct roles across multiple Accounts. CRM already stores person-to-account role pairings, and modeling time is scarce. Which mapping decision should the architect make for Account Contact?",
       "options": [
         {
           "id": "s1_a",
-          "label": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
-          "isCorrect": true,
-          "rationale": "Harmonizing the relationship entity establishes a distinct row for each account-person pairing. Downstream segmentations can then target contacts within their specific organizational roles without losing multi-account context.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/reference-diagrams/guide/data-model-notation.html#relationships"
+          "label": "Map Contact DLO one-to-one into Account Contact and treat each Contact as a single account role.",
+          "isCorrect": false,
+          "distractorAntipattern": "Flattened Relationship Model",
+          "rationale": "Collapsing multi-account roles into one Contact-shaped row loses the account-specific role grain Account Contact is meant to represent for ABM targeting."
         },
         {
           "id": "s1_b",
-          "label": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
-          "isCorrect": false,
-          "distractorAntipattern": "Flattened Relationship Model",
-          "rationale": "Collapsing multiple account associations into a single contact record discards the many-to-many junction grain, making it impossible for marketing activations to determine which account attributes govern each touchpoint."
+          "label": "Map AccountContactRelation into Account Contact so each account-specific role is a distinct row.",
+          "isCorrect": true,
+          "rationale": "The AccountContactRelation DLO maps to the Account Contact DMO. Using that mapping produces Account Contact rows for each CRM account-person pairing so ABM can target role-specific buyers across Accounts.",
+          "citationUrl": "https://developer.salesforce.com/docs/data/data-cloud-dmo-mapping/guide/c360dm-accountcontactrelation_dmo_mappings.html"
         },
         {
           "id": "s1_c",
-          "label": "Duplicate each Contact record across each Account directly inside the CRM source before ingestion.",
+          "label": "Map AccountAccountRelation into Account Contact to capture buyer roles between Accounts.",
           "isCorrect": false,
-          "distractorAntipattern": "Source Data Duplication",
-          "rationale": "Cloning contact rows in core CRM corrupts data hygiene, inflates platform storage, and complicates identity resolution across duplicate external records."
+          "distractorAntipattern": "Wrong Junction Mapping",
+          "rationale": "AccountAccountRelation maps to Account Relationship, not Account Contact, so it cannot represent person roles on an Account for ABM membership."
         }
       ]
     },
     {
       "id": "s2",
-      "prompt": "A custom Account-Contact junction DMO is assigned to the Other category. Recreating it in the Profile category requires rebuilding relationships and re-testing. The admin asks if the junction can remain categorized as Other while being used for Activation Membership. How should the architect guide them?",
+      "prompt": "A B2B renewal campaign must reach the right people at named Accounts without blowing the remaining daily activation budget. Marketing Cloud Engagement is the destination. Which activation design should the architect require?",
       "options": [
         {
           "id": "s2_a",
-          "label": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
-          "isCorrect": false,
-          "distractorAntipattern": "Category Constraint Bypass",
-          "rationale": "The activation engine ignores relationship links when determining eligible membership objects, preventing any DMO in the Other category from serving as an activation anchor."
+          "label": "Use contact-point and membership filtering when publishing the activation.",
+          "isCorrect": true,
+          "rationale": "Contact point and activation membership filtering controls who is reached and which contact points enter the activation, so B2B renewal audiences stay precise and volume stays inside the remaining daily budget.",
+          "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_activation_filtering_main.htm&language=en_US&type=5"
         },
         {
           "id": "s2_b",
-          "label": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
-          "isCorrect": true,
-          "rationale": "The platform segmentation and activation engine strictly requires membership entities to belong to the Profile category. Transitioning the junction allows marketing to select it directly as the target activation grain.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#source-profile-linking"
+          "label": "Publish every Contact Point Email on each Individual and filter later in journeys.",
+          "isCorrect": false,
+          "distractorAntipattern": "Unfiltered Contact Fan-Out",
+          "rationale": "Publishing every email address inflates activation volume against the remaining daily budget and defers audience precision to the destination."
         },
         {
           "id": "s2_c",
-          "label": "Change the junction category to Engagement to enable streaming event activations to Marketing Cloud.",
+          "label": "Publish the full Account population and rebuild the audience in Marketing Cloud queries.",
           "isCorrect": false,
-          "distractorAntipattern": "Mismatched Entity Semantics",
-          "rationale": "Engagement category objects represent time-stamped interaction records rather than persistent entity associations, making them unsuitable for defining membership cohorts."
+          "distractorAntipattern": "Downstream Audience Reconstruction",
+          "rationale": "Pushing the full Account population into the destination still consumes activation capacity and delays the renewal send while the audience is rebuilt there."
         }
       ]
     },
     {
       "id": "s3",
-      "prompt": "In an activation dry run, a Contact associated with two Accounts produced only one Data Extension row, dropping the second Account's attributes. Re-segmenting on the junction takes an additional build day. Leadership proposes keeping Contact membership and resolving context inside Marketing Cloud. How should the architect respond?",
+      "prompt": "The ABM activation must personalize Marketing Cloud journeys with each Account's contract end date while the Data Extension attribute budget is capped. Unified Individual profiles already exist in Data 360. Which activation approach should the architect select?",
       "options": [
         {
           "id": "s3_a",
-          "label": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
+          "label": "Export the full unified profile graph into the Marketing Cloud Data Extension for journey use.",
           "isCorrect": false,
-          "distractorAntipattern": "Downstream Context Reconstruction",
-          "rationale": "Delegating relationship reconstruction to Marketing Cloud journey activities introduces complex script queries, increases journey latency, and fails when contacts have ambiguous active accounts."
+          "distractorAntipattern": "Full Profile Dump",
+          "rationale": "Shipping the entire profile graph breaches the capped attribute budget and delivers more data than journeys need for contract-date personalization."
         },
         {
           "id": "s3_b",
-          "label": "Segment on junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
-          "isCorrect": true,
-          "rationale": "Anchoring membership on the junction outputs an independent row for every Account-Contact pairing, preserving distinct company attributes for each relationship when records land in Marketing Cloud.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+          "label": "Sync person-only attributes and look up Account contract dates inside Marketing Cloud journeys.",
+          "isCorrect": false,
+          "distractorAntipattern": "Downstream Context Reconstruction",
+          "rationale": "Leaving Account contract context out of activation forces journeys to rebuild enrichment after delivery, adding latency and failure points under the go-live window."
         },
         {
           "id": "s3_c",
-          "label": "Combine multiple Account names into a delimited text string attribute on the unified Contact profile.",
-          "isCorrect": false,
-          "distractorAntipattern": "Delimited Attribute Packing",
-          "rationale": "Merging distinct structural values into delimited text fields breaks automated journey personalization and prevents targeted filtering on discrete company parameters."
-        }
-      ]
-    },
-    {
-      "id": "s4",
-      "prompt": "Compliance requires every Contact Point Email for an Individual to be present in the Marketing Cloud Data Extension, but Max Attribute Values is capped at 1. Building a fan-out transform requires multiple days. The team asks if raising the attribute limit resolves the requirement. How should the architect advise?",
-      "options": [
-        {
-          "id": "s4_a",
-          "label": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
+          "label": "Activate enriched segment members with selected related attributes that carry the Account contract fields.",
           "isCorrect": true,
-          "rationale": "Generating an unpivoted dataset with one record per address ensures each email address receives a dedicated Data Extension row that Marketing Cloud can individually target.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
-        },
-        {
-          "id": "s4_b",
-          "label": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
-          "isCorrect": false,
-          "distractorAntipattern": "Attribute Fan-Out Assumption",
-          "rationale": "Increasing attribute value limits packs additional email values as comma-separated entries into a single row, which journey builder cannot parse as distinct recipient targets."
-        },
-        {
-          "id": "s4_c",
-          "label": "Configure a scheduled script in Marketing Cloud to split comma-separated emails after every activation sync.",
-          "isCorrect": false,
-          "distractorAntipattern": "Post-Processing Pipeline Dependency",
-          "rationale": "Relying on external SQL queries or scripts to reshape incoming data introduces operational fragility, scheduling delays, and synchronicity gaps between Data Cloud and journey execution."
-        }
-      ]
-    },
-    {
-      "id": "s5",
-      "prompt": "Activation fails because three attributes named Id collide across Individual, Contact Point Email, and a Redshift DMO. The integration lead can assign preferred activation names this afternoon, or spend three days rebuilding the Redshift DMO with unique schema fields past go-live. Which approach should the architect direct?",
-      "options": [
-        {
-          "id": "s5_a",
-          "label": "Assign preferred activation names to colliding Id attributes and re-run the activation today.",
-          "isCorrect": true,
-          "rationale": "Preferred activation names disambiguate field aliases directly within the destination payload without altering underlying data lake schema definitions or jeopardizing delivery milestones.",
-          "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
-        },
-        {
-          "id": "s5_b",
-          "label": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
-          "isCorrect": false,
-          "distractorAntipattern": "Unnecessary Upstream Refactoring",
-          "rationale": "Rebuilding underlying data model objects causes significant schedule slippage and invalidates existing mapping dependencies to fix a naming conflict that target-layer alias configuration easily solves."
-        },
-        {
-          "id": "s5_c",
-          "label": "Drop conflicting Id attributes from the activation payload and pass only person names.",
-          "isCorrect": false,
-          "distractorAntipattern": "Identifier Stripping Compromise",
-          "rationale": "Omitting primary and foreign identifiers prevents downstream systems from reliably matching and synchronizing profile records back to source platforms."
+          "rationale": "Related attributes in activation personalize Marketing Cloud Engagement communications with account-level fields such as contract end date. Selecting those attributes also controls the volume and variety of data sent, fitting the capped Data Extension budget.",
+          "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_related_attributes.htm&language=en_US&type=5"
         }
       ]
     }

@@ -5,7 +5,10 @@
   "domain": "Data_Architecture",
   "domainLabel": "Data Cloud Modeling & Transformation",
   "difficulty": "Lead_CTA",
-  "pillars": ["Reliability", "Operational_Excellence"],
+  "pillars": [
+    "Reliability",
+    "Operational_Excellence"
+  ],
   "version": 1,
   "status": "published",
   "steps": [
@@ -27,7 +30,7 @@
           "diagramUrl": "/diagrams/agd-00808-ansi-syntax-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Unsupported Query Syntax Assumption",
-          "rationale": "The insight engine supports ANSI SQL syntax for multidimensional rollups and window calculations, but its execution model restricts outputs to summarized metric objects."
+          "rationale": "The Calculated Insight authoring surface accepts ANSI SQL, including common window and conditional expressions used when defining metric logic."
         },
         {
           "id": "s1_c",
@@ -35,7 +38,7 @@
           "diagramUrl": "/diagrams/agd-00808-zero-copy-source-topology.svg",
           "isCorrect": false,
           "distractorAntipattern": "Federated Source Reading Restriction",
-          "rationale": "Calculated insights can reference data model objects backed by federated sources, but the engine is designed for metric calculations rather than record deduplication."
+          "rationale": "Federated lake objects mapped into the data model remain valid inputs for Calculated Insight definitions, so Zero Copy sources are readable by the engine."
         }
       ]
     }

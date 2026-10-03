@@ -35,7 +35,7 @@
           "label": "Stream partitioned telemetry batches through the Ingestion API into Data 360 every few minutes",
           "isCorrect": false,
           "distractorAntipattern": "Streaming Bulk Replication",
-          "rationale": "The Ingestion API's streaming mode is built for small record payloads, so this copies the whole 2TB a day in fragments while federation could read the same tables in place."
+          "rationale": "The Ingestion API's streaming mode is built for small record payloads, so pushing 2TB a day of telemetry through it fragments a bulk load into millions of tiny calls."
         }
       ]
     }

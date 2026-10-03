@@ -20,11 +20,13 @@
     "feedback:pull": "npx tsx scripts/feedback-report.ts --pull",
     "test": "pnpm --recursive run test",
     "preview": "pnpm --filter @arcgym/web preview",
-    "deploy": "pnpm typecheck && pnpm check && pnpm build && pnpm test:diagram-qa && pnpm --filter @arcgym/web run deploy:pages"
+    "deploy": "pnpm typecheck && pnpm check && pnpm build && pnpm test:diagram-qa && pnpm --filter @arcgym/web run deploy:pages",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@types/node": "^24.19.0",
+    "husky": "^9.1.7",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"

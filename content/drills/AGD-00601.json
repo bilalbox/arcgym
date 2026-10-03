@@ -35,7 +35,7 @@
           "label": "Swap the refund demo for a read-only order-status agent and ship refunds after Dreamforce.",
           "isCorrect": false,
           "distractorAntipattern": "Premature Scope Surrender",
-          "rationale": "Abandoning autonomous capabilities eliminates keynote risk entirely, but discards executive goals when establishing a human-in-the-loop boundary safely satisfies both timeline and governance requirements."
+          "rationale": "Abandoning autonomous capabilities eliminates keynote risk entirely, but discards the executive demo objective when a narrower autonomous scope could still ship before the keynote."
         }
       ]
     },
@@ -48,7 +48,7 @@
           "label": "Start the two-week Data 360 build and demo with one customer whose short history loads quickly.",
           "isCorrect": false,
           "distractorAntipattern": "Premature Architecture Migration",
-          "rationale": "Beginning a multi-week data pipeline overhaul introduces high project overhead and misses the delivery window, while masking an unselective table scan that simple query indexing resolves."
+          "rationale": "Beginning a multi-week data pipeline overhaul introduces high project overhead and misses the delivery window, while leaving the unselective table scan that causes the latency unaddressed."
         },
         {
           "id": "s2_b",

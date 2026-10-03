@@ -24,7 +24,7 @@
           "label": "Set each segment to publish on a schedule so the linked business unit receives the members",
           "isCorrect": false,
           "distractorAntipattern": "Connect-Only Audience Expectation",
-          "rationale": "Publishing refreshes segment membership inside Data 360, but linking the products does not deliver it anywhere; delivery needs an activation to an Account Engagement target.",
+          "rationale": "Publishing refreshes segment membership inside Data 360 only; the linked Account Engagement business unit still has no membership payload delivered to it.",
           "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
         },
         {

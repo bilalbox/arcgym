@@ -189,7 +189,7 @@
             "label": "Stream partitioned telemetry batches through the Ingestion API into Data 360 every few minutes",
             "isCorrect": false,
             "distractorAntipattern": "Streaming Bulk Replication",
-            "rationale": "The Ingestion API's streaming mode is built for small record payloads, so this copies the whole 2TB a day in fragments while federation could read the same tables in place."
+            "rationale": "The Ingestion API's streaming mode is built for small record payloads, so pushing 2TB a day of telemetry through it fragments a bulk load into millions of tiny calls."
           }
         ]
       }
@@ -462,16 +462,16 @@
   },
   {
     "id": "AGD-00211",
-    "title": "Sales Data Kit Deploy vs Preserving Custom DLO–DMO Maps",
+    "title": "Sales Data Kit Metadata vs Custom DLO–DMO Mappings",
     "format": "Rapid_Fire",
     "domain": "Data_Architecture",
-    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "domainLabel": "Data Architecture & Virtualization",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
       "Operational_Excellence"
     ],
-    "version": 2,
+    "version": 1,
     "status": "published",
     "sourceCardIds": [
       "FC-0D5KX00000pNzhX0AS"
@@ -479,30 +479,55 @@
     "steps": [
       {
         "id": "s1",
-        "prompt": "A mature Data 360 org has customized Contact and Account DLO-to-DMO mappings that feed identity resolution and activation. Enabling Marketing Cloud Next requires the Sales Data Kit, whose consent and messaging streams the team needs. How should the architect bring in the kit?",
+        "prompt": "A Data 360 org already runs customized Contact and Account DLO-to-DMO mappings for identity resolution. Marketing Cloud Next requires installing the Sales Data Kit. What should the architect treat that kit install as deploying?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Run the Deploy Data Streams step in Marketing Cloud Next setup to reconcile the mappings",
+            "label": "Sales Cloud record payloads into existing Contact and Account lake objects",
             "isCorrect": false,
-            "distractorAntipattern": "Blind Packaged Kit Redeploy",
-            "rationale": "The setup deploy reapplies the kit's predefined DLO-to-DMO mappings over the custom ones, breaking the identity resolution and activation built on them.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+            "distractorAntipattern": "Payload-Only Kit Assumption",
+            "rationale": "Framing the kit as a CRM row load leaves mapping and stream definition changes out of the cutover plan, which is what threatens the customized Contact and Account model."
           },
           {
             "id": "s1_b",
-            "label": "Keep the custom mappings and point segments and activations at the DLOs instead",
-            "isCorrect": false,
-            "distractorAntipattern": "Lake-Only Activation Bypass",
-            "rationale": "Segmentation and activation build on the harmonized DMO layer, so moving them to DLOs gives up the canonical model that identity resolution unifies.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+            "label": "Data 360 metadata definitions for data streams and related models",
+            "isCorrect": true,
+            "rationale": "For Data 360, packaged metadata represents the definition of components in the org and not the data—for example definitions of calculated insights, profiles, and data streams. With customized DLO-to-DMO mappings already live, the install risk is those definitions landing in the target org.",
+            "citationUrl": "https://developer.salesforce.com/docs/data/data-cloud-dev/guide/packages-data-kits.html"
           },
           {
             "id": "s1_c",
-            "label": "Deploy only the kit's consent and messaging streams and map them beside the custom mappings",
+            "label": "Platform metadata in an unlocked package that omits a data kit",
+            "isCorrect": false,
+            "distractorAntipattern": "Unlocked Package Bypass",
+            "rationale": "Data 360 metadata cannot be added in an unlocked package, and Marketing Cloud Next still depends on the Sales Data Kit rather than a Platform-only package path."
+          }
+        ]
+      },
+      {
+        "id": "s2",
+        "prompt": "After the Sales Data Kit is installed, the team creates data streams from it while Contact and Account DLO-to-DMO mappings remain customized. What should the architect expect those streams to surface?",
+        "options": [
+          {
+            "id": "s2_a",
+            "label": "A Deploy Data Streams pass that preserves the org's Contact maps",
+            "isCorrect": false,
+            "distractorAntipattern": "Blind Packaged Kit Redeploy",
+            "rationale": "The setup deploy reapplies the kit's predefined DLO-to-DMO alignment and can realign the Contact and Account mappings identity resolution already depends on."
+          },
+          {
+            "id": "s2_b",
+            "label": "Empty CRM schemas with no mapping or field metadata from the kit",
+            "isCorrect": false,
+            "distractorAntipattern": "Schema-Only Kit Reading",
+            "rationale": "Assuming schemas arrive empty of mapping metadata underestimates conflict with the org's customized Contact and Account model until activation breaks."
+          },
+          {
+            "id": "s2_c",
+            "label": "Ready DMOs plus the kit's packaged mappings and fields",
             "isCorrect": true,
-            "rationale": "DMOs are the harmonized layer that identity resolution and activation read, so the custom DLO-to-DMO mappings must stay intact. Bringing in only the streams Marketing Cloud Next needs adds consent and messaging data without replacing those mappings.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-lifecycle-and-object-types"
+            "rationale": "When you create a data stream from a data kit in the target org, data model objects are available automatically. For a standard data model added to a kit, only the custom mappings and custom fields are packaged—so stream creation surfaces that packaged mapping set where Contact and Account are already customized.",
+            "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_install_package_kit.htm&language=en_US&type=5"
           }
         ]
       }
@@ -534,7 +559,7 @@
             "label": "Set each segment to publish on a schedule so the linked business unit receives the members",
             "isCorrect": false,
             "distractorAntipattern": "Connect-Only Audience Expectation",
-            "rationale": "Publishing refreshes segment membership inside Data 360, but linking the products does not deliver it anywhere; delivery needs an activation to an Account Engagement target.",
+            "rationale": "Publishing refreshes segment membership inside Data 360 only; the linked Account Engagement business unit still has no membership payload delivered to it.",
             "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
           },
           {
@@ -558,10 +583,10 @@
   },
   {
     "id": "AGD-00213",
-    "title": "Test Rows for a Data Stream You Cannot Reach",
+    "title": "Local CSV File Upload and Occupied DLO Guardrails",
     "format": "Rapid_Fire",
     "domain": "Data_Architecture",
-    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "domainLabel": "Data Architecture & Virtualization",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Operational_Excellence",
@@ -575,30 +600,55 @@
     "steps": [
       {
         "id": "s1",
-        "prompt": "An architect built a Direct Access data stream that feeds a DLO, a DMO, and a Flow that writes to CRM. The upstream source belongs to another team and will not be available for three weeks. How should the architect get test rows into the DMO to validate the Flow?",
+        "prompt": "A sandbox team holds a local CSV of 200 seed product rows that must be available in Data 360 before a Monday cutover rehearsal. Which pattern should the architect use?",
         "options": [
           {
             "id": "s1_a",
-            "label": "POST sample payloads with the Ingestion API into the Direct Access stream's existing DLO",
+            "label": "Create an Ingestion API connector and stream, then load the seed CSV through a bulk job",
             "isCorrect": false,
-            "distractorAntipattern": "Arbitrary DLO Inject Bypass",
-            "rationale": "A DLO belongs to the stream and connector that created it, so the Ingestion API can write only to its own streams' DLOs, not to one a Direct Access stream owns.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
-          },
-          {
-            "id": "s1_c",
-            "label": "Point the Flow at fixture records in a CRM custom object until the source is available",
-            "isCorrect": false,
-            "distractorAntipattern": "CRM Fixture Path Substitution",
-            "rationale": "The Flow would read a different object, so the DMO mapping and the Data 360 trigger path it depends on go untested.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#connect-ingest-and-prepare"
+            "distractorAntipattern": "API Path Overfit",
+            "rationale": "The Ingestion API is a REST interface for streaming and bulk loads through that connector family. It is not the create-stream path documented for bringing a local CSV file into Data 360."
           },
           {
             "id": "s1_b",
-            "label": "Add a temporary Cloud Storage or file upload stream whose DLO maps to the same DMO",
+            "label": "Create a File Upload data stream from the local CSV and deploy it",
             "isCorrect": true,
-            "rationale": "Each connector ingests into the streams it owns, but several streams can map into one DMO. A temporary stream mapped to the same DMO exercises the DMO-to-Flow path without touching the Direct Access source.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#data-ingestion-methods"
+            "rationale": "File upload creates a data stream by bringing data from a local CSV into Data 360, and deploying the stream ingests those rows into the stream’s DLO. The seed file is already local, so that create-and-deploy path matches the constraint.",
+            "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_upload_a_csv_file.htm&language=en_US&type=5"
+          },
+          {
+            "id": "s1_c",
+            "label": "Create an Amazon S3 connection, stage the CSV in a bucket, then create an S3 stream",
+            "isCorrect": false,
+            "distractorAntipattern": "Cloud Staging Detour",
+            "rationale": "An S3 stream expects objects already reachable in a bucket behind a configured connection. Relaying a file that is already on disk through S3 adds connector work the local CSV ingest path does not require."
+          }
+        ]
+      },
+      {
+        "id": "s2",
+        "prompt": "A Direct Access stream already populates DLO Customer_DA__dll. A partner will place weekly CSV extracts in an Amazon S3 bucket with a configured connection. How should the architect land those files in Data 360?",
+        "options": [
+          {
+            "id": "s2_a",
+            "label": "Create an Amazon S3 data stream that reuses Customer_DA__dll as its target DLO",
+            "isCorrect": false,
+            "distractorAntipattern": "Occupied DLO Reuse",
+            "rationale": "Existing DLOs may be selected for S3 streams only when no other source already uses them. Customer_DA__dll is already populated by the Direct Access stream, so it is not available as the partner stream target."
+          },
+          {
+            "id": "s2_b",
+            "label": "Download each weekly partner CSV and ingest it through a File Upload stream",
+            "isCorrect": false,
+            "distractorAntipattern": "Manual File Relay",
+            "rationale": "File upload is the path for bringing a local CSV into Data 360. Ferrying partner objects out of S3 by hand each week ignores the S3 stream path already available for bucket-sourced files."
+          },
+          {
+            "id": "s2_c",
+            "label": "Create an Amazon S3 data stream and a new DLO for the partner extracts",
+            "isCorrect": true,
+            "rationale": "An S3 data stream may create a DLO or select an existing one, but a DLO already used by another source cannot be chosen. Customer_DA__dll is already in use, so the partner stream needs a new DLO.",
+            "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_guardrails_existing_data_lake_object.htm&language=en_US&type=5"
           }
         ]
       }
@@ -606,7 +656,7 @@
   },
   {
     "id": "AGD-00402",
-    "title": "Data Cloud Data Kit Promotion and Connector Decoupling",
+    "title": "Data Kit Promotion: Package Boundaries and Target Binding",
     "format": "Rapid_Fire",
     "domain": "Devops_Lifecycle",
     "domainLabel": "DevOps & Governance",
@@ -615,7 +665,7 @@
       "Operational_Excellence",
       "Reliability"
     ],
-    "version": 1,
+    "version": 2,
     "status": "published",
     "sourceCardIds": [
       "FC-0D5KX00000j9Gcu0AE",
@@ -624,82 +674,82 @@
     "steps": [
       {
         "id": "s1",
-        "prompt": "A delivery team promotes Data Cloud assets across environments using Data Kits. In sandbox, ingestion streams bind to an external Redshift connector named RedshiftDEV, whereas production runs RedshiftPROD. After deploying the kit to production, data streams fail to connect. Which deployment practice prevents this configuration failure?",
+        "prompt": "A release must promote Data 360 stream and insight definitions plus Apex and custom objects into production. Winter '25 packaging rules apply, and the team wants a single installable artifact. How should the architect structure the packages?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Package the production connection credentials inside the Data Kit metadata archive before deployment.",
+            "label": "Put Apex, custom objects, and Data 360 definitions into one unlocked package for a single install",
             "isCorrect": false,
-            "distractorAntipattern": "Packaged Secret Exposure",
-            "rationale": "Data Kits package metadata definitions rather than connection credentials, and bundling credentials exposes environment secrets."
+            "distractorAntipattern": "Unlocked Package Mixing",
+            "rationale": "Data 360 metadata cannot go in an unlocked package, and Winter '25 blocks mixing Data 360 metadata with Platform metadata in one package."
           },
           {
             "id": "s1_b",
-            "label": "Enforce matching connector developer names across all environments and pre-provision target endpoints before deploying the Data Kit.",
+            "label": "Ship Data 360 definitions in a data-kit package and Platform metadata in a separate package",
             "isCorrect": true,
-            "rationale": "Uniform connector naming enables automated metadata binding during promotion, decoupling transport schema definitions from physical environment endpoints.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-360-connector-framework"
+            "rationale": "Data 360 metadata must enter a data kit before that kit is added to a package, and packaging Data 360 with Platform metadata requires two packages. Winter '25 disallows combining both metadata classes in one package.",
+            "citationUrl": "https://developer.salesforce.com/docs/data/data-cloud-dev/guide/packages-data-kits.html"
           },
           {
             "id": "s1_c",
-            "label": "Manually edit the ingested Data Stream definition in production to re-point its schema toward RedshiftPROD.",
+            "label": "Add Apex and custom objects into the data kit alongside stream and insight definitions",
             "isCorrect": false,
-            "distractorAntipattern": "Production Manual Configuration",
-            "rationale": "Modifying stream connectors manually in production introduces configuration drift and breaks automated release reproducibility."
+            "distractorAntipattern": "Kit Scope Overreach",
+            "rationale": "A data kit is a portable container of packageable Data 360 metadata such as stream templates and insight definitions, not Platform Apex or custom objects."
           }
         ]
       },
       {
         "id": "s2",
-        "prompt": "A pipeline deploys data transforms utilizing custom Python code extensions between environments. The practitioner adds the extension metadata to a Data Kit and installs it in UAT. The extension objects import, but transforms fail to run. Which mechanism explains this deployment outcome?",
+        "prompt": "A data kit with CRM stream templates is installed in production, and marketing needs live CRM ingestion this week. Which prerequisite must the architect complete so those streams can ingest?",
         "options": [
           {
             "id": "s2_a",
-            "label": "Data Kits require an accompanying change set to activate Python runtime containers within the target environment.",
+            "label": "Rely on the kit install alone to materialize streams and pull CRM rows into production",
             "isCorrect": false,
-            "distractorAntipattern": "Change Set Conflation",
-            "rationale": "Change sets do not manage Data Cloud container runtimes, and mixing deployment mechanisms fails to provision runtime dependencies."
+            "distractorAntipattern": "Install Equals Ingest",
+            "rationale": "Kit metadata is component definitions, not live data or connections, so install alone neither creates ingesting streams nor copies CRM rows."
           },
           {
             "id": "s2_b",
-            "label": "Data Kits transfer metadata references only, requiring container environments and dependencies to be provisioned through automated pipeline tasks.",
-            "isCorrect": true,
-            "rationale": "Executable environments operate outside metadata packaging boundaries, requiring external deployment scripts to configure runtime libraries and credentials.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-360-connector-framework"
+            "label": "Export sandbox CRM records into the kit so production streams hydrate on install",
+            "isCorrect": false,
+            "distractorAntipattern": "Packaged Record Payload",
+            "rationale": "Data kits carry definitions of streams and models rather than the underlying CRM records, so exporting rows into the kit cannot hydrate production."
           },
           {
             "id": "s2_c",
-            "label": "Python extensions remain in inactive status until the Data Cloud admin user executes a manual schema compile.",
-            "isCorrect": false,
-            "distractorAntipattern": "Manual Lifecycle Gate",
-            "rationale": "Execution failures stem from missing runtime environments rather than an uncompiled schema state in the target org."
+            "label": "Create the production CRM connection first, then create data streams from the installed kit",
+            "isCorrect": true,
+            "rationale": "After the data kit is installed, streams are created in the target org to flow from a Salesforce CRM source. Creating that stream from the kit makes the data model objects available automatically.",
+            "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_install_package_kit.htm&language=en_US&type=5"
           }
         ]
       },
       {
         "id": "s3",
-        "prompt": "An enterprise with 12 development sandboxes must support developers writing Apex queries against Data Model Objects. Data Cloud credit usage is pooled across all sandboxes and production. Which environment strategy controls credit burn while enabling developer unit testing?",
+        "prompt": "Production has an authorized Connector Framework connection named RetailLake. A DevOps data kit holds the stream bundle, and deploy uses the Connect REST API with asyncMode. How should the architect bind the stream during deploy?",
         "options": [
           {
             "id": "s3_a",
-            "label": "Enable full Data Cloud ingestion in every developer sandbox with scheduled hourly batch synchronization.",
-            "isCorrect": false,
-            "distractorAntipattern": "Unbounded Sandbox Ingestion",
-            "rationale": "Enabling full data pipelines in every lower sandbox rapidly exhausts enterprise credit allotments through redundant compute cycles."
+            "label": "Post a DataStreamBundle whose bundleConfig.connectionName references the RetailLake connection",
+            "isCorrect": true,
+            "rationale": "Connector Framework stream deploy payloads supply connectionName inside bundleConfig, so the target deploy binds the bundle to a connection that already exists in that org.",
+            "citationUrl": "https://developer.salesforce.com/docs/data/connectapi/guide/deploy-data-kit-payloads.html"
           },
           {
             "id": "s3_b",
-            "label": "Provision Data Cloud in a dedicated integration sandbox with sampled datasets while developers use mock Apex interfaces locally.",
-            "isCorrect": true,
-            "rationale": "Centralizing Data Cloud testing in one shared lower environment preserves pooled credits while interfaces allow isolated test execution.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/well-architected/guide/operational-excellence-devops-patterns.html#sandbox-strategy"
+            "label": "Omit connectionName so Connect API copies sandbox connector credentials into production",
+            "isCorrect": false,
+            "distractorAntipattern": "Credential Auto-Copy Myth",
+            "rationale": "The Connector Framework deploy shape expects connectionName in bundleConfig; omitting it does not migrate sandbox authorization into production."
           },
           {
             "id": "s3_c",
-            "label": "Configure Data Cloud directly in production and grant developers administrative access to test query performance.",
+            "label": "Redeploy the managed package version so connector credentials refresh from the kit",
             "isCorrect": false,
-            "distractorAntipattern": "Production Environment Testing",
-            "rationale": "Authoring and testing unverified queries in production threatens tenant performance and breaches enterprise governance guardrails."
+            "distractorAntipattern": "Package Credential Refresh",
+            "rationale": "Packages and data kits move metadata definitions, not sensitive connection authorization, so a package redeploy does not rebind or refresh the target connection."
           }
         ]
       }
@@ -869,7 +919,7 @@
             "label": "Map stream DLOs only to custom DMOs that mirror website JSON keys",
             "isCorrect": false,
             "distractorAntipattern": "Source-Shaped Custom Model",
-            "rationale": "Custom source-shaped DMOs leave party and engagement data outside the standard Customer 360 model that unification and activation treat as the single source of truth."
+            "rationale": "Custom source-shaped DMOs lock party and engagement fields to website JSON shapes that break whenever storefront keys change, so remaps become perpetual schema chases."
           },
           {
             "id": "st_map_c",
@@ -1032,7 +1082,7 @@
             "label": "Rapid Publish segment of carts abandoned within 20 minutes",
             "isCorrect": false,
             "distractorAntipattern": "Segment Cadence Mismatch",
-            "rationale": "Rapid Publish is the fastest standard segment cadence at every 1 to 4 hours, so membership still lags a per-cart 20-minute abandon window Streaming Insights are built to express."
+            "rationale": "Rapid Publish is the fastest standard segment cadence at every 1 to 4 hours, so membership still lags a per-cart 20-minute abandon window."
           }
         ]
       },
@@ -1153,7 +1203,7 @@
             "label": "Swap the refund demo for a read-only order-status agent and ship refunds after Dreamforce.",
             "isCorrect": false,
             "distractorAntipattern": "Premature Scope Surrender",
-            "rationale": "Abandoning autonomous capabilities eliminates keynote risk entirely, but discards executive goals when establishing a human-in-the-loop boundary safely satisfies both timeline and governance requirements."
+            "rationale": "Abandoning autonomous capabilities eliminates keynote risk entirely, but discards the executive demo objective when a narrower autonomous scope could still ship before the keynote."
           }
         ]
       },
@@ -1166,7 +1216,7 @@
             "label": "Start the two-week Data 360 build and demo with one customer whose short history loads quickly.",
             "isCorrect": false,
             "distractorAntipattern": "Premature Architecture Migration",
-            "rationale": "Beginning a multi-week data pipeline overhaul introduces high project overhead and misses the delivery window, while masking an unselective table scan that simple query indexing resolves."
+            "rationale": "Beginning a multi-week data pipeline overhaul introduces high project overhead and misses the delivery window, while leaving the unselective table scan that causes the latency unaddressed."
           },
           {
             "id": "s2_b",
@@ -1215,157 +1265,101 @@
   },
   {
     "id": "AGD-00602",
-    "title": "B2B ABM Go-Live: Relationship-Grain Activation Under a Deadline",
+    "title": "B2B ABM Go-Live: Relationship Grain and Filtered Activation",
     "format": "Rapid_Fire",
     "domain": "Data_Architecture",
-    "domainLabel": "Data 360 & Data Cloud Zero Copy",
+    "domainLabel": "Data Architecture & Virtualization",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
       "Operational_Excellence"
     ],
-    "version": 5,
+    "version": 6,
     "status": "published",
     "sourceCardIds": [
       "FC-0D54V00007bLMAFSA4",
-      "FC-0D5KX00000j8v9e0AA",
       "FC-0D5KX00000j8twP0AQ",
-      "FC-0D5KX00000jAOxu0AG",
-      "FC-0D54V00007er4NUSAY"
+      "FC-0D5KX00000jAOxu0AG"
     ],
     "steps": [
       {
         "id": "s1",
-        "prompt": "An Account-Based Marketing rollout launches in two weeks, where buyers associate one Contact with multiple Accounts. Mapping a true Account-Contact relationship requires data harmonization effort. The CRM architect asks whether mapping Account Contact directly from Contact is sufficient. What should the architect decide?",
+        "prompt": "An ABM launch in two weeks must reach buyers who hold distinct roles across multiple Accounts. CRM already stores person-to-account role pairings, and modeling time is scarce. Which mapping decision should the architect make for Account Contact?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Map Account Contact from the Account–Contact relationship object, related to both Account and Individual.",
-            "isCorrect": true,
-            "rationale": "Harmonizing the relationship entity establishes a distinct row for each account-person pairing. Downstream segmentations can then target contacts within their specific organizational roles without losing multi-account context.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/reference-diagrams/guide/data-model-notation.html#relationships"
+            "label": "Map Contact DLO one-to-one into Account Contact and treat each Contact as a single account role.",
+            "isCorrect": false,
+            "distractorAntipattern": "Flattened Relationship Model",
+            "rationale": "Collapsing multi-account roles into one Contact-shaped row loses the account-specific role grain Account Contact is meant to represent for ABM targeting."
           },
           {
             "id": "s1_b",
-            "label": "Map Account Contact one-to-one from Contact so modeling finishes today and activation planning starts tomorrow.",
-            "isCorrect": false,
-            "distractorAntipattern": "Flattened Relationship Model",
-            "rationale": "Collapsing multiple account associations into a single contact record discards the many-to-many junction grain, making it impossible for marketing activations to determine which account attributes govern each touchpoint."
+            "label": "Map AccountContactRelation into Account Contact so each account-specific role is a distinct row.",
+            "isCorrect": true,
+            "rationale": "The AccountContactRelation DLO maps to the Account Contact DMO. Using that mapping produces Account Contact rows for each CRM account-person pairing so ABM can target role-specific buyers across Accounts.",
+            "citationUrl": "https://developer.salesforce.com/docs/data/data-cloud-dmo-mapping/guide/c360dm-accountcontactrelation_dmo_mappings.html"
           },
           {
             "id": "s1_c",
-            "label": "Duplicate each Contact record across each Account directly inside the CRM source before ingestion.",
+            "label": "Map AccountAccountRelation into Account Contact to capture buyer roles between Accounts.",
             "isCorrect": false,
-            "distractorAntipattern": "Source Data Duplication",
-            "rationale": "Cloning contact rows in core CRM corrupts data hygiene, inflates platform storage, and complicates identity resolution across duplicate external records."
+            "distractorAntipattern": "Wrong Junction Mapping",
+            "rationale": "AccountAccountRelation maps to Account Relationship, not Account Contact, so it cannot represent person roles on an Account for ABM membership."
           }
         ]
       },
       {
         "id": "s2",
-        "prompt": "A custom Account-Contact junction DMO is assigned to the Other category. Recreating it in the Profile category requires rebuilding relationships and re-testing. The admin asks if the junction can remain categorized as Other while being used for Activation Membership. How should the architect guide them?",
+        "prompt": "A B2B renewal campaign must reach the right people at named Accounts without blowing the remaining daily activation budget. Marketing Cloud Engagement is the destination. Which activation design should the architect require?",
         "options": [
           {
             "id": "s2_a",
-            "label": "Leave the junction in the Other category and rely on its Account and Contact relationships to make it selectable.",
-            "isCorrect": false,
-            "distractorAntipattern": "Category Constraint Bypass",
-            "rationale": "The activation engine ignores relationship links when determining eligible membership objects, preventing any DMO in the Other category from serving as an activation anchor."
+            "label": "Use contact-point and membership filtering when publishing the activation.",
+            "isCorrect": true,
+            "rationale": "Contact point and activation membership filtering controls who is reached and which contact points enter the activation, so B2B renewal audiences stay precise and volume stays inside the remaining daily budget.",
+            "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_activation_filtering_main.htm&language=en_US&type=5"
           },
           {
             "id": "s2_b",
-            "label": "Recreate the junction in the Profile category, re-relate it to Account and Contact, and select it for membership.",
-            "isCorrect": true,
-            "rationale": "The platform segmentation and activation engine strictly requires membership entities to belong to the Profile category. Transitioning the junction allows marketing to select it directly as the target activation grain.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#source-profile-linking"
+            "label": "Publish every Contact Point Email on each Individual and filter later in journeys.",
+            "isCorrect": false,
+            "distractorAntipattern": "Unfiltered Contact Fan-Out",
+            "rationale": "Publishing every email address inflates activation volume against the remaining daily budget and defers audience precision to the destination."
           },
           {
             "id": "s2_c",
-            "label": "Change the junction category to Engagement to enable streaming event activations to Marketing Cloud.",
+            "label": "Publish the full Account population and rebuild the audience in Marketing Cloud queries.",
             "isCorrect": false,
-            "distractorAntipattern": "Mismatched Entity Semantics",
-            "rationale": "Engagement category objects represent time-stamped interaction records rather than persistent entity associations, making them unsuitable for defining membership cohorts."
+            "distractorAntipattern": "Downstream Audience Reconstruction",
+            "rationale": "Pushing the full Account population into the destination still consumes activation capacity and delays the renewal send while the audience is rebuilt there."
           }
         ]
       },
       {
         "id": "s3",
-        "prompt": "In an activation dry run, a Contact associated with two Accounts produced only one Data Extension row, dropping the second Account's attributes. Re-segmenting on the junction takes an additional build day. Leadership proposes keeping Contact membership and resolving context inside Marketing Cloud. How should the architect respond?",
+        "prompt": "The ABM activation must personalize Marketing Cloud journeys with each Account's contract end date while the Data Extension attribute budget is capped. Unified Individual profiles already exist in Data 360. Which activation approach should the architect select?",
         "options": [
           {
             "id": "s3_a",
-            "label": "Keep Contact as the membership object and look up each Contact's Accounts inside Marketing Cloud journeys.",
+            "label": "Export the full unified profile graph into the Marketing Cloud Data Extension for journey use.",
             "isCorrect": false,
-            "distractorAntipattern": "Downstream Context Reconstruction",
-            "rationale": "Delegating relationship reconstruction to Marketing Cloud journey activities introduces complex script queries, increases journey latency, and fails when contacts have ambiguous active accounts."
+            "distractorAntipattern": "Full Profile Dump",
+            "rationale": "Shipping the entire profile graph breaches the capped attribute budget and delivers more data than journeys need for contract-date personalization."
           },
           {
             "id": "s3_b",
-            "label": "Segment on junction rows, set the junction as Activation Membership, and pull Contact attributes through relationships.",
-            "isCorrect": true,
-            "rationale": "Anchoring membership on the junction outputs an independent row for every Account-Contact pairing, preserving distinct company attributes for each relationship when records land in Marketing Cloud.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
+            "label": "Sync person-only attributes and look up Account contract dates inside Marketing Cloud journeys.",
+            "isCorrect": false,
+            "distractorAntipattern": "Downstream Context Reconstruction",
+            "rationale": "Leaving Account contract context out of activation forces journeys to rebuild enrichment after delivery, adding latency and failure points under the go-live window."
           },
           {
             "id": "s3_c",
-            "label": "Combine multiple Account names into a delimited text string attribute on the unified Contact profile.",
-            "isCorrect": false,
-            "distractorAntipattern": "Delimited Attribute Packing",
-            "rationale": "Merging distinct structural values into delimited text fields breaks automated journey personalization and prevents targeted filtering on discrete company parameters."
-          }
-        ]
-      },
-      {
-        "id": "s4",
-        "prompt": "Compliance requires every Contact Point Email for an Individual to be present in the Marketing Cloud Data Extension, but Max Attribute Values is capped at 1. Building a fan-out transform requires multiple days. The team asks if raising the attribute limit resolves the requirement. How should the architect advise?",
-        "options": [
-          {
-            "id": "s4_a",
-            "label": "Build a transform that outputs one row per Individual and email, then segment and activate on it.",
+            "label": "Activate enriched segment members with selected related attributes that carry the Account contract fields.",
             "isCorrect": true,
-            "rationale": "Generating an unpivoted dataset with one record per address ensures each email address receives a dedicated Data Extension row that Marketing Cloud can individually target.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
-          },
-          {
-            "id": "s4_b",
-            "label": "Raise Max # of Attribute Values on a custom activation DMO and keep the current membership object.",
-            "isCorrect": false,
-            "distractorAntipattern": "Attribute Fan-Out Assumption",
-            "rationale": "Increasing attribute value limits packs additional email values as comma-separated entries into a single row, which journey builder cannot parse as distinct recipient targets."
-          },
-          {
-            "id": "s4_c",
-            "label": "Configure a scheduled script in Marketing Cloud to split comma-separated emails after every activation sync.",
-            "isCorrect": false,
-            "distractorAntipattern": "Post-Processing Pipeline Dependency",
-            "rationale": "Relying on external SQL queries or scripts to reshape incoming data introduces operational fragility, scheduling delays, and synchronicity gaps between Data Cloud and journey execution."
-          }
-        ]
-      },
-      {
-        "id": "s5",
-        "prompt": "Activation fails because three attributes named Id collide across Individual, Contact Point Email, and a Redshift DMO. The integration lead can assign preferred activation names this afternoon, or spend three days rebuilding the Redshift DMO with unique schema fields past go-live. Which approach should the architect direct?",
-        "options": [
-          {
-            "id": "s5_a",
-            "label": "Assign preferred activation names to colliding Id attributes and re-run the activation today.",
-            "isCorrect": true,
-            "rationale": "Preferred activation names disambiguate field aliases directly within the destination payload without altering underlying data lake schema definitions or jeopardizing delivery milestones.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#activation"
-          },
-          {
-            "id": "s5_b",
-            "label": "Rebuild the Redshift DMO with non-overlapping field names, then re-run the activation after go-live.",
-            "isCorrect": false,
-            "distractorAntipattern": "Unnecessary Upstream Refactoring",
-            "rationale": "Rebuilding underlying data model objects causes significant schedule slippage and invalidates existing mapping dependencies to fix a naming conflict that target-layer alias configuration easily solves."
-          },
-          {
-            "id": "s5_c",
-            "label": "Drop conflicting Id attributes from the activation payload and pass only person names.",
-            "isCorrect": false,
-            "distractorAntipattern": "Identifier Stripping Compromise",
-            "rationale": "Omitting primary and foreign identifiers prevents downstream systems from reliably matching and synchronizing profile records back to source platforms."
+            "rationale": "Related attributes in activation personalize Marketing Cloud Engagement communications with account-level fields such as contract end date. Selecting those attributes also controls the volume and variety of data sent, fitting the capped Data Extension budget.",
+            "citationUrl": "https://help.salesforce.com/s/articleView?id=sf.c360_a_related_attributes.htm&language=en_US&type=5"
           }
         ]
       }
@@ -1413,7 +1407,7 @@
             "label": "Merge the three Salesforce CRM orgs into a single production org before deploying Data Cloud capabilities.",
             "isCorrect": false,
             "distractorAntipattern": "Monolithic Consolidation Delay",
-            "rationale": "Forcing a multi-year CRM consolidation project stalls enterprise data unification when zero-copy multi-org federation addresses the requirement immediately."
+            "rationale": "Forcing a multi-year CRM consolidation project stalls enterprise data unification and exceeds the delivery window when the orgs must stay operationally separate."
           }
         ]
       },
@@ -1460,7 +1454,7 @@
             "label": "Grant Companion Org administrators delegated system privileges on the Home Org to create remote streams directly.",
             "isCorrect": false,
             "distractorAntipattern": "Permission Governance Bypass",
-            "rationale": "Elevating companion administrator permissions compromises environment boundaries without resolving the architectural constraint that enrichments must originate in the home org."
+            "rationale": "Elevating companion administrator permissions compromises environment boundaries and still leaves companion sandboxes unable to author the blocked enrichment and stream configurations."
           },
           {
             "id": "s3_c",
@@ -1489,11 +1483,11 @@
     "steps": [
       {
         "id": "s1",
-        "prompt": "Nightly identity jobs run, but marketing campaigns are still delivering duplicate messages to the same person under different CRM and web IDs. Which architecture topology ensures activations deliver unified individuals without duplicate channel contacts?",
+        "prompt": "Nightly identity jobs run, but marketing campaigns are still delivering duplicate messages to the same person under different CRM and web IDs. Which architecture topology ensures activations reach each person once across channels?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Unified Individual Segment Activation",
+            "label": "Resolved-Profile Segment Activation",
             "diagramUrl": "/diagrams/agd-00801-unified-topology.svg",
             "isCorrect": true,
             "rationale": "Activations built on segments of the Unified Individual data model object guarantee that deduplicated enterprise identities govern channel reach, eliminating source-key duplicates.",
@@ -1505,7 +1499,7 @@
             "diagramUrl": "/diagrams/agd-00801-direct-topology.svg",
             "isCorrect": false,
             "distractorAntipattern": "Identity Resolution Bypass",
-            "rationale": "Directly activating from source Contact DMOs completely bypasses the Identity Resolution engine and Unified Individual profiles, causing channel activations to treat CRM and web records as separate individuals."
+            "rationale": "Directly activating from source Contact DMOs keeps CRM and web keys as separate activation members, so the same person still receives duplicate channel messages under each source identity."
           },
           {
             "id": "s1_c",
@@ -1721,11 +1715,11 @@
     "steps": [
       {
         "id": "s1",
-        "prompt": "An enterprise stores 400 TB of IoT diagnostic telemetry in an Amazon S3 bucket using Apache Iceberg tables in the same AWS region as its Data Cloud tenant. Data Science and Agentforce teams need read access for customer anomaly scoring. Which architecture provides access while avoiding data movement and egress costs?",
+        "prompt": "An enterprise stores 400 TB of IoT diagnostic telemetry in an Amazon S3 bucket using Apache Iceberg tables in the same AWS region as its Data Cloud tenant. Data Science and Agentforce teams need read access for customer anomaly scoring. Which architecture should the CTA recommend?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Zero Copy File Federation via S3 Iceberg Catalog",
+            "label": "External Open-Table Catalog Federation into Data Cloud",
             "diagramUrl": "/diagrams/agd-00806-iceberg-topology.svg",
             "isCorrect": true,
             "rationale": "File federation allows Data Cloud to read open-table Parquet files directly from object storage without copying bytes. When co-located in the same cloud region, row-access credit consumption is avoided, and partition pruning minimizes network scan overhead.",
@@ -1767,7 +1761,7 @@
     "steps": [
       {
         "id": "s1",
-        "prompt": "An architect integrates a 500-million-row Snowflake order table via Zero Copy federation. Because raw fields contain malformed dates, an engineer proposes running a Batch Data Transform in Data Cloud to clean and persist the records into the canonical SalesOrder object. Why does this design undermine the core objective of Zero Copy?",
+        "prompt": "An architect integrates a 500-million-row Snowflake order table via Zero Copy federation. Because raw fields contain malformed dates, an engineer proposes running a Batch Data Transform in Data Cloud against the federated lake object. Why does this design undermine the core objective of Zero Copy?",
         "options": [
           {
             "id": "s1_a",
@@ -1829,7 +1823,7 @@
             "diagramUrl": "/diagrams/agd-00808-ansi-syntax-topology.svg",
             "isCorrect": false,
             "distractorAntipattern": "Unsupported Query Syntax Assumption",
-            "rationale": "The insight engine supports ANSI SQL syntax for multidimensional rollups and window calculations, but its execution model restricts outputs to summarized metric objects."
+            "rationale": "The Calculated Insight authoring surface accepts ANSI SQL, including common window and conditional expressions used when defining metric logic."
           },
           {
             "id": "s1_c",
@@ -1837,7 +1831,7 @@
             "diagramUrl": "/diagrams/agd-00808-zero-copy-source-topology.svg",
             "isCorrect": false,
             "distractorAntipattern": "Federated Source Reading Restriction",
-            "rationale": "Calculated insights can reference data model objects backed by federated sources, but the engine is designed for metric calculations rather than record deduplication."
+            "rationale": "Federated lake objects mapped into the data model remain valid inputs for Calculated Insight definitions, so Zero Copy sources are readable by the engine."
           }
         ]
       }
@@ -1845,46 +1839,97 @@
   },
   {
     "id": "AGD-00809",
-    "title": "Zero Copy Federation: Curated Lakehouse Views",
+    "title": "Warehouse-to-Salesforce Inventory Consistency Under Credit Pressure",
     "format": "Rapid_Fire",
     "domain": "Data_Architecture",
-    "domainLabel": "Zero Copy Lakehouse Architecture",
+    "domainLabel": "Data Architecture & Virtualization",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Cost_Optimization",
       "Reliability",
-      "Trust"
+      "Operational_Excellence"
     ],
     "version": 1,
     "status": "published",
     "steps": [
       {
         "id": "s1",
-        "prompt": "An enterprise federates a 140-column raw transaction table from Snowflake into Data Cloud for Agentforce grounding. Data Cloud only needs 12 fields, and primary keys require deduplication. Which architecture aligns with Salesforce Well-Architected guidance to clean at the source while minimizing egress overhead?",
+        "prompt": "Field service dashboards need hourly CRM Analytics SyncIn from Snowflake into a custom object. The warehouse fact holds 120 attributes and years of history, while Salesforce maps twelve fields for open-work orders only. Sync runs already burn warehouse credits and miss the one-hour window. Which SyncIn source design should the architect choose?",
         "options": [
           {
             "id": "s1_a",
-            "label": "Curated Snowflake View Enforcing Uniqueness and Column Pruning",
-            "diagramUrl": "/diagrams/agd-00809-curated-view-topology.svg",
-            "isCorrect": true,
-            "rationale": "Curated views push filtering, deduplication, and type casting to the source engine. This approach minimizes network data transmission, enforces identity uniqueness before mapping, and provides direct one-to-one alignment with standard objects.",
-            "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+            "label": "Point SyncIn at the warehouse fact and omit unmapped attributes in the field mapping UI",
+            "isCorrect": false,
+            "distractorAntipattern": "Mapping Layer Pruning",
+            "rationale": "Field mappings do not shrink what SyncIn pulls from Snowflake. Historical rows and unused attributes still drive warehouse compute and extend job duration past the hourly window."
           },
           {
             "id": "s1_b",
-            "label": "Formula Field Expressions Configured on Federated Lake Objects",
-            "diagramUrl": "/diagrams/agd-00809-formula-fields-topology.svg",
-            "isCorrect": false,
-            "distractorAntipattern": "Virtual Field Predicate Blocking",
-            "rationale": "Applying dynamic formulas across hundreds of unpruned federated columns prevents optimal query predicate pushdown to the warehouse, increasing query latency and transfer volume."
+            "label": "Point SyncIn at a Snowflake view shaped to the Salesforce object contract",
+            "isCorrect": true,
+            "rationale": "Sync design guidance is to feed SyncIn from Snowflake views so row filters, column projection, and business logic run in the warehouse first. That cuts data volume, sync duration, and compute cost—the levers this hourly SLA and credit burn depend on.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-synchronization.html#key-platform-considerations"
           },
           {
             "id": "s1_c",
-            "label": "Identity Resolution Rule Sets Applied to Uncleaned Transactions",
-            "diagramUrl": "/diagrams/agd-00809-id-resolution-topology.svg",
+            "label": "Export the warehouse fact to cloud storage and load Salesforce through a custom Bulk API job",
             "isCorrect": false,
-            "distractorAntipattern": "Transaction Level Resolution Overkill",
-            "rationale": "Identity resolution creates unified individual customer profiles from party identifiers. It cannot resolve duplicate transaction records or normalize non-standard transactional timestamps."
+            "distractorAntipattern": "Shadow ETL Pipeline",
+            "rationale": "A custom Bulk path reintroduces engineering-owned extract and load work. SyncIn already provides declarative scheduling and Sync Job Monitor for this hourly object sync."
+          }
+        ]
+      },
+      {
+        "id": "s2",
+        "prompt": "CRM Analytics SyncIn loads partner inventory into a Salesforce custom object using Bulk API 2.0 with External ID Partner_SKU__c. The first job fails because multiple rows share the same Partner_SKU__c value. Where must the architect enforce uniqueness before retrying?",
+        "options": [
+          {
+            "id": "s2_a",
+            "label": "In the Snowflake view layer that supplies rows to the SyncIn configuration",
+            "isCorrect": true,
+            "rationale": "SyncIn upserts through Bulk API 2.0 on the External ID. Duplicate key values in the Snowflake source cause affected records to fail, so uniqueness must be enforced in the view layer before the sync configuration consumes it.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-synchronization.html#syncin-upsert-key-integrity"
+          },
+          {
+            "id": "s2_b",
+            "label": "In a Salesforce duplicate rule that rejects colliding saves after each SyncIn batch",
+            "isCorrect": false,
+            "distractorAntipattern": "Post Load Deduplication",
+            "rationale": "Duplicate rules act after Bulk upsert attempts. They do not stop SyncIn from failing when the Snowflake source already returns colliding External ID values."
+          },
+          {
+            "id": "s2_c",
+            "label": "In an Apex before-save trigger that keeps only the first row per External ID",
+            "isCorrect": false,
+            "distractorAntipattern": "Trigger Side Dedup",
+            "rationale": "Apex on the target object cannot repair a SyncIn batch whose source key set already violates upsert key integrity. The failure originates in the Snowflake feed, not in Salesforce save order."
+          }
+        ]
+      },
+      {
+        "id": "s3",
+        "prompt": "Ops wants Salesforce inventory and Snowflake inventory to stay mutually consistent, including removing Salesforce rows when the warehouse feed drops them. Leadership will accept refreshes measured in minutes. Which architecture should the CTA select?",
+        "options": [
+          {
+            "id": "s3_a",
+            "label": "Publish inventory changes on Platform Events into Salesforce objects",
+            "isCorrect": false,
+            "distractorAntipattern": "Realtime Overfit",
+            "rationale": "Platform Events notify subscribers of discrete changes. They do not own a scheduled Salesforce–Snowflake object sync path or hard-delete flagging for inventory rows."
+          },
+          {
+            "id": "s3_b",
+            "label": "Fan inventory writes through middleware into every Salesforce org",
+            "isCorrect": false,
+            "distractorAntipattern": "Multi Org Middleware Default",
+            "rationale": "Cross-org middleware solves a multi-org distribution problem. It is the wrong default when the requirement is Salesforce–Snowflake consistency for the org that owns inventory."
+          },
+          {
+            "id": "s3_c",
+            "label": "Configure CRM Analytics SyncIn together with SyncOut",
+            "isCorrect": true,
+            "rationale": "When the need is bidirectional Salesforce–Snowflake sync, hard-delete tracking, and schedules at or above 15 minutes, SyncIn and SyncOut are the fit. Near-real-time buses and multi-org middleware are outside that fit window.",
+            "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-synchronization.html#when-to-use-data-synchronization"
           }
         ]
       }

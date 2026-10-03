@@ -60,8 +60,8 @@ export function parseBuildErrorHints(buildError: string): BuildErrorRepairHint[]
   const hints: BuildErrorRepairHint[] = [];
   for (const line of buildError.split(/\r?\n/)) {
     const match = ERROR_LINE.exec(line);
-    if (!match) continue;
-    const message = match[1]!;
+    const message = match?.[1];
+    if (!message) continue;
 
     const citation = CITATION_MANIFEST.exec(message);
     if (citation) {
