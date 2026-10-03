@@ -6,6 +6,24 @@ Discovers chapter URLs by filtering llms-data-cloud.txt on curated guide path
 prefixes, fetches content via .md siblings (bot-friendly), stores canonical
 .html URLs in chunk metadata / Citation Manifest, and upserts into the shared
 Chroma grounding collection.
+
+Filter table (Wave C / issue #7 — phased widen, not a full leaf dump)
+---------------------------------------------------------------------
+Guide                 | Keep                                      | Drop / still deferred
+----------------------|-------------------------------------------|----------------------
+dmo-mapping           | All non-DLO pages under the DMO guide:    | Pure DLO leaves (*_dlo.md)
+(dmo_phased)          | Standard/SSOT object leaves (*_dmo.md),   | when present. No DLO pages
+                      | mapping pages (*_dmo_mappings.md), and    | appear in llms-data-cloud
+                      | conceptual / object guide pages.          | under this prefix today.
+integrations          | First-party / platform allowlist:         | Still deferred (~800 leaves):
+(integrations_phased) | Ingestion API, Amazon S3, GCS, Azure      | third-party vendor catalog
+                      | storage streams, MuleSoft, Web/Mobile SDK | (-connector / objects / cred
+                      | (plus setup/stream/UDLO pages matching    | / create-*-data-stream for
+                      | INTEG_FIRST_PARTY_RE).                    | Jira, Confluence, ServiceNow,
+                      | Salesforce CRM connector docs are not in  | Airtable, Azure SQL/Cosmos,
+                      | this prefix — they live on                | Adobe, etc.). Full ~3600-leaf
+                      | help.salesforce.com (Help corpus).        | dump remains out of scope.
+other GUIDE_SEEDS     | All pages under each prefix (filter=full) | —
 """
 
 from __future__ import annotations
@@ -83,36 +101,32 @@ GUIDE_SEEDS = [
     },
 ]
 
-# Deferred for a later wave: object-level DMO/DLO leaves and per-connector catalog pages.
-DMO_LEAF_RE = re.compile(
-    r"(_dmo_mappings\.md$|[-_]dmo\.md$|[-_]dlo\.md$)",
-    re.IGNORECASE,
-)
-DMO_KEEP_CONCEPTUAL_RE = re.compile(
-    r"(model-data|datamodelobjects|standard_mappings|starter-data-bundles|"
-    r"file-based-data-kits|isv-readiness|si-entity-interface-dmos-introduction|"
-    r"CmsAdvanced|CmsBase|CmsBaseSearch|Financial_Aid|MessagingConsentObjects|ServiceDK|"
-    r"b2ccommerce-bundlesproduct|mce-eventdetectiondifferences)",
+# Pure DLO leaf noise under the DMO guide. Object leaves + mapping pages are kept (issue #7).
+DMO_DLO_LEAF_RE = re.compile(r"[-_]dlo\.md$", re.IGNORECASE)
+
+# First-party / platform connector allowlist (issue #7). Unmatched vendor leaves stay deferred.
+# Salesforce CRM connector docs are not under this prefix (see Help corpus / filter table).
+INTEG_FIRST_PARTY_RE = re.compile(
+    r"("
+    r"ingestion|authenticated-server|real-time-ingestion|data-cloud-integrations|"
+    r"connect-an-ingestion|api-get-started|api-ingest|api-bulk|api-streaming|"
+    r"api-salesforce-cdp|api-accelerated|schema-req|create-ingestion-api|"
+    r"delete-ingestion-api|idp-data-federation|"
+    r"developer-required|perform-partial|synchronous-record|close-or-abort|"
+    r"create-a-job|delete-a-job|get-all-jobs|get-job-info|upload-job|"
+    r"insert-records|delete-records|post-amazon-s3|"
+    r"awss3|rotate-s3|deploy-s3|retrieve-s3|"
+    r"gcs-|"
+    r"azure-data-streams|azure-udlo|set-up-azure-connection|create-sas-token-azure|"
+    r"mulesoft|salesforce-web-sdk|admin-web-sdk|setup-web-sdk|"
+    r"mobile-web|mobile-sdk|mobile-connector|suggested-web-mobile|"
+    r"when-to-use-salesforce-web-sdk|set-up-of-salesforce-web-sdk"
+    r")",
     re.IGNORECASE,
 )
 
-INTEG_DROP_RE = re.compile(
-    r"(-connector|[-_]objects|[-_]cred\.|create-.*-data-stream|fieldmapping|emi-|"
-    r"set-up-.*-connection|prepare-your-|prepare-.*-connection|prepare-fora-|"
-    r"prepare-confluence|prepare-googledrive|prepare-jira|prepare-servicenow|"
-    r"-udlo|create-a-.*-udlo|create-aem-udlo|create-demandbase|create-googledrive)",
-    re.IGNORECASE,
-)
-INTEG_KEEP_RE = re.compile(
-    r"(ingestion|authenticated-server|real-time-ingestion|data-cloud-integrations|"
-    r"connect-an-ingestion|api-get-started|api-ingest|api-bulk|api-streaming|"
-    r"api-salesforce-cdp|api-accelerated|schema-req|create-ingestion-api|"
-    r"idp-data-federation|awss3|gcs-data|azure-data-streams|salesforce-web-sdk|"
-    r"mobile-web|mulesoft|rotate-s3|developer-required|perform-partial|"
-    r"synchronous-record|close-or-abort|create-a-job|delete-a-job|get-all-jobs|"
-    r"get-job-info|upload-job|insert-records|delete-records|post-amazon-s3)",
-    re.IGNORECASE,
-)
+# Abort rewrite/upsert when the CDN rate-limits too hard (protects prior export).
+MAX_FETCH_FAILURE_RATE = 0.15
 
 MD_HEADING_RE = re.compile(r"^(#{1,4})\s+(.+?)\s*$", re.MULTILINE)
 
@@ -143,15 +157,12 @@ def keep_url(url: str, filter_mode: str) -> bool:
     if filter_mode == "full":
         return True
     if filter_mode == "dmo_phased":
-        if DMO_LEAF_RE.search(name):
-            return False
-        if name.lower().startswith("c360dm-") and not DMO_KEEP_CONCEPTUAL_RE.search(name):
-            return False
-        return True
+        # Keep Standard/SSOT object leaves, mapping pages, and conceptual guide pages;
+        # drop pure DLO leaf noise only.
+        return not bool(DMO_DLO_LEAF_RE.search(name))
     if filter_mode == "integrations_phased":
-        if INTEG_DROP_RE.search(name):
-            return False
-        return bool(INTEG_KEEP_RE.search(name))
+        # Allowlist-only: anything not matched (vendor catalog leaves) stays deferred.
+        return bool(INTEG_FIRST_PARTY_RE.search(name))
     return False
 
 
@@ -257,17 +268,35 @@ def chunk_section(
     return chunks
 
 
-def fetch_and_chunk(canonical_url: str, guide: dict, session: requests.Session) -> list[dict]:
+def fetch_markdown(fetch_url: str, session: requests.Session, *, attempts: int = 5) -> str | None:
+    """Fetch .md sibling with backoff on 403/429 (developer CDN rate-limits parallel bursts)."""
+    for attempt in range(attempts):
+        try:
+            resp = session.get(fetch_url, timeout=40)
+        except Exception as e:
+            if attempt + 1 >= attempts:
+                print(f"  [ERROR] Failed to fetch {fetch_url}: {e}")
+                return None
+            time.sleep(1.5 * (2**attempt))
+            continue
+        if resp.status_code == 200:
+            return resp.text
+        if resp.status_code in (403, 429) and attempt + 1 < attempts:
+            time.sleep(1.5 * (2**attempt))
+            continue
+        print(f"  [WARN] HTTP {resp.status_code} for {fetch_url}")
+        return None
+    return None
+
+
+def fetch_and_chunk(
+    canonical_url: str, guide: dict, session: requests.Session
+) -> tuple[list[dict], bool]:
+    """Return (chunks, fetch_ok). fetch_ok is False on HTTP/network failure."""
     fetch_url = to_fetch_md_url(canonical_url)
-    try:
-        resp = session.get(fetch_url, timeout=40)
-        if resp.status_code != 200:
-            print(f"  [WARN] HTTP {resp.status_code} for {fetch_url}")
-            return []
-        md = resp.text
-    except Exception as e:
-        print(f"  [ERROR] Failed to fetch {fetch_url}: {e}")
-        return []
+    md = fetch_markdown(fetch_url, session)
+    if md is None:
+        return [], False
 
     # Prefer first H1 as doc title
     h1 = re.search(r"^#\s+(.+?)\s*$", md, re.MULTILINE)
@@ -285,7 +314,7 @@ def fetch_and_chunk(canonical_url: str, guide: dict, session: requests.Session) 
                 now_iso=now_iso,
             )
         )
-    return chunks
+    return chunks, True
 
 
 def main() -> None:
@@ -307,26 +336,45 @@ def main() -> None:
         session = requests.Session(impersonate="chrome")
         targets = discover_urls(session)
         all_chunks: list[dict] = []
+        fetch_failures = 0
         start = time.time()
-        print(f"\nStarting parallel crawl across {len(targets)} pages...")
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        # Keep concurrency low: developer CDN 403s under bursty parallel fetches.
+        max_workers = 2
+        print(f"\nStarting crawl across {len(targets)} pages (workers={max_workers})...")
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
 
-            def worker(item: tuple[str, dict]) -> list[dict]:
+            def worker(item: tuple[str, dict]) -> tuple[list[dict], bool]:
                 url, guide = item
                 sess = requests.Session(impersonate="chrome")
+                time.sleep(0.15)
                 return fetch_and_chunk(url, guide, sess)
 
             futures = {executor.submit(worker, t): t[0] for t in targets}
             done = 0
             for future in as_completed(futures):
                 done += 1
-                chunks = future.result()
+                chunks, ok = future.result()
+                if not ok:
+                    fetch_failures += 1
                 all_chunks.extend(chunks)
-                if done % 20 == 0 or done == len(targets):
+                if done % 50 == 0 or done == len(targets):
                     print(
-                        f"  [{done}/{len(targets)}] pages | Total chunks so far: {len(all_chunks)}"
+                        f"  [{done}/{len(targets)}] pages | chunks={len(all_chunks)} | "
+                        f"fetch_failures={fetch_failures}"
                     )
-        print(f"\n✓ Crawl finished in {time.time() - start:.1f}s. Extracted {len(all_chunks)} chunks.")
+        elapsed = time.time() - start
+        fail_rate = fetch_failures / max(len(targets), 1)
+        print(
+            f"\n✓ Crawl finished in {elapsed:.1f}s. Extracted {len(all_chunks)} chunks "
+            f"({fetch_failures} fetch failures, {fail_rate:.1%})."
+        )
+        if fail_rate > MAX_FETCH_FAILURE_RATE:
+            print(
+                "✗ Aborting write/upsert: fetch failure rate too high. "
+                "Prior developer_chunks.json left unchanged.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
 
     assign_stable_ids(all_chunks, "dev")
     for c in all_chunks:
