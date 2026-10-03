@@ -53,8 +53,8 @@ The learner-facing mode for Case File practice, separate from the daily Rapid Fi
 _Avoid_: Board Eval, Review Board mock, exam mode
 
 ### Troubleshooting Drill
-A diagnosis practice format: architecture synopsis + required diagram + issue, a scarce Probe Budget of clarifying questions that unlock scenario facts, then a confidence-gated free-text root-cause commit. Graded against one gold cause and three hidden antipattern distractors (never MCQ). Outside the daily Rapid Fire streak; no separate Troubleshoot streak in v1. See ADR 0004.
-_Avoid_: Quiz, Scenario, Lesson, remediation step (v1), LLM-as-judge
+A diagnosis practice format: architecture synopsis + required diagram + issue, a scarce Probe Budget of clarifying questions that unlock scenario facts, then a confidence-gated free-text root-cause commit. Graded by Workers AI CLEF as a choice over one gold cause, three hidden antipattern distractors (never MCQ), and an `other` catchall. Outside the daily Rapid Fire streak; no separate Troubleshoot streak in v1. See ADR 0004.
+_Avoid_: Quiz, Scenario, Lesson, remediation step (v1), LLM-as-judge, BGE reranker grading
 
 ### Incident
 One complete Troubleshooting Drill — the unit of Troubleshoot practice (not a multi-station Case File, not a three-rep Rapid Fire pack).
