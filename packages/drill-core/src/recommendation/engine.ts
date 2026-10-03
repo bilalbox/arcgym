@@ -1,3 +1,4 @@
+import { getDrillFormatDescriptor } from '../formats/index.js';
 import type {
   ArchitecturalDomain,
   DrillAttemptRecord,
@@ -61,9 +62,9 @@ export function selectRecommendedRound(params: {
     setCount = 3,
   } = params;
 
-  // Daily streak is Rapid Fire only — Case File uses a separate Cases entry.
+  // Daily streak filters by isDailyEligible format descriptor.
   const candidateDrills = drills.filter((d) => {
-    if (d.format !== 'Rapid_Fire') return false;
+    if (!getDrillFormatDescriptor(d.format).isDailyEligible) return false;
     if (domain && d.domain !== domain) return false;
     return true;
   });

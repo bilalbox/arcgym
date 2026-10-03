@@ -4,6 +4,7 @@ import {
   computeNewStreak,
   type DrillAttemptRecord,
   type DrillFormat,
+  getDrillFormatDescriptor,
   getTodayString,
   getYesterdayString,
   type VisitorProgressState,
@@ -102,8 +103,7 @@ export function useVisitorProgress() {
       const yesterday = getYesterdayString();
 
       setState((prev) => {
-        // Only Rapid Fire advances the daily streak; Cases / Troubleshoot stay on-demand.
-        const countsForStreak = params.format === 'Rapid_Fire';
+        const countsForStreak = getDrillFormatDescriptor(params.format).countsForStreak;
         const newStreak = countsForStreak
           ? computeNewStreak(prev.streakDays, prev.lastActiveDate, today, yesterday)
           : prev.streakDays;

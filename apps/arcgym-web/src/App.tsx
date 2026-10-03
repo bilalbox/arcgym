@@ -13,6 +13,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
+import { getWebFormatDescriptor } from '@/formats';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import { useRouter } from '@/hooks/useRouter';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
@@ -198,12 +199,14 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (!routeDrillId) return;
     const found = ALL_DRILLS.find((d) => d.id.toUpperCase() === routeDrillId.toUpperCase());
-    if (found && isCaseFileDrill(found)) {
-      navigate(`/cases/${found.id}`);
-    } else if (found && isTroubleshootingDrill(found)) {
-      navigate(`/troubleshoot/${found.id}`);
+    if (found) {
+      const descriptor = getWebFormatDescriptor(found.format);
+      const canonicalPath = `${descriptor.detailRoutePrefix}/${found.id}`;
+      if (pathname !== canonicalPath) {
+        navigate(canonicalPath);
+      }
     }
-  }, [routeDrillId, navigate]);
+  }, [routeDrillId, pathname, navigate]);
 
   if (import.meta.env.DEV && StudioDrillsPage && pathname === '/dev/drills') {
     return shell(

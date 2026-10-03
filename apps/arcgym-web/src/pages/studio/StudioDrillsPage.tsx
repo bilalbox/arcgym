@@ -1,4 +1,4 @@
-import { ARCHITECTURAL_DOMAIN_LABELS } from '@arcgym/drill-core';
+import { ARCHITECTURAL_DOMAIN_LABELS, DRILL_FORMAT_LABELS } from '@arcgym/drill-core';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StudioBanner } from '@/components/studio/StudioBanner';
@@ -105,11 +105,7 @@ export const StudioDrillsPage: React.FC<StudioDrillsPageProps> = ({ navigate }) 
                       {drill.status}
                     </Badge>
                     <Badge variant="outline" className="text-[11px]">
-                      {drill.format === 'Rapid_Fire'
-                        ? 'Rapid Fire'
-                        : drill.format === 'Case_File'
-                          ? 'Case File'
-                          : 'Troubleshooting'}
+                      {DRILL_FORMAT_LABELS[drill.format]}
                     </Badge>
                     {drill.findingCount > 0 && (
                       <Badge variant="destructive" className="text-[11px]">

@@ -239,16 +239,18 @@ export type ClientDrillDefinitionDTO =
   | CaseFileDrillDefinition
   | ClientTroubleshootingDrillDefinition;
 
+import { getDrillFormatDescriptor } from '../formats/index.js';
+
 export function isRapidFireDrill(
   d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
 ): d is RapidFireDrillDefinition {
-  return d.format === 'Rapid_Fire';
+  return getDrillFormatDescriptor('Rapid_Fire').isClient(d);
 }
 
 export function isCaseFileDrill(
   d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
 ): d is CaseFileDrillDefinition {
-  return d.format === 'Case_File';
+  return getDrillFormatDescriptor('Case_File').isClient(d);
 }
 
 export function isTroubleshootingDrill(d: DrillDefinitionDTO): d is TroubleshootingDrillDefinition;
@@ -258,15 +260,11 @@ export function isTroubleshootingDrill(
 export function isTroubleshootingDrill(
   d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
 ): d is TroubleshootingDrillDefinition | ClientTroubleshootingDrillDefinition {
-  return d.format === 'Troubleshooting';
+  return getDrillFormatDescriptor('Troubleshooting').isClient(d);
 }
 
 export function sanitizeDrillForClient(drill: DrillDefinitionDTO): ClientDrillDefinitionDTO {
-  if (drill.format === 'Troubleshooting') {
-    const { goldCause: _gold, hiddenDistractors: _distractors, ...rest } = drill;
-    return rest;
-  }
-  return drill;
+  return getDrillFormatDescriptor(drill.format).sanitizeForClient(drill);
 }
 
 export interface AttemptSubmissionDTO {

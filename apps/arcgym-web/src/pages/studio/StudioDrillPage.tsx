@@ -1,30 +1,19 @@
 import {
-  type CaseFileDrillDefinition,
   type DrillDefinitionDTO,
-  isCaseFileDrill,
-  isRapidFireDrill,
-  isTroubleshootingDrill,
   lintDrillWording,
-  type RapidFireDrillDefinition,
-  type TroubleshootingDrillDefinition,
   type ValidationFinding,
   type WordingFinding,
 } from '@arcgym/drill-core';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CaseFileRunner } from '@/components/drill/CaseFileRunner';
-import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
-import { TroubleshootRunner } from '@/components/drill/TroubleshootRunner';
-import { CaseFileEditor } from '@/components/studio/CaseFileEditor';
 import { JsonHatch } from '@/components/studio/JsonHatch';
 import { MetadataForm } from '@/components/studio/MetadataForm';
-import { RapidFireEditor } from '@/components/studio/RapidFireEditor';
 import { StudioBanner } from '@/components/studio/StudioBanner';
-import { TroubleshootingEditor } from '@/components/studio/TroubleshootingEditor';
 import { ValidationFindings } from '@/components/studio/ValidationFindings';
 import { WordingFindings } from '@/components/studio/WordingFindings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getWebFormatDescriptor } from '@/formats';
 import {
   getStudioDrill,
   publishStudioDrill,
@@ -58,6 +47,10 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
     if (!drill) return false;
     return JSON.stringify(drill) !== savedSnapshot;
   }, [drill, savedSnapshot]);
+
+  const webDescriptor = drill ? getWebFormatDescriptor(drill.format) : null;
+  const Runner = webDescriptor?.Runner;
+  const Editor = webDescriptor?.Editor;
 
   const load = useCallback(() => {
     setLoading(true);
@@ -318,17 +311,9 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
           ))}
         </div>
 
-        {tab === 'play' && (
+        {tab === 'play' && drill && Runner && (
           <div className="pt-2">
-            {isRapidFireDrill(drill) && (
-              <RapidFireRunner key={`rf-${drill.id}-${playRevision}`} drill={drill} />
-            )}
-            {isCaseFileDrill(drill) && (
-              <CaseFileRunner key={`cf-${drill.id}-${playRevision}`} drill={drill} />
-            )}
-            {isTroubleshootingDrill(drill) && (
-              <TroubleshootRunner key={`ts-${drill.id}-${playRevision}`} drill={drill} />
-            )}
+            <Runner key={`${drill.format}-${drill.id}-${playRevision}`} drill={drill} />
           </div>
         )}
 
@@ -379,24 +364,7 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
                   <h2 className="text-[11px] uppercase tracking-wider text-miro-muted font-medium">
                     Content
                   </h2>
-                  {isRapidFireDrill(drill) && (
-                    <RapidFireEditor
-                      drill={drill}
-                      onChange={(next: RapidFireDrillDefinition) => onDrillChange(next)}
-                    />
-                  )}
-                  {isCaseFileDrill(drill) && (
-                    <CaseFileEditor
-                      drill={drill}
-                      onChange={(next: CaseFileDrillDefinition) => onDrillChange(next)}
-                    />
-                  )}
-                  {isTroubleshootingDrill(drill) && (
-                    <TroubleshootingEditor
-                      drill={drill}
-                      onChange={(next: TroubleshootingDrillDefinition) => onDrillChange(next)}
-                    />
-                  )}
+                  {Editor && <Editor drill={drill} onChange={onDrillChange} />}
                 </section>
               </>
             ) : (
