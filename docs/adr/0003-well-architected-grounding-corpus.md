@@ -22,6 +22,6 @@ Separately, ingest hard-rolled back failed drafts (delete or restore), discardin
 
 - Authors may cite crawled developer.salesforce.com pages for Data 360 Stations; uncrawled allowlisted URLs still fail build.
 - Architect reindex no longer deletes the whole collection (developer vectors survive).
-- Failed ingest is recoverable: repair the kept JSON using the findings sidecar, then rerun ingest.
+- Failed ingest is recoverable: repair the kept JSON using the findings sidecar, then rerun ingest. The `reviewing-drills` skill (issue #6) loads that sidecar, applies surgical fixes, and re-ingests with `--force` (max 3 attempts; Citation Manifest / missing-grounding cases hand back to `generating-drills` with sharper `--query` values). No auto-publish.
 - Help corpus (issue #5): curated Data 360 / architecture-adjacent `help.salesforce.com` articles are crawled via Aura into `data/help_chunks.json` and unioned into the Citation Manifest; full Help catalog dump remains out of scope.
-- Explicitly deferred (later waves): engineering/practitioner blog ingestion; full DMO object / Integrations connector leaves; hybrid BM25; Architect Linter adversarial CTA red-team tier; `reviewing-drills` + automated repair loops; progressive authoring automation; LLM query auto-decomposition.
+- Explicitly deferred (later waves): engineering/practitioner blog ingestion; full DMO object / Integrations connector leaves; hybrid BM25; Architect Linter adversarial CTA red-team tier; progressive authoring automation; LLM query auto-decomposition.
