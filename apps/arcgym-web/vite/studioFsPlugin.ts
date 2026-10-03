@@ -8,9 +8,13 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import {
+  citationManifestUrlsFromExports,
   type DrillDefinitionDTO,
   type DrillStatus,
+  type GroundingChunkExport,
   lintDrillWording,
+  type ValidationFinding,
+  validateDrill,
   type WordingFinding,
 } from '@arcgym/drill-core';
 import type { Plugin } from 'vite';
@@ -177,9 +181,39 @@ function loadAllChunkIndexes(repoRoot: string): ChunkIndexEntry[] {
   return entries;
 }
 
+function loadCitationManifestUrls(repoRoot: string): Set<string> {
+  const exports = [
+    'data/architect_chunks.json',
+    'data/developer_chunks.json',
+    'data/help_chunks.json',
+  ];
+  const chunksList: GroundingChunkExport[][] = [];
+  for (const rel of exports) {
+    const p = path.join(repoRoot, rel);
+    if (fs.existsSync(p)) {
+      chunksList.push(JSON.parse(fs.readFileSync(p, 'utf-8')));
+    }
+  }
+  return citationManifestUrlsFromExports(chunksList);
+}
+
 export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
   const drillsDir = path.join(repoRoot, 'content/drills');
   let chunkIndex: ChunkIndexEntry[] | null = null;
+  let citationManifest: Set<string> | null = null;
+
+  const getCitationManifest = () => {
+    if (!citationManifest) {
+      citationManifest = loadCitationManifestUrls(repoRoot);
+    }
+    return citationManifest;
+  };
+
+  const assetExists = (diagramPath: string) => {
+    if (!diagramPath.startsWith('/') || diagramPath.includes('..')) return false;
+    const abs = path.join(publicDir, diagramPath.replace(/^\//, ''));
+    return abs.startsWith(publicDir) && fs.existsSync(abs);
+  };
 
   return {
     name: 'arcgym-studio-fs',
@@ -249,8 +283,13 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
               sendJson(res, 404, { error: `Drill ${drillId} not found` });
               return;
             }
+            const vRes = validateDrill(drill, {
+              citationManifest: getCitationManifest(),
+              assetExists,
+            });
+            const validationFindings = vRes.ok ? [] : vRes.findings;
             const findings = lintDrillWording(drill);
-            sendJson(res, 200, { drill, findings });
+            sendJson(res, 200, { drill, findings, validationFindings });
             return;
           }
 
@@ -275,10 +314,16 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
             const saved = prepareForSave(incoming);
             saved.id = drillId;
             writeDrill(drillsDir, saved);
+            const vRes = validateDrill(saved, {
+              citationManifest: getCitationManifest(),
+              assetExists,
+            });
+            const validationFindings = vRes.ok ? [] : vRes.findings;
             const findings = lintDrillWording(saved);
             sendJson(res, 200, {
               drill: saved,
               findings,
+              validationFindings,
               flippedToDraft: existing.status === 'published',
             });
             return;
@@ -290,10 +335,23 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
               sendJson(res, 404, { error: `Drill ${drillId} not found` });
               return;
             }
+            const vRes = validateDrill(existing, {
+              citationManifest: getCitationManifest(),
+              assetExists,
+            });
+            if (!vRes.ok) {
+              sendJson(res, 400, {
+                error: 'Validation findings block publish',
+                validationFindings: vRes.findings,
+                findings: lintDrillWording(existing),
+              });
+              return;
+            }
             const findings = lintDrillWording(existing);
             if (findings.length > 0) {
               sendJson(res, 400, {
                 error: 'Wording findings block publish',
+                validationFindings: [],
                 findings,
               });
               return;
@@ -313,6 +371,7 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
             sendJson(res, 200, {
               drill: published,
               findings: [] as WordingFinding[],
+              validationFindings: [] as ValidationFinding[],
               reloadRequired: true,
               buildOutput: build.output,
             });
@@ -336,9 +395,14 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
               });
               return;
             }
+            const vRes = validateDrill(unpublished, {
+              citationManifest: getCitationManifest(),
+              assetExists,
+            });
             sendJson(res, 200, {
               drill: unpublished,
               findings: lintDrillWording(unpublished),
+              validationFindings: vRes.ok ? [] : vRes.findings,
               reloadRequired: true,
               buildOutput: build.output,
             });

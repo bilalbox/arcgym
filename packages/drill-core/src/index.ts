@@ -15,3 +15,4 @@ export * from './types/drill.js';
 export * from './types/feedback.js';
 export * from './types/validation.js';
 export * from './ui/orderOptions.js';
+export * from './validator/validator.js';

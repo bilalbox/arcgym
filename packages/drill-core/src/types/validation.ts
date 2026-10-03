@@ -5,6 +5,13 @@ export function isValidDrillId(id: unknown): id is string {
   return typeof id === 'string' && DRILL_ID_PATTERN.test(id);
 }
 
+/** Approved Friction Card ID pattern (e.g. FC-0D5KX00000jATZ10AO). */
+export const FRICTION_CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
+
+export function isValidFrictionCardId(id: unknown): id is string {
+  return typeof id === 'string' && FRICTION_CARD_ID_PATTERN.test(id);
+}
+
 /** Well-Architected Grounding hosts allowed in drill citation / source links (https only). */
 export const ALLOWED_CITATION_HOSTS = [
   'architect.salesforce.com',

@@ -1,4 +1,4 @@
-import type { DrillDefinitionDTO, WordingFinding } from '@arcgym/drill-core';
+import type { DrillDefinitionDTO, ValidationFinding, WordingFinding } from '@arcgym/drill-core';
 
 const BASE = '/__studio';
 
@@ -28,13 +28,19 @@ async function studioFetch<T>(path: string, init?: RequestInit): Promise<T> {
       ...(init?.headers ?? {}),
     },
   });
-  const body = (await res.json()) as T & { error?: string; findings?: WordingFinding[] };
+  const body = (await res.json()) as T & {
+    error?: string;
+    findings?: WordingFinding[];
+    validationFindings?: ValidationFinding[];
+  };
   if (!res.ok) {
     const err = new Error(body.error ?? `Studio API ${res.status}`) as Error & {
       findings?: WordingFinding[];
+      validationFindings?: ValidationFinding[];
       status?: number;
     };
     err.findings = body.findings;
+    err.validationFindings = body.validationFindings;
     err.status = res.status;
     throw err;
   }
@@ -48,9 +54,11 @@ export function listStudioDrills(
   return studioFetch(`/drills${q}`);
 }
 
-export function getStudioDrill(
-  id: string,
-): Promise<{ drill: DrillDefinitionDTO; findings: WordingFinding[] }> {
+export function getStudioDrill(id: string): Promise<{
+  drill: DrillDefinitionDTO;
+  findings: WordingFinding[];
+  validationFindings?: ValidationFinding[];
+}> {
   return studioFetch(`/drills/${encodeURIComponent(id)}`);
 }
 
@@ -60,6 +68,7 @@ export function saveStudioDrill(
 ): Promise<{
   drill: DrillDefinitionDTO;
   findings: WordingFinding[];
+  validationFindings?: ValidationFinding[];
   flippedToDraft: boolean;
 }> {
   return studioFetch(`/drills/${encodeURIComponent(id)}`, {
@@ -71,6 +80,7 @@ export function saveStudioDrill(
 export function publishStudioDrill(id: string): Promise<{
   drill: DrillDefinitionDTO;
   findings: WordingFinding[];
+  validationFindings?: ValidationFinding[];
   reloadRequired: boolean;
 }> {
   return studioFetch(`/drills/${encodeURIComponent(id)}/publish`, { method: 'POST' });
@@ -79,6 +89,7 @@ export function publishStudioDrill(id: string): Promise<{
 export function unpublishStudioDrill(id: string): Promise<{
   drill: DrillDefinitionDTO;
   findings: WordingFinding[];
+  validationFindings?: ValidationFinding[];
   reloadRequired: boolean;
 }> {
   return studioFetch(`/drills/${encodeURIComponent(id)}/unpublish`, { method: 'POST' });

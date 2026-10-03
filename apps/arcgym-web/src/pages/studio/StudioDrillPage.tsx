@@ -7,6 +7,7 @@ import {
   lintDrillWording,
   type RapidFireDrillDefinition,
   type TroubleshootingDrillDefinition,
+  type ValidationFinding,
   type WordingFinding,
 } from '@arcgym/drill-core';
 import type React from 'react';
@@ -20,6 +21,7 @@ import { MetadataForm } from '@/components/studio/MetadataForm';
 import { RapidFireEditor } from '@/components/studio/RapidFireEditor';
 import { StudioBanner } from '@/components/studio/StudioBanner';
 import { TroubleshootingEditor } from '@/components/studio/TroubleshootingEditor';
+import { ValidationFindings } from '@/components/studio/ValidationFindings';
 import { WordingFindings } from '@/components/studio/WordingFindings';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,7 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
   const [drill, setDrill] = useState<DrillDefinitionDTO | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState<string>('');
   const [findings, setFindings] = useState<WordingFinding[]>([]);
+  const [validationFindings, setValidationFindings] = useState<ValidationFinding[]>([]);
   const [tab, setTab] = useState<MainTab>('edit');
   const [editMode, setEditMode] = useState<EditMode>('forms');
   const [playRevision, setPlayRevision] = useState(0);
@@ -64,6 +67,7 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
         setDrill(res.drill);
         setSavedSnapshot(JSON.stringify(res.drill));
         setFindings(res.findings);
+        setValidationFindings(res.validationFindings ?? []);
         setPlayRevision((n) => n + 1);
       })
       .catch((err: Error) => setError(err.message))
@@ -108,11 +112,13 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
       setDrill(res.drill);
       setSavedSnapshot(JSON.stringify(res.drill));
       setFindings(res.findings);
+      setValidationFindings(res.validationFindings ?? []);
       setPlayRevision((n) => n + 1);
+      const totalFindings = res.findings.length + (res.validationFindings?.length ?? 0);
       setMessage(
         res.flippedToDraft
           ? 'Saved as draft (was published)'
-          : `Saved · ${res.findings.length} finding${res.findings.length === 1 ? '' : 's'}`,
+          : `Saved · ${totalFindings} finding${totalFindings === 1 ? '' : 's'}`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -135,14 +141,19 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
       setDrill(res.drill);
       setSavedSnapshot(JSON.stringify(res.drill));
       setFindings(res.findings);
+      setValidationFindings(res.validationFindings ?? []);
       const reload = window.confirm(
         'Published and rebuilt the learner catalog. Reload the page so learner routes pick it up?',
       );
       if (reload) window.location.reload();
       else setMessage(`Published · v${res.drill.version}`);
     } catch (err) {
-      const e = err as Error & { findings?: WordingFinding[] };
+      const e = err as Error & {
+        findings?: WordingFinding[];
+        validationFindings?: ValidationFinding[];
+      };
       if (e.findings) setFindings(e.findings);
+      if (e.validationFindings) setValidationFindings(e.validationFindings);
       setError(e.message);
     } finally {
       setBusy(false);
@@ -163,6 +174,7 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
       setDrill(res.drill);
       setSavedSnapshot(JSON.stringify(res.drill));
       setFindings(res.findings);
+      setValidationFindings(res.validationFindings ?? []);
       const reload = window.confirm(
         'Unpublished and rebuilt the learner catalog. Reload the page?',
       );
@@ -340,6 +352,13 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
                 JSON
               </Button>
             </div>
+
+            <section className="space-y-2">
+              <h2 className="text-[11px] uppercase tracking-wider text-miro-muted font-medium">
+                Validation
+              </h2>
+              <ValidationFindings findings={validationFindings} />
+            </section>
 
             <section className="space-y-2">
               <h2 className="text-[11px] uppercase tracking-wider text-miro-muted font-medium">

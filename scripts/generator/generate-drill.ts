@@ -17,10 +17,25 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  ARCHITECTURAL_DOMAIN_LABELS,
+  type ArchitecturalDomain,
+  CASE_FILE_MIN_STATIONS,
+  citationManifestUrlsFromExports,
   clearIngestFindings,
+  DRILL_DIFFICULTIES,
+  DRILL_FORMATS,
   type DrillDefinitionDTO,
+  type DrillDifficulty,
+  type DrillFormat,
   findingsSidecarPath,
+  type GroundingChunkExport,
   lintDrillWording,
+  TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT,
+  TROUBLESHOOTING_MIN_PIVOTAL_PROBES,
+  TROUBLESHOOTING_PROBE_BUDGET,
+  validateDrill,
+  WELL_ARCHITECTED_PILLARS,
+  type WellArchitectedPillar,
   writeIngestFindings,
 } from '../../packages/drill-core/src/index.js';
 
@@ -34,15 +49,6 @@ const ROOT_DIR = process.cwd();
 const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const CHROMA_SEARCH_SCRIPT = path.join(ROOT_DIR, 'scripts/crawler/search_chroma.py');
 const FRICTION_CARDS_PATH = path.join(ROOT_DIR, 'data/friction_cards.json');
-const WELL_ARCHITECTED_PILLARS = [
-  'Trust',
-  'Reliability',
-  'Operational_Excellence',
-  'Cost_Optimization',
-  'Fairness',
-];
-const SUPPORTED_FORMATS = ['Rapid_Fire', 'Case_File', 'Troubleshooting'] as const;
-const DIFFICULTIES = ['Associate_Domain_Architect', 'Lead_CTA'] as const;
 
 interface ChromaChunk {
   content: string;
@@ -78,8 +84,8 @@ interface PromptArgs {
   topic: string;
   domain?: string;
   pillar?: string;
-  format: (typeof SUPPORTED_FORMATS)[number];
-  difficulty: (typeof DIFFICULTIES)[number];
+  format: DrillFormat;
+  difficulty: DrillDifficulty;
   steps: number;
   /** Case_File: station count (>= 3). Defaults to 3 when unset. */
   stations?: number;
@@ -115,13 +121,13 @@ function parsePromptArgs(args: string[]): PromptArgs {
     } else if (arg === '--pillar' && value) {
       result.pillar = args[++i];
     } else if (arg === '--format' && value) {
-      if (!SUPPORTED_FORMATS.includes(value as (typeof SUPPORTED_FORMATS)[number])) {
-        fail(`--format must be one of ${SUPPORTED_FORMATS.join('|')}`);
+      if (!DRILL_FORMATS.includes(value as DrillFormat)) {
+        fail(`--format must be one of ${DRILL_FORMATS.join('|')}`);
       }
       result.format = args[++i] as PromptArgs['format'];
     } else if (arg === '--difficulty' && value) {
-      if (!DIFFICULTIES.includes(value as (typeof DIFFICULTIES)[number])) {
-        fail(`--difficulty must be one of ${DIFFICULTIES.join('|')}`);
+      if (!DRILL_DIFFICULTIES.includes(value as DrillDifficulty)) {
+        fail(`--difficulty must be one of ${DRILL_DIFFICULTIES.join('|')}`);
       }
       result.difficulty = args[++i] as PromptArgs['difficulty'];
     } else if (arg === '--steps' && value) {
@@ -255,16 +261,6 @@ function queryChromaMerged(queries: string[], topK: number, pillar?: string): Ch
   return merged;
 }
 
-const DOMAIN_LABELS: Record<string, string> = {
-  Ai_And_Automation: 'Agentic AI & Automation',
-  Data_Architecture: 'Data Architecture & Virtualization',
-  Integration_Apis: 'Integration APIs & Events',
-  Security_And_Access: 'Security & Access',
-  Devops_Lifecycle: 'DevOps & Governance',
-  Infrastructure: 'Infrastructure',
-  Platform_Core: 'Platform Core & Scalability',
-};
-
 function inferDomain(category?: string, pillar?: string): string {
   if (pillar === 'Agentforce' || category?.includes('agent')) return 'Ai_And_Automation';
   if (pillar === 'Data_360' || category?.includes('data')) return 'Data_Architecture';
@@ -280,7 +276,11 @@ function resolvePillars(chunks: ChromaChunk[], card?: FrictionCard): string[] {
   if (card?.pillars.length) return card.pillars;
   return Array.from(
     new Set(
-      chunks.map((c) => c.metadata.pillar).filter((p) => WELL_ARCHITECTED_PILLARS.includes(p)),
+      chunks
+        .map((c) => c.metadata.pillar)
+        .filter((p): p is WellArchitectedPillar =>
+          WELL_ARCHITECTED_PILLARS.includes(p as WellArchitectedPillar),
+        ),
     ),
   );
 }
@@ -387,7 +387,7 @@ function buildTroubleshootingSchema(
     "diagramLabel": "Short diagram caption"
   },
   "issue": "Current failure symptom statement; do not leak the gold cause",
-  "probeBudget": 3,
+  "probeBudget": ${TROUBLESHOOTING_PROBE_BUDGET},
   "probes": [
     {
       "id": "p1",
@@ -441,7 +441,7 @@ function buildTroubleshootingSchema(
     }
   ]
 }
-Write exactly 3 hiddenDistractors. Require ≥2 pivotal probes, mix useful + distractor probes (~7 total), probeBudget 3. diagramUrl is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Probe answers are scenario fiction; only goldCause.citationUrl cites Well-Architected Grounding when the failure class is doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
+Write exactly ${TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT} hiddenDistractors. Require ≥${TROUBLESHOOTING_MIN_PIVOTAL_PROBES} pivotal probes, mix useful + distractor probes (~7 total), probeBudget ${TROUBLESHOOTING_PROBE_BUDGET}. diagramUrl is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Probe answers are scenario fiction; only goldCause.citationUrl cites Well-Architected Grounding when the failure class is doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
 }
 
 function buildCaseFileSchema(
@@ -453,7 +453,7 @@ function buildCaseFileSchema(
   sourceCardLine: string,
   citationUrl: string,
 ): string {
-  const stationCount = args.stations ?? 3;
+  const stationCount = args.stations ?? CASE_FILE_MIN_STATIONS;
   return `{
   "id": "${drillId}",
   "title": "Clear Evaluation-scale Case File title",
@@ -546,7 +546,7 @@ ${c.content}
 
   const domain =
     args.domain || inferDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
-  const domainLabel = DOMAIN_LABELS[domain] ?? domain;
+  const domainLabel = ARCHITECTURAL_DOMAIN_LABELS[domain as ArchitecturalDomain] ?? domain;
   const pillars = resolvePillars(chunks, card);
   const pillarSpec = pillars.length
     ? JSON.stringify(pillars)
@@ -711,43 +711,61 @@ function runIngest(argv: string[]) {
   drill.status = 'draft';
   fs.writeFileSync(outPath, `${JSON.stringify(drill, null, 2)}\n`, 'utf-8');
 
-  const failWithFindings = (
-    reasons: Array<'validation' | 'wording'>,
-    extras: { buildError?: string; wordingFindings?: ReturnType<typeof lintDrillWording> },
-    message: string,
-  ): never => {
+  function loadGroundingChunkExports(): GroundingChunkExport[][] {
+    return GROUNDING_CHUNK_EXPORTS.map((rel) => path.join(ROOT_DIR, rel))
+      .filter((p) => fs.existsSync(p))
+      .map((p) => JSON.parse(fs.readFileSync(p, 'utf-8')) as GroundingChunkExport[]);
+  }
+
+  const citationManifestUrls = citationManifestUrlsFromExports(loadGroundingChunkExports());
+  const publicRoot = path.join(ROOT_DIR, 'apps/arcgym-web/public');
+  const assetExists = (url: string) => {
+    if (!url.startsWith('/')) return false;
+    return fs.existsSync(path.join(publicRoot, url.replace(/^\/+/, '')));
+  };
+
+  const validationRes = validateDrill(drill, {
+    citationManifest: citationManifestUrls,
+    assetExists,
+  });
+  const validationFindings = validationRes.ok ? [] : validationRes.findings;
+
+  let wordingFindings: ReturnType<typeof lintDrillWording> = [];
+  try {
+    wordingFindings = lintDrillWording(drill as unknown as DrillDefinitionDTO);
+  } catch {
+    // If the draft is too malformed for wording lint, leave empty
+  }
+
+  if (validationFindings.length > 0 || wordingFindings.length > 0) {
+    const reasons: Array<'validation' | 'wording'> = [];
+    if (validationFindings.length > 0) reasons.push('validation');
+    if (wordingFindings.length > 0) reasons.push('wording');
+
+    for (const f of validationFindings) {
+      console.error(`  [VALIDATION] ${f.ruleId} at ${f.where}: ${f.message}`);
+    }
+    for (const f of wordingFindings) {
+      console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
+    }
+
     writeIngestFindings(outPath, {
       drillId: drill.id as string,
       failedAt: new Date().toISOString(),
       reasons,
-      ...extras,
+      ...(validationFindings.length > 0 ? { validationFindings } : {}),
+      ...(wordingFindings.length > 0 ? { wordingFindings } : {}),
     });
-    fail(`${message}; draft kept at ${outPath}. See ${findingsSidecarPath(outPath)}.`);
-  };
 
-  try {
-    const buildOutput = execFileSync('npx', ['tsx', 'scripts/build-drills.ts'], {
-      cwd: ROOT_DIR,
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    if (buildOutput.trim()) process.stderr.write(buildOutput);
-  } catch (err: unknown) {
-    const e = err as { stdout?: string; stderr?: string; message?: string };
-    const buildError = `${e.stdout ?? ''}\n${e.stderr ?? e.message ?? String(err)}`.trim();
-    if (buildError) process.stderr.write(`${buildError}\n`);
-    failWithFindings(['validation'], { buildError }, 'Validation failed');
-  }
-
-  const wordingFindings = lintDrillWording(drill as unknown as DrillDefinitionDTO);
-  if (wordingFindings.length > 0) {
-    for (const f of wordingFindings) {
-      console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
+    const failureParts: string[] = [];
+    if (validationFindings.length > 0) {
+      failureParts.push(`${validationFindings.length} validation finding(s)`);
     }
-    failWithFindings(
-      ['wording'],
-      { wordingFindings },
-      `${wordingFindings.length} wording findings (new drills must have none)`,
+    if (wordingFindings.length > 0) {
+      failureParts.push(`${wordingFindings.length} wording finding(s)`);
+    }
+    fail(
+      `${failureParts.join(' and ')}; draft kept at ${outPath}. See ${findingsSidecarPath(outPath)}.`,
     );
   }
 

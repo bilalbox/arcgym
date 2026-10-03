@@ -1,11 +1,4 @@
-import {
-  DRILL_STATUSES,
-  type DrillFormat,
-  isAllowedCitationUrl,
-  isValidDrillId,
-} from '@arcgym/drill-core';
-
-const ALLOWED_FORMATS = new Set<DrillFormat>(['Rapid_Fire', 'Case_File', 'Troubleshooting']);
+import { type DrillDefinitionDTO, validateDrill } from '@arcgym/drill-core';
 
 const MAX_STRING = 8_000;
 const MAX_TITLE = 300;
@@ -13,41 +6,62 @@ const MAX_NESTING = 12;
 const MAX_ARRAY = 64;
 
 export type DrillValidationResult =
-  | { ok: true; drill: Record<string, unknown> }
+  | { ok: true; drill: DrillDefinitionDTO & { scheduledDate?: string } }
   | { ok: false; error: string };
+
+function checkPayloadLimits(value: unknown, depth = 0): string | null {
+  if (depth > MAX_NESTING) {
+    return 'Payload nesting too deep';
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length > MAX_ARRAY) {
+      return 'Array too large';
+    }
+    for (const item of value) {
+      const err = checkPayloadLimits(item, depth + 1);
+      if (err) return err;
+    }
+    return null;
+  }
+
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  for (const child of Object.values(value as Record<string, unknown>)) {
+    if (typeof child === 'string') {
+      if (child.length > MAX_STRING) {
+        return 'String field too large';
+      }
+      continue;
+    }
+    const err = checkPayloadLimits(child, depth + 1);
+    if (err) return err;
+  }
+
+  return null;
+}
 
 /**
  * Validates a webhook drill payload before it is written to KV / featured as today.
- * Rejects drafts, unknown formats, invalid ids, and non-allowlisted citation URLs.
+ * Uses the drill-core validator (with no manifest and no asset check), plus the webhook's
+ * own checks: status must be published, scheduledDate shape, and payload size, nesting and string limits.
  */
 export function validatePublishDrillPayload(raw: unknown): DrillValidationResult {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return { ok: false, error: 'Drill payload must be a JSON object' };
   }
 
+  const limitError = checkPayloadLimits(raw);
+  if (limitError) {
+    return { ok: false, error: limitError };
+  }
+
   const drill = raw as Record<string, unknown>;
 
-  if (!isValidDrillId(drill.id)) {
-    return { ok: false, error: 'Invalid or missing drill id' };
-  }
-
-  if (
-    typeof drill.title !== 'string' ||
-    drill.title.length === 0 ||
-    drill.title.length > MAX_TITLE
-  ) {
-    return { ok: false, error: 'Invalid or missing title' };
-  }
-
-  if (typeof drill.format !== 'string' || !ALLOWED_FORMATS.has(drill.format as DrillFormat)) {
-    return { ok: false, error: 'Invalid or missing format' };
-  }
-
-  if (drill.status !== 'published') {
-    return {
-      ok: false,
-      error: 'Refusing to feature a draft drill; set status to published first',
-    };
+  if (typeof drill.title === 'string' && drill.title.length > MAX_TITLE) {
+    return { ok: false, error: 'Title exceeds maximum length' };
   }
 
   if (drill.scheduledDate !== undefined) {
@@ -59,58 +73,27 @@ export function validatePublishDrillPayload(raw: unknown): DrillValidationResult
     }
   }
 
-  // status is validated above; keep DRILL_STATUSES referenced for drift detection
-  if (!DRILL_STATUSES.includes(drill.status)) {
-    return { ok: false, error: 'Invalid status' };
+  // Validate format body and structure without manifest or asset checks
+  const validationRes = validateDrill(raw, {});
+  if (!validationRes.ok) {
+    const errorMsg = validationRes.findings
+      .map((f) => `${f.where ? `${f.where}: ` : ''}${f.message}`)
+      .join('; ');
+    return { ok: false, error: errorMsg };
   }
 
-  const urlError = findUnsafeCitationUrl(drill, 0);
-  if (urlError) {
-    return { ok: false, error: urlError };
+  if (validationRes.drill.status !== 'published') {
+    return {
+      ok: false,
+      error: 'Refusing to feature a draft drill; set status to published first',
+    };
   }
 
-  return { ok: true, drill };
-}
-
-function findUnsafeCitationUrl(value: unknown, depth: number): string | null {
-  if (depth > MAX_NESTING) {
-    return 'Payload nesting too deep';
-  }
-
-  if (Array.isArray(value)) {
-    if (value.length > MAX_ARRAY) {
-      return 'Array too large';
-    }
-    for (const item of value) {
-      const err = findUnsafeCitationUrl(item, depth + 1);
-      if (err) return err;
-    }
-    return null;
-  }
-
-  if (!value || typeof value !== 'object') {
-    return null;
-  }
-
-  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-    if (key === 'citationUrl') {
-      if (child === undefined || child === null || child === '') continue;
-      if (!isAllowedCitationUrl(child)) {
-        return 'citationUrl must be an https URL on an allowlisted Salesforce host';
-      }
-      continue;
-    }
-
-    if (typeof child === 'string') {
-      if (child.length > MAX_STRING) {
-        return 'String field too large';
-      }
-      continue;
-    }
-
-    const err = findUnsafeCitationUrl(child, depth + 1);
-    if (err) return err;
-  }
-
-  return null;
+  return {
+    ok: true,
+    drill: {
+      ...validationRes.drill,
+      ...(drill.scheduledDate ? { scheduledDate: drill.scheduledDate as string } : {}),
+    },
+  };
 }

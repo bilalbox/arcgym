@@ -2,6 +2,8 @@ export type ConfidenceAnchor = 0.5 | 0.7 | 0.85 | 0.95;
 
 export type DrillFormat = 'Rapid_Fire' | 'Case_File' | 'Troubleshooting';
 
+export const DRILL_FORMATS: DrillFormat[] = ['Rapid_Fire', 'Case_File', 'Troubleshooting'];
+
 /** Practice category from Salesforce Architect Fundamentals. Orthogonal to Well-Architected pillars. */
 export type ArchitecturalDomain =
   | 'Platform_Core'
@@ -64,6 +66,8 @@ export const BOARD_DOMAIN_LABELS: Record<BoardDomain, string> = {
 };
 
 export type ProbeTier = 'pivotal' | 'useful' | 'distractor';
+
+export const PROBE_TIERS: ProbeTier[] = ['pivotal', 'useful', 'distractor'];
 
 export type WellArchitectedPillar =
   | 'Trust'
@@ -138,6 +142,20 @@ export interface CaseFileStationDTO {
   options: DrillOptionDTO[];
 }
 
+export type DrillDifficulty = 'Associate_Domain_Architect' | 'Lead_CTA';
+export const DRILL_DIFFICULTIES: DrillDifficulty[] = ['Associate_Domain_Architect', 'Lead_CTA'];
+
+/** Case File rule constants */
+export const CASE_FILE_MIN_STATIONS = 3;
+export const CASE_FILE_MIN_PROBES_PER_STATION = 5;
+export const CASE_FILE_PIVOTAL_PROBES_PER_STATION = 2;
+
+/** Incident (Troubleshooting) rule constants */
+export const TROUBLESHOOTING_PROBE_BUDGET = 3;
+export const TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT = 3;
+export const TROUBLESHOOTING_MIN_PROBES = 5;
+export const TROUBLESHOOTING_MIN_PIVOTAL_PROBES = 2;
+
 /** Editorial lifecycle — drafts stay in content/ but are excluded from the learner catalog. */
 export type DrillStatus = 'draft' | 'published';
 
@@ -149,7 +167,7 @@ export interface DrillDefinitionBase {
   title: string;
   domain: ArchitecturalDomain;
   domainLabel: string;
-  difficulty: 'Associate_Domain_Architect' | 'Lead_CTA';
+  difficulty: DrillDifficulty;
   pillars: WellArchitectedPillar[];
   version: number;
   /** Only `published` drills are compiled into the learner-facing catalog. */

@@ -7,7 +7,6 @@ import {
   findingsRequireGroundingHandoff,
   findingsSidecarPath,
   type IngestFindings,
-  parseBuildErrorHints,
   writeIngestFindings,
 } from '../index.js';
 
@@ -57,7 +56,13 @@ describe('soft ingest findings sidecar', () => {
       drillId: 'AGD-00998',
       failedAt: '2026-10-03T00:00:00.000Z',
       reasons: ['validation'],
-      buildError: 'citation missing',
+      validationFindings: [
+        {
+          ruleId: 'citation-manifest',
+          where: 'steps[0].options[0].citationUrl',
+          message: 'citation missing',
+        },
+      ],
     });
 
     clearIngestFindings(drillPath);
@@ -67,86 +72,35 @@ describe('soft ingest findings sidecar', () => {
   });
 });
 
-describe('parseBuildErrorHints', () => {
-  it('marks Citation Manifest mismatches as not surgically fixable', () => {
-    const hints = parseBuildErrorHints(
-      '  [ERROR] AGD-00997.json: correct option opt-a must cite an exact Citation Manifest URL from grounding chunk exports (got https://trailhead.salesforce.com/content/learn/modules/x)',
-    );
-
-    expect(hints).toEqual([
-      {
-        kind: 'citation_manifest',
-        surgicallyFixable: false,
-        optionId: 'opt-a',
-        citedUrl: 'https://trailhead.salesforce.com/content/learn/modules/x',
-        message:
-          'correct option opt-a must cite an exact Citation Manifest URL from grounding chunk exports (got https://trailhead.salesforce.com/content/learn/modules/x)',
-      },
-    ]);
-  });
-
-  it('extracts surgically fixable option-field errors', () => {
-    const hints = parseBuildErrorHints(
-      [
-        '  [ERROR] AGD-00996.json: option opt-b is missing rationale',
-        '  [ERROR] AGD-00996.json: incorrect option opt-c is missing distractorAntipattern',
-        '  [ERROR] AGD-00996.json: step st-1 has NO correct option marked',
-      ].join('\n'),
-    );
-
-    expect(hints).toEqual([
-      {
-        kind: 'missing_rationale',
-        surgicallyFixable: true,
-        optionId: 'opt-b',
-        message: 'option opt-b is missing rationale',
-      },
-      {
-        kind: 'missing_distractor_antipattern',
-        surgicallyFixable: true,
-        optionId: 'opt-c',
-        message: 'incorrect option opt-c is missing distractorAntipattern',
-      },
-      {
-        kind: 'missing_correct_option',
-        surgicallyFixable: true,
-        message: 'step st-1 has NO correct option marked',
-      },
-    ]);
-  });
-
-  it('returns empty for blank buildError and unknown for unmatched ERROR lines', () => {
-    expect(parseBuildErrorHints('')).toEqual([]);
-    expect(parseBuildErrorHints('  [ERROR] AGD-00995.json: pillars must not be empty')).toEqual([
-      {
-        kind: 'unknown',
-        surgicallyFixable: true,
-        message: 'pillars must not be empty',
-      },
-    ]);
-  });
-
-  it('treats truncated Citation Manifest errors as not surgically fixable', () => {
-    expect(
-      parseBuildErrorHints('  [ERROR] AGD-00991.json: Citation Manifest URL missing for opt-a'),
-    ).toEqual([
-      {
-        kind: 'citation_manifest',
-        surgicallyFixable: false,
-        message: 'Citation Manifest URL missing for opt-a',
-      },
-    ]);
-  });
-});
-
 describe('findingsRequireGroundingHandoff', () => {
-  it('is true when buildError includes a Citation Manifest mismatch', () => {
+  it('is true when validationFindings includes a Citation Manifest mismatch', () => {
     const findings: IngestFindings = {
       drillId: 'AGD-00994',
       failedAt: '2026-10-03T00:00:00.000Z',
       reasons: ['validation'],
-      buildError:
-        '  [ERROR] AGD-00994.json: correct option opt-a must cite an exact Citation Manifest URL from grounding chunk exports (got none)',
+      validationFindings: [
+        {
+          ruleId: 'citation-manifest',
+          where: 'step s1 option opt-a citationUrl',
+          message: 'correct option opt-a must cite an exact Citation Manifest URL',
+        },
+      ],
+    };
+    expect(findingsRequireGroundingHandoff(findings)).toBe(true);
+  });
+
+  it('is true when validationFindings includes missing-asset', () => {
+    const findings: IngestFindings = {
+      drillId: 'AGD-00995',
+      failedAt: '2026-10-03T00:00:00.000Z',
+      reasons: ['validation'],
+      validationFindings: [
+        {
+          ruleId: 'missing-asset',
+          where: 'architecture.diagramUrl',
+          message: 'diagramUrl references missing asset: /diagrams/missing.svg',
+        },
+      ],
     };
     expect(findingsRequireGroundingHandoff(findings)).toBe(true);
   });
@@ -179,14 +133,32 @@ describe('findingsRequireGroundingHandoff', () => {
         ],
       }),
     ).toBe(false);
+
     expect(
       findingsRequireGroundingHandoff({
         drillId: 'AGD-00992',
         failedAt: '2026-10-03T00:00:00.000Z',
         reasons: ['validation'],
-        buildError: '  [ERROR] AGD-00992.json: option opt-b is missing rationale',
+        validationFindings: [
+          {
+            ruleId: 'missing-rationale',
+            where: 'step s1 option opt-b rationale',
+            message: 'option opt-b is missing rationale',
+          },
+          {
+            ruleId: 'missing-distractor-antipattern',
+            where: 'step s1 option opt-c distractorAntipattern',
+            message: 'incorrect option opt-c is missing distractorAntipattern',
+          },
+          {
+            ruleId: 'option-set',
+            where: 'step s1 options',
+            message: 'step s1 has NO correct option marked',
+          },
+        ],
       }),
     ).toBe(false);
+
     expect(
       findingsRequireGroundingHandoff({
         drillId: 'AGD-00989',

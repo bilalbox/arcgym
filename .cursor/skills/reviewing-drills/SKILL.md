@@ -18,13 +18,13 @@ Consume the `IngestFindings` contract from `@arcgym/drill-core` as-is. Do not in
    content/drills/<id>.findings.json
    ```
 
-   Parse `reasons`, optional `wordingFindings`, optional `redteamFindings`, and optional `buildError`. For `buildError` and red-team handoff, use `parseBuildErrorHints` / `findingsRequireGroundingHandoff` in drill-core (Citation Manifest mismatches and `dual-grounding` red-team findings are not surgically fixable).
+   Parse `reasons`, optional `validationFindings`, optional `wordingFindings`, and optional `redteamFindings`. For grounding and asset handoff, use `findingsRequireGroundingHandoff` in drill-core (Citation Manifest mismatches, missing assets, and `dual-grounding` red-team findings are not surgically fixable).
 
-2. **Stop early if unfixable.** When findings require grounding handoff (Citation Manifest mismatch / missing Well-Architected Grounding, or a `dual-grounding` red-team finding): do **not** invent or rewrite citations from memory. Stop and tell the user to return to the `generating-drills` skill with sharper `--query` values (Case File: one `--query` per Station) so retrieved chunks govern the decision, then re-author affected correct options from those chunks.
+2. **Stop early if unfixable.** When findings require grounding handoff (Citation Manifest mismatch / missing Well-Architected Grounding, missing diagram asset, or a `dual-grounding` red-team finding): do **not** invent or rewrite citations from memory. Stop and tell the user to return to the `generating-drills` skill with sharper `--query` values (Case File: one `--query` per Station) so retrieved chunks govern the decision, then re-author affected correct options from those chunks.
 
 3. **Surgical fix** only what the findings name:
    - Wording: edit the fields at each `wordingFindings[].where` until Architect Linter wording rules are satisfied (shorten length-tells, drop verdict prefixes, fix antipattern names, etc.).
-   - Validation: add missing `rationale` / `distractorAntipattern`, mark a correct option, fix other schema errors named in `buildError`. Keep scenario fiction out of Case File `brief.synopsis`.
+   - Validation: repair fields at each `validationFindings[].where` according to its `ruleId` (add missing `rationale` / `distractorAntipattern`, mark a correct option, fix probe pool counts or tiers, etc.). Keep scenario fiction out of Case File `brief.synopsis`.
    - Red-team (fixable rule ids only): edit the fields at each `redteamFindings[].where` for `giveaway-stem`, `distractor-restates-correct`, and `correct-too-obvious` until the trap is gone. Do not invent new Citation Manifest URLs.
 
 4. **Re-ingest** (counts toward the session attempt budget):

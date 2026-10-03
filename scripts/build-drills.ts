@@ -1,21 +1,17 @@
 /**
  * ArcGym Drill Builder & Validator
- * Reads content/drills/*.json, validates Format-discriminated payloads,
+ * Reads content/drills/*.json, validates Format-discriminated payloads via drill-core,
  * and compiles them for the React frontend and Cloudflare API endpoints.
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
-  type CaseFileDrillDefinition,
   citationManifestUrlsFromExports,
   type DrillDefinitionDTO,
-  type DrillOptionDTO,
   type GroundingChunkExport,
-  isEligibleCorrectOptionCitation,
   lintDrillWording,
-  type RapidFireDrillDefinition,
-  type TroubleshootingDrillDefinition,
+  validateDrill,
 } from '../packages/drill-core/src/index.js';
 
 /** When true, wording findings on published drills fail the build; drafts only ever warn. */
@@ -32,44 +28,6 @@ const GROUNDING_CHUNK_EXPORTS = [
   path.join(ROOT_DIR, 'data/developer_chunks.json'),
   path.join(ROOT_DIR, 'data/help_chunks.json'),
 ];
-
-const ARCHITECTURAL_DOMAINS = new Set([
-  'Platform_Core',
-  'Data_Architecture',
-  'Security_And_Access',
-  'Integration_Apis',
-  'Ai_And_Automation',
-  'Infrastructure',
-  'Devops_Lifecycle',
-]);
-
-const BOARD_DOMAINS = new Set([
-  'System_Architecture',
-  'Security',
-  'Data',
-  'Solution_Architecture',
-  'Integration',
-  'Development_Lifecycle',
-  'Communication',
-]);
-
-const PROBE_TIERS = new Set(['pivotal', 'useful', 'distractor']);
-const FORMATS = new Set(['Rapid_Fire', 'Case_File', 'Troubleshooting']);
-const STATUSES = new Set(['draft', 'published']);
-const DIFFICULTIES = new Set(['Associate_Domain_Architect', 'Lead_CTA']);
-const PILLARS = new Set([
-  'Trust',
-  'Reliability',
-  'Operational_Excellence',
-  'Cost_Optimization',
-  'Fairness',
-]);
-const CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
-const DEFAULT_PIVOTAL_COUNT = 2;
-const TROUBLESHOOT_PROBE_BUDGET = 3;
-const TROUBLESHOOT_HIDDEN_DISTRACTORS = 3;
-const TROUBLESHOOT_MIN_PROBES = 5;
-const TROUBLESHOOT_MIN_PIVOTAL = 2;
 
 [WEB_DATA_DIR, WEB_PUBLIC_DIR].forEach((dir) => {
   if (!fs.existsSync(dir)) {
@@ -120,324 +78,29 @@ console.log(
   `Citation Manifest: ${citationManifestUrls.size} URLs from ${GROUNDING_CHUNK_EXPORTS.filter((p) => fs.existsSync(p)).length} chunk export(s)`,
 );
 
-function validateOptionIds(file: string, where: string, options: Array<{ id: string }>) {
-  const ids = options.map((o) => o.id);
-  if (new Set(ids).size !== ids.length) {
-    err(file, `${where} has duplicate option ids`);
-  }
-}
-
-function validateDiagramUrl(file: string, where: string, diagramUrl: unknown) {
-  if (diagramUrl === undefined) return;
-  if (typeof diagramUrl !== 'string' || !diagramUrl.startsWith('/')) {
-    err(file, `${where} diagramUrl must be an absolute path (e.g. /diagrams/...)`);
-    return;
-  }
-  const diagramPath = path.join(WEB_PUBLIC_ROOT, diagramUrl.replace(/^\/+/, ''));
-  if (!fs.existsSync(diagramPath)) {
-    err(
-      file,
-      `${where} diagramUrl references missing asset: ${diagramUrl} (expected at ${diagramPath})`,
-    );
-  }
-}
-
-function validateMcqOptions(file: string, where: string, options: DrillOptionDTO[]) {
-  if (!Array.isArray(options) || options.length < 2) {
-    err(file, `${where} requires at least 2 options`);
-    return;
-  }
-  if (!options.some((o) => o.isCorrect)) {
-    err(file, `${where} has NO correct option marked`);
-  }
-  validateOptionIds(file, where, options);
-  for (const option of options) {
-    if (!option.rationale) {
-      err(file, `option ${option.id} is missing rationale`);
-    }
-    if (!option.isCorrect && !option.distractorAntipattern) {
-      err(file, `incorrect option ${option.id} is missing distractorAntipattern`);
-    }
-    if (
-      option.isCorrect &&
-      !isEligibleCorrectOptionCitation(option.citationUrl, citationManifestUrls)
-    ) {
-      err(
-        file,
-        `correct option ${option.id} must cite an exact Citation Manifest URL from grounding chunk exports (got ${option.citationUrl ?? 'none'})`,
-      );
-    }
-    validateDiagramUrl(file, `option ${option.id}`, option.diagramUrl);
-  }
-}
-
-function validateMetadata(file: string, drill: DrillDefinitionDTO) {
-  if (!DIFFICULTIES.has(drill.difficulty)) {
-    err(file, `invalid difficulty: ${drill.difficulty} (expected ${[...DIFFICULTIES].join('|')})`);
-  }
-  if (drill.pillars.length === 0) {
-    err(file, 'pillars must not be empty');
-  }
-  for (const pillar of drill.pillars) {
-    if (!PILLARS.has(pillar)) {
-      err(file, `invalid Well-Architected pillar: ${pillar}`);
-    }
-  }
-  if (drill.sourceCardIds !== undefined) {
-    const valid =
-      Array.isArray(drill.sourceCardIds) &&
-      drill.sourceCardIds.every(
-        (id: unknown) => typeof id === 'string' && CARD_ID_PATTERN.test(id),
-      );
-    if (!valid) {
-      err(file, 'sourceCardIds must be an array of Friction Card ids (FC-<discussion_id>)');
-    }
-  }
-}
-
-function validateRapidFire(file: string, drill: RapidFireDrillDefinition) {
-  if (!Array.isArray(drill.steps) || drill.steps.length === 0) {
-    err(file, 'Rapid_Fire requires non-empty steps');
-    return;
-  }
-  for (const step of drill.steps) {
-    if (!step.prompt || !Array.isArray(step.options)) {
-      err(file, `step ${step.id} has invalid prompt or options`);
-      continue;
-    }
-    validateMcqOptions(file, `step ${step.id}`, step.options);
-  }
-}
-
-function validateCaseFile(file: string, drill: CaseFileDrillDefinition) {
-  if (!drill.brief || typeof drill.brief.title !== 'string' || !drill.brief.title) {
-    err(file, 'Case_File requires brief.title');
-  }
-  if (!drill.brief || typeof drill.brief.synopsis !== 'string' || !drill.brief.synopsis) {
-    err(file, 'Case_File requires brief.synopsis');
-  }
-  if (drill.brief?.exhibits) {
-    for (const [i, exhibit] of drill.brief.exhibits.entries()) {
-      if (!exhibit.label || !exhibit.diagramUrl) {
-        err(file, `brief.exhibits[${i}] requires label and diagramUrl`);
-      } else {
-        validateDiagramUrl(file, `brief.exhibits[${i}]`, exhibit.diagramUrl);
-      }
-    }
-  }
-
-  if (!Array.isArray(drill.stations) || drill.stations.length === 0) {
-    err(file, 'Case_File requires non-empty stations');
-    return;
-  }
-  if (drill.stations.length < 3) {
-    err(file, `Case_File requires at least 3 stations; got ${drill.stations.length}`);
-  }
-
-  const stationIds = drill.stations.map((s) => s.id);
-  if (new Set(stationIds).size !== stationIds.length) {
-    err(file, 'Case_File has duplicate station ids');
-  }
-
-  for (const station of drill.stations) {
-    if (!station.prompt) {
-      err(file, `station ${station.id} missing prompt`);
-    }
-    if (!ARCHITECTURAL_DOMAINS.has(station.domain)) {
-      err(file, `station ${station.id} invalid domain: ${station.domain}`);
-    }
-    if (!BOARD_DOMAINS.has(station.boardDomain)) {
-      err(file, `station ${station.id} invalid boardDomain: ${station.boardDomain}`);
-    }
-
-    if (typeof station.probeBudget !== 'number' || station.probeBudget < 1) {
-      err(file, `station ${station.id} probeBudget must be a positive number`);
-    }
-
-    if (!Array.isArray(station.probes) || station.probes.length < 5) {
-      err(file, `station ${station.id} requires at least 5 probes`);
-      continue;
-    }
-
-    validateOptionIds(file, `station ${station.id} probes`, station.probes);
-
-    let pivotalCount = 0;
-    for (const probe of station.probes) {
-      if (!probe.label || !probe.answer) {
-        err(file, `station ${station.id} probe ${probe.id} missing label or answer`);
-      }
-      if (!PROBE_TIERS.has(probe.tier)) {
-        err(file, `station ${station.id} probe ${probe.id} invalid tier: ${probe.tier}`);
-      }
-      if (probe.tier === 'pivotal') pivotalCount++;
-      if (probe.tier === 'distractor' && !probe.distractorAntipattern) {
-        err(
-          file,
-          `station ${station.id} distractor probe ${probe.id} missing distractorAntipattern`,
-        );
-      }
-    }
-
-    if (pivotalCount !== DEFAULT_PIVOTAL_COUNT) {
-      err(
-        file,
-        `station ${station.id} must have exactly ${DEFAULT_PIVOTAL_COUNT} pivotal probes (got ${pivotalCount})`,
-      );
-    }
-
-    if (station.probeBudget > station.probes.length) {
-      err(file, `station ${station.id} probeBudget exceeds probe pool size`);
-    }
-
-    validateMcqOptions(file, `station ${station.id}`, station.options);
-  }
-}
-
-function validateTroubleshooting(file: string, drill: TroubleshootingDrillDefinition) {
-  if (
-    !drill.architecture ||
-    typeof drill.architecture.synopsis !== 'string' ||
-    !drill.architecture.synopsis
-  ) {
-    err(file, 'Troubleshooting requires architecture.synopsis');
-  }
-  if (!drill.architecture?.diagramUrl) {
-    err(file, 'Troubleshooting requires architecture.diagramUrl');
-  } else {
-    validateDiagramUrl(file, 'architecture', drill.architecture.diagramUrl);
-  }
-
-  if (typeof drill.issue !== 'string' || !drill.issue) {
-    err(file, 'Troubleshooting requires issue');
-  }
-
-  if (drill.probeBudget !== TROUBLESHOOT_PROBE_BUDGET) {
-    err(file, `Troubleshooting probeBudget must be ${TROUBLESHOOT_PROBE_BUDGET}`);
-  }
-
-  if (!drill.goldCause || typeof drill.goldCause.text !== 'string' || !drill.goldCause.text) {
-    err(file, 'Troubleshooting requires goldCause.text');
-  }
-  if (
-    !drill.goldCause ||
-    typeof drill.goldCause.rationale !== 'string' ||
-    !drill.goldCause.rationale
-  ) {
-    err(file, 'Troubleshooting requires goldCause.rationale');
-  }
-  if (
-    drill.goldCause?.citationUrl !== undefined &&
-    !isEligibleCorrectOptionCitation(drill.goldCause.citationUrl, citationManifestUrls)
-  ) {
-    err(
-      file,
-      `goldCause.citationUrl must be an exact Citation Manifest URL (got ${drill.goldCause.citationUrl})`,
-    );
-  }
-
-  if (
-    !Array.isArray(drill.hiddenDistractors) ||
-    drill.hiddenDistractors.length !== TROUBLESHOOT_HIDDEN_DISTRACTORS
-  ) {
-    err(
-      file,
-      `Troubleshooting requires exactly ${TROUBLESHOOT_HIDDEN_DISTRACTORS} hiddenDistractors`,
-    );
-  } else {
-    validateOptionIds(file, 'hiddenDistractors', drill.hiddenDistractors);
-    for (const d of drill.hiddenDistractors) {
-      if (!d.text || !d.antipattern || !d.rationale) {
-        err(file, `hiddenDistractor ${d.id} requires text, antipattern, and rationale`);
-      }
-    }
-  }
-
-  if (!Array.isArray(drill.probes) || drill.probes.length < TROUBLESHOOT_MIN_PROBES) {
-    err(file, `Troubleshooting requires at least ${TROUBLESHOOT_MIN_PROBES} probes`);
-    return;
-  }
-
-  validateOptionIds(file, 'probes', drill.probes);
-
-  let pivotalCount = 0;
-  let hasUseful = false;
-  let hasDistractor = false;
-  for (const probe of drill.probes) {
-    if (!probe.label || !probe.answer) {
-      err(file, `probe ${probe.id} missing label or answer`);
-    }
-    if (!PROBE_TIERS.has(probe.tier)) {
-      err(file, `probe ${probe.id} invalid tier: ${probe.tier}`);
-    }
-    if (probe.tier === 'pivotal') pivotalCount++;
-    if (probe.tier === 'useful') hasUseful = true;
-    if (probe.tier === 'distractor') {
-      hasDistractor = true;
-      if (!probe.distractorAntipattern) {
-        err(file, `distractor probe ${probe.id} missing distractorAntipattern`);
-      }
-    }
-  }
-
-  if (pivotalCount < TROUBLESHOOT_MIN_PIVOTAL) {
-    err(
-      file,
-      `Troubleshooting requires at least ${TROUBLESHOOT_MIN_PIVOTAL} pivotal probes (got ${pivotalCount})`,
-    );
-  }
-  if (!hasUseful) {
-    err(file, 'Troubleshooting requires at least one useful probe');
-  }
-  if (!hasDistractor) {
-    err(file, 'Troubleshooting requires at least one distractor probe');
-  }
-  if (drill.probeBudget > drill.probes.length) {
-    err(file, 'Troubleshooting probeBudget exceeds probe pool size');
-  }
-}
+const assetExists = (url: string) => {
+  if (!url.startsWith('/')) return false;
+  const diagramPath = path.join(WEB_PUBLIC_ROOT, url.replace(/^\/+/, ''));
+  return fs.existsSync(diagramPath);
+};
 
 for (const file of drillFiles) {
   const filePath = path.join(DRILLS_DIR, file);
   try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const drill = JSON.parse(raw);
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const res = validateDrill(raw, {
+      citationManifest: citationManifestUrls,
+      assetExists,
+    });
 
-    if (
-      !drill.id ||
-      !drill.title ||
-      !drill.domain ||
-      !drill.domainLabel ||
-      !Array.isArray(drill.pillars)
-    ) {
-      err(file, 'missing required metadata (id, title, domain, domainLabel, pillars)');
+    if (!res.ok) {
+      for (const f of res.findings) {
+        err(file, `validation ${f.ruleId} at ${f.where}: ${f.message}`);
+      }
       continue;
     }
 
-    if (!ARCHITECTURAL_DOMAINS.has(drill.domain)) {
-      err(file, `invalid Architectural Domain: ${drill.domain}`);
-      continue;
-    }
-
-    if (!FORMATS.has(drill.format)) {
-      err(file, `invalid Drill Format: ${drill.format}`);
-      continue;
-    }
-
-    if (!STATUSES.has(drill.status)) {
-      err(file, `invalid status: ${drill.status} (expected draft|published)`);
-      continue;
-    }
-
-    validateMetadata(file, drill);
-
-    if (drill.format === 'Rapid_Fire') {
-      validateRapidFire(file, drill as RapidFireDrillDefinition);
-    } else if (drill.format === 'Case_File') {
-      validateCaseFile(file, drill as CaseFileDrillDefinition);
-    } else if (drill.format === 'Troubleshooting') {
-      validateTroubleshooting(file, drill as TroubleshootingDrillDefinition);
-    }
-
+    const drill = res.drill;
     lintWording(file, drill);
 
     if (drill.status === 'published') {
