@@ -10,7 +10,7 @@ import {
   safeCitationHref,
   troubleshootSessionReducer,
 } from '@arcgym/drill-core';
-import { ArrowRight, CheckCircle2, Lock, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { gradeCauseViaApi } from '@/lib/gradeCauseApi';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
+import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
 export interface TroubleshootRunnerProps {
   drill: ClientTroubleshootingDrillDefinition;
@@ -88,8 +89,6 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     [drill],
   );
 
-  const unlocked = drill.probes.filter((p) => session.selectedProbeIds.includes(p.id));
-  const budgetLeft = drill.probeBudget - session.selectedProbeIds.length;
   const citationHref = safeCitationHref(session.grade?.goldCitationUrl);
 
   const commitCause = async () => {
@@ -213,59 +212,16 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
 
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
-      {(session.phase === 'probes' || session.probesLocked) && (
-        <CardHeader className="pb-3">
-          <Badge variant="outline" className="text-[11px] font-mono w-fit">
-            {budgetLeft} / {drill.probeBudget}
-          </Badge>
-        </CardHeader>
-      )}
-
-      <CardContent className="space-y-5">
+      <CardContent className="space-y-5 pt-6">
         {(session.phase === 'probes' || session.probesLocked) && (
-          <div className="space-y-3">
-            <div className="space-y-2">
-              {orderedProbes.map((probe) => {
-                const selected = session.selectedProbeIds.includes(probe.id);
-                const disabled = session.probesLocked || (!selected && budgetLeft <= 0);
-                return (
-                  <button
-                    key={probe.id}
-                    type="button"
-                    disabled={disabled}
-                    onClick={() => dispatch({ type: 'TOGGLE_PROBE', probeId: probe.id })}
-                    className={`w-full text-left rounded-xl border px-3.5 py-3 text-sm transition-colors ${
-                      selected
-                        ? 'border-miro-primary bg-miro-surface text-miro-primary'
-                        : 'border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong'
-                    } ${disabled && !selected ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <span className="font-medium">{probe.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {session.phase === 'probes' && (
-              <Button
-                onClick={() => dispatch({ type: 'LOCK_PROBES' })}
-                disabled={session.selectedProbeIds.length === 0}
-                className="w-full gap-2"
-              >
-                <Lock className="h-4 w-4" /> Lock probes
-              </Button>
-            )}
-          </div>
-        )}
-
-        {session.probesLocked && unlocked.length > 0 && (
-          <div className="rounded-xl border border-miro-hairline bg-miro-surface p-3.5 space-y-2.5">
-            {unlocked.map((probe) => (
-              <div key={probe.id} className="text-sm">
-                <p className="font-medium text-miro-primary">{probe.label}</p>
-                <p className="text-miro-slate mt-0.5">{probe.answer}</p>
-              </div>
-            ))}
-          </div>
+          <ProbeBudgetPanel
+            probes={orderedProbes}
+            selectedProbeIds={session.selectedProbeIds}
+            probesLocked={session.probesLocked}
+            probeBudget={drill.probeBudget}
+            onToggleProbe={(probeId) => dispatch({ type: 'TOGGLE_PROBE', probeId })}
+            onLockProbes={() => dispatch({ type: 'LOCK_PROBES' })}
+          />
         )}
 
         {session.phase === 'cause' && (

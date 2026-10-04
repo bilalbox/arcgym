@@ -1,6 +1,6 @@
-import { ArcGymScoringEngine } from '../scoring/brier.js';
+import { probeBudgetReducer } from '../probeBudget/index.js';
 import type { GradeCauseResult } from '../scoring/grader/types.js';
-import { calculateProbeQuality } from '../scoring/probe.js';
+import { calculateProbeDecisionScore } from '../scoring/probe.js';
 import type {
   ClientTroubleshootingDrillDefinition,
   ConfidenceAnchor,
@@ -105,23 +105,24 @@ export function troubleshootSessionReducer(
       return { ...state, phase: 'probes' };
 
     case 'TOGGLE_PROBE': {
-      if (state.phase !== 'probes' || state.probesLocked) return state;
-      if (!state.drill.probes.some((p) => p.id === action.probeId)) return state;
-
-      const already = state.selectedProbeIds.includes(action.probeId);
-      let nextIds: string[];
-      if (already) {
-        nextIds = state.selectedProbeIds.filter((id) => id !== action.probeId);
-      } else {
-        if (state.selectedProbeIds.length >= state.drill.probeBudget) return state;
-        nextIds = [...state.selectedProbeIds, action.probeId];
-      }
-      return { ...state, selectedProbeIds: nextIds };
+      if (state.phase !== 'probes') return state;
+      const nextBudget = probeBudgetReducer(
+        { selectedProbeIds: state.selectedProbeIds, probesLocked: state.probesLocked },
+        action,
+        { probes: state.drill.probes, probeBudget: state.drill.probeBudget },
+      );
+      if (nextBudget.selectedProbeIds === state.selectedProbeIds) return state;
+      return { ...state, selectedProbeIds: nextBudget.selectedProbeIds };
     }
 
     case 'LOCK_PROBES': {
-      if (state.phase !== 'probes' || state.probesLocked) return state;
-      if (state.selectedProbeIds.length === 0) return state;
+      if (state.phase !== 'probes') return state;
+      const nextBudget = probeBudgetReducer(
+        { selectedProbeIds: state.selectedProbeIds, probesLocked: state.probesLocked },
+        action,
+        { probes: state.drill.probes, probeBudget: state.drill.probeBudget },
+      );
+      if (!nextBudget.probesLocked) return state;
       return { ...state, probesLocked: true, phase: 'cause' };
     }
 
@@ -142,9 +143,12 @@ export function troubleshootSessionReducer(
       if (!text) return state;
 
       const grade = action.grade;
-      const probe = calculateProbeQuality(state.drill.probes, state.selectedProbeIds);
-      const brier = ArcGymScoringEngine.calculateDecisionScore(action.confidence, grade.isCorrect);
-      const totalScore = probe.probeScore + brier.pointsAwarded;
+      const scored = calculateProbeDecisionScore({
+        probes: state.drill.probes,
+        selectedProbeIds: state.selectedProbeIds,
+        confidence: action.confidence,
+        isCorrect: grade.isCorrect,
+      });
 
       return {
         ...state,
@@ -152,11 +156,11 @@ export function troubleshootSessionReducer(
         committedConfidence: action.confidence,
         grade,
         isCorrect: grade.isCorrect,
-        probeScore: probe.probeScore,
-        causeScore: brier.pointsAwarded,
-        totalScore,
-        quadrant: brier.quadrant,
-        missedAllPivotal: probe.missedAllPivotal,
+        probeScore: scored.probe.probeScore,
+        causeScore: scored.decisionScore,
+        totalScore: scored.totalScore,
+        quadrant: scored.quadrant,
+        missedAllPivotal: scored.probe.missedAllPivotal,
         distractorAntipattern: grade.matchedDistractor?.antipattern,
       };
     }

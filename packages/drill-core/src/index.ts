@@ -2,6 +2,7 @@ export * from './caseSession/reducer.js';
 export * from './formats/index.js';
 export * from './ingest/findings.js';
 export * from './lint/wording.js';
+export * from './probeBudget/index.js';
 export * from './proficiency/aggregator.js';
 export * from './progress/streak.js';
 export * from './recommendation/engine.js';

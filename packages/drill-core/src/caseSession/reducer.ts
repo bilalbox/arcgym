@@ -1,3 +1,4 @@
+import { probeBudgetReducer } from '../probeBudget/index.js';
 import { calculateCaseFileScore, calculateStationScore } from '../scoring/probe.js';
 import type {
   CaseFileDrillDefinition,
@@ -91,16 +92,8 @@ function synthesizeAttempt(state: CaseSessionState): {
   const submitted = state.stations.filter((s) => s.isSubmitted);
   const pack = calculateCaseFileScore(
     submitted.map((s) => ({
-      probe: {
-        pivotalHit: 0,
-        pivotalTotal: 0,
-        usefulHit: 0,
-        distractorCount: 0,
-        rawProbeScore: s.probeScore ?? 0,
-        probeScore: s.probeScore ?? 0,
-        missedAllPivotal: s.missedAllPivotal ?? false,
-      },
       stationScore: s.stationScore ?? 0,
+      missedAllPivotal: s.missedAllPivotal ?? false,
     })),
   );
 
@@ -151,19 +144,17 @@ export function caseSessionReducer(
       if (state.phase !== 'probes') return state;
       const idx = state.currentStationIndex;
       const current = state.stations[idx];
-      if (!current || current.probesLocked) return state;
+      if (!current) return state;
 
-      const already = current.selectedProbeIds.includes(action.probeId);
-      let nextIds: string[];
-      if (already) {
-        nextIds = current.selectedProbeIds.filter((id) => id !== action.probeId);
-      } else {
-        if (current.selectedProbeIds.length >= current.station.probeBudget) return state;
-        nextIds = [...current.selectedProbeIds, action.probeId];
-      }
+      const nextBudget = probeBudgetReducer(
+        { selectedProbeIds: current.selectedProbeIds, probesLocked: current.probesLocked },
+        action,
+        { probes: current.station.probes, probeBudget: current.station.probeBudget },
+      );
+      if (nextBudget.selectedProbeIds === current.selectedProbeIds) return state;
 
       const stations = state.stations.map((s, i) =>
-        i === idx ? { ...s, selectedProbeIds: nextIds } : s,
+        i === idx ? { ...s, selectedProbeIds: nextBudget.selectedProbeIds } : s,
       );
       return { ...state, stations };
     }
@@ -172,7 +163,14 @@ export function caseSessionReducer(
       if (state.phase !== 'probes') return state;
       const idx = state.currentStationIndex;
       const current = state.stations[idx];
-      if (!current || current.selectedProbeIds.length === 0) return state;
+      if (!current) return state;
+
+      const nextBudget = probeBudgetReducer(
+        { selectedProbeIds: current.selectedProbeIds, probesLocked: current.probesLocked },
+        action,
+        { probes: current.station.probes, probeBudget: current.station.probeBudget },
+      );
+      if (!nextBudget.probesLocked) return state;
 
       const stations = state.stations.map((s, i) => (i === idx ? { ...s, probesLocked: true } : s));
       return { ...state, stations, phase: 'commit' };

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { ProbeOptionDTO } from '../types/drill.js';
-import { calculateCaseFileScore, calculateProbeQuality, calculateStationScore } from './probe.js';
+import {
+  calculateCaseFileScore,
+  calculateProbeDecisionScore,
+  calculateProbeQuality,
+  calculateStationScore,
+} from './probe.js';
 
 const PROBES: ProbeOptionDTO[] = [
   { id: 'p1', label: 'Peak order volume?', tier: 'pivotal', answer: '2M orders/day' },
@@ -49,6 +54,22 @@ describe('calculateProbeQuality', () => {
   });
 });
 
+describe('calculateProbeDecisionScore', () => {
+  it('combines probe quality with Brier decision points', () => {
+    const result = calculateProbeDecisionScore({
+      probes: PROBES,
+      selectedProbeIds: ['p1', 'p2'],
+      confidence: 0.95,
+      isCorrect: true,
+    });
+    expect(result.probe.probeScore).toBe(50);
+    expect(result.decisionScore).toBe(100);
+    expect(result.totalScore).toBe(150);
+    expect(result.quadrant).toBe('Calibrated_Conviction');
+    expect(result.overconfidencePenaltyApplied).toBe(false);
+  });
+});
+
 describe('calculateStationScore', () => {
   it('combines probe quality with Brier recommendation points', () => {
     const result = calculateStationScore({
@@ -65,7 +86,7 @@ describe('calculateStationScore', () => {
 });
 
 describe('calculateCaseFileScore', () => {
-  it('averages stations and flags discovery failure', () => {
+  it('averages stations and flags discovery failure with legacy probe struct', () => {
     const a = calculateStationScore({
       probes: PROBES,
       selectedProbeIds: ['p1', 'p2'],
@@ -85,5 +106,15 @@ describe('calculateCaseFileScore', () => {
     expect(pack.discoveryFailure).toBe(true);
     expect(pack.stationScores).toHaveLength(2);
     expect(pack.meanScore).toBe(Math.round((a.stationScore + b.stationScore) / 2));
+  });
+
+  it('averages stations and flags discovery failure with direct entry shape', () => {
+    const pack = calculateCaseFileScore([
+      { stationScore: 120, missedAllPivotal: false },
+      { stationScore: 40, missedAllPivotal: true },
+    ]);
+    expect(pack.discoveryFailure).toBe(true);
+    expect(pack.stationScores).toEqual([120, 40]);
+    expect(pack.meanScore).toBe(80);
   });
 });

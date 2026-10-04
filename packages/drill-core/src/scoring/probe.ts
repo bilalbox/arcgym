@@ -59,8 +59,38 @@ export function calculateProbeQuality(
   };
 }
 
+export interface ProbeDecisionScoreResult {
+  probe: ProbeQualityResult;
+  decisionScore: number;
+  quadrant: MetacognitiveQuadrant;
+  overconfidencePenaltyApplied: boolean;
+  totalScore: number;
+}
+
+/**
+ * Dual score for probe-budgeted formats (Case File Station & Troubleshooting Incident):
+ * Probe Quality (0–60) + Brier decision points.
+ */
+export function calculateProbeDecisionScore(params: {
+  probes: ProbeOptionDTO[];
+  selectedProbeIds: string[];
+  confidence: ConfidenceAnchor;
+  isCorrect: boolean;
+}): ProbeDecisionScoreResult {
+  const probe = calculateProbeQuality(params.probes, params.selectedProbeIds);
+  const brier = ArcGymScoringEngine.calculateDecisionScore(params.confidence, params.isCorrect);
+  return {
+    probe,
+    decisionScore: brier.pointsAwarded,
+    quadrant: brier.quadrant,
+    overconfidencePenaltyApplied: brier.overconfidencePenaltyApplied,
+    totalScore: probe.probeScore + brier.pointsAwarded,
+  };
+}
+
 /**
  * Dual station score: Probe Quality (0–60) + Brier recommendation points.
+ * Retained as a semantic alias over calculateProbeDecisionScore for Case File Stations.
  */
 export function calculateStationScore(params: {
   probes: ProbeOptionDTO[];
@@ -68,14 +98,13 @@ export function calculateStationScore(params: {
   confidence: ConfidenceAnchor;
   isCorrect: boolean;
 }): StationScoreResult {
-  const probe = calculateProbeQuality(params.probes, params.selectedProbeIds);
-  const brier = ArcGymScoringEngine.calculateDecisionScore(params.confidence, params.isCorrect);
+  const result = calculateProbeDecisionScore(params);
   return {
-    probe,
-    recommendationScore: brier.pointsAwarded,
-    quadrant: brier.quadrant,
-    overconfidencePenaltyApplied: brier.overconfidencePenaltyApplied,
-    stationScore: probe.probeScore + brier.pointsAwarded,
+    probe: result.probe,
+    recommendationScore: result.decisionScore,
+    quadrant: result.quadrant,
+    overconfidencePenaltyApplied: result.overconfidencePenaltyApplied,
+    stationScore: result.totalScore,
   };
 }
 
@@ -85,15 +114,21 @@ export interface CaseFileScoreResult {
   discoveryFailure: boolean;
 }
 
+export interface CaseFileScoreEntry {
+  stationScore: number;
+  missedAllPivotal?: boolean;
+  probe?: { missedAllPivotal: boolean };
+}
+
 /** Mean of station scores; discoveryFailure if any station missed all pivotal probes. */
-export function calculateCaseFileScore(
-  stations: Array<{ probe: ProbeQualityResult; stationScore: number }>,
-): CaseFileScoreResult {
+export function calculateCaseFileScore(stations: CaseFileScoreEntry[]): CaseFileScoreResult {
   const stationScores = stations.map((s) => s.stationScore);
   const meanScore =
     stationScores.length === 0
       ? 0
       : Math.round(stationScores.reduce((a, b) => a + b, 0) / stationScores.length);
-  const discoveryFailure = stations.some((s) => s.probe.missedAllPivotal);
+  const discoveryFailure = stations.some(
+    (s) => s.missedAllPivotal ?? s.probe?.missedAllPivotal ?? false,
+  );
   return { stationScores, meanScore, discoveryFailure };
 }

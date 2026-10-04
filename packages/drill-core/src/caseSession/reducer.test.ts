@@ -113,4 +113,11 @@ describe('caseSessionReducer', () => {
     expect(state.attempt?.format).toBe('Case_File');
     expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
   });
+
+  it('rejects unknown probe IDs not present in the station probe pool', () => {
+    let state = createCaseSessionState(DRILL);
+    state = caseSessionReducer(state, { type: 'BEGIN_STATIONS' });
+    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'non_existent_probe' });
+    expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([]);
+  });
 });
