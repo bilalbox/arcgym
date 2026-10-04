@@ -7,12 +7,31 @@ import {
   getDrillFormatDescriptor,
   getTodayString,
   getYesterdayString,
+  mergeProgressStates,
   type VisitorProgressState,
 } from '@arcgym/drill-core';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
+export const AUTH_CACHE_KEY = 'arcgym_auth_cached';
+
+function getInitialAuthState(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (localStorage.getItem(AUTH_CACHE_KEY) === '1') return true;
+    if (
+      document.cookie.includes('arcgym_logged_in=1') ||
+      window.location.search.includes('auth=success')
+    ) {
+      localStorage.setItem(AUTH_CACHE_KEY, '1');
+      return true;
+    }
+  } catch {
+    // ignore private browsing exceptions
+  }
+  return false;
+}
 
 function initializeState(): VisitorProgressState {
   const defaultState: VisitorProgressState = {
@@ -72,6 +91,10 @@ function initializeState(): VisitorProgressState {
 
 export function useVisitorProgress() {
   const [state, setState] = useState<VisitorProgressState>(initializeState);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(getInitialAuthState);
+  const [learnerId, setLearnerId] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const authCheckedRef = useRef(false);
 
   // Sync to localStorage
   const saveState = useCallback((newState: VisitorProgressState) => {
@@ -89,6 +112,117 @@ export function useVisitorProgress() {
       console.error('Failed to save visitor progress to localStorage', e);
     }
   }, []);
+
+  // Background push helper to Cloudflare D1
+  const pushToCloud = useCallback(async (stateToPush: VisitorProgressState) => {
+    try {
+      setIsSyncing(true);
+      const res = await fetch('/api/learner/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stateToPush),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          authenticated: boolean;
+          progress: VisitorProgressState;
+        };
+        if (data.authenticated && data.progress) {
+          setState((prev) => {
+            const merged = mergeProgressStates(prev, data.progress);
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            } catch {
+              // ignore
+            }
+            return merged;
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Sync push to cloud failed (offline or unauthenticated)', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  // Check auth and initial cloud pull on mount
+  useEffect(() => {
+    if (authCheckedRef.current) return;
+    authCheckedRef.current = true;
+
+    async function initialSync() {
+      try {
+        const res = await fetch('/api/learner/sync');
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          authenticated: boolean;
+          learnerId?: string;
+          progress: VisitorProgressState | null;
+        };
+
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+          try {
+            localStorage.setItem(AUTH_CACHE_KEY, '1');
+          } catch {
+            // ignore
+          }
+          if (data.learnerId) setLearnerId(data.learnerId);
+
+          if (data.progress) {
+            const cloudProgress = data.progress;
+            setState((prev) => {
+              const merged = mergeProgressStates(prev, cloudProgress);
+              try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+              } catch {
+                // ignore
+              }
+              // If local had extra items not in cloud, push merged state back
+              const localKeys = Object.keys(prev.completedDrills);
+              const cloudKeys = Object.keys(cloudProgress.completedDrills || {});
+              const hasLocalUnsynced = localKeys.some((k) => !cloudKeys.includes(k));
+              if (hasLocalUnsynced) {
+                pushToCloud(merged);
+              }
+              return merged;
+            });
+          } else {
+            // First cloud login: push local trial progress
+            pushToCloud(state);
+          }
+        } else {
+          setIsAuthenticated(false);
+          setLearnerId(null);
+          try {
+            localStorage.removeItem(AUTH_CACHE_KEY);
+          } catch {
+            // ignore
+          }
+        }
+      } catch (err) {
+        console.warn('Initial cloud sync check skipped', err);
+      } finally {
+        if (typeof window !== 'undefined' && window.location.search.includes('auth=')) {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('auth');
+            url.searchParams.delete('reason');
+            window.history.replaceState(
+              {},
+              '',
+              url.pathname + (url.search ? url.search : '') + url.hash,
+            );
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+
+    initialSync();
+  }, [pushToCloud, state]);
 
   // Record a completed drill
   const recordDrillCompletion = useCallback(
@@ -142,10 +276,14 @@ export function useVisitorProgress() {
           console.error('Failed to persist progress', e);
         }
 
+        if (isAuthenticated) {
+          pushToCloud(updated);
+        }
+
         return updated;
       });
     },
-    [],
+    [isAuthenticated, pushToCloud],
   );
 
   // Record completion of all reps in a Rapid Fire drill set to achieve that day's streak
@@ -201,10 +339,14 @@ export function useVisitorProgress() {
           console.error('Failed to persist progress', e);
         }
 
+        if (isAuthenticated) {
+          pushToCloud(updated);
+        }
+
         return updated;
       });
     },
-    [],
+    [isAuthenticated, pushToCloud],
   );
 
   // Reset progress history
@@ -218,12 +360,51 @@ export function useVisitorProgress() {
     saveState(cleanState);
   }, [saveState]);
 
+  const signInWithGoogle = useCallback((returnUrl?: string) => {
+    const target = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/');
+    window.location.href = `/api/auth/google/login?returnUrl=${encodeURIComponent(target)}`;
+  }, []);
+
+  const signOut = useCallback(async () => {
+    try {
+      localStorage.removeItem(AUTH_CACHE_KEY);
+    } catch {
+      // ignore
+    }
+    setIsAuthenticated(false);
+    setLearnerId(null);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (e) {
+      console.error('Logout failed', e);
+    }
+  }, []);
+
+  const eraseAllData = useCallback(async () => {
+    try {
+      localStorage.removeItem(AUTH_CACHE_KEY);
+    } catch {
+      // ignore
+    }
+    resetProgress();
+    setIsAuthenticated(false);
+    setLearnerId(null);
+    try {
+      await fetch('/api/learner/delete', { method: 'POST' });
+    } catch (e) {
+      console.error('Telemetry erase failed', e);
+    }
+  }, [resetProgress]);
+
   const isDrillCompleted = useCallback(
     (drillId: string) => Boolean(state.completedDrills[drillId]),
     [state.completedDrills],
   );
 
   const totalCompleted = Object.keys(state.completedDrills).length;
+
+  // Trial Allowance: 1 workout (e.g. 1 completed drill / set) allowed anonymously before gating
+  const isTrialExhausted = !isAuthenticated && totalCompleted >= 1;
 
   const activeStreak = useMemo(() => {
     return calculateActiveStreak(state.streakDays, state.lastActiveDate, totalCompleted);
@@ -242,9 +423,16 @@ export function useVisitorProgress() {
     totalPoints,
     completedDrills: state.completedDrills,
     totalCompleted,
+    isAuthenticated,
+    learnerId,
+    isSyncing,
+    isTrialExhausted,
     isDrillCompleted,
     recordDrillCompletion,
     recordRapidFireSetCompletion,
     resetProgress,
+    signInWithGoogle,
+    signOut,
+    eraseAllData,
   };
 }

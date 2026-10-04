@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react';
+import { Cloud, Moon, Sun } from 'lucide-react';
 import type React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -10,6 +10,10 @@ interface HeaderProps {
   streakDays: number;
   isStreakEarnedToday?: boolean;
   totalPoints?: number;
+  isAuthenticated?: boolean;
+  isSyncing?: boolean;
+  isTrialExhausted?: boolean;
+  onSignIn?: () => void;
   onOpenProgressModal: () => void;
 }
 
@@ -24,6 +28,10 @@ export const Header: React.FC<HeaderProps> = ({
   streakDays,
   isStreakEarnedToday = false,
   totalPoints = 0,
+  isAuthenticated = false,
+  isSyncing = false,
+  isTrialExhausted = false,
+  onSignIn,
   onOpenProgressModal,
 }) => {
   const isHome = pathname === '/' || pathname === '';
@@ -151,6 +159,31 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <span className="font-mono tabular-nums">{streakDays}d</span>
             </div>
+          )}
+
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={onOpenProgressModal}
+              className={`${chipClass} hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong cursor-pointer text-miro-successText flex items-center gap-1.5`}
+              title={isSyncing ? 'Syncing telemetry...' : 'Cloud synced (Zero-PII)'}
+            >
+              <Cloud className={`h-3 w-3 ${isSyncing ? 'animate-pulse' : ''}`} />
+              <span className="hidden sm:inline">Synced</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onSignIn}
+              className={`inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                isTrialExhausted
+                  ? 'bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal animate-pulse'
+                  : 'border border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong hover:text-miro-primary'
+              }`}
+              title={isTrialExhausted ? 'Save streak with Google' : 'Sign in with Google'}
+            >
+              {isTrialExhausted ? 'Save streak' : 'Sign in'}
+            </button>
           )}
 
           <button

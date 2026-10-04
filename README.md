@@ -241,7 +241,7 @@ Every drill uses the universal pre-submit **confidence gate** (50%, 70%, 85%, 95
 - **Metacognitive Calibration**: Drills map answers against subjective confidence into four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate dangerous architectural blind spots.
 - **Local-First Practice**: No account, login, or Salesforce org connection is required. Streaks, progress, and history stay inside your browser's `localStorage`.
 - **Anonymous Drill Ratings**: Optional enum-pill feedback (no free text). Edge anti-sybil uses a short-lived HMAC over date + drill + connecting IP; raw IP is not stored in feedback records. See [`/privacy`](./apps/arcgym-web/src/pages/PrivacyPage.tsx).
-- **Cookieless Telemetry**: Site analytics are aggregated via Cloudflare Web Analytics (no cookies, no cross-site advertising profiles).
+- **Cookieless Telemetry**: Site analytics are aggregated via Cloudflare Web Analytics (no cookies, no cross-site advertising profiles; auto-injected at the Cloudflare edge across custom domains such as `arcgym.23p.tech` and `arcgym.23p.dev`).
 
 ## Edge secrets (required for Functions)
 

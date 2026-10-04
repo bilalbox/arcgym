@@ -17,6 +17,14 @@
           const preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           const dark = stored === 'dark' || (stored !== 'light' && preferDark);
           if (dark) document.documentElement.classList.add('dark');
+
+          // Pre-seed auth hint to prevent unauthenticated UI flash (FOUC)
+          if (
+            document.cookie.includes('arcgym_logged_in=1') ||
+            window.location.search.includes('auth=success')
+          ) {
+            localStorage.setItem('arcgym_auth_cached', '1');
+          }
         } catch (_e) {}
       })();
     </script>

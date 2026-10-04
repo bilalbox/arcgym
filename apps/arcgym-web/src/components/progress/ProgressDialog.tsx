@@ -1,5 +1,5 @@
 import type { ClientDrillDefinitionDTO, DrillAttemptRecord } from '@arcgym/drill-core';
-import { AlertTriangle, Calendar, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Calendar, Cloud, RotateCcw } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,11 @@ interface ProgressDialogProps {
   totalPoints?: number;
   streakDays?: number;
   allDrills: ClientDrillDefinitionDTO[];
+  isAuthenticated?: boolean;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
   onResetProgress: () => void;
+  onEraseAllData?: () => void;
   navigate?: (to: string) => void;
 }
 
@@ -34,7 +38,11 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   totalPoints = 0,
   streakDays = 0,
   allDrills,
+  isAuthenticated = false,
+  onSignIn,
+  onSignOut,
   onResetProgress,
+  onEraseAllData,
   navigate,
 }) => {
   const [confirmReset, setConfirmReset] = useState(false);
@@ -49,7 +57,11 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   }
 
   const handleReset = () => {
-    onResetProgress();
+    if (isAuthenticated && onEraseAllData) {
+      onEraseAllData();
+    } else {
+      onResetProgress();
+    }
     setConfirmReset(false);
     onOpenChange(false);
   };
@@ -71,6 +83,43 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-3 py-2">
+          {isAuthenticated ? (
+            <div className="p-3 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-miro-successText">
+                <Cloud className="h-4 w-4" />
+                <span className="font-medium">Cloud sync active (Zero-PII)</span>
+              </div>
+              {onSignOut && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSignOut}
+                  className="text-xs h-7 text-miro-slate hover:text-miro-primary"
+                >
+                  Sign out
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="p-3 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+              <div className="space-y-0.5">
+                <span className="font-medium text-miro-primary">Sync streak across devices</span>
+                <p className="text-[11px] text-miro-slate">
+                  Passwordless Google login. Zero personal data or emails stored.
+                </p>
+              </div>
+              {onSignIn && (
+                <Button
+                  size="sm"
+                  onClick={onSignIn}
+                  className="text-xs h-7 bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal shrink-0"
+                >
+                  Sign in with Google
+                </Button>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
             <div className="p-2.5 sm:p-3 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
               <div className="text-miro-muted text-xs font-medium mb-1">Points</div>

@@ -138,7 +138,7 @@ export function practiceSessionReducer(
     }
 
     case 'RESET_SESSION': {
-      return createPracticeSessionState(state.drills);
+      return createPracticeSessionState(action.drills ?? state.drills);
     }
 
     default:

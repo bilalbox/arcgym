@@ -161,5 +161,11 @@ describe('PracticeSession Reducer', () => {
     expect(state.currentRepIndex).toBe(0);
     expect(getCurrentRep(state)?.selectedOptionId).toBeNull();
     expect(getCurrentRep(state)?.isSubmitted).toBe(false);
+
+    // RESET_SESSION with new drills
+    const newDrills = [createMockDrill('D2'), createMockDrill('D3')];
+    state = practiceSessionReducer(state, { type: 'RESET_SESSION', drills: newDrills });
+    expect(state.reps.length).toBe(2);
+    expect(getCurrentRep(state)?.drill.id).toBe('D2');
   });
 });

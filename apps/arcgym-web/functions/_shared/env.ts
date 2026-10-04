@@ -14,8 +14,26 @@ export interface AiBinding {
   run(model: string, inputs: Record<string, unknown>): Promise<unknown>;
 }
 
+/** Minimal D1 database binding surface. */
+export interface D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement;
+  first<T = unknown>(colName?: string): Promise<T | null>;
+  all<T = unknown>(): Promise<{ results: T[]; success: boolean }>;
+  run(): Promise<{ success: boolean; meta: Record<string, unknown> }>;
+}
+
+export interface D1Database {
+  prepare(query: string): D1PreparedStatement;
+  batch<T = unknown>(
+    statements: D1PreparedStatement[],
+  ): Promise<Array<{ results?: T[]; success: boolean }>>;
+  exec(query: string): Promise<{ count: number; duration: number }>;
+}
+
 export interface Env {
   DRILL_KV?: DrillKvNamespace;
+  /** Cloudflare D1 SQLite database for Learner Progress sync. */
+  DB?: D1Database;
   /** Workers AI binding for Troubleshooting cause grading. */
   AI?: AiBinding;
   /** HMAC secret for publish-drill webhook signatures. */
@@ -24,9 +42,24 @@ export interface Env {
   ARCGYM_ADMIN_KEY?: string;
   /** HMAC secret for ephemeral vote-dedup tokens (IP×day×drill). */
   ARCGYM_VOTE_HMAC_SECRET?: string;
+  /** Google OAuth Client ID for passwordless authentication. */
+  GOOGLE_CLIENT_ID?: string;
+  /** Google OAuth Client Secret. */
+  GOOGLE_CLIENT_SECRET?: string;
+  /** HMAC secret for signing HttpOnly session JWT cookies. */
+  SESSION_SECRET?: string;
+  /** Server salt/pepper for pseudonymous learner IDs. */
+  LEARNER_PEPPER?: string;
 }
 
-export type SecretName = 'ARCGYM_HMAC_SECRET' | 'ARCGYM_ADMIN_KEY' | 'ARCGYM_VOTE_HMAC_SECRET';
+export type SecretName =
+  | 'ARCGYM_HMAC_SECRET'
+  | 'ARCGYM_ADMIN_KEY'
+  | 'ARCGYM_VOTE_HMAC_SECRET'
+  | 'GOOGLE_CLIENT_ID'
+  | 'GOOGLE_CLIENT_SECRET'
+  | 'SESSION_SECRET'
+  | 'LEARNER_PEPPER';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
 
@@ -77,8 +110,26 @@ export class KvConfigError extends Error {
   }
 }
 
+export function requireDb(env: Env): D1Database {
+  if (!env.DB) {
+    throw new DbConfigError();
+  }
+  return env.DB;
+}
+
+export class DbConfigError extends Error {
+  constructor() {
+    super('DB is not bound');
+    this.name = 'DbConfigError';
+  }
+}
+
 export function configErrorResponse(error: unknown): Response | null {
-  if (error instanceof SecretConfigError || error instanceof KvConfigError) {
+  if (
+    error instanceof SecretConfigError ||
+    error instanceof KvConfigError ||
+    error instanceof DbConfigError
+  ) {
     return opaqueError(503, 'Service misconfigured');
   }
   return null;

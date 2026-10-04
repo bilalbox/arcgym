@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
         transformIndexHtml: {
           order: 'pre',
           handler(html) {
+            // For multi-domain Cloudflare Pages deployments (e.g. arcgym.23p.tech and arcgym.23p.dev),
+            // leave VITE_CF_BEACON_TOKEN unset so Cloudflare Pages automatically injects the beacon
+            // script at the edge for all domains.
             const scriptTag = cfBeaconToken
               ? `<!-- Cloudflare Web Analytics -->\n    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${cfBeaconToken}", "spa": true}'></script>\n    <!-- End Cloudflare Web Analytics -->`
               : '<!-- Cloudflare Web Analytics: auto-injected at edge by Cloudflare Pages -->';

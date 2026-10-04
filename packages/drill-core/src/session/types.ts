@@ -33,7 +33,7 @@ export type PracticeSessionAction =
   | { type: 'SELECT_OPTION'; optionId: string }
   | { type: 'COMMIT_CONFIDENCE'; confidence: ConfidenceAnchor }
   | { type: 'ADVANCE_REP' }
-  | { type: 'RESET_SESSION' };
+  | { type: 'RESET_SESSION'; drills?: RapidFireDrillDefinition[] };
 
 export interface RoundCompletionResult {
   attempts: DrillAttemptRecord[];

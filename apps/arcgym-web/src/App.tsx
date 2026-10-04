@@ -13,15 +13,13 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
+import { ProgressDialog } from '@/components/progress/ProgressDialog';
 import { getWebFormatDescriptor } from '@/formats';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import { useRouter } from '@/hooks/useRouter';
 import { useVisitorProgress } from '@/hooks/useVisitorProgress';
 import { allowStudioNavigation } from '@/studio/navBlock';
 
-const ProgressDialog = lazy(() =>
-  import('@/components/progress/ProgressDialog').then((m) => ({ default: m.ProgressDialog })),
-);
 const PrivacyPage = lazy(() =>
   import('@/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
 );
@@ -67,7 +65,6 @@ export const App: React.FC = () => {
   );
   const [activeDomain, setActiveDomain] = useState<ArchitecturalDomain | undefined>(undefined);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
-  const [progressDialogLoaded, setProgressDialogLoaded] = useState(false);
 
   const {
     streakDays,
@@ -75,9 +72,15 @@ export const App: React.FC = () => {
     totalPoints,
     completedDrills,
     totalCompleted,
+    isAuthenticated,
+    isSyncing,
+    isTrialExhausted,
     recordDrillCompletion,
     recordRapidFireSetCompletion,
     resetProgress,
+    signInWithGoogle,
+    signOut,
+    eraseAllData,
   } = useVisitorProgress();
 
   const caseFiles = useMemo(() => ALL_DRILLS.filter(isCaseFileDrill), []);
@@ -101,7 +104,7 @@ export const App: React.FC = () => {
     );
   }, [rapidFireCatalog]);
 
-  const { rapidFireDrills, isReviewMode, previousAttempt, advanceToNextDrill, resetSessionSkip } =
+  const { rapidFireDrills, isReviewMode, previousAttempt, resetSessionSkip } =
     useDrillRecommendation(completedDrills, activeDomain);
 
   const handleDomainChange = (domain: ArchitecturalDomain | undefined) => {
@@ -138,28 +141,34 @@ export const App: React.FC = () => {
     accuracy: number;
   }) => {
     recordRapidFireSetCompletion(result.attempts);
+    resetSessionSkip();
+  };
+
+  const handleNextRapidFireSet = () => {
+    resetSessionSkip();
   };
 
   const openProgressModal = () => {
-    setProgressDialogLoaded(true);
     setIsProgressModalOpen(true);
   };
 
-  const progressDialog = progressDialogLoaded ? (
-    <Suspense fallback={null}>
-      <ProgressDialog
-        open={isProgressModalOpen}
-        onOpenChange={setIsProgressModalOpen}
-        completedDrills={completedDrills}
-        totalDrillsCount={ALL_DRILLS.length}
-        totalPoints={totalPoints}
-        streakDays={streakDays}
-        allDrills={ALL_DRILLS}
-        onResetProgress={resetProgress}
-        navigate={navigate}
-      />
-    </Suspense>
-  ) : null;
+  const progressDialog = (
+    <ProgressDialog
+      open={isProgressModalOpen}
+      onOpenChange={setIsProgressModalOpen}
+      completedDrills={completedDrills}
+      totalDrillsCount={ALL_DRILLS.length}
+      totalPoints={totalPoints}
+      streakDays={streakDays}
+      allDrills={ALL_DRILLS}
+      isAuthenticated={isAuthenticated}
+      onSignIn={signInWithGoogle}
+      onSignOut={signOut}
+      onResetProgress={resetProgress}
+      onEraseAllData={eraseAllData}
+      navigate={navigate}
+    />
+  );
 
   const shell = (body: React.ReactNode) => (
     <div className="min-h-screen bg-miro-surface text-miro-primary flex flex-col font-sans antialiased">
@@ -171,8 +180,26 @@ export const App: React.FC = () => {
         streakDays={streakDays}
         isStreakEarnedToday={isStreakEarnedToday}
         totalPoints={totalPoints}
+        isAuthenticated={isAuthenticated}
+        isSyncing={isSyncing}
+        isTrialExhausted={isTrialExhausted}
+        onSignIn={signInWithGoogle}
         onOpenProgressModal={openProgressModal}
       />
+      {isTrialExhausted && (
+        <div className="bg-miro-charcoal text-miro-onPrimary px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-3 shadow-xs">
+          <span>
+            Trial complete · Save your streak and unlock unlimited architectural drills with Google.
+          </span>
+          <button
+            type="button"
+            onClick={() => signInWithGoogle()}
+            className="px-3 py-1 bg-miro-blue hover:bg-miro-blueDeep text-white rounded-full text-xs font-semibold cursor-pointer shrink-0 transition-colors"
+          >
+            Sign in with Google
+          </button>
+        </div>
+      )}
       {body}
       {progressDialog}
     </div>
@@ -371,11 +398,15 @@ export const App: React.FC = () => {
           </div>
         ) : (
           <RapidFireRunner
+            key={activeDomain ?? 'all'}
             drills={rapidFireDrills}
             isReviewMode={isReviewMode}
             previousAttempt={previousAttempt}
+            isAuthenticated={isAuthenticated}
+            isTrialExhausted={isTrialExhausted}
+            onSignIn={signInWithGoogle}
             onRapidFireComplete={handleRapidFireComplete}
-            onNextDrill={advanceToNextDrill}
+            onNextDrill={handleNextRapidFireSet}
           />
         )}
       </div>

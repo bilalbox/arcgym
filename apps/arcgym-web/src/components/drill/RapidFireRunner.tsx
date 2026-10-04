@@ -8,6 +8,7 @@ import {
   getRoundCompletionResult,
   optionSeed,
   orderOptions,
+  type PracticeSessionState,
   practiceSessionReducer,
   type RapidFireDrillDefinition,
   type RoundCompletionResult,
@@ -51,6 +52,9 @@ export interface RapidFireRunnerProps {
     steps?: StepAttemptTelemetry[];
   }) => void;
   onNextDrill?: () => void;
+  isAuthenticated?: boolean;
+  isTrialExhausted?: boolean;
+  onSignIn?: () => void;
 }
 
 export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
@@ -62,12 +66,16 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   onRapidFireComplete,
   onDrillComplete,
   onNextDrill,
+  isAuthenticated = false,
+  isTrialExhausted = false,
+  onSignIn,
 }) => {
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
   const [inspectDiagram, setInspectDiagram] = useState<{
     url: string;
     label: string;
   } | null>(null);
+  const [completedSession, setCompletedSession] = useState<PracticeSessionState | null>(null);
 
   // Normalize drills into a list (supports both set workout and solo drill navigation)
   const drillList = useMemo(() => {
@@ -80,19 +88,26 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     return drillList.map((d) => d.id).join(':') || 'empty';
   }, [drillList]);
 
+  const lastSessionKeyRef = useRef(sessionKey);
+
   const [session, dispatch] = useReducer(
     practiceSessionReducer,
     drillList,
     createPracticeSessionState,
   );
 
-  // Reset session when drill list changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Reset session on sessionKey change
+  // Reset session when drill list changes, but NOT while user is inspecting completed results
   useEffect(() => {
-    dispatch({ type: 'RESET_SESSION' });
-    setSelectedConfidence(null);
-    setInspectDiagram(null);
-  }, [sessionKey]);
+    if (completedSession) {
+      return;
+    }
+    if (lastSessionKeyRef.current !== sessionKey) {
+      lastSessionKeyRef.current = sessionKey;
+      dispatch({ type: 'RESET_SESSION', drills: drillList });
+      setSelectedConfidence(null);
+      setInspectDiagram(null);
+    }
+  }, [sessionKey, completedSession, drillList]);
 
   const repList = session.reps;
   const currentStepIndex = session.currentRepIndex;
@@ -108,6 +123,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   useEffect(() => {
     if (isCompleted && !completedRef.current) {
       completedRef.current = true;
+      setCompletedSession(session);
       const result = getRoundCompletionResult(session);
       if (result) {
         onRoundComplete?.(result);
@@ -125,10 +141,18 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           steps: result.steps,
         });
       }
-    } else if (!isCompleted) {
+    } else if (!isCompleted && !completedSession) {
       completedRef.current = false;
     }
-  }, [isCompleted, session, onRoundComplete, onRapidFireComplete, onDrillComplete, repList]);
+  }, [
+    isCompleted,
+    completedSession,
+    session,
+    onRoundComplete,
+    onRapidFireComplete,
+    onDrillComplete,
+    repList,
+  ]);
 
   const orderedOptions = useMemo(() => {
     if (!activeDrill || !currentStep) return [];
@@ -143,10 +167,6 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const correctCitationUrl = currentStep?.options.find((o) => o.isCorrect)?.citationUrl;
   const correctCitationHref = safeCitationHref(correctCitationUrl);
   const correctCitationHost = citationHostname(correctCitationUrl);
-
-  if (!activeDrill || !currentStep) {
-    return null;
-  }
 
   const handleSelectOption = (optionId: string) => {
     if (isSubmitted) return;
@@ -164,14 +184,32 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     dispatch({ type: 'ADVANCE_REP' });
   };
 
-  const handleRestart = () => {
+  const handleNextSet = () => {
+    lastSessionKeyRef.current = sessionKey;
+    setCompletedSession(null);
     setSelectedConfidence(null);
-    dispatch({ type: 'RESET_SESSION' });
+    setInspectDiagram(null);
+    completedRef.current = false;
+    dispatch({ type: 'RESET_SESSION', drills: drillList });
+    onNextDrill?.();
   };
 
-  if (isCompleted) {
-    const totalScore = session.totalScore;
-    const correctCount = session.reps.filter((r) => r.isCorrect).length;
+  const handleRestartCurrentSet = () => {
+    const currentDrills = completedSession?.drills ?? drillList;
+    setCompletedSession(null);
+    setSelectedConfidence(null);
+    setInspectDiagram(null);
+    completedRef.current = false;
+    dispatch({ type: 'RESET_SESSION', drills: currentDrills });
+  };
+
+  const isDisplayCompleted = Boolean(completedSession || isCompleted);
+  const displaySession = completedSession ?? session;
+
+  if (isDisplayCompleted) {
+    const totalScore = displaySession.totalScore;
+    const completionRepList = displaySession.reps;
+    const correctCount = completionRepList.filter((r) => r.isCorrect).length;
 
     return (
       <Card className="border-miro-hairline bg-miro-card shadow-xs">
@@ -183,8 +221,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             Rapid Fire completed
           </h2>
           <p className="text-sm text-miro-slate mt-1">
-            You committed all {repList.length} architectural decision{' '}
-            {repList.length === 1 ? 'rep' : 'reps'}.
+            You committed all {completionRepList.length} architectural decision{' '}
+            {completionRepList.length === 1 ? 'rep' : 'reps'}.
           </p>
         </CardHeader>
         <CardContent className="space-y-6 pt-0">
@@ -196,16 +234,16 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             <div>
               <span className="text-xs text-miro-slate font-medium">Decisions correct</span>
               <p className="text-2xl font-medium text-miro-successText mt-0.5">
-                {correctCount} / {repList.length}
+                {correctCount} / {completionRepList.length}
               </p>
             </div>
             <div>
               <span className="text-xs text-miro-slate font-medium">Avg confidence</span>
               <p className="text-2xl font-medium text-miro-primary mt-0.5">
-                {repList.length > 0
+                {completionRepList.length > 0
                   ? Math.round(
-                      (repList.reduce((acc, r) => acc + (r.committedConfidence ?? 0), 0) /
-                        repList.length) *
+                      (completionRepList.reduce((acc, r) => acc + (r.committedConfidence ?? 0), 0) /
+                        completionRepList.length) *
                         100,
                     )
                   : 0}
@@ -216,9 +254,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
 
           <div className="space-y-2.5">
             <h4 className="text-xs font-semibold text-miro-slate">
-              Decision breakdown ({repList.length} {repList.length === 1 ? 'rep' : 'reps'})
+              Decision breakdown ({completionRepList.length}{' '}
+              {completionRepList.length === 1 ? 'rep' : 'reps'})
             </h4>
-            {repList.map((r, i) => {
+            {completionRepList.map((r, i) => {
               const repScore = r.score ?? 0;
               const repConf = Math.round((r.committedConfidence ?? 0) * 100);
 
@@ -274,27 +313,56 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             </div>
           )}
 
-          <DrillFeedbackWidget drillId={repList[0]?.drill.id ?? 'drill'} />
+          {!isAuthenticated && onSignIn && (
+            <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="space-y-0.5">
+                <span className="font-semibold text-miro-primary">
+                  Save your streak across devices
+                </span>
+                <p className="text-miro-slate">
+                  Sign in with Google to sync your calibration telemetry and unlock tomorrow's
+                  practice.
+                </p>
+              </div>
+              <Button
+                onClick={onSignIn}
+                className="bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary text-xs font-semibold px-3 py-1.5 shrink-0"
+              >
+                Sign in with Google
+              </Button>
+            </div>
+          )}
+
+          <DrillFeedbackWidget drillId={completionRepList[0]?.drill.id ?? 'drill'} />
 
           <div className="flex flex-col gap-2.5 pt-1">
-            {onNextDrill && (
-              <Button
-                onClick={() => {
-                  handleRestart();
-                  onNextDrill();
-                }}
-                className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
-              >
-                Practice next Rapid Fire set <ArrowRight className="h-4 w-4" />
-              </Button>
-            )}
-            <Button onClick={handleRestart} variant="secondary" className="w-full gap-2">
+            {onNextDrill &&
+              (isTrialExhausted && !isAuthenticated ? (
+                <Button
+                  onClick={onSignIn}
+                  className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+                >
+                  Sign in with Google to unlock next set <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNextSet}
+                  className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+                >
+                  Practice next Rapid Fire set <ArrowRight className="h-4 w-4" />
+                </Button>
+              ))}
+            <Button onClick={handleRestartCurrentSet} variant="secondary" className="w-full gap-2">
               <RotateCcw className="h-4 w-4" /> Practice this set again
             </Button>
           </div>
         </CardContent>
       </Card>
     );
+  }
+
+  if (!activeDrill || !currentStep || !currentRep) {
+    return null;
   }
 
   const currentScore = currentRep.score;

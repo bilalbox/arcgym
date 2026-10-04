@@ -52,6 +52,22 @@ _Avoid_: Hint unlock, investigation credits, Currency spend
 The learner-facing mode for Case File practice, separate from the daily Rapid Fire streak.
 _Avoid_: Board Eval, Review Board mock, exam mode
 
+### Learner Identity
+The cryptographic authentication credential or OAuth voucher establishing a learner's cloud session, decoupled from personal identifying information.
+_Avoid_: User profile, account credentials, PII record
+
+### Learner Progress
+The persisted record of an individual architect's completed drills, practice streak, and calibration history across device sessions.
+_Avoid_: User stats, game save, cookie payload
+
+### Trial Allowance
+The bounded anonymous practice quota permitted to a new learner before authentication is required to continue.
+_Avoid_: Paywall, free tier, demo mode
+
+### Progress Sync
+The deterministic two-way set-union reconciliation of local client attempt telemetry with cloud storage.
+_Avoid_: Cloud save, profile download, state overwrite
+
 ### Troubleshooting Drill
 A diagnosis practice format: architecture synopsis + required diagram + issue, a scarce Probe Budget of clarifying questions that unlock scenario facts, then a confidence-gated free-text root-cause commit. Graded by Workers AI CLEF as a choice over one gold cause, three hidden antipattern distractors (never MCQ), and an `other` catchall. Outside the daily Rapid Fire streak; no separate Troubleshoot streak in v1. See ADR 0004.
 _Avoid_: Quiz, Scenario, Lesson, remediation step (v1), LLM-as-judge, BGE reranker grading
