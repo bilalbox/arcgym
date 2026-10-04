@@ -1,4 +1,4 @@
-import type { WordingFinding } from '../lint/wording.js';
+import type { WordingFinding } from '../lint/types.js';
 import {
   type ClientTroubleshootingDrillDefinition,
   TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT,
@@ -7,7 +7,7 @@ import {
   TROUBLESHOOTING_PROBE_BUDGET,
   type TroubleshootingDrillDefinition,
 } from '../types/drill.js';
-import type { ValidationContext, ValidationFinding } from '../validator/validator.js';
+import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 import type { DrillFormatDescriptor } from './types.js';
 import { isCitationValid, validateDiagramUrl, validateProbePool } from './validationHelpers.js';
 import {

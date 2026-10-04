@@ -1,6 +1,6 @@
-import type { WordingFinding } from '../lint/wording.js';
+import type { WordingFinding } from '../lint/types.js';
 import type { ClientDrillDefinitionDTO, DrillDefinitionDTO, DrillFormat } from '../types/drill.js';
-import type { ValidationContext, ValidationFinding } from '../validator/validator.js';
+import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 
 export interface DrillFormatDescriptor<
   TAuthored extends DrillDefinitionDTO = DrillDefinitionDTO,

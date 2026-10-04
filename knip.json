@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@5/overview/configuration/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.ts", "scripts/**/*.ts"],
+      "project": ["scripts/**/*.ts"],
+      "ignoreDependencies": ["@swc/core", "dependency-cruiser", "jscpd", "vitest"],
+      "ignoreBinaries": ["uv", "wrangler"]
+    },
+    "apps/arcgym-web": {
+      "entry": ["src/main.tsx", "functions/**/!(*.test).ts"],
+      "project": ["src/**/*.{ts,tsx}", "functions/**/*.ts"],
+      "ignoreDependencies": ["tailwindcss", "tw-animate-css"]
+    },
+    "packages/drill-core": {
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.ts"],
+      "ignore": ["prototypes/**"]
+    },
+    "packages/diagrams": {
+      "entry": ["src/index.ts", "src/qa/auditSvgGeometry.ts"],
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  },
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "unlisted": "error",
+    "exports": "off",
+    "types": "off",
+    "duplicates": "off"
+  }
+}

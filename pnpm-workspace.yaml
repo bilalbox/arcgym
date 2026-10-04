@@ -3,9 +3,13 @@ packages:
   - 'packages/*'
 
 allowBuilds:
+  '@swc/core': true
   core-js: true
   core-js-pure: true
   esbuild: true
   protobufjs: true
   sharp: true
   workerd: true
+
+patchedDependencies:
+  dependency-cruiser: patches/dependency-cruiser.patch

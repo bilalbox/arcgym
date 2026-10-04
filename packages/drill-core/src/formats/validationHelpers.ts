@@ -1,7 +1,7 @@
 import { isEligibleCorrectOptionCitation } from '../types/citationManifest.js';
 import { PROBE_TIERS, type ProbeTier } from '../types/drill.js';
 import { isAllowedCitationUrl } from '../types/validation.js';
-import type { ValidationContext, ValidationFinding } from '../validator/validator.js';
+import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 
 export function isCitationValid(url: unknown, ctx: ValidationContext): boolean {
   if (ctx.citationManifest) {

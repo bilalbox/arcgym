@@ -1,6 +1,8 @@
 import type {
   CaseFileDrillDefinition,
+  ClientDrillDefinitionDTO,
   ClientTroubleshootingDrillDefinition,
+  DrillDefinitionDTO,
   DrillFormat,
   RapidFireDrillDefinition,
   TroubleshootingDrillDefinition,
@@ -57,4 +59,8 @@ export function getDrillFormatDescriptor(format: DrillFormat): DrillFormatDescri
 
 export function getAllDrillFormatDescriptors(): DrillFormatDescriptor[] {
   return Object.values(DRILL_FORMAT_DESCRIPTORS);
+}
+
+export function sanitizeDrillForClient(drill: DrillDefinitionDTO): ClientDrillDefinitionDTO {
+  return getDrillFormatDescriptor(drill.format).sanitizeForClient(drill);
 }

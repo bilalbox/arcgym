@@ -1,4 +1,4 @@
-import type { WordingFinding } from '../lint/wording.js';
+import type { WordingFinding } from '../lint/types.js';
 import type { DrillFormat } from '../types/drill.js';
 
 export type FeedbackField = 'rationale';

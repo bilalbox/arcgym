@@ -14,28 +14,9 @@ import {
 } from '../types/drill.js';
 import { isValidDrillId, isValidFrictionCardId } from '../types/validation.js';
 
-export type ValidationRuleId =
-  | 'missing-field'
-  | 'invalid-enum'
-  | 'option-set'
-  | 'missing-rationale'
-  | 'missing-distractor-antipattern'
-  | 'probe-pool'
-  | 'station-set'
-  | 'hidden-distractors'
-  | 'citation-manifest'
-  | 'missing-asset';
+import type { ValidationContext, ValidationFinding, ValidationRuleId } from './types.js';
 
-export interface ValidationFinding {
-  ruleId: ValidationRuleId;
-  where: string;
-  message: string;
-}
-
-export interface ValidationContext {
-  citationManifest?: ReadonlySet<string>;
-  assetExists?: (url: string) => boolean;
-}
+export type { ValidationContext, ValidationFinding, ValidationRuleId };
 
 export type ValidationResult =
   | { ok: true; drill: DrillDefinitionDTO }

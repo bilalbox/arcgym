@@ -1,5 +1,5 @@
 import type { RapidFireDrillDefinition } from '../types/drill.js';
-import type { ValidationContext, ValidationFinding } from '../validator/validator.js';
+import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 import type { DrillFormatDescriptor } from './types.js';
 import { validateMcqOptions } from './validationHelpers.js';
 import { lintQuestion, type Question } from './wordingHelpers.js';

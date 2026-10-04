@@ -8,6 +8,10 @@
     "typecheck": "tsc --noEmit && pnpm --recursive run typecheck",
     "check": "biome check --error-on-warnings",
     "check:fix": "biome check --write",
+    "check:arch": "depcruise --config .dependency-cruiser.cjs apps packages scripts",
+    "check:dead": "knip",
+    "check:clones": "jscpd",
+    "verify": "pnpm typecheck && pnpm check && pnpm test && pnpm check:arch && pnpm check:dead && pnpm check:clones",
     "lint": "biome check",
     "format": "biome format --write",
     "build": "pnpm diagrams:export && npx tsx scripts/build-drills.ts && pnpm typecheck && pnpm check && pnpm --recursive run build",
@@ -27,8 +31,12 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@swc/core": "^1.16.13",
     "@types/node": "^24.19.1",
+    "dependency-cruiser": "^18.5.0",
     "husky": "^9.1.7",
+    "jscpd": "^5.4.0",
+    "knip": "^6.39.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"

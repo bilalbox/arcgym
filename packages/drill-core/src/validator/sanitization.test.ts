@@ -2,11 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import {
-  type RapidFireDrillDefinition,
-  sanitizeDrillForClient,
-  type TroubleshootingDrillDefinition,
-} from '../types/drill.js';
+import { sanitizeDrillForClient } from '../formats/index.js';
+import type { RapidFireDrillDefinition, TroubleshootingDrillDefinition } from '../types/drill.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

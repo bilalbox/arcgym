@@ -1,4 +1,4 @@
-import type { WordingFinding } from '../lint/wording.js';
+import type { WordingFinding } from '../lint/types.js';
 import {
   ARCHITECTURAL_DOMAINS,
   type ArchitecturalDomain,
@@ -9,7 +9,7 @@ import {
   CASE_FILE_PIVOTAL_PROBES_PER_STATION,
   type CaseFileDrillDefinition,
 } from '../types/drill.js';
-import type { ValidationContext, ValidationFinding } from '../validator/validator.js';
+import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 import type { DrillFormatDescriptor } from './types.js';
 import { validateDiagramUrl, validateMcqOptions, validateProbePool } from './validationHelpers.js';
 import {

@@ -1,23 +1,9 @@
 import { getDrillFormatDescriptor } from '../formats/index.js';
 import type { DrillDefinitionDTO } from '../types/drill.js';
 
-export type WordingRuleId =
-  | 'length-tell'
-  | 'verdict-prefix'
-  | 'antipattern-name'
-  | 'label-echo'
-  | 'self-refuting-distractor'
-  | 'long-stem'
-  | 'pivotal-leak'
-  | 'probe-not-question'
-  | 'cause-leak'
-  | 'gold-too-long';
+import type { WordingFinding, WordingRuleId } from './types.js';
 
-export interface WordingFinding {
-  ruleId: WordingRuleId;
-  where: string;
-  message: string;
-}
+export type { WordingFinding, WordingRuleId };
 
 /** Answer tells and feedback defects that let a learner find the answer without architectural judgment. */
 export function lintDrillWording(drill: DrillDefinitionDTO): WordingFinding[] {
