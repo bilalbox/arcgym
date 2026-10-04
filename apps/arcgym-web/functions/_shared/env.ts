@@ -46,6 +46,10 @@ export interface Env {
   GOOGLE_CLIENT_ID?: string;
   /** Google OAuth Client Secret. */
   GOOGLE_CLIENT_SECRET?: string;
+  /** GitHub OAuth Client ID for passwordless authentication. */
+  GITHUB_CLIENT_ID?: string;
+  /** GitHub OAuth Client Secret. */
+  GITHUB_CLIENT_SECRET?: string;
   /** HMAC secret for signing HttpOnly session JWT cookies. */
   SESSION_SECRET?: string;
   /** Server salt/pepper for pseudonymous learner IDs. */
@@ -58,6 +62,8 @@ export type SecretName =
   | 'ARCGYM_VOTE_HMAC_SECRET'
   | 'GOOGLE_CLIENT_ID'
   | 'GOOGLE_CLIENT_SECRET'
+  | 'GITHUB_CLIENT_ID'
+  | 'GITHUB_CLIENT_SECRET'
   | 'SESSION_SECRET'
   | 'LEARNER_PEPPER';
 

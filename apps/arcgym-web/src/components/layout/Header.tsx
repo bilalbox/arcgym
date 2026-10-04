@@ -174,13 +174,13 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <button
               type="button"
-              onClick={onSignIn}
+              onClick={onOpenProgressModal || onSignIn}
               className={`inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
                 isTrialExhausted
                   ? 'bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal animate-pulse'
                   : 'border border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong hover:text-miro-primary'
               }`}
-              title={isTrialExhausted ? 'Save streak with Google' : 'Sign in with Google'}
+              title={isTrialExhausted ? 'Save streak' : 'Sign in'}
             >
               {isTrialExhausted ? 'Save streak' : 'Sign in'}
             </button>

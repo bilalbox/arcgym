@@ -28,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { GithubIcon, GoogleIcon } from '@/components/ui/icons';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
@@ -55,6 +56,8 @@ export interface RapidFireRunnerProps {
   isAuthenticated?: boolean;
   isTrialExhausted?: boolean;
   onSignIn?: () => void;
+  onSignInGoogle?: () => void;
+  onSignInGithub?: () => void;
 }
 
 export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
@@ -69,6 +72,8 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   isAuthenticated = false,
   isTrialExhausted = false,
   onSignIn,
+  onSignInGoogle,
+  onSignInGithub,
 }) => {
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
   const [inspectDiagram, setInspectDiagram] = useState<{
@@ -313,23 +318,37 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             </div>
           )}
 
-          {!isAuthenticated && onSignIn && (
+          {!isAuthenticated && (onSignIn || onSignInGoogle || onSignInGithub) && (
             <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="space-y-0.5">
                 <span className="font-semibold text-miro-primary">
                   Save your streak across devices
                 </span>
                 <p className="text-miro-slate">
-                  Sign in with Google to sync your calibration telemetry and unlock tomorrow's
-                  practice.
+                  Sign in with Google or GitHub to sync your calibration telemetry and unlock
+                  tomorrow's practice.
                 </p>
               </div>
-              <Button
-                onClick={onSignIn}
-                className="bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary text-xs font-semibold px-3 py-1.5 shrink-0"
-              >
-                Sign in with Google
-              </Button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {(onSignInGoogle || onSignIn) && (
+                  <Button
+                    onClick={onSignInGoogle || onSignIn}
+                    className="bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary text-xs font-semibold px-2.5 py-1.5 inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <GoogleIcon className="h-3 w-3" />
+                    <span>Google</span>
+                  </Button>
+                )}
+                {onSignInGithub && (
+                  <Button
+                    onClick={onSignInGithub}
+                    className="bg-miro-card border border-miro-hairline text-miro-primary hover:border-miro-hairlineStrong hover:bg-miro-surfaceSoft text-xs font-semibold px-2.5 py-1.5 inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <GithubIcon className="h-3 w-3" />
+                    <span>GitHub</span>
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -339,10 +358,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             {onNextDrill &&
               (isTrialExhausted && !isAuthenticated ? (
                 <Button
-                  onClick={onSignIn}
-                  className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+                  onClick={onSignIn || onSignInGoogle}
+                  className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium cursor-pointer"
                 >
-                  Sign in with Google to unlock next set <ArrowRight className="h-4 w-4" />
+                  Sign in to unlock next set <ArrowRight className="h-4 w-4" />
                 </Button>
               ) : (
                 <Button

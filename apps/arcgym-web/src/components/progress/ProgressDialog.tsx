@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { GithubIcon, GoogleIcon } from '@/components/ui/icons';
 import { Progress } from '@/components/ui/progress';
 
 interface ProgressDialogProps {
@@ -24,6 +25,8 @@ interface ProgressDialogProps {
   allDrills: ClientDrillDefinitionDTO[];
   isAuthenticated?: boolean;
   onSignIn?: () => void;
+  onSignInGoogle?: () => void;
+  onSignInGithub?: () => void;
   onSignOut?: () => void;
   onResetProgress: () => void;
   onEraseAllData?: () => void;
@@ -40,6 +43,8 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
   allDrills,
   isAuthenticated = false,
   onSignIn,
+  onSignInGoogle,
+  onSignInGithub,
   onSignOut,
   onResetProgress,
   onEraseAllData,
@@ -105,18 +110,31 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               <div className="space-y-0.5">
                 <span className="font-medium text-miro-primary">Sync streak across devices</span>
                 <p className="text-[11px] text-miro-slate">
-                  Passwordless Google login. Zero personal data or emails stored.
+                  Passwordless Google or GitHub login. Zero personal data stored.
                 </p>
               </div>
-              {onSignIn && (
-                <Button
-                  size="sm"
-                  onClick={onSignIn}
-                  className="text-xs h-7 bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal shrink-0"
-                >
-                  Sign in with Google
-                </Button>
-              )}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {(onSignInGoogle || onSignIn) && (
+                  <Button
+                    size="sm"
+                    onClick={onSignInGoogle || onSignIn}
+                    className="text-xs h-7 px-2.5 bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <GoogleIcon className="h-3 w-3" />
+                    <span>Google</span>
+                  </Button>
+                )}
+                {onSignInGithub && (
+                  <Button
+                    size="sm"
+                    onClick={onSignInGithub}
+                    className="text-xs h-7 px-2.5 bg-miro-card border border-miro-hairline text-miro-primary hover:border-miro-hairlineStrong hover:bg-miro-surfaceSoft inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <GithubIcon className="h-3 w-3" />
+                    <span>GitHub</span>
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 

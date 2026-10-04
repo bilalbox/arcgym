@@ -365,6 +365,22 @@ export function useVisitorProgress() {
     window.location.href = `/api/auth/google/login?returnUrl=${encodeURIComponent(target)}`;
   }, []);
 
+  const signInWithGithub = useCallback((returnUrl?: string) => {
+    const target = returnUrl || (typeof window !== 'undefined' ? window.location.pathname : '/');
+    window.location.href = `/api/auth/github/login?returnUrl=${encodeURIComponent(target)}`;
+  }, []);
+
+  const signIn = useCallback(
+    (provider: 'google' | 'github', returnUrl?: string) => {
+      if (provider === 'github') {
+        signInWithGithub(returnUrl);
+      } else {
+        signInWithGoogle(returnUrl);
+      }
+    },
+    [signInWithGithub, signInWithGoogle],
+  );
+
   const signOut = useCallback(async () => {
     try {
       localStorage.removeItem(AUTH_CACHE_KEY);
@@ -432,6 +448,8 @@ export function useVisitorProgress() {
     recordRapidFireSetCompletion,
     resetProgress,
     signInWithGoogle,
+    signInWithGithub,
+    signIn,
     signOut,
     eraseAllData,
   };

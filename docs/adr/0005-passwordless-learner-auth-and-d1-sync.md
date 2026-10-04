@@ -1,6 +1,6 @@
 # Passwordless Learner Authentication and D1 Telemetry Sync
 
-ArcGym uses Google OpenID Connect (OIDC) via standard OAuth 2.0 authorization code redirect for passwordless identity, coupled with Cloudflare D1 for cross-device telemetry synchronization under a pseudonymous, zero-PII privacy model. Anonymous visitors receive a Trial Allowance of one practice round before authentication is required to persist streaks and continue daily practice.
+ArcGym uses Google OpenID Connect (OIDC) and GitHub OAuth via standard OAuth 2.0 authorization code redirect for passwordless identity, coupled with Cloudflare D1 for cross-device telemetry synchronization under a pseudonymous, zero-PII privacy model. Anonymous visitors receive a Trial Allowance of one practice round before authentication is required to persist streaks and continue daily practice.
 
 ## Context
 
@@ -8,15 +8,18 @@ ArcGym initially stored all practice progress, streaks, and calibration scores i
 
 ## Decisions
 
-### 1. Identity Provider: Google OIDC (Standard Redirect)
-* Authentication uses standard OAuth 2.0 authorization code flow redirecting to Google and completing at `/api/auth/google/callback`.
+### 1. Identity Providers: Google OIDC & GitHub OAuth (Standard Redirect)
+* Authentication uses standard OAuth 2.0 authorization code flow redirecting to Google (`/api/auth/google/login` → `/api/auth/google/callback`) or GitHub (`/api/auth/github/login` → `/api/auth/github/callback`).
 * Avoids loading third-party client JavaScript in the browser, ensuring resilience against strict privacy browsers, ad-blockers, and corporate endpoint policies.
-* Sessions are transported via `HttpOnly`, `Secure`, `SameSite=Lax` cookies containing a signed JWT, preventing token theft via XSS.
+* Sessions are transported via `HttpOnly`, `Secure`, `SameSite=Lax` cookies containing a signed stateless JWT, preventing token theft via XSS.
 
 ### 2. Privacy Model: Pseudonymous Zero-PII Store
-* The database never stores real names, emails, or Google user IDs.
-* When verifying the ID token, the backend hashes the provider subject identifier with a private server pepper: `learner_id = HMAC_SHA256(sub, SERVER_PEPPER)`.
-* Practice telemetry cannot be tied to an individual's corporate or personal identity even in the event of database exposure. A single-click "Erase All Records" purge in settings immediately executes a hard `DELETE` of the learner's row and clears local state.
+* The database never stores real names, emails, usernames, avatars, or provider user IDs.
+* When verifying the provider identity, the backend hashes the provider subject identifier with a private server pepper:
+  * Google: `learner_id = HMAC_SHA256(pepper, "learner:<google_sub>")`
+  * GitHub: `learner_id = HMAC_SHA256(pepper, "learner:github:<github_user_id>")`
+* Provider subject isolation ensures zero collision risk between numerical provider IDs while preserving 100% backwards compatibility for existing Google learner IDs.
+* Ephemeral access tokens are discarded immediately. Practice telemetry cannot be tied to an individual's corporate or personal identity even in the event of database exposure. A single-click "Erase All Records" purge in settings immediately executes a hard `DELETE` of the learner's row and clears local state.
 
 ### 3. Storage Separation: D1 for Progress, KV & Static Bundle for Drills
 * **Drills**: Remain immutable static JSON artifacts built into `canonicalDrills.json` and cached in Cloudflare KV (`drill:today`). Drills are never queried from SQL, preserving 0ms catalog load times, 100% offline drill viewing, and zero D1 read quota burn.
@@ -41,5 +44,5 @@ ArcGym initially stored all practice progress, streaks, and calibration scores i
 ## Consequences
 
 * Adds `[[d1_databases]] binding = "DB"` to `apps/arcgym-web/wrangler.toml` and native migrations in `apps/arcgym-web/migrations/`.
-* Requires environment secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, and `LEARNER_PEPPER`.
+* Requires environment secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `SESSION_SECRET`, and `LEARNER_PEPPER`.
 * Requires client-side hook `useLearnerSync` to integrate with `useVisitorProgress`.

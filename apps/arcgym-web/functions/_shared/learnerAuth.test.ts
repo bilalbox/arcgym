@@ -25,6 +25,16 @@ describe('learnerAuth', () => {
     expect(id1).not.toBe(idOther);
   });
 
+  it('isolates GitHub provider subjects from Google subjects with the same numeric ID', async () => {
+    const rawId = '12345678';
+    const googleId = await deriveLearnerId(rawId, TEST_PEPPER);
+    const githubId = await deriveLearnerId(`github:${rawId}`, TEST_PEPPER);
+
+    expect(googleId).toHaveLength(64);
+    expect(githubId).toHaveLength(64);
+    expect(googleId).not.toBe(githubId);
+  });
+
   it('signs and verifies a session JWT', async () => {
     const learnerId = 'mock_learner_id_123';
     const token = await signSessionJwt(learnerId, TEST_SECRET, 3600);

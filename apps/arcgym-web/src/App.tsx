@@ -14,6 +14,7 @@ import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { ProgressDialog } from '@/components/progress/ProgressDialog';
+import { GithubIcon, GoogleIcon } from '@/components/ui/icons';
 import { getWebFormatDescriptor } from '@/formats';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import { useRouter } from '@/hooks/useRouter';
@@ -79,6 +80,7 @@ export const App: React.FC = () => {
     recordRapidFireSetCompletion,
     resetProgress,
     signInWithGoogle,
+    signInWithGithub,
     signOut,
     eraseAllData,
   } = useVisitorProgress();
@@ -163,6 +165,8 @@ export const App: React.FC = () => {
       allDrills={ALL_DRILLS}
       isAuthenticated={isAuthenticated}
       onSignIn={signInWithGoogle}
+      onSignInGoogle={signInWithGoogle}
+      onSignInGithub={signInWithGithub}
       onSignOut={signOut}
       onResetProgress={resetProgress}
       onEraseAllData={eraseAllData}
@@ -183,21 +187,30 @@ export const App: React.FC = () => {
         isAuthenticated={isAuthenticated}
         isSyncing={isSyncing}
         isTrialExhausted={isTrialExhausted}
-        onSignIn={signInWithGoogle}
+        onSignIn={openProgressModal}
         onOpenProgressModal={openProgressModal}
       />
       {isTrialExhausted && (
         <div className="bg-miro-charcoal text-miro-onPrimary px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-3 shadow-xs">
-          <span>
-            Trial complete · Save your streak and unlock unlimited architectural drills with Google.
-          </span>
-          <button
-            type="button"
-            onClick={() => signInWithGoogle()}
-            className="px-3 py-1 bg-miro-blue hover:bg-miro-blueDeep text-white rounded-full text-xs font-semibold cursor-pointer shrink-0 transition-colors"
-          >
-            Sign in with Google
-          </button>
+          <span>Trial complete · Save streak and unlock unlimited architectural drills.</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => signInWithGoogle()}
+              className="px-3 py-1 bg-miro-blue hover:bg-miro-blueDeep text-white rounded-full text-xs font-semibold cursor-pointer shrink-0 transition-colors inline-flex items-center gap-1.5"
+            >
+              <GoogleIcon className="h-3 w-3" />
+              <span>Google</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => signInWithGithub()}
+              className="px-3 py-1 bg-miro-surface text-miro-primary hover:bg-miro-surfaceSoft rounded-full text-xs font-semibold cursor-pointer shrink-0 transition-colors inline-flex items-center gap-1.5"
+            >
+              <GithubIcon className="h-3 w-3" />
+              <span>GitHub</span>
+            </button>
+          </div>
         </div>
       )}
       {body}
@@ -404,7 +417,9 @@ export const App: React.FC = () => {
             previousAttempt={previousAttempt}
             isAuthenticated={isAuthenticated}
             isTrialExhausted={isTrialExhausted}
-            onSignIn={signInWithGoogle}
+            onSignIn={openProgressModal}
+            onSignInGoogle={signInWithGoogle}
+            onSignInGithub={signInWithGithub}
             onRapidFireComplete={handleRapidFireComplete}
             onNextDrill={handleNextRapidFireSet}
           />
