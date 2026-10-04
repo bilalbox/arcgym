@@ -197,8 +197,26 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             >
               architect.salesforce.com
             </a>{' '}
-            and the Salesforce Trailblazer Community. When following links to external domains, your
-            browsing is subject to Salesforce’s own privacy statement and terms of service.
+            and discussions in the{' '}
+            <a
+              href="https://trailhead.salesforce.com/trailblazer-community/groups"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-miro-blue hover:text-miro-blueDeep font-medium underline"
+            >
+              Trailblazer Community
+            </a>
+            . ArcGym is heavily inspired by{' '}
+            <a
+              href="https://analystgym.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-miro-blue hover:text-miro-blueDeep font-medium underline"
+            >
+              Analyst Gym
+            </a>
+            . When following links to external domains, your browsing is subject to the external
+            domain's own privacy statement and terms of service.
           </p>
         </section>
 
