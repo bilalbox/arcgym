@@ -1,0 +1,103 @@
+{
+  "id": "AGD-01002",
+  "title": "Silent Retraction in Streaming Data Transforms",
+  "format": "Troubleshooting",
+  "domain": "Data_Architecture",
+  "domainLabel": "Streaming Data Transforms & Real-Time Identity",
+  "difficulty": "Lead_CTA",
+  "pillars": ["Reliability", "Operational_Excellence"],
+  "version": 1,
+  "status": "published",
+  "sourceCardIds": ["FC-0D5KX00000jAFgt0AG"],
+  "architecture": {
+    "synopsis": "High-velocity clickstream and authentication events are ingested via the Web SDK into an Engagement DLO with unique event UUIDs. A Streaming Data Transform (SDT) filters for login events to populate an AnonymousVisitor Profile DLO mapped to the Individual DMO for real-time personalization.",
+    "diagramUrl": "/diagrams/agd-01002-sdt-retraction-topology.svg",
+    "diagramLabel": "Web SDK engagement stream through filtered SDT into visitor profile DMO"
+  },
+  "issue": "Shortly after landing on the site and authenticating, visitor profiles appear in the Profile DMO and qualify for real-time personalization. However, within minutes of active browsing, visitors mysteriously vanish from the Profile DMO, dropping active sessions and breaking personalization.",
+  "probeBudget": 3,
+  "probes": [
+    {
+      "id": "p1",
+      "tier": "pivotal",
+      "label": "What events arrive immediately before a visitor vanishes from the target Profile DMO?",
+      "answer": "A subsequent event for the same visitor_cookie arrives with an event_type of 'navigation' or 'cart_browse'."
+    },
+    {
+      "id": "p2",
+      "tier": "pivotal",
+      "label": "How is the primary key defined on the target Profile DLO in the Streaming Data Transform?",
+      "answer": "The target DLO uses visitor_cookie alone as the primary key, matching the WHERE event_type = 'login' SELECT statement."
+    },
+    {
+      "id": "p3",
+      "tier": "useful",
+      "label": "Are the original login events still present in the source Engagement DLO?",
+      "answer": "Yes, all login and navigation events persist with unique event UUIDs in the source engagement table; none were deleted or modified."
+    },
+    {
+      "id": "p4",
+      "tier": "useful",
+      "label": "Does the Streaming Data Transform show any execution errors or dropped event metrics in Data Cloud Monitoring?",
+      "answer": "Transform status is Active with 0 processing errors, 0 dropped records, and sub-second execution latency."
+    },
+    {
+      "id": "p5",
+      "tier": "distractor",
+      "label": "Is a downstream privacy or consent flow triggering automated profile deletions?",
+      "answer": "Consent API audit logs show no opt-out or Right to Be Forgotten deletion requests for these visitor cookies.",
+      "distractorAntipattern": "Blame Consent Automation"
+    },
+    {
+      "id": "p6",
+      "tier": "distractor",
+      "label": "Is the Web SDK clearing the visitor_cookie from browser storage prematurely?",
+      "answer": "Browser inspect logs confirm the visitor_cookie persists unchanged across all page views and subsequent requests.",
+      "distractorAntipattern": "Client Cookie Expiration"
+    },
+    {
+      "id": "p7",
+      "tier": "distractor",
+      "label": "Is the real-time streaming buffer evicting records due to high tenant event throughput?",
+      "answer": "Tenant streaming ingestion is operating at 28% of capacity with zero memory or buffer eviction alerts.",
+      "distractorAntipattern": "Buffer Eviction Blame"
+    }
+  ],
+  "goldCause": {
+    "text": "Streaming Data Transforms evaluate as stateful materialized views keyed on the target primary key. When a subsequent event on that key fails the WHERE filter, the engine issues a streaming retraction that deletes the row from the target DLO.",
+    "rationale": "The streaming SQL engine evaluates mutations per target primary key. Filtering an event stream by a business key in the target causes any non-matching event on that key to retract previous rows. The architect must define a composite primary key (e.g., visitor_cookie + event_type) or create separate single-purpose streams to ensure append-only persistence.",
+    "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms",
+    "remediations": [
+      {
+        "title": "Composite Primary Key in Target DLO",
+        "description": "Define the target DLO primary key as a composite key of visitor_cookie plus event_type so non-login events cannot invalidate or retract previous login records.",
+        "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+      },
+      {
+        "title": "Pre-Filtered Dedicated Ingestion Streams",
+        "description": "Separate login authentication events from general browsing navigation events into dedicated data streams prior to transformation.",
+        "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+      }
+    ]
+  },
+  "hiddenDistractors": [
+    {
+      "id": "d1",
+      "text": "The Web SDK client library is prematurely expiring the visitor cookie during cross-page navigation.",
+      "antipattern": "Client Cookie Expiration",
+      "rationale": "The client cookie persists across requests; the deletion occurs downstream in the target DLO due to streaming retraction."
+    },
+    {
+      "id": "d2",
+      "text": "Real-time streaming buffer pressure is evicting uncommitted profile records during high QPS spikes.",
+      "antipattern": "Buffer Eviction Blame",
+      "rationale": "Ingestion metrics confirm zero buffer drops. The record is explicitly retracted by the streaming SQL query state."
+    },
+    {
+      "id": "d3",
+      "text": "Automated consent management flows are misinterpreting navigation events as opt-out signals and deleting profile records.",
+      "antipattern": "Blame Consent Automation",
+      "rationale": "Consent logs show no deletion events. The deletion is triggered by the Streaming Data Transform retraction logic."
+    }
+  ]
+}

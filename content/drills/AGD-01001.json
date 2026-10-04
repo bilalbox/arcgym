@@ -1,90 +1,108 @@
 {
   "id": "AGD-01001",
-  "title": "Intermittent Zero-Copy segment refresh timeouts",
+  "title": "Ghost Records in Accelerated Zero-Copy Federation",
   "format": "Troubleshooting",
   "domain": "Data_Architecture",
-  "domainLabel": "Data 360 Zero Copy & Segments",
+  "domainLabel": "Data 360 Zero Copy & Lakehouse Federation",
   "difficulty": "Lead_CTA",
-  "pillars": ["Reliability", "Operational_Excellence"],
+  "pillars": ["Trust", "Operational_Excellence"],
   "version": 1,
   "status": "published",
+  "sourceCardIds": ["FC-0D5KX00000j9NNc0AM"],
   "architecture": {
-    "synopsis": "CRM Core feeds identity into Data Cloud. A Zero Copy Data Stream reads curated tables in Snowflake. Segment refresh jobs run hourly. A batch Data Transform (BDT) rebuilds a curated DLO used by two high-value segments.",
-    "diagramUrl": "/diagrams/agd-00807-bdt-materialization-topology.svg",
-    "diagramLabel": "Zero Copy, BDT, curated DLO, segments"
+    "synopsis": "An enterprise connects customer account records from Snowflake into Data Cloud via a Zero Copy Data Stream. To satisfy low-latency SLAs for Agentforce actions and hourly segment refreshes, Acceleration (Caching) is enabled with an hourly incremental refresh tracking updated_at.",
+    "diagramUrl": "/diagrams/agd-01001-cached-topology.svg",
+    "diagramLabel": "Zero Copy acceleration cache between Snowflake and Agentforce / segments"
   },
-  "issue": "For two weeks, segment refresh was stable. Now refreshes intermittently fail with query timeout near the top of the hour. Ops already enlarged the Snowflake warehouse once; failures continue.",
+  "issue": "Following a compliance purge in Snowflake, auditing reveals that hundreds of hard-deleted customer accounts are still being actively queried by Agentforce and included in hourly segment activations 36 hours later.",
   "probeBudget": 3,
   "probes": [
     {
       "id": "p1",
       "tier": "pivotal",
-      "label": "What changed in the curated DLO definition in the last sprint?",
-      "answer": "Two formula fields were added that expand nested account attributes at query time against the Zero Copy source."
+      "label": "How were the customer accounts purged upstream in Snowflake?",
+      "answer": "A compliance batch job executed physical SQL DELETE FROM accounts WHERE ... statements without soft-delete flags or tombstone records."
     },
     {
       "id": "p2",
       "tier": "pivotal",
-      "label": "Do BDT runs overlap the segment refresh window?",
-      "answer": "Yes. After a scheduler change, BDT start slipped 12 minutes and now overlaps the hourly segment refresh."
+      "label": "How is the Zero Copy Data Stream configured for acceleration?",
+      "answer": "Acceleration is enabled with an hourly incremental refresh schedule tracking updated_at as the watermark column."
     },
     {
       "id": "p3",
       "tier": "useful",
-      "label": "Are timeouts correlated with a specific segment?",
-      "answer": "Both failing segments read the same curated DLO; other segments on different DLOs are fine."
+      "label": "What do direct SQL queries in Snowflake Snowsight return for the purged customer IDs?",
+      "answer": "Zero rows. Querying the source Snowflake tables directly confirms the records were hard-deleted and no longer exist in Snowflake storage."
     },
     {
       "id": "p4",
       "tier": "useful",
-      "label": "What does the Snowflake query profile show during failures?",
-      "answer": "Long scan plus remote spill while evaluating expressions over the Zero Copy external path."
+      "label": "What SQL does the Data Cloud connector execute in Snowflake during the hourly acceleration refresh?",
+      "answer": "Snowflake query history shows: SELECT ... FROM accounts WHERE updated_at > :last_watermark. The query returned 42 newly created and modified rows; no delete metadata or tombstones were requested."
     },
     {
       "id": "p5",
       "tier": "distractor",
-      "label": "Is the Zero Copy connector hitting documented API rate limits?",
-      "answer": "No sustained 429s. Connector health looks normal between failures.",
-      "distractorAntipattern": "Blame Connector Ceiling"
+      "label": "Is Snowflake Time Travel retaining snapshots past the purge window?",
+      "answer": "Time Travel is set to the default 1 day, and live queries confirm the physical table dropped the rows completely.",
+      "distractorAntipattern": "Blame Storage Time Travel"
     },
     {
       "id": "p6",
       "tier": "distractor",
-      "label": "Did the CRM to Data Cloud identity sync lag increase?",
-      "answer": "Identity sync lag is unchanged and within SLO; failures are on segment refresh, not identity.",
-      "distractorAntipattern": "Identity Sync Distraction"
+      "label": "Did the Data Cloud connector user lose permissions on Snowflake change-data-capture (CDC) tables?",
+      "answer": "No permission errors or 403s. The integration role has sustained SELECT access.",
+      "distractorAntipattern": "Permission Ghost Hunt"
     },
     {
       "id": "p7",
       "tier": "distractor",
-      "label": "Is cross-region network latency elevated?",
-      "answer": "Cloud monitoring shows no latency incident in the window. Timeouts are query-side.",
-      "distractorAntipattern": "Network Ghost Hunt"
+      "label": "Are segment refresh schedules failing or throwing execution errors in Data Cloud?",
+      "answer": "All segment publish jobs are completing with status 'Success' on their standard hourly schedule.",
+      "distractorAntipattern": "Segment Schedule Blame"
     }
   ],
   "goldCause": {
-    "text": "Formula fields on the curated DLO force expensive Zero Copy evaluation, and after the BDT schedule slip those scans overlap segment refresh, causing intermittent timeouts.",
-    "rationale": "The failure mode is concurrent heavy evaluation against Zero Copy plus a schedule collision—not warehouse size. Fix the formula materialization path and/or separate the BDT window from segment refresh.",
-    "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+    "text": "Zero Copy incremental acceleration queries external tables using a high-watermark timestamp (updated_at), which only captures inserts and updates. Upstream physical SQL DELETE operations produce no row or updated timestamp, leaving purged records in Data Cloud's accelerated cache until a full refresh or soft-delete pattern is used.",
+    "rationale": "Incremental acceleration supports upserts only and does not track hard deletes in the external source. Purging records via physical DELETE in Snowflake leaves zombie records in the accelerated DMO cache. The architect must implement soft deletes (is_deleted flag) with updated timestamps or schedule periodic full cache refreshes.",
+    "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods",
+    "remediations": [
+      {
+        "title": "Logical Soft Deletes with Updated Watermark",
+        "description": "Implement an is_deleted flag in the upstream table and update updated_at during purges so incremental acceleration ingests the tombstone.",
+        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+      },
+      {
+        "title": "Direct Access Live Query Federation",
+        "description": "Route compliance-critical DMOs through Direct Access without acceleration to guarantee immediate, zero-staleness reads directly from Snowflake.",
+        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+      },
+      {
+        "title": "Automated Full Cache Re-baselining",
+        "description": "Trigger an automated API-driven full cache refresh immediately following batch delete scripts to clear purged keys from the acceleration store.",
+        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+      }
+    ]
   },
   "hiddenDistractors": [
     {
       "id": "d1",
-      "text": "The Snowflake warehouse is still undersized for peak concurrent segment refresh load.",
-      "antipattern": "Scale First Warehouse",
-      "rationale": "Warehouse was already enlarged with no relief. Capacity masks the real overlap and formula expansion cost."
+      "text": "Snowflake Time Travel and data replication lag are serving stale snapshots to Data Cloud.",
+      "antipattern": "Blame Storage Time Travel",
+      "rationale": "Direct queries confirm the rows were deleted in Snowflake. The issue is Data Cloud's high-watermark cache not capturing hard deletes."
     },
     {
       "id": "d2",
-      "text": "Zero Copy connector rate limiting is throttling the segment refresh queries.",
-      "antipattern": "Blame Connector Ceiling",
-      "rationale": "No rate-limit evidence. Timeouts track query evaluation cost during BDT overlap."
+      "text": "The Data Cloud connector user lacks permissions to read Snowflake change-data-capture (CDC) tables.",
+      "antipattern": "Permission Ghost Hunt",
+      "rationale": "Zero Copy incremental acceleration queries the base table using updated_at timestamps, not a CDC stream. Permissions are fully intact."
     },
     {
       "id": "d3",
-      "text": "Cross-region network latency between Data Cloud and Snowflake is causing the timeouts.",
-      "antipattern": "Network Ghost Hunt",
-      "rationale": "No latency incident. Failures are selective to one curated DLO path."
+      "text": "Hourly segment refresh jobs failed to run, causing segments to retain stale membership lists.",
+      "antipattern": "Segment Schedule Blame",
+      "rationale": "Segment jobs are running and completing successfully; the stale data resides in the accelerated DMO cache itself."
     }
   ]
 }

@@ -2,6 +2,7 @@ import type {
   CauseVerdict,
   HiddenDistractorDTO,
   TroubleshootingDrillDefinition,
+  TroubleshootingRemediationDTO,
 } from '../../types/drill.js';
 
 export interface CauseGraderInput {
@@ -31,6 +32,7 @@ export interface GradeCauseResult {
   goldText: string;
   goldRationale: string;
   goldCitationUrl?: string;
+  goldRemediations?: TroubleshootingRemediationDTO[];
 }
 
 export interface CauseGrader {

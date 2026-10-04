@@ -196,12 +196,22 @@ export interface TroubleshootingArchitectureDTO {
   diagramLabel?: string;
 }
 
+/** Remediation path to prevent recurrence of a troubleshooting failure mode. */
+export interface TroubleshootingRemediationDTO {
+  title: string;
+  description: string;
+  /** Optional Citation Manifest URL when the remediation pattern is documentation-backed. */
+  citationUrl?: string;
+}
+
 /** Authored gold root cause — free-text grading target; never shown as an MCQ. */
 export interface GoldCauseDTO {
   text: string;
   rationale: string;
   /** Optional Citation Manifest URL when the failure class is documentation-backed. */
   citationUrl?: string;
+  /** Optional architectural remediations to prevent recurrence. */
+  remediations?: TroubleshootingRemediationDTO[];
 }
 
 /** Hidden antipattern distractor for free-text cause grading — never rendered as a choice. */

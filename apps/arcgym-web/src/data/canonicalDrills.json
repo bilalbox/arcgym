@@ -2192,10 +2192,81 @@
   },
   {
     "id": "AGD-01001",
-    "title": "Intermittent Zero-Copy segment refresh timeouts",
+    "title": "Ghost Records in Accelerated Zero-Copy Federation",
     "format": "Troubleshooting",
     "domain": "Data_Architecture",
-    "domainLabel": "Data 360 Zero Copy & Segments",
+    "domainLabel": "Data 360 Zero Copy & Lakehouse Federation",
+    "difficulty": "Lead_CTA",
+    "pillars": [
+      "Trust",
+      "Operational_Excellence"
+    ],
+    "version": 1,
+    "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000j9NNc0AM"
+    ],
+    "architecture": {
+      "synopsis": "An enterprise connects customer account records from Snowflake into Data Cloud via a Zero Copy Data Stream. To satisfy low-latency SLAs for Agentforce actions and hourly segment refreshes, Acceleration (Caching) is enabled with an hourly incremental refresh tracking updated_at.",
+      "diagramUrl": "/diagrams/agd-01001-cached-topology.svg",
+      "diagramLabel": "Zero Copy acceleration cache between Snowflake and Agentforce / segments"
+    },
+    "issue": "Following a compliance purge in Snowflake, auditing reveals that hundreds of hard-deleted customer accounts are still being actively queried by Agentforce and included in hourly segment activations 36 hours later.",
+    "probeBudget": 3,
+    "probes": [
+      {
+        "id": "p1",
+        "tier": "pivotal",
+        "label": "How were the customer accounts purged upstream in Snowflake?",
+        "answer": "A compliance batch job executed physical SQL DELETE FROM accounts WHERE ... statements without soft-delete flags or tombstone records."
+      },
+      {
+        "id": "p2",
+        "tier": "pivotal",
+        "label": "How is the Zero Copy Data Stream configured for acceleration?",
+        "answer": "Acceleration is enabled with an hourly incremental refresh schedule tracking updated_at as the watermark column."
+      },
+      {
+        "id": "p3",
+        "tier": "useful",
+        "label": "What do direct SQL queries in Snowflake Snowsight return for the purged customer IDs?",
+        "answer": "Zero rows. Querying the source Snowflake tables directly confirms the records were hard-deleted and no longer exist in Snowflake storage."
+      },
+      {
+        "id": "p4",
+        "tier": "useful",
+        "label": "What SQL does the Data Cloud connector execute in Snowflake during the hourly acceleration refresh?",
+        "answer": "Snowflake query history shows: SELECT ... FROM accounts WHERE updated_at > :last_watermark. The query returned 42 newly created and modified rows; no delete metadata or tombstones were requested."
+      },
+      {
+        "id": "p5",
+        "tier": "distractor",
+        "label": "Is Snowflake Time Travel retaining snapshots past the purge window?",
+        "answer": "Time Travel is set to the default 1 day, and live queries confirm the physical table dropped the rows completely.",
+        "distractorAntipattern": "Blame Storage Time Travel"
+      },
+      {
+        "id": "p6",
+        "tier": "distractor",
+        "label": "Did the Data Cloud connector user lose permissions on Snowflake change-data-capture (CDC) tables?",
+        "answer": "No permission errors or 403s. The integration role has sustained SELECT access.",
+        "distractorAntipattern": "Permission Ghost Hunt"
+      },
+      {
+        "id": "p7",
+        "tier": "distractor",
+        "label": "Are segment refresh schedules failing or throwing execution errors in Data Cloud?",
+        "answer": "All segment publish jobs are completing with status 'Success' on their standard hourly schedule.",
+        "distractorAntipattern": "Segment Schedule Blame"
+      }
+    ]
+  },
+  {
+    "id": "AGD-01002",
+    "title": "Silent Retraction in Streaming Data Transforms",
+    "format": "Troubleshooting",
+    "domain": "Data_Architecture",
+    "domainLabel": "Streaming Data Transforms & Real-Time Identity",
     "difficulty": "Lead_CTA",
     "pillars": [
       "Reliability",
@@ -2203,58 +2274,61 @@
     ],
     "version": 1,
     "status": "published",
+    "sourceCardIds": [
+      "FC-0D5KX00000jAFgt0AG"
+    ],
     "architecture": {
-      "synopsis": "CRM Core feeds identity into Data Cloud. A Zero Copy Data Stream reads curated tables in Snowflake. Segment refresh jobs run hourly. A batch Data Transform (BDT) rebuilds a curated DLO used by two high-value segments.",
-      "diagramUrl": "/diagrams/agd-00807-bdt-materialization-topology.svg",
-      "diagramLabel": "Zero Copy, BDT, curated DLO, segments"
+      "synopsis": "High-velocity clickstream and authentication events are ingested via the Web SDK into an Engagement DLO with unique event UUIDs. A Streaming Data Transform (SDT) filters for login events to populate an AnonymousVisitor Profile DLO mapped to the Individual DMO for real-time personalization.",
+      "diagramUrl": "/diagrams/agd-01002-sdt-retraction-topology.svg",
+      "diagramLabel": "Web SDK engagement stream through filtered SDT into visitor profile DMO"
     },
-    "issue": "For two weeks, segment refresh was stable. Now refreshes intermittently fail with query timeout near the top of the hour. Ops already enlarged the Snowflake warehouse once; failures continue.",
+    "issue": "Shortly after landing on the site and authenticating, visitor profiles appear in the Profile DMO and qualify for real-time personalization. However, within minutes of active browsing, visitors mysteriously vanish from the Profile DMO, dropping active sessions and breaking personalization.",
     "probeBudget": 3,
     "probes": [
       {
         "id": "p1",
         "tier": "pivotal",
-        "label": "What changed in the curated DLO definition in the last sprint?",
-        "answer": "Two formula fields were added that expand nested account attributes at query time against the Zero Copy source."
+        "label": "What events arrive immediately before a visitor vanishes from the target Profile DMO?",
+        "answer": "A subsequent event for the same visitor_cookie arrives with an event_type of 'navigation' or 'cart_browse'."
       },
       {
         "id": "p2",
         "tier": "pivotal",
-        "label": "Do BDT runs overlap the segment refresh window?",
-        "answer": "Yes. After a scheduler change, BDT start slipped 12 minutes and now overlaps the hourly segment refresh."
+        "label": "How is the primary key defined on the target Profile DLO in the Streaming Data Transform?",
+        "answer": "The target DLO uses visitor_cookie alone as the primary key, matching the WHERE event_type = 'login' SELECT statement."
       },
       {
         "id": "p3",
         "tier": "useful",
-        "label": "Are timeouts correlated with a specific segment?",
-        "answer": "Both failing segments read the same curated DLO; other segments on different DLOs are fine."
+        "label": "Are the original login events still present in the source Engagement DLO?",
+        "answer": "Yes, all login and navigation events persist with unique event UUIDs in the source engagement table; none were deleted or modified."
       },
       {
         "id": "p4",
         "tier": "useful",
-        "label": "What does the Snowflake query profile show during failures?",
-        "answer": "Long scan plus remote spill while evaluating expressions over the Zero Copy external path."
+        "label": "Does the Streaming Data Transform show any execution errors or dropped event metrics in Data Cloud Monitoring?",
+        "answer": "Transform status is Active with 0 processing errors, 0 dropped records, and sub-second execution latency."
       },
       {
         "id": "p5",
         "tier": "distractor",
-        "label": "Is the Zero Copy connector hitting documented API rate limits?",
-        "answer": "No sustained 429s. Connector health looks normal between failures.",
-        "distractorAntipattern": "Blame Connector Ceiling"
+        "label": "Is a downstream privacy or consent flow triggering automated profile deletions?",
+        "answer": "Consent API audit logs show no opt-out or Right to Be Forgotten deletion requests for these visitor cookies.",
+        "distractorAntipattern": "Blame Consent Automation"
       },
       {
         "id": "p6",
         "tier": "distractor",
-        "label": "Did the CRM to Data Cloud identity sync lag increase?",
-        "answer": "Identity sync lag is unchanged and within SLO; failures are on segment refresh, not identity.",
-        "distractorAntipattern": "Identity Sync Distraction"
+        "label": "Is the Web SDK clearing the visitor_cookie from browser storage prematurely?",
+        "answer": "Browser inspect logs confirm the visitor_cookie persists unchanged across all page views and subsequent requests.",
+        "distractorAntipattern": "Client Cookie Expiration"
       },
       {
         "id": "p7",
         "tier": "distractor",
-        "label": "Is cross-region network latency elevated?",
-        "answer": "Cloud monitoring shows no latency incident in the window. Timeouts are query-side.",
-        "distractorAntipattern": "Network Ghost Hunt"
+        "label": "Is the real-time streaming buffer evicting records due to high tenant event throughput?",
+        "answer": "Tenant streaming ingestion is operating at 28% of capacity with zero memory or buffer eviction alerts.",
+        "distractorAntipattern": "Buffer Eviction Blame"
       }
     ]
   }

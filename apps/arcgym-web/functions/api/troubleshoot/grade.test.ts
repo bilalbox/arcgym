@@ -24,6 +24,13 @@ const FIXTURE_DRILL: TroubleshootingDrillDefinition = {
     text: 'Formula fields force expensive Zero Copy evaluation overlapping segment refresh.',
     rationale: 'Concurrent heavy evaluation plus schedule collision, not warehouse size.',
     citationUrl: 'https://architect.salesforce.com/docs/fixture',
+    remediations: [
+      {
+        title: 'Separate batch transforms from refresh schedules',
+        description: 'Ensure transforms do not overlap segment publish windows.',
+        citationUrl: 'https://architect.salesforce.com/docs/fixture',
+      },
+    ],
   },
   hiddenDistractors: [
     {
@@ -144,6 +151,7 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
       goldText: string;
       goldRationale: string;
       goldCitationUrl?: string;
+      goldRemediations?: Array<{ title: string; description: string; citationUrl?: string }>;
     };
     expect(data.verdict).toBe('correct');
     expect(data.isCorrect).toBe(true);
@@ -151,5 +159,9 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
     expect(data.goldText).toBe(FIXTURE_DRILL.goldCause.text);
     expect(data.goldRationale).toBe(FIXTURE_DRILL.goldCause.rationale);
     expect(data.goldCitationUrl).toBe(FIXTURE_DRILL.goldCause.citationUrl);
+    expect(data.goldRemediations).toHaveLength(1);
+    expect(data.goldRemediations?.[0].title).toBe(
+      'Separate batch transforms from refresh schedules',
+    );
   });
 });

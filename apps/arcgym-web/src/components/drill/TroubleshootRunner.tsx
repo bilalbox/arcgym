@@ -299,6 +299,43 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
               )}
             </div>
 
+            {session.grade.goldRemediations && session.grade.goldRemediations.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
+                  Architectural Remediation
+                </p>
+                <div className="space-y-2">
+                  {session.grade.goldRemediations.map((rem, idx) => (
+                    <div
+                      key={rem.title}
+                      className="rounded-xl border border-miro-hairline bg-miro-surface p-3.5 space-y-1.5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-mono">
+                          Solution {idx + 1}
+                        </Badge>
+                        <span className="text-sm font-medium text-miro-primary">{rem.title}</span>
+                      </div>
+                      <p className="text-xs text-miro-slate leading-relaxed">{rem.description}</p>
+                      {rem.citationUrl && (
+                        <div className="pt-1">
+                          <a
+                            href={rem.citationUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] text-miro-blue hover:underline inline-flex items-center gap-1"
+                          >
+                            <span>{new URL(rem.citationUrl).hostname}</span>
+                            <span aria-hidden="true">↗</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="rounded-xl border border-miro-hairline p-3 text-sm text-miro-slate flex flex-wrap gap-3">
               <span className="font-mono">Probe {session.probeScore ?? 0}</span>
               <span className="font-mono">Cause {session.causeScore ?? 0}</span>

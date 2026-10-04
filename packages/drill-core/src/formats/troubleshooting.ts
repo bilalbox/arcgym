@@ -110,6 +110,41 @@ export function validateTroubleshooting(
     }
   }
 
+  if (goldCause?.remediations !== undefined) {
+    if (!Array.isArray(goldCause.remediations)) {
+      findings.push({
+        ruleId: 'missing-field',
+        where: 'goldCause.remediations',
+        message: 'goldCause.remediations must be an array when present',
+      });
+    } else {
+      goldCause.remediations.forEach((rem, idx) => {
+        const r = rem as Record<string, unknown> | undefined;
+        if (!r || typeof r.title !== 'string' || !r.title.trim()) {
+          findings.push({
+            ruleId: 'missing-field',
+            where: `goldCause.remediations[${idx}].title`,
+            message: `remediation ${idx + 1} requires a non-empty title`,
+          });
+        }
+        if (!r || typeof r.description !== 'string' || !r.description.trim()) {
+          findings.push({
+            ruleId: 'missing-field',
+            where: `goldCause.remediations[${idx}].description`,
+            message: `remediation ${idx + 1} requires a non-empty description`,
+          });
+        }
+        if (r?.citationUrl !== undefined && !isCitationValid(r.citationUrl, ctx)) {
+          findings.push({
+            ruleId: 'citation-manifest',
+            where: `goldCause.remediations[${idx}].citationUrl`,
+            message: `remediation ${idx + 1} citationUrl must be an exact Citation Manifest URL (got ${r.citationUrl})`,
+          });
+        }
+      });
+    }
+  }
+
   if (
     !Array.isArray(drill.hiddenDistractors) ||
     drill.hiddenDistractors.length !== TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT

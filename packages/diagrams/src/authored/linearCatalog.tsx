@@ -144,7 +144,37 @@ export const LINEAR_TOPOLOGY_DEFS: LinearDef[] = [
       {
         id: 'snowflake',
         header: 'Snowflake Lakehouse',
-        title: '120M Order Records',
+        title: '120M Account Records',
+        subtitle: 'External Table Storage',
+        badge: 'Federated Source Tables',
+      },
+      {
+        id: 'cache',
+        header: 'Data Cloud Zero Copy',
+        title: 'Accelerated Query Cache',
+        subtitle: 'Materialized Cache Layer',
+        badge: 'Configured Cache TTL',
+      },
+      {
+        id: 'clients',
+        header: 'High-QPS Traffic',
+        title: 'CRM Users & Agentforce',
+        subtitle: '600+ Requests / Minute',
+        badge: 'Operational Reads',
+      },
+    ],
+    edgeLabels: ['Refresh', 'Cached'],
+  },
+  {
+    id: 'agd-01001-cached-topology',
+    title: 'Zero Copy Query Acceleration Topology',
+    description: 'Zero Copy cache sits between Snowflake and high-QPS CRM / Agentforce readers.',
+    gap: 70,
+    stages: [
+      {
+        id: 'snowflake',
+        header: 'Snowflake Lakehouse',
+        title: '120M Account Records',
         subtitle: 'External Table Storage',
         badge: 'Federated Source Tables',
       },
@@ -589,6 +619,37 @@ export const LINEAR_TOPOLOGY_DEFS: LinearDef[] = [
       },
     ],
     edgeLabels: ['Feed', 'Unify'],
+  },
+  {
+    id: 'agd-01002-sdt-retraction-topology',
+    title: 'Streaming Data Transform Retraction Topology',
+    description:
+      'High-velocity engagement events stream through filtered SDT into visitor profile DMO.',
+    gap: 80,
+    stages: [
+      {
+        id: 'events',
+        header: 'Web SDK Ingestion',
+        title: 'Engagement DLO',
+        subtitle: 'UUID Primary Key Stream',
+        badge: 'High-Velocity Events',
+      },
+      {
+        id: 'sdt',
+        header: 'Streaming SQL Engine',
+        title: 'Streaming Transform',
+        subtitle: "WHERE type = 'login'",
+        badge: 'Stateful Materialized View',
+      },
+      {
+        id: 'profiles',
+        header: 'Visitor Profiles',
+        title: 'Profile DMO',
+        subtitle: 'visitor_cookie Keyed',
+        badge: 'Target Row Retraction',
+      },
+    ],
+    edgeLabels: ['Filter', 'Retract'],
   },
 ];
 

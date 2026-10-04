@@ -222,6 +222,107 @@ export const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
       </div>
 
       <div className={studioSectionClass}>
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h3 className="text-sm font-medium text-miro-primary">Remediations</h3>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              onChange({
+                ...drill,
+                goldCause: {
+                  ...drill.goldCause,
+                  remediations: [
+                    ...(drill.goldCause.remediations ?? []),
+                    {
+                      title: '',
+                      description: '',
+                      citationUrl: undefined,
+                    },
+                  ],
+                },
+              })
+            }
+          >
+            Add remediation
+          </Button>
+        </div>
+        <div className="space-y-3">
+          {(drill.goldCause.remediations ?? []).map((rem, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: remediations have no persistent id in editor
+            <div key={index} className="rounded-md border border-miro-hairline p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-medium text-miro-slate">
+                  Solution {index + 1}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                  onClick={() => {
+                    const next = [...(drill.goldCause.remediations ?? [])];
+                    next.splice(index, 1);
+                    onChange({
+                      ...drill,
+                      goldCause: {
+                        ...drill.goldCause,
+                        remediations: next.length > 0 ? next : undefined,
+                      },
+                    });
+                  }}
+                >
+                  Remove
+                </Button>
+              </div>
+              <input
+                type="text"
+                className={studioFieldClass}
+                placeholder="Title"
+                value={rem.title}
+                onChange={(e) => {
+                  const next = [...(drill.goldCause.remediations ?? [])];
+                  next[index] = { ...rem, title: e.target.value };
+                  onChange({
+                    ...drill,
+                    goldCause: { ...drill.goldCause, remediations: next },
+                  });
+                }}
+              />
+              <textarea
+                className={`${studioFieldClass} min-h-[60px]`}
+                placeholder="Description"
+                value={rem.description}
+                onChange={(e) => {
+                  const next = [...(drill.goldCause.remediations ?? [])];
+                  next[index] = { ...rem, description: e.target.value };
+                  onChange({
+                    ...drill,
+                    goldCause: { ...drill.goldCause, remediations: next },
+                  });
+                }}
+              />
+              <input
+                type="text"
+                className={studioFieldClass}
+                placeholder="Citation URL (optional)"
+                value={rem.citationUrl ?? ''}
+                onChange={(e) => {
+                  const next = [...(drill.goldCause.remediations ?? [])];
+                  next[index] = { ...rem, citationUrl: e.target.value || undefined };
+                  onChange({
+                    ...drill,
+                    goldCause: { ...drill.goldCause, remediations: next },
+                  });
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className={studioSectionClass}>
         <h3 className="text-sm font-medium text-miro-primary mb-2">Hidden distractors</h3>
         <div className="space-y-3">
           {drill.hiddenDistractors.map((d, index) => (
