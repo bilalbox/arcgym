@@ -83,19 +83,19 @@ describe('Streak calculation engine', () => {
   });
 
   describe('Rapid Fire streak requirement', () => {
-    it('requires 3 reps by default', () => {
-      expect(RAPID_FIRE_REPS_PER_DRILL).toBe(3);
+    it('requires 5 reps by default', () => {
+      expect(RAPID_FIRE_REPS_PER_DRILL).toBe(5);
     });
 
     it('returns false when fewer than required reps are completed', () => {
       expect(isRapidFireStreakRequirementMet(0)).toBe(false);
       expect(isRapidFireStreakRequirementMet(1)).toBe(false);
-      expect(isRapidFireStreakRequirementMet(2)).toBe(false);
+      expect(isRapidFireStreakRequirementMet(4)).toBe(false);
     });
 
-    it('returns true when all 3 reps are completed', () => {
-      expect(isRapidFireStreakRequirementMet(3)).toBe(true);
-      expect(isRapidFireStreakRequirementMet(4)).toBe(true);
+    it('returns true when all 5 reps are completed', () => {
+      expect(isRapidFireStreakRequirementMet(5)).toBe(true);
+      expect(isRapidFireStreakRequirementMet(6)).toBe(true);
     });
   });
 });

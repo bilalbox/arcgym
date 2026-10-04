@@ -1,8 +1,16 @@
 import { getDrillFormatDescriptor } from '../formats/index.js';
-import type {
-  ArchitecturalDomain,
-  DrillAttemptRecord,
-  DrillDefinitionDTO,
+import { RAPID_FIRE_REPS_PER_DRILL } from '../progress/streak.js';
+import {
+  type ArchitecturalDomain,
+  type CaseFileDrillDefinition,
+  type ClientDrillDefinitionDTO,
+  type ClientTroubleshootingDrillDefinition,
+  type DrillAttemptRecord,
+  type DrillDefinitionDTO,
+  isCaseFileDrill,
+  isRapidFireDrill,
+  isTroubleshootingDrill,
+  type RapidFireDrillDefinition,
 } from '../types/drill.js';
 
 export type RecommendationReason = 'daily' | 'next_uncompleted' | 'review';
@@ -18,6 +26,33 @@ export interface RecommendedRound {
 
 /** Backward compatibility alias */
 export type RapidFireSetRecommendation = RecommendedRound;
+
+export type DailyWorkoutFormat = 'Rapid_Fire' | 'Case_File' | 'Troubleshooting';
+
+export interface DailyWorkoutAssignment {
+  format: DailyWorkoutFormat;
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  isCompletedToday: boolean;
+  rapidFireRound?: RecommendedRound;
+  caseFile?: CaseFileDrillDefinition;
+  incident?: ClientTroubleshootingDrillDefinition;
+  drillId?: string;
+}
+
+/**
+ * Hashes an arbitrary string into a stable positive 32-bit integer.
+ */
+export function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
 
 /**
  * Hashes a date string (e.g. "2026-09-27") into a stable positive 32-bit integer.
@@ -155,3 +190,115 @@ export function selectRecommendedRound(params: {
 
 /** Backward-compatibility alias */
 export const selectRecommendedRapidFireSet = selectRecommendedRound;
+
+/**
+ * Selects today's assigned workout for a specific user deterministically.
+ * Randomizes across Rapid Fire (5 reps), Case File (1 scenario), and Troubleshooting (1 incident),
+ * seeded by date + visitor ID (Question 1 = B).
+ */
+export function selectDailyWorkout(params: {
+  allDrills: (DrillDefinitionDTO | ClientDrillDefinitionDTO)[];
+  completedDrills: Record<string, DrillAttemptRecord>;
+  todayDateStr: string;
+  visitorId: string;
+  rapidFireReps?: number;
+}): DailyWorkoutAssignment | null {
+  const {
+    allDrills,
+    completedDrills,
+    todayDateStr,
+    visitorId,
+    rapidFireReps = RAPID_FIRE_REPS_PER_DRILL,
+  } = params;
+
+  if (allDrills.length === 0) return null;
+
+  const rapidFireCatalog = allDrills.filter(isRapidFireDrill) as RapidFireDrillDefinition[];
+  const caseFiles = allDrills.filter(isCaseFileDrill) as CaseFileDrillDefinition[];
+  const incidents = allDrills.filter(
+    isTroubleshootingDrill,
+  ) as ClientTroubleshootingDrillDefinition[];
+
+  const availableFormats: DailyWorkoutFormat[] = [];
+  if (rapidFireCatalog.length > 0) availableFormats.push('Rapid_Fire');
+  if (caseFiles.length > 0) availableFormats.push('Case_File');
+  if (incidents.length > 0) availableFormats.push('Troubleshooting');
+
+  if (availableFormats.length === 0) return null;
+
+  // Deterministic seed based on date and visitor ID
+  const userDailySeed = hashString(`${todayDateStr}:${visitorId || 'guest'}`);
+  const formatIndex = userDailySeed % availableFormats.length;
+  const format = availableFormats[formatIndex];
+
+  if (format === 'Case_File') {
+    const uncompletedCases = caseFiles.filter((c) => !completedDrills[c.id]);
+    const pool = uncompletedCases.length > 0 ? uncompletedCases : caseFiles;
+    const caseIndex = userDailySeed % pool.length;
+    const assignedCase = pool[caseIndex];
+
+    const attempt = completedDrills[assignedCase.id];
+    const isCompletedToday = Boolean(attempt && attempt.completedAt.slice(0, 10) === todayDateStr);
+
+    return {
+      format: 'Case_File',
+      title: assignedCase.title,
+      description:
+        assignedCase.brief?.synopsis ||
+        'Enterprise narrative Brief with scarce Probe Budget across stations.',
+      estimatedMinutes: 10,
+      isCompletedToday,
+      caseFile: assignedCase,
+      drillId: assignedCase.id,
+    };
+  }
+
+  if (format === 'Troubleshooting') {
+    const uncompletedIncidents = incidents.filter((inc) => !completedDrills[inc.id]);
+    const pool = uncompletedIncidents.length > 0 ? uncompletedIncidents : incidents;
+    const incidentIndex = userDailySeed % pool.length;
+    const assignedIncident = pool[incidentIndex];
+
+    const attempt = completedDrills[assignedIncident.id];
+    const isCompletedToday = Boolean(attempt && attempt.completedAt.slice(0, 10) === todayDateStr);
+
+    return {
+      format: 'Troubleshooting',
+      title: assignedIncident.title,
+      description:
+        assignedIncident.issue ||
+        'Diagnose architectural failure from system topology diagram and scarce probes.',
+      estimatedMinutes: 8,
+      isCompletedToday,
+      incident: assignedIncident,
+      drillId: assignedIncident.id,
+    };
+  }
+
+  // Rapid_Fire (5 reps, ~5 min)
+  const round = selectRecommendedRound({
+    drills: rapidFireCatalog,
+    completedDrills,
+    todayDateStr,
+    setCount: rapidFireReps,
+  });
+
+  const isCompletedToday = Boolean(
+    round &&
+      round.drills.length > 0 &&
+      round.drills.every((d) => {
+        const att = completedDrills[d.id];
+        return att && att.completedAt.slice(0, 10) === todayDateStr;
+      }),
+  );
+
+  return {
+    format: 'Rapid_Fire',
+    title: `${rapidFireReps}-Rep High-Tempo Decision Workout`,
+    description:
+      'Calibrate architectural judgment across platform trade-offs before committing recommendations.',
+    estimatedMinutes: 5,
+    isCompletedToday,
+    rapidFireRound: round ?? undefined,
+  };
+}

@@ -1,5 +1,5 @@
 import type { ClientDrillDefinitionDTO, DrillAttemptRecord } from '@arcgym/drill-core';
-import { AlertTriangle, Calendar, Cloud, RotateCcw } from 'lucide-react';
+import { AlertTriangle, Calendar, Cloud, RotateCcw, Shield, User } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -71,6 +71,13 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
     onOpenChange(false);
   };
 
+  const handleOpenPrivacy = () => {
+    onOpenChange(false);
+    if (navigate) {
+      navigate('/privacy');
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -79,39 +86,47 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
         onOpenChange(val);
       }}
     >
-      <DialogContent className="max-w-xl max-h-[85vh] flex flex-col p-6 overflow-hidden">
+      <DialogContent className="max-w-xl max-h-[88vh] flex flex-col p-6 overflow-hidden">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-xl font-medium text-miro-primary">Practice</DialogTitle>
+          <DialogTitle className="text-xl font-medium text-miro-primary">
+            Account & Settings
+          </DialogTitle>
           <DialogDescription className="text-sm text-miro-slate">
-            Completed drills and cumulative points.
+            Manage cloud synchronization, telemetry, and local data.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-2">
+        <div className="space-y-4 py-2">
+          {/* Identity & Cloud Sync Card */}
           {isAuthenticated ? (
-            <div className="p-3 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-miro-successText">
-                <Cloud className="h-4 w-4" />
-                <span className="font-medium">Cloud sync active (Zero-PII)</span>
+            <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5 text-miro-successText">
+                <Cloud className="h-4 w-4 shrink-0" />
+                <div>
+                  <span className="font-semibold block text-miro-primary">Cloud Sync Active</span>
+                  <span className="text-[11px] text-miro-slate">
+                    Telemetry synced across devices with Zero-PII protection.
+                  </span>
+                </div>
               </div>
               {onSignOut && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={onSignOut}
-                  className="text-xs h-7 text-miro-slate hover:text-miro-primary"
+                  className="text-xs h-7 border-miro-hairline hover:bg-miro-card"
                 >
                   Sign out
                 </Button>
               )}
             </div>
           ) : (
-            <div className="p-3 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="space-y-0.5">
-                <span className="font-medium text-miro-primary">Sync streak across devices</span>
-                <p className="text-[11px] text-miro-slate">
-                  Passwordless Google or GitHub login. Zero personal data stored.
-                </p>
+                <div className="flex items-center gap-1.5 font-medium text-miro-primary">
+                  <User className="h-3.5 w-3.5 text-miro-muted" />
+                  <span>Sync Streak Across Devices</span>
+                </div>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 {(onSignInGoogle || onSignIn) && (
@@ -138,6 +153,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
             </div>
           )}
 
+          {/* Practice Telemetry Overview */}
           <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
             <div className="p-2.5 sm:p-3 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
               <div className="text-miro-muted text-xs font-medium mb-1">Points</div>
@@ -169,9 +185,10 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1.5 pt-0.5">
+          {/* Catalog Progress Bar */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-miro-slate">
-              <span>Catalog</span>
+              <span>Catalog Practice Progress</span>
               <span className="font-medium text-miro-primary font-mono tabular-nums">
                 {percent}%
               </span>
@@ -184,10 +201,20 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 my-2">
+        {/* Practice History List */}
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1 my-2 border-t border-miro-hairlineSoft pt-3">
+          <div className="flex items-center justify-between pb-1">
+            <span className="text-xs font-medium text-miro-primary">Practice History</span>
+            <span className="text-[11px] text-miro-muted">
+              {completedCount} record{completedCount === 1 ? '' : 's'}
+            </span>
+          </div>
+
           {completedCount === 0 ? (
-            <div className="py-8 px-4 rounded-xl border border-dashed border-miro-hairline bg-miro-surfaceSoft">
-              <p className="text-sm text-miro-slate text-center">No drills completed yet.</p>
+            <div className="py-6 px-4 rounded-xl border border-dashed border-miro-hairline bg-miro-surfaceSoft text-center">
+              <p className="text-xs text-miro-slate">
+                No drills completed yet. Start your first workout!
+              </p>
             </div>
           ) : (
             completedList
@@ -226,8 +253,8 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="font-mono text-xs text-miro-slate tabular-nums">
-                        +{attempt.score}
+                      <span className="font-mono text-xs text-miro-slate tabular-nums font-medium">
+                        +{attempt.score} pts
                       </span>
                     </div>
                   </>
@@ -242,7 +269,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                         navigate(`/drills/${attempt.drillId}`);
                         onOpenChange(false);
                       }}
-                      className="w-full text-left p-3 rounded-xl border border-miro-hairline bg-miro-card transition-colors flex items-start justify-between gap-3 text-sm cursor-pointer hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-miro-blue"
+                      className="w-full text-left p-2.5 rounded-xl border border-miro-hairline bg-miro-card transition-colors flex items-start justify-between gap-3 text-sm cursor-pointer hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-miro-blue"
                     >
                       {body}
                     </button>
@@ -252,7 +279,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                 return (
                   <div
                     key={attempt.drillId}
-                    className="p-3 rounded-xl border border-miro-hairline bg-miro-card hover:bg-miro-surfaceSoft transition-colors flex items-start justify-between gap-3 text-sm"
+                    className="p-2.5 rounded-xl border border-miro-hairline bg-miro-card hover:bg-miro-surfaceSoft transition-colors flex items-start justify-between gap-3 text-sm"
                   >
                     {body}
                   </div>
@@ -261,7 +288,8 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
           )}
         </div>
 
-        <DialogFooter className="pt-3 border-t border-miro-hairlineSoft flex items-center justify-between sm:justify-between w-full">
+        {/* Footer: Data Management & Privacy */}
+        <DialogFooter className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
           <div>
             {!confirmReset ? (
               <Button
@@ -271,7 +299,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                 className="text-xs text-miro-dangerText hover:text-miro-dangerText hover:bg-miro-dangerLight gap-1.5 px-2"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                Reset Progress
+                Clear Data
               </Button>
             ) : (
               <div className="flex items-center gap-2">
@@ -284,7 +312,7 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
                   onClick={handleReset}
                   className="text-xs h-7 px-2.5"
                 >
-                  Yes, Reset
+                  Yes, Clear
                 </Button>
                 <Button
                   variant="ghost"
@@ -298,14 +326,26 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
             )}
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="text-xs"
-          >
-            Close
-          </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenPrivacy}
+              className="text-xs text-miro-slate hover:text-miro-primary gap-1 cursor-pointer"
+            >
+              <Shield className="h-3 w-3" />
+              <span>Privacy Policy</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-xs"
+            >
+              Close
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

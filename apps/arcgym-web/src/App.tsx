@@ -8,12 +8,16 @@ import {
   isTroubleshootingDrill,
   type StepAttemptTelemetry,
 } from '@arcgym/drill-core';
+import { ArrowLeft } from 'lucide-react';
 import type React from 'react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
+import { GymFloor } from '@/components/home/GymFloor';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { ProgressDialog } from '@/components/progress/ProgressDialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { GithubIcon, GoogleIcon } from '@/components/ui/icons';
 import { getWebFormatDescriptor } from '@/formats';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
@@ -74,6 +78,7 @@ export const App: React.FC = () => {
     completedDrills,
     totalCompleted,
     isAuthenticated,
+    visitorId,
     isSyncing,
     isTrialExhausted,
     recordDrillCompletion,
@@ -89,29 +94,71 @@ export const App: React.FC = () => {
   const incidents = useMemo(() => ALL_DRILLS.filter(isTroubleshootingDrill), []);
   const rapidFireCatalog = useMemo(() => ALL_DRILLS.filter(isRapidFireDrill), []);
 
+  const isWorkoutMode = useMemo(() => {
+    if (!search) return false;
+    const params = new URLSearchParams(search);
+    return params.get('workout') === 'rapid-fire';
+  }, [search]);
+
   useEffect(() => {
     if (search) {
       const params = new URLSearchParams(search);
       const dom = params.get('domain');
       if (dom && (ARCHITECTURAL_DOMAINS as string[]).includes(dom)) {
         setActiveDomain(dom as ArchitecturalDomain);
+      } else if (!dom) {
+        setActiveDomain(undefined);
       }
+    } else {
+      setActiveDomain(undefined);
     }
   }, [search]);
 
-  const availableDomains = useMemo(() => {
-    const present = new Set(rapidFireCatalog.map((d) => d.domain));
-    return (Object.keys(ARCHITECTURAL_DOMAIN_LABELS) as ArchitecturalDomain[]).filter((d) =>
-      present.has(d),
-    );
-  }, [rapidFireCatalog]);
-
-  const { rapidFireDrills, isReviewMode, previousAttempt, resetSessionSkip } =
-    useDrillRecommendation(completedDrills, activeDomain);
+  const { rapidFireDrills, dailyWorkout, isReviewMode, previousAttempt, resetSessionSkip } =
+    useDrillRecommendation(completedDrills, activeDomain, visitorId);
 
   const handleDomainChange = (domain: ArchitecturalDomain | undefined) => {
     setActiveDomain(domain);
     resetSessionSkip();
+    const params = new URLSearchParams(search || '');
+    if (domain) {
+      params.set('domain', domain);
+    } else {
+      params.delete('domain');
+    }
+    const qs = params.toString();
+    navigate(qs ? `/?${qs}` : '/');
+  };
+
+  const handleStartRapidFireWorkout = () => {
+    const params = new URLSearchParams(search || '');
+    params.set('workout', 'rapid-fire');
+    if (activeDomain) {
+      params.set('domain', activeDomain);
+    }
+    navigate(`/?${params.toString()}`);
+  };
+
+  const handleExitWorkout = () => {
+    const params = new URLSearchParams(search || '');
+    params.delete('workout');
+    const qs = params.toString();
+    navigate(qs ? `/?${qs}` : '/');
+  };
+
+  const handleLaunchDailyWorkout = () => {
+    if (!dailyWorkout) {
+      handleStartRapidFireWorkout();
+      return;
+    }
+
+    if (dailyWorkout.format === 'Case_File' && dailyWorkout.caseFile) {
+      navigate(`/cases/${dailyWorkout.caseFile.id}`);
+    } else if (dailyWorkout.format === 'Troubleshooting' && dailyWorkout.incident) {
+      navigate(`/troubleshoot/${dailyWorkout.incident.id}`);
+    } else {
+      handleStartRapidFireWorkout();
+    }
   };
 
   const handleDrillComplete = (result: {
@@ -359,72 +406,88 @@ export const App: React.FC = () => {
     );
   }
 
-  return shell(
-    <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div className="text-center sm:text-left space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">
-          Architectural judgment practice
-        </h1>
-        <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">
-          Trade-off drills grounded in official Salesforce Well-Architected guidance.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] uppercase tracking-wider text-miro-muted font-medium mr-1">
-          Domain
-        </span>
-        <button
-          type="button"
-          onClick={() => handleDomainChange(undefined)}
-          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-            activeDomain === undefined
-              ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
-              : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-          }`}
-        >
-          All
-        </button>
-        {availableDomains.map((domain) => (
+  if (isWorkoutMode) {
+    return shell(
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
             type="button"
-            key={domain}
-            onClick={() => handleDomainChange(domain)}
-            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer ${
-              activeDomain === domain
-                ? 'bg-miro-primary text-miro-onPrimary border-miro-primary'
-                : 'bg-miro-card text-miro-slate border-miro-hairline hover:border-miro-hairlineStrong'
-            }`}
+            onClick={handleExitWorkout}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
           >
-            {ARCHITECTURAL_DOMAIN_LABELS[domain]}
+            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            Exit to Gym Floor
           </button>
-        ))}
-      </div>
 
-      <div className="pt-2">
-        {rapidFireDrills.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-miro-hairline bg-miro-card p-8 text-center space-y-2">
-            <p className="text-sm font-medium text-miro-slate">No drills in this domain yet</p>
-            <p className="text-xs text-miro-slate">
-              Pick another Architectural Domain, or choose All.
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] text-miro-muted font-medium bg-miro-surface px-2 py-0.5 rounded border border-miro-hairline">
+              5-Rep Round
+            </span>
+            <Badge variant="outline" className="text-[11px] py-0 px-2 font-normal">
+              ⚡ Rapid Fire
+            </Badge>
+            <Badge variant="domain" className="text-[11px] py-0 px-2">
+              {activeDomain ? ARCHITECTURAL_DOMAIN_LABELS[activeDomain] : 'All Domains'}
+            </Badge>
           </div>
-        ) : (
-          <RapidFireRunner
-            key={activeDomain ?? 'all'}
-            drills={rapidFireDrills}
-            isReviewMode={isReviewMode}
-            previousAttempt={previousAttempt}
-            isAuthenticated={isAuthenticated}
-            isTrialExhausted={isTrialExhausted}
-            onSignIn={openProgressModal}
-            onSignInGoogle={signInWithGoogle}
-            onSignInGithub={signInWithGithub}
-            onRapidFireComplete={handleRapidFireComplete}
-            onNextDrill={handleNextRapidFireSet}
-          />
-        )}
-      </div>
+        </div>
+
+        <div className="pt-1">
+          {rapidFireDrills.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-miro-hairline bg-miro-card p-8 text-center space-y-3">
+              <p className="text-sm font-medium text-miro-primary">No drills in this domain yet</p>
+              <p className="text-xs text-miro-slate">
+                Pick another Architectural Domain, or choose All.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDomainChange(undefined)}
+                className="text-xs rounded-full"
+              >
+                Reset to All Domains
+              </Button>
+            </div>
+          ) : (
+            <RapidFireRunner
+              key={activeDomain ?? 'all'}
+              drills={rapidFireDrills}
+              isReviewMode={isReviewMode}
+              previousAttempt={previousAttempt}
+              isAuthenticated={isAuthenticated}
+              isTrialExhausted={isTrialExhausted}
+              onSignIn={openProgressModal}
+              onSignInGoogle={signInWithGoogle}
+              onSignInGithub={signInWithGithub}
+              onRapidFireComplete={handleRapidFireComplete}
+              onNextDrill={handleNextRapidFireSet}
+            />
+          )}
+        </div>
+
+        <Footer navigate={navigate} currentPath={pathname} />
+      </main>,
+    );
+  }
+
+  return shell(
+    <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <GymFloor
+        rapidFireCatalog={rapidFireCatalog}
+        caseFiles={caseFiles}
+        incidents={incidents}
+        allDrills={ALL_DRILLS}
+        completedDrills={completedDrills}
+        streakDays={streakDays}
+        isStreakEarnedToday={isStreakEarnedToday}
+        totalPoints={totalPoints}
+        activeDomain={activeDomain}
+        dailyWorkout={dailyWorkout}
+        onDomainChange={handleDomainChange}
+        onStartRapidFireWorkout={handleStartRapidFireWorkout}
+        onLaunchDailyWorkout={handleLaunchDailyWorkout}
+        navigate={navigate}
+      />
 
       <Footer navigate={navigate} currentPath={pathname} />
     </main>,

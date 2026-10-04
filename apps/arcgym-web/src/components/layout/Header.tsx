@@ -1,4 +1,4 @@
-import { Cloud, Moon, Sun } from 'lucide-react';
+import { Cloud, Flame, Moon, Sun, User } from 'lucide-react';
 import type React from 'react';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -27,28 +27,32 @@ export const Header: React.FC<HeaderProps> = ({
   totalDrillsCount,
   streakDays,
   isStreakEarnedToday = false,
-  totalPoints = 0,
+  totalPoints: _totalPoints = 0,
   isAuthenticated = false,
   isSyncing = false,
   isTrialExhausted = false,
   onSignIn,
   onOpenProgressModal,
 }) => {
-  const isHome = pathname === '/' || pathname === '';
+  const isGym =
+    pathname === '/' ||
+    pathname === '' ||
+    pathname.startsWith('/cases') ||
+    pathname.startsWith('/troubleshoot') ||
+    pathname.startsWith('/drills');
   const isSkills = pathname === '/skills';
-  const isCases = pathname === '/cases' || pathname.startsWith('/cases/');
-  const isTroubleshoot = pathname === '/troubleshoot' || pathname.startsWith('/troubleshoot/');
   const isStudio = pathname === '/dev/drills' || pathname.startsWith('/dev/drills/');
   const { resolved, toggle } = useTheme();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-miro-hairline bg-miro-card/95 backdrop-blur-sm">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-4 sm:gap-8">
+          {/* Brand Logo */}
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="flex items-center gap-3 group text-left cursor-pointer"
+            className="flex items-center gap-2.5 group text-left cursor-pointer"
             aria-label="ArcGym home"
           >
             <div
@@ -57,22 +61,23 @@ export const Header: React.FC<HeaderProps> = ({
             >
               AG
             </div>
-            <span className="hidden sm:inline font-medium text-miro-primary tracking-tight text-lg">
+            <span className="font-medium text-miro-primary tracking-tight text-lg">
               Arc<span className="text-miro-blue">Gym</span>
             </span>
           </button>
 
+          {/* Clean Primary Navigation */}
           <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
             <button
               type="button"
               onClick={() => navigate('/')}
               className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
-                isHome
+                isGym && !isSkills && !isStudio
                   ? 'border-miro-primary text-miro-primary font-medium'
                   : 'border-transparent text-miro-muted hover:text-miro-primary'
               }`}
             >
-              Home
+              Gym
             </button>
             <button
               type="button"
@@ -84,28 +89,6 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               Skill Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/cases')}
-              className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
-                isCases
-                  ? 'border-miro-primary text-miro-primary font-medium'
-                  : 'border-transparent text-miro-muted hover:text-miro-primary'
-              }`}
-            >
-              Cases
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/troubleshoot')}
-              className={`inline-flex items-center px-3 h-10 text-[13.5px] border-b-2 transition-colors cursor-pointer ${
-                isTroubleshoot
-                  ? 'border-miro-primary text-miro-primary font-medium'
-                  : 'border-transparent text-miro-muted hover:text-miro-primary'
-              }`}
-            >
-              Troubleshoot
             </button>
             {import.meta.env.DEV && (
               <button
@@ -123,69 +106,70 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
         </div>
 
+        {/* Right Utility Controls */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={onOpenProgressModal}
-            className={`${chipClass} hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong cursor-pointer`}
-            title="Practice history"
-          >
-            <span className="font-mono tabular-nums">
-              {totalCompleted}/{totalDrillsCount}
-            </span>
-          </button>
-
-          {totalPoints > 0 && (
+          {/* Streak indicator chip */}
+          {streakDays > 0 ? (
             <button
               type="button"
               onClick={onOpenProgressModal}
-              className={`${chipClass} hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong cursor-pointer`}
-              title="Total points"
-            >
-              <span className="font-mono tabular-nums">{totalPoints.toLocaleString()}</span>
-            </button>
-          )}
-
-          {streakDays > 0 && (
-            <div
               className={`${chipClass} ${
-                isStreakEarnedToday ? 'border-miro-hairlineStrong text-miro-primary' : ''
-              }`}
+                isStreakEarnedToday
+                  ? 'border-miro-hairlineStrong text-miro-primary'
+                  : 'text-miro-slate'
+              } hover:bg-miro-surfaceSoft cursor-pointer gap-1`}
               title={
                 isStreakEarnedToday
                   ? `${streakDays}-day streak · earned today`
-                  : `${streakDays}-day streak`
+                  : `${streakDays}-day streak · click for practice history`
               }
             >
+              <Flame className="h-3 w-3 text-amber-500" />
               <span className="font-mono tabular-nums">{streakDays}d</span>
-            </div>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenProgressModal}
+              className={`${chipClass} hover:bg-miro-surfaceSoft cursor-pointer hidden sm:inline-flex`}
+              title="Practice progress"
+            >
+              <span className="font-mono tabular-nums">
+                {totalCompleted}/{totalDrillsCount}
+              </span>
+            </button>
           )}
 
+          {/* Account & Settings Pill Trigger */}
           {isAuthenticated ? (
             <button
               type="button"
               onClick={onOpenProgressModal}
               className={`${chipClass} hover:bg-miro-surfaceSoft hover:border-miro-hairlineStrong cursor-pointer text-miro-successText flex items-center gap-1.5`}
-              title={isSyncing ? 'Syncing telemetry...' : 'Cloud synced (Zero-PII)'}
+              title={isSyncing ? 'Syncing telemetry...' : 'Cloud synced · Account & Settings'}
             >
-              <Cloud className={`h-3 w-3 ${isSyncing ? 'animate-pulse' : ''}`} />
-              <span className="hidden sm:inline">Synced</span>
+              <Cloud className={`h-3.5 w-3.5 ${isSyncing ? 'animate-pulse' : ''}`} />
+              <span className="hidden sm:inline font-medium">Account</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={onOpenProgressModal || onSignIn}
-              className={`inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
                 isTrialExhausted
                   ? 'bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal animate-pulse'
                   : 'border border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong hover:text-miro-primary'
               }`}
-              title={isTrialExhausted ? 'Save streak' : 'Sign in'}
+              title={isTrialExhausted ? 'Save streak' : 'Account & Settings'}
             >
-              {isTrialExhausted ? 'Save streak' : 'Sign in'}
+              <User className="h-3 w-3" />
+              <span className="hidden sm:inline">
+                {isTrialExhausted ? 'Save streak' : 'Account'}
+              </span>
             </button>
           )}
 
+          {/* Theme switcher */}
           <button
             type="button"
             onClick={toggle}

@@ -294,8 +294,8 @@ describe('Drill Format Descriptors & Registry', () => {
       expect(desc.format).toBe('Case_File');
       expect(desc.label).toBe('Case File');
       expect(desc.routePrefix).toBe('/cases');
-      expect(desc.countsForStreak).toBe(false);
-      expect(desc.isDailyEligible).toBe(false);
+      expect(desc.countsForStreak).toBe(true);
+      expect(desc.isDailyEligible).toBe(true);
     });
 
     it('identifies authored and client drills', () => {
@@ -334,8 +334,8 @@ describe('Drill Format Descriptors & Registry', () => {
       expect(desc.format).toBe('Troubleshooting');
       expect(desc.label).toBe('Troubleshooting');
       expect(desc.routePrefix).toBe('/troubleshoot');
-      expect(desc.countsForStreak).toBe(false);
-      expect(desc.isDailyEligible).toBe(false);
+      expect(desc.countsForStreak).toBe(true);
+      expect(desc.isDailyEligible).toBe(true);
     });
 
     it('identifies authored and client drills', () => {

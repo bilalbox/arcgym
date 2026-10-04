@@ -4,7 +4,12 @@ import type {
   DrillAttemptRecord,
   DrillDefinitionDTO,
 } from '../types/drill.js';
-import { getDailyDrillIndex, hashDateString, selectRecommendedRound } from './engine.js';
+import {
+  getDailyDrillIndex,
+  hashDateString,
+  selectDailyWorkout,
+  selectRecommendedRound,
+} from './engine.js';
 
 function mockDrill(
   id: string,
@@ -213,5 +218,106 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
     for (const id of set1Ids) {
       expect(set0Ids.has(id)).toBe(false);
     }
+  });
+
+  describe('selectDailyWorkout (Multi-format daily randomized workout)', () => {
+    const mixedCatalog: DrillDefinitionDTO[] = [
+      mockDrill('RF-1', 'Platform_Core'),
+      mockDrill('RF-2', 'Platform_Core'),
+      mockDrill('RF-3', 'Platform_Core'),
+      mockDrill('RF-4', 'Platform_Core'),
+      mockDrill('RF-5', 'Platform_Core'),
+      {
+        id: 'CF-1',
+        title: 'Global Billing Hub',
+        format: 'Case_File',
+        domain: 'Platform_Core',
+        domainLabel: 'Platform Core',
+        difficulty: 'Lead_CTA',
+        pillars: ['Reliability'],
+        version: 1,
+        status: 'published',
+        brief: { title: 'Billing', synopsis: 'Complex billing integration' },
+        stations: [],
+      } as unknown as DrillDefinitionDTO,
+      {
+        id: 'INC-1',
+        title: 'Lock Contention Ingestion',
+        format: 'Troubleshooting',
+        domain: 'Data_Architecture',
+        domainLabel: 'Data Architecture',
+        difficulty: 'Lead_CTA',
+        pillars: ['Reliability'],
+        version: 1,
+        status: 'published',
+        architecture: { synopsis: 'Event ingest pipeline', diagramUrl: '/diagrams/test.svg' },
+        issue: 'Lock contention failure under high volume',
+        probeBudget: 3,
+        probes: [],
+        goldCause: { text: 'Row locking issue', rationale: 'Locking' },
+        hiddenDistractors: [],
+      } as unknown as DrillDefinitionDTO,
+    ];
+
+    it('deterministically returns a workout assignment for a user on a given date', () => {
+      const assignment1 = selectDailyWorkout({
+        allDrills: mixedCatalog,
+        completedDrills: {},
+        todayDateStr: '2026-10-05',
+        visitorId: 'user-alpha-123',
+      });
+      const assignment2 = selectDailyWorkout({
+        allDrills: mixedCatalog,
+        completedDrills: {},
+        todayDateStr: '2026-10-05',
+        visitorId: 'user-alpha-123',
+      });
+
+      expect(assignment1).not.toBeNull();
+      expect(assignment2).not.toBeNull();
+      expect(assignment1?.format).toBe(assignment2?.format);
+      expect(assignment1?.title).toBe(assignment2?.title);
+      expect(assignment1?.estimatedMinutes).toBeLessThanOrEqual(10);
+    });
+
+    it('randomizes across different users on the same date (Question 1 = B)', () => {
+      const formatsSeen = new Set<string>();
+
+      // Testing across different visitor IDs to verify distribution across available formats
+      for (let i = 0; i < 20; i++) {
+        const res = selectDailyWorkout({
+          allDrills: mixedCatalog,
+          completedDrills: {},
+          todayDateStr: '2026-10-05',
+          visitorId: `visitor-${i}`,
+        });
+        if (res) formatsSeen.add(res.format);
+      }
+
+      // Should have generated more than 1 format across different users
+      expect(formatsSeen.size).toBeGreaterThan(1);
+    });
+
+    it('assigns 5 reps when Rapid_Fire format is selected', () => {
+      // Find a visitorId that lands on Rapid_Fire
+      let rfAssignment = null;
+      for (let i = 0; i < 30; i++) {
+        const res = selectDailyWorkout({
+          allDrills: mixedCatalog,
+          completedDrills: {},
+          todayDateStr: '2026-10-05',
+          visitorId: `visitor-rf-test-${i}`,
+        });
+        if (res?.format === 'Rapid_Fire') {
+          rfAssignment = res;
+          break;
+        }
+      }
+
+      expect(rfAssignment).not.toBeNull();
+      expect(rfAssignment?.format).toBe('Rapid_Fire');
+      expect(rfAssignment?.rapidFireRound?.drills.length).toBe(5);
+      expect(rfAssignment?.estimatedMinutes).toBe(5);
+    });
   });
 });

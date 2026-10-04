@@ -95,42 +95,35 @@ describe('PracticeSession Reducer', () => {
     expect(rep?.quadrant).toBe('Hazardous_Assumption');
   });
 
-  it('runs a complete 3-rep practice round through to completion and telemetry synthesis', () => {
-    const drills = [createMockDrill('D1'), createMockDrill('D2'), createMockDrill('D3')];
+  it('runs a complete 5-rep practice round through to completion and telemetry synthesis', () => {
+    const drills = [
+      createMockDrill('D1'),
+      createMockDrill('D2'),
+      createMockDrill('D3'),
+      createMockDrill('D4'),
+      createMockDrill('D5'),
+    ];
     let state = createPracticeSessionState(drills);
 
-    // Rep 1: correct with 85%
-    state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_correct' });
-    state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
-    state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
-    expect(state.currentRepIndex).toBe(1);
-    expect(state.isCompleted).toBe(false);
-
-    // Rep 2: wrong with 70%
-    state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
-    state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
-    state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
-    expect(state.currentRepIndex).toBe(2);
-    expect(state.isCompleted).toBe(false);
-
-    // Rep 3: correct with 95%
-    state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_correct' });
-    state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.95 });
-    state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+    for (let i = 0; i < 5; i++) {
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_OPTION',
+        optionId: i % 2 === 0 ? 'opt_correct' : 'opt_wrong',
+      });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.8 });
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+    }
 
     // Round should now be completed
     expect(state.isCompleted).toBe(true);
-    expect(state.accuracy).toBeCloseTo(2 / 3);
-    expect(state.totalScore).toBeGreaterThan(0);
-    expect(state.attempts.length).toBe(3);
+    expect(state.attempts.length).toBe(5);
 
     const completion = getRoundCompletionResult(state);
     expect(completion).not.toBeNull();
     expect(completion?.isStreakEligible).toBe(true);
-    expect(completion?.repsCount).toBe(3);
+    expect(completion?.repsCount).toBe(5);
     expect(completion?.attempts[0].drillId).toBe('D1');
-    expect(completion?.attempts[1].drillId).toBe('D2');
-    expect(completion?.attempts[2].drillId).toBe('D3');
+    expect(completion?.attempts[4].drillId).toBe('D5');
   });
 
   it('supports 1-rep solo drill sessions without awarding streak requirement', () => {

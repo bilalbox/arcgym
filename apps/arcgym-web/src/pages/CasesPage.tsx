@@ -1,5 +1,5 @@
 import type { CaseFileDrillDefinition, DrillAttemptRecord } from '@arcgym/drill-core';
-import { ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type React from 'react';
 import { Footer } from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,17 @@ export const CasesPage: React.FC<CasesPageProps> = ({
 }) => {
   return (
     <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+          Back to Gym Floor
+        </button>
+      </div>
+
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">Cases</h1>
         <p className="text-sm sm:text-base text-miro-slate max-w-2xl leading-relaxed">

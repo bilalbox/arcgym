@@ -4,6 +4,7 @@ import {
   calculateTotalPoints,
   type DrillAttemptRecord,
 } from '@arcgym/drill-core';
+import { ArrowLeft } from 'lucide-react';
 import type React from 'react';
 import { useMemo } from 'react';
 import { Footer } from '@/components/layout/Footer';
@@ -43,6 +44,17 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
 
   return (
     <div className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
+        >
+          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+          Back to Gym Floor
+        </button>
+      </div>
+
       {/* Title & Description */}
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-medium text-miro-primary tracking-tight">

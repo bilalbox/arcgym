@@ -15,6 +15,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
 export const AUTH_CACHE_KEY = 'arcgym_auth_cached';
+const VISITOR_ID_KEY = 'arcgym_visitor_id';
+
+function getOrCreateVisitorId(): string {
+  if (typeof window === 'undefined') return 'guest';
+  try {
+    let id = localStorage.getItem(VISITOR_ID_KEY);
+    if (!id) {
+      id = `v_${Math.random().toString(36).slice(2, 11)}_${Date.now().toString(36)}`;
+      localStorage.setItem(VISITOR_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return 'guest';
+  }
+}
 
 function getInitialAuthState(): boolean {
   if (typeof window === 'undefined') return false;
@@ -431,6 +446,7 @@ export function useVisitorProgress() {
   }, [state.completedDrills]);
 
   const isStreakEarnedToday = state.lastActiveDate === getTodayString();
+  const visitorId = useMemo(() => learnerId || getOrCreateVisitorId(), [learnerId]);
 
   return {
     progress: state,
@@ -441,6 +457,7 @@ export function useVisitorProgress() {
     totalCompleted,
     isAuthenticated,
     learnerId,
+    visitorId,
     isSyncing,
     isTrialExhausted,
     isDrillCompleted,

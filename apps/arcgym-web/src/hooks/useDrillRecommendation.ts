@@ -1,10 +1,12 @@
 import {
   type ArchitecturalDomain,
   type ClientDrillDefinitionDTO,
+  type DailyWorkoutAssignment,
   type DrillAttemptRecord,
   isRapidFireDrill,
   type RapidFireDrillDefinition,
   type RecommendedRound,
+  selectDailyWorkout,
   selectRecommendedRound,
 } from '@arcgym/drill-core';
 import { useCallback, useMemo, useState } from 'react';
@@ -16,10 +18,21 @@ const RAPID_FIRE_DRILLS = ALL_DRILLS.filter(isRapidFireDrill);
 export function useDrillRecommendation(
   completedDrills: Record<string, DrillAttemptRecord>,
   domain?: ArchitecturalDomain,
+  visitorId?: string,
 ) {
   const [sessionSkipCount, setSessionSkipCount] = useState<number>(0);
 
   const todayDateStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
+  const dailyWorkout: DailyWorkoutAssignment | null = useMemo(() => {
+    return selectDailyWorkout({
+      allDrills: ALL_DRILLS,
+      completedDrills,
+      todayDateStr,
+      visitorId: visitorId || 'guest',
+      rapidFireReps: 5,
+    });
+  }, [completedDrills, todayDateStr, visitorId]);
 
   const activeRound: RecommendedRound | null = useMemo(() => {
     return selectRecommendedRound({
@@ -28,7 +41,7 @@ export function useDrillRecommendation(
       todayDateStr,
       domain,
       sessionSkipCount,
-      setCount: 3,
+      setCount: 5,
     });
   }, [completedDrills, todayDateStr, domain, sessionSkipCount]);
 
@@ -50,6 +63,7 @@ export function useDrillRecommendation(
     round: activeRound,
     drills: rapidFireDrills,
     rapidFireDrills: rapidFireDrills as RapidFireDrillDefinition[],
+    dailyWorkout,
     isDaily: activeRound?.isDaily ?? false,
     reason: activeRound?.reason ?? null,
     isReviewMode: activeRound?.reason === 'review',
