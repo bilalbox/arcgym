@@ -110,6 +110,7 @@ let putCount = 0;
 try {
   if (shouldClear) {
     console.log(`\n--- Clearing Cloudflare KV namespace ${KV_NAMESPACE_ID} ---`);
+    console.log('Note: Feedback and user progress live in Cloudflare D1 and are preserved.');
     const rawKeys = execSync(
       `pnpm exec wrangler kv key list --namespace-id=${KV_NAMESPACE_ID} --remote`,
       { cwd: WEB_DIR, encoding: 'utf-8' },

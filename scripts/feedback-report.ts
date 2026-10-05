@@ -3,18 +3,20 @@
 /**
  * ArcGym Drill Feedback Triage CLI
  *
- * Inspects and summarizes learner ratings and multiselect pill tags across published drills.
+ * Inspects and summarizes learner ratings and multiselect pill tags across published drills from Cloudflare D1.
  *
  * Usage:
  *   pnpm feedback:report                  # Summary table of all drill ratings
  *   pnpm feedback:report --drill AGD-00101 # Detail view for a specific drill
- *   pnpm feedback:pull                   # Snapshot remote KV to data/feedback.json
+ *   pnpm feedback:pull                   # Snapshot remote D1 to data/feedback.json
+ *   pnpm feedback:pull --local           # Snapshot local D1 to data/feedback.json
  */
 
 import { execSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  calculateRatingStats,
   DRILL_DISLIKED_TAG_LABELS,
   DRILL_LIKED_TAG_LABELS,
   type DrillFeedbackRecord,
@@ -25,12 +27,30 @@ import {
 const ROOT_DIR = process.cwd();
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const FEEDBACK_FILE = path.join(DATA_DIR, 'feedback.json');
-const KV_NAMESPACE_ID = 'c1f903c9221b40c086115dd7fc7f43d7';
 
 interface FeedbackSnapshot {
   lastSyncedAt: string;
   ratings: Record<string, DrillRatingStats>;
   records: Record<string, DrillFeedbackRecord[]>;
+}
+
+interface D1RatingStatsRow {
+  drill_id: string;
+  up_votes: number;
+  down_votes: number;
+  total_votes: number;
+  like_percentage: number | null;
+  tag_counts_json: string;
+  updated_at: string;
+}
+
+interface D1FeedbackRow {
+  id: string;
+  drill_id: string;
+  rating: string;
+  tags_json: string;
+  learner_id: string | null;
+  created_at: string;
 }
 
 function loadLocalFeedback(): FeedbackSnapshot {
@@ -56,36 +76,89 @@ function saveLocalFeedback(snapshot: FeedbackSnapshot) {
 }
 
 /**
- * Pulls ratings and recent feedback records directly from Cloudflare KV using Wrangler.
+ * Pulls ratings and recent feedback records directly from Cloudflare D1 using Wrangler.
  */
-function pullFromCloudflare(): FeedbackSnapshot {
-  console.log('Connecting to Cloudflare KV to sync drill feedback...');
+function pullFromCloudflare(useLocal = false): FeedbackSnapshot {
+  const envLabel = useLocal ? 'local D1' : 'Cloudflare D1 (remote)';
+  console.log(`Connecting to ${envLabel} to sync drill feedback...`);
+
   const snapshot: FeedbackSnapshot = {
     lastSyncedAt: new Date().toISOString(),
     ratings: {},
     records: {},
   };
 
-  try {
-    const listRaw = execSync(
-      `pnpm --filter @arcgym/web exec wrangler kv key list --namespace-id=${KV_NAMESPACE_ID} --prefix="drill:rating:" --remote`,
-      { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' },
-    );
-    const keys = JSON.parse(listRaw) as Array<{ name: string }>;
+  const flag = useLocal ? '--local' : '--remote';
 
-    for (const key of keys) {
-      try {
-        const valRaw = execSync(
-          `pnpm --filter @arcgym/web exec wrangler kv key get --namespace-id=${KV_NAMESPACE_ID} "${key.name}" --remote`,
-          { stdio: ['pipe', 'pipe', 'ignore'], encoding: 'utf-8' },
-        );
-        const stats = JSON.parse(valRaw) as DrillRatingStats;
-        if (stats?.drillId) {
-          snapshot.ratings[stats.drillId] = stats;
+  try {
+    const rawRatings = execSync(
+      `pnpm --filter @arcgym/web exec wrangler d1 execute arcgym-d1 ${flag} --command="SELECT * FROM drill_rating_stats;" --json`,
+      { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
+    );
+
+    const parsedRatings = JSON.parse(rawRatings) as Array<{
+      results: D1RatingStatsRow[];
+      success: boolean;
+    }>;
+
+    if (parsedRatings?.[0]?.results) {
+      for (const row of parsedRatings[0].results) {
+        let tagCounts = {};
+        if (row.tag_counts_json) {
+          try {
+            tagCounts = JSON.parse(row.tag_counts_json);
+          } catch {
+            tagCounts = {};
+          }
         }
-      } catch {
-        // Continue if single key fails
+
+        const stats = calculateRatingStats(
+          row.drill_id,
+          row.up_votes,
+          row.down_votes,
+          tagCounts,
+          row.updated_at,
+        );
+        snapshot.ratings[row.drill_id] = stats;
       }
+    }
+
+    // Pull recent feedback submissions
+    try {
+      const rawRecords = execSync(
+        `pnpm --filter @arcgym/web exec wrangler d1 execute arcgym-d1 ${flag} --command="SELECT id, drill_id, rating, tags_json, learner_id, created_at FROM drill_feedback ORDER BY created_at DESC LIMIT 500;" --json`,
+        { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
+      );
+
+      const parsedRecords = JSON.parse(rawRecords) as Array<{
+        results: D1FeedbackRow[];
+        success: boolean;
+      }>;
+
+      if (parsedRecords?.[0]?.results) {
+        for (const row of parsedRecords[0].results) {
+          let tags = [];
+          try {
+            tags = JSON.parse(row.tags_json || '[]');
+          } catch {
+            tags = [];
+          }
+
+          if (!snapshot.records[row.drill_id]) {
+            snapshot.records[row.drill_id] = [];
+          }
+
+          snapshot.records[row.drill_id].push({
+            id: row.id,
+            drillId: row.drill_id,
+            rating: row.rating as 'up' | 'down',
+            tags,
+            submittedAt: row.created_at,
+          });
+        }
+      }
+    } catch {
+      // Feedback table might be empty or optional
     }
 
     saveLocalFeedback(snapshot);
@@ -94,7 +167,7 @@ function pullFromCloudflare(): FeedbackSnapshot {
     );
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'offline';
-    console.warn(`Wrangler KV pull skipped (${msg}). Using local cache if available.\n`);
+    console.warn(`Wrangler D1 pull skipped (${msg}). Using local cache if available.\n`);
   }
 
   return snapshot;
@@ -103,8 +176,7 @@ function pullFromCloudflare(): FeedbackSnapshot {
 function renderReport(drillFilter?: string) {
   let snapshot = loadLocalFeedback();
   if (Object.keys(snapshot.ratings).length === 0) {
-    // If no local data, attempt a pull
-    snapshot = pullFromCloudflare();
+    snapshot = pullFromCloudflare(false);
   }
 
   const ratingsList = Object.values(snapshot.ratings);
@@ -137,17 +209,29 @@ function renderReport(drillFilter?: string) {
       for (const [key, label] of Object.entries(DRILL_LIKED_TAG_LABELS)) {
         const count = counts[key as keyof typeof counts] || 0;
         if (count > 0) {
-          console.log(`  • 👍 ${label.padEnd(20)}: ${count}`);
+          console.log(`  • 👍 ${label.padEnd(25)}: ${count}`);
         }
       }
       console.log("\nDidn't Like Pills:");
       for (const [key, label] of Object.entries(DRILL_DISLIKED_TAG_LABELS)) {
         const count = counts[key as keyof typeof counts] || 0;
         if (count > 0) {
-          console.log(`  • 👎 ${label.padEnd(20)}: ${count}`);
+          console.log(`  • 👎 ${label.padEnd(25)}: ${count}`);
         }
       }
     }
+
+    const records = snapshot.records[drillFilter] || [];
+    if (records.length > 0) {
+      console.log(`\n--- Recent Submissions (${records.length}) ---`);
+      for (const r of records.slice(0, 10)) {
+        const icon = r.rating === 'up' ? '👍' : '👎';
+        const date = r.submittedAt.slice(0, 19).replace('T', ' ');
+        const tags = r.tags.length > 0 ? ` [${r.tags.join(', ')}]` : '';
+        console.log(`  ${icon}  ${date}${tags}`);
+      }
+    }
+
     console.log('\n');
     return;
   }
@@ -161,7 +245,7 @@ function renderReport(drillFilter?: string) {
     console.log(
       'Tip: Once feedback is submitted on drills, run `pnpm feedback:report` to inspect.',
     );
-    console.log('     Or run `pnpm feedback:pull` to sync from Cloudflare KV.\n');
+    console.log('     Or run `pnpm feedback:pull` to sync from Cloudflare D1.\n');
     return;
   }
 
@@ -206,8 +290,11 @@ function renderReport(drillFilter?: string) {
 
 // Parse CLI arguments
 const args = process.argv.slice(2);
-if (args.includes('--pull')) {
-  pullFromCloudflare();
+const isPull = args.includes('--pull');
+const isLocal = args.includes('--local');
+
+if (isPull) {
+  pullFromCloudflare(isLocal);
 } else {
   const drillIdx = args.indexOf('--drill');
   const drillFilter = drillIdx !== -1 && args[drillIdx + 1] ? args[drillIdx + 1] : undefined;

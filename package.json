@@ -24,6 +24,7 @@
     "seed:clear": "npx tsx scripts/seed-drills.ts --clear",
     "feedback:report": "npx tsx scripts/feedback-report.ts",
     "feedback:pull": "npx tsx scripts/feedback-report.ts --pull",
+    "feedback:migrate": "npx tsx scripts/migrate-feedback-to-d1.ts",
     "test": "pnpm --recursive run test",
     "preview": "pnpm --filter @arcgym/web preview",
     "prototype:troubleshoot": "pnpm --filter @arcgym/web exec wrangler dev --config ../../packages/drill-core/prototypes/troubleshooting-ai/wrangler.toml",
