@@ -6,6 +6,7 @@ import {
 } from '@arcgym/drill-core';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DrillFeedbackTab } from '@/components/studio/DrillFeedbackTab';
 import { JsonHatch } from '@/components/studio/JsonHatch';
 import { MetadataForm } from '@/components/studio/MetadataForm';
 import { StudioBanner } from '@/components/studio/StudioBanner';
@@ -16,13 +17,16 @@ import { Button } from '@/components/ui/button';
 import { getWebFormatDescriptor } from '@/formats';
 import {
   getStudioDrill,
+  getStudioFeedback,
   publishStudioDrill,
+  type StudioFeedbackSnapshot,
   saveStudioDrill,
+  syncStudioFeedback,
   unpublishStudioDrill,
 } from '@/studio/api';
 import { setStudioNavBlocker } from '@/studio/navBlock';
 
-type MainTab = 'play' | 'edit';
+type MainTab = 'play' | 'edit' | 'feedback';
 type EditMode = 'forms' | 'json';
 
 interface StudioDrillPageProps {
@@ -35,6 +39,9 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
   const [savedSnapshot, setSavedSnapshot] = useState<string>('');
   const [findings, setFindings] = useState<WordingFinding[]>([]);
   const [validationFindings, setValidationFindings] = useState<ValidationFinding[]>([]);
+  const [feedbackSnapshot, setFeedbackSnapshot] = useState<StudioFeedbackSnapshot | null>(null);
+  const [syncingFeedback, setSyncingFeedback] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [tab, setTab] = useState<MainTab>('edit');
   const [editMode, setEditMode] = useState<EditMode>('forms');
   const [playRevision, setPlayRevision] = useState(0);
@@ -55,17 +62,39 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    getStudioDrill(drillId)
-      .then((res) => {
-        setDrill(res.drill);
-        setSavedSnapshot(JSON.stringify(res.drill));
-        setFindings(res.findings);
-        setValidationFindings(res.validationFindings ?? []);
-        setPlayRevision((n) => n + 1);
+    Promise.allSettled([getStudioDrill(drillId), getStudioFeedback()])
+      .then(([drillRes, fbRes]) => {
+        if (drillRes.status === 'fulfilled') {
+          const res = drillRes.value;
+          setDrill(res.drill);
+          setSavedSnapshot(JSON.stringify(res.drill));
+          setFindings(res.findings);
+          setValidationFindings(res.validationFindings ?? []);
+          setPlayRevision((n) => n + 1);
+        } else {
+          setError(
+            drillRes.reason instanceof Error ? drillRes.reason.message : String(drillRes.reason),
+          );
+        }
+        if (fbRes.status === 'fulfilled') {
+          setFeedbackSnapshot(fbRes.value);
+        }
       })
-      .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, [drillId]);
+
+  const handleSyncFeedback = async () => {
+    setSyncingFeedback(true);
+    setFeedbackError(null);
+    try {
+      const fb = await syncStudioFeedback();
+      setFeedbackSnapshot(fb);
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSyncingFeedback(false);
+    }
+  };
 
   useEffect(() => {
     load();
@@ -220,6 +249,8 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
 
   if (!drill) return null;
 
+  const drillStats = feedbackSnapshot?.ratings[drill.id];
+
   return (
     <>
       <StudioBanner />
@@ -247,6 +278,23 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
               {findings.length > 0 && (
                 <Badge variant="destructive" className="text-[11px]">
                   {findings.length} finding{findings.length === 1 ? '' : 's'}
+                </Badge>
+              )}
+              {drillStats && drillStats.totalVotes > 0 && (
+                <Badge
+                  variant={
+                    drillStats.downVotes > 0 &&
+                    (drillStats.likePercentage === null || drillStats.likePercentage < 70)
+                      ? 'destructive'
+                      : drillStats.likePercentage !== null && drillStats.likePercentage >= 80
+                        ? 'success'
+                        : 'outline'
+                  }
+                  className="text-[11px]"
+                >
+                  {drillStats.likePercentage !== null
+                    ? `👍 ${drillStats.likePercentage}% (${drillStats.totalVotes})`
+                    : `👍 ${drillStats.upVotes} · 👎 ${drillStats.downVotes}`}
                 </Badge>
               )}
             </div>
@@ -295,7 +343,7 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
         )}
 
         <div className="flex gap-1 border-b border-miro-hairline">
-          {(['play', 'edit'] as const).map((t) => (
+          {(['play', 'edit', 'feedback'] as const).map((t) => (
             <button
               key={t}
               type="button"
@@ -306,7 +354,16 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
                   : 'border-transparent text-miro-muted hover:text-miro-primary'
               }`}
             >
-              {t}
+              {t === 'feedback' && drillStats && drillStats.totalVotes > 0 ? (
+                <span className="flex items-center gap-1.5">
+                  Feedback
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-miro-surfaceSoft text-miro-slate font-mono">
+                    {drillStats.totalVotes}
+                  </span>
+                </span>
+              ) : (
+                t
+              )}
             </button>
           ))}
         </div>
@@ -315,6 +372,18 @@ export const StudioDrillPage: React.FC<StudioDrillPageProps> = ({ drillId, navig
           <div className="pt-2">
             <Runner key={`${drill.format}-${drill.id}-${playRevision}`} drill={drill} />
           </div>
+        )}
+
+        {tab === 'feedback' && drill && (
+          <DrillFeedbackTab
+            drillId={drill.id}
+            stats={drillStats}
+            records={feedbackSnapshot?.records[drill.id]}
+            lastSyncedAt={feedbackSnapshot?.lastSyncedAt ?? null}
+            onSync={handleSyncFeedback}
+            syncing={syncingFeedback}
+            error={feedbackError}
+          />
         )}
 
         {tab === 'edit' && (

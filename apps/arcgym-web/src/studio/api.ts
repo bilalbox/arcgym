@@ -1,4 +1,10 @@
-import type { DrillDefinitionDTO, ValidationFinding, WordingFinding } from '@arcgym/drill-core';
+import type {
+  DrillDefinitionDTO,
+  DrillFeedbackRecord,
+  DrillRatingStats,
+  ValidationFinding,
+  WordingFinding,
+} from '@arcgym/drill-core';
 
 const BASE = '/__studio';
 
@@ -101,4 +107,18 @@ export function searchStudioChunks(q: string): Promise<{ chunks: ChunkSearchHit[
 
 export function checkDiagramExists(diagramPath: string): Promise<{ exists: boolean }> {
   return studioFetch(`/diagram-exists?path=${encodeURIComponent(diagramPath)}`);
+}
+
+export interface StudioFeedbackSnapshot {
+  lastSyncedAt: string | null;
+  ratings: Record<string, DrillRatingStats>;
+  records: Record<string, DrillFeedbackRecord[]>;
+}
+
+export function getStudioFeedback(): Promise<StudioFeedbackSnapshot> {
+  return studioFetch('/feedback');
+}
+
+export function syncStudioFeedback(): Promise<StudioFeedbackSnapshot> {
+  return studioFetch('/feedback/sync', { method: 'POST' });
 }

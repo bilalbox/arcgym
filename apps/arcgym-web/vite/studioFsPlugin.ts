@@ -69,6 +69,40 @@ function drillPath(drillsDir: string, id: string): string {
   return path.join(drillsDir, `${id.toUpperCase()}.json`);
 }
 
+function feedbackPath(repoRoot: string): string {
+  return path.join(repoRoot, 'data/feedback.json');
+}
+
+function readFeedbackSnapshot(repoRoot: string): {
+  lastSyncedAt: string | null;
+  ratings: Record<string, unknown>;
+  records: Record<string, unknown[]>;
+} {
+  const fp = feedbackPath(repoRoot);
+  if (!fs.existsSync(fp)) {
+    return {
+      lastSyncedAt: null,
+      ratings: {},
+      records: {},
+    };
+  }
+  try {
+    const raw = fs.readFileSync(fp, 'utf-8');
+    const parsed = JSON.parse(raw);
+    return {
+      lastSyncedAt: typeof parsed.lastSyncedAt === 'string' ? parsed.lastSyncedAt : null,
+      ratings: parsed.ratings && typeof parsed.ratings === 'object' ? parsed.ratings : {},
+      records: parsed.records && typeof parsed.records === 'object' ? parsed.records : {},
+    };
+  } catch {
+    return {
+      lastSyncedAt: null,
+      ratings: {},
+      records: {},
+    };
+  }
+}
+
 function readDrill(drillsDir: string, id: string): DrillDefinitionDTO | null {
   const filePath = drillPath(drillsDir, id);
   if (!fs.existsSync(filePath)) return null;
@@ -315,6 +349,32 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
             const exists = abs.startsWith(publicDir) && fs.existsSync(abs);
             sendJson(res, 200, { exists });
             return;
+          }
+
+          if (req.method === 'GET' && pathname === `${STUDIO_PREFIX}/feedback`) {
+            sendJson(res, 200, readFeedbackSnapshot(repoRoot));
+            return;
+          }
+
+          if (req.method === 'POST' && pathname === `${STUDIO_PREFIX}/feedback/sync`) {
+            try {
+              const { stdout, stderr } = await execFileAsync('pnpm', ['feedback:pull'], {
+                cwd: repoRoot,
+                maxBuffer: 10 * 1024 * 1024,
+              });
+              const snapshot = readFeedbackSnapshot(repoRoot);
+              sendJson(res, 200, {
+                ...snapshot,
+                output: `${stdout}\n${stderr}`.trim(),
+              });
+              return;
+            } catch (err) {
+              const e = err as { stdout?: string; stderr?: string; message?: string };
+              sendJson(res, 500, {
+                error: `Failed to sync feedback: ${e.stderr || e.message || String(err)}`,
+              });
+              return;
+            }
           }
 
           const drillMatch = pathname.match(
