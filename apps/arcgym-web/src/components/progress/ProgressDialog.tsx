@@ -1,5 +1,5 @@
 import type { ClientDrillDefinitionDTO, DrillAttemptRecord } from '@arcgym/drill-core';
-import { AlertTriangle, Calendar, Cloud, RotateCcw, Shield, User } from 'lucide-react';
+import { AlertTriangle, Calendar, Cloud, FileText, RotateCcw, Shield, User } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +75,13 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
     onOpenChange(false);
     if (navigate) {
       navigate('/privacy');
+    }
+  };
+
+  const handleOpenTerms = () => {
+    onOpenChange(false);
+    if (navigate) {
+      navigate('/terms');
     }
   };
 
@@ -334,7 +341,17 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               className="text-xs text-miro-slate hover:text-miro-primary gap-1 cursor-pointer"
             >
               <Shield className="h-3 w-3" />
-              <span>Privacy Policy</span>
+              <span>Privacy</span>
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleOpenTerms}
+              className="text-xs text-miro-slate hover:text-miro-primary gap-1 cursor-pointer"
+            >
+              <FileText className="h-3 w-3" />
+              <span>Terms</span>
             </Button>
 
             <Button

@@ -28,6 +28,7 @@ import { allowStudioNavigation } from '@/studio/navBlock';
 const PrivacyPage = lazy(() =>
   import('@/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })),
 );
+const TermsPage = lazy(() => import('@/pages/TermsPage').then((m) => ({ default: m.TermsPage })));
 const SkillProfilePage = lazy(() =>
   import('@/pages/SkillProfilePage').then((m) => ({ default: m.SkillProfilePage })),
 );
@@ -315,6 +316,14 @@ export const App: React.FC = () => {
     return shell(
       <Suspense fallback={<RouteFallback />}>
         <PrivacyPage navigate={navigate} />
+      </Suspense>,
+    );
+  }
+
+  if (pathname === '/terms') {
+    return shell(
+      <Suspense fallback={<RouteFallback />}>
+        <TermsPage navigate={navigate} />
       </Suspense>,
     );
   }
