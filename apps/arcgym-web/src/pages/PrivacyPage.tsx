@@ -206,7 +206,7 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             >
               Trailblazer Community
             </a>
-            . ArcGym is heavily inspired by{' '}
+            . ArcGym is heavily inspired by the excellent{' '}
             <a
               href="https://analystgym.com/"
               target="_blank"

@@ -97,7 +97,7 @@
       "id": "d3",
       "text": "Automated consent management flows are misinterpreting navigation events as opt-out signals and deleting profile records.",
       "antipattern": "Blame Consent Automation",
-      "rationale": "Consent logs show no deletion events. The deletion is triggered by the Streaming Data Transform retraction logic."
+      "rationale": "Consent logs show no deletion events. The deletion is triggered by Streaming Data Transform retraction logic."
     }
   ]
 }
