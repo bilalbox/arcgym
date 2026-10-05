@@ -124,7 +124,7 @@ function main() {
   try {
     const flag = isRemote ? '--remote' : '--local';
     execSync(
-      `pnpm --filter @arcgym/web exec wrangler d1 execute arcgym-d1 ${flag} --file=${JSON.stringify(tmpFile)}`,
+      `pnpm --filter @arcgym/web exec wrangler d1 execute arcgym-d1 ${flag} -y --file=${JSON.stringify(tmpFile)}`,
       { stdio: 'inherit', cwd: ROOT_DIR },
     );
     console.log(`Successfully migrated feedback into ${targetEnv}.`);

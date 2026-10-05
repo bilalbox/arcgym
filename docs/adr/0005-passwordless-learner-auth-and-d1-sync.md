@@ -21,9 +21,10 @@ ArcGym initially stored all practice progress, streaks, and calibration scores i
 * Provider subject isolation ensures zero collision risk between numerical provider IDs while preserving 100% backwards compatibility for existing Google learner IDs.
 * Ephemeral access tokens are discarded immediately. Practice telemetry cannot be tied to an individual's corporate or personal identity even in the event of database exposure. A single-click "Erase All Records" purge in settings immediately executes a hard `DELETE` of the learner's row and clears local state.
 
-### 3. Storage Separation: D1 for Progress, KV & Static Bundle for Drills
-* **Drills**: Remain immutable static JSON artifacts built into `canonicalDrills.json` and cached in Cloudflare KV (`drill:today`). Drills are never queried from SQL, preserving 0ms catalog load times, 100% offline drill viewing, and zero D1 read quota burn.
+### 3. Storage Separation: D1 for Dynamic State, KV & Static Bundle for Drills
+* **Drills**: Remain immutable static JSON artifacts built into `canonicalDrills.json` and cached in Cloudflare KV (`drill:today`, `drill:<id>`). Drills are never queried from SQL, preserving 0ms catalog load times, 100% offline drill viewing, and zero D1 read quota burn.
 * **Learner Progress**: Stored in Cloudflare D1 (`DB` binding) using the **Hybrid Document Pattern** (`learner_progress` table with indexed `learner_id`, `streak_days`, `last_active_date`, `total_points`, and a compressed JSON column `completed_drills_json`).
+* **Drill Feedback & Ratings**: Stored in Cloudflare D1 (`drill_rating_stats` for aggregated totals/percentages and `drill_feedback` for individual submissions with learner pseudonymity and dedup tokens), replacing ephemeral KV storage and eliminating data loss during KV purges.
 
 ### 4. Onboarding & Gating: Trial Allowance
 * New visitors practice immediately without an account.
@@ -43,6 +44,6 @@ ArcGym initially stored all practice progress, streaks, and calibration scores i
 
 ## Consequences
 
-* Adds `[[d1_databases]] binding = "DB"` to `apps/arcgym-web/wrangler.toml` and native migrations in `apps/arcgym-web/migrations/`.
+* Adds `[[d1_databases]] binding = "DB"` to `apps/arcgym-web/wrangler.toml` and native migrations in `apps/arcgym-web/migrations/` (applied via `pnpm db:migrate:local` and `pnpm db:migrate:remote`).
 * Requires environment secrets: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `SESSION_SECRET`, and `LEARNER_PEPPER`.
 * Requires client-side hook `useLearnerSync` to integrate with `useVisitorProgress`.
