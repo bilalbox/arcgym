@@ -419,7 +419,7 @@ export const App: React.FC = () => {
               5-Rep Round
             </span>
             <Badge variant="outline" className="text-[11px] py-0 px-2 font-normal">
-              ⚡ Rapid Fire
+              Rapid Fire
             </Badge>
             <Badge variant="domain" className="text-[11px] py-0 px-2">
               {activeDomain ? ARCHITECTURAL_DOMAIN_LABELS[activeDomain] : 'All Domains'}

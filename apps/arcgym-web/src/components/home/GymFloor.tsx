@@ -9,7 +9,7 @@ import {
   type DrillFormat,
   type RapidFireDrillDefinition,
 } from '@arcgym/drill-core';
-import { ArrowRight, CheckCircle2, FileText, Flame, Search, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Flame } from 'lucide-react';
 import type React from 'react';
 import { useMemo } from 'react';
 
@@ -111,10 +111,6 @@ const WorkoutTypeBadge: React.FC<{ format?: DrillFormat }> = ({ format }) => {
   if (format === 'Case_File') {
     return (
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-miro-surfaceSoft border border-miro-hairline text-miro-primary">
-          <FileText className="h-3.5 w-3.5 text-miro-blue" />
-          Today's Workout
-        </span>
         <span className="text-xs text-miro-muted font-mono uppercase tracking-wider">
           Case File
         </span>
@@ -124,10 +120,6 @@ const WorkoutTypeBadge: React.FC<{ format?: DrillFormat }> = ({ format }) => {
   if (format === 'Troubleshooting') {
     return (
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-miro-surfaceSoft border border-miro-hairline text-miro-primary">
-          <Search className="h-3.5 w-3.5 text-purple-500" />
-          Today's Workout
-        </span>
         <span className="text-xs text-miro-muted font-mono uppercase tracking-wider">
           Troubleshoot
         </span>
@@ -136,10 +128,6 @@ const WorkoutTypeBadge: React.FC<{ format?: DrillFormat }> = ({ format }) => {
   }
   return (
     <div className="flex items-center gap-2">
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-miro-surfaceSoft border border-miro-hairline text-miro-primary">
-        <Zap className="h-3.5 w-3.5 text-amber-500" />
-        Today's Workout
-      </span>
       <span className="text-xs text-miro-muted font-mono uppercase tracking-wider">Rapid Fire</span>
     </div>
   );
@@ -253,20 +241,20 @@ function getWorkoutInfo(
 function getWorkoutButton(format: DrillFormat, isStreakEarnedToday: boolean) {
   if (isStreakEarnedToday) {
     if (format === 'Case_File') {
-      return { text: 'Review Case File', icon: <FileText className="h-4 w-4" /> };
+      return { text: 'Review Case File' };
     }
     if (format === 'Troubleshooting') {
-      return { text: 'Review Incident', icon: <Search className="h-4 w-4" /> };
+      return { text: 'Review Incident' };
     }
-    return { text: 'Practice Another Set', icon: <Zap className="h-4 w-4" /> };
+    return { text: 'Practice Another Set' };
   }
   if (format === 'Case_File') {
-    return { text: 'Launch Daily Case File', icon: <FileText className="h-4 w-4" /> };
+    return { text: 'Launch Daily Case File' };
   }
   if (format === 'Troubleshooting') {
-    return { text: 'Launch Daily Incident', icon: <Search className="h-4 w-4" /> };
+    return { text: 'Launch Daily Incident' };
   }
-  return { text: 'Start Daily Workout (5 Reps)', icon: <Zap className="h-4 w-4" /> };
+  return { text: 'Start Daily Workout (5 Reps)' };
 }
 
 interface DailyWorkoutHeroProps {
@@ -327,7 +315,6 @@ const DailyWorkoutHero: React.FC<DailyWorkoutHeroProps> = ({
           onClick={onLaunchDailyWorkout}
           className="rounded-full bg-miro-primary hover:bg-miro-primaryHover text-miro-onPrimary text-sm font-semibold px-6 py-2.5 shadow-sm inline-flex items-center justify-center gap-2 cursor-pointer transition-transform active:scale-[0.99]"
         >
-          {button.icon}
           <span>{button.text}</span>
           <ArrowRight className="h-4 w-4 ml-0.5" />
         </Button>
@@ -349,17 +336,10 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({ onStartRapidFire
       {/* Rapid Fire Track */}
       <div className="bg-miro-card rounded-2xl border border-miro-hairline p-5 flex flex-col justify-between hover:border-miro-hairlineStrong transition-colors shadow-xs group">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-miro-surfaceSoft text-miro-primary border border-miro-hairline">
-              <Zap className="h-3 w-3 text-amber-500" />
-              Rapid Fire
-            </span>
-          </div>
           <div className="space-y-1">
-            <h3 className="text-base font-medium text-miro-primary">Fast-Twitch Reps</h3>
+            <h3 className="text-base font-medium text-miro-primary">Rapid Fire Drills</h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              5 high-tempo architectural judgment reps with inline topology previews, antipattern
-              distractors, and Brier calibration scoring.
+              5 architectural judgment reps with antipattern distractors.
             </p>
           </div>
         </div>
@@ -379,17 +359,11 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({ onStartRapidFire
       {/* Case Files Track */}
       <div className="bg-miro-card rounded-2xl border border-miro-hairline p-5 flex flex-col justify-between hover:border-miro-hairlineStrong transition-colors shadow-xs group">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-miro-surfaceSoft text-miro-primary border border-miro-hairline">
-              <FileText className="h-3 w-3 text-miro-blue" />
-              Cases
-            </span>
-          </div>
           <div className="space-y-1">
             <h3 className="text-base font-medium text-miro-primary">CTA Case Files</h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              Evaluation-scale scenarios (~10 min). Fictional enterprise Brief, scarce Probe Budget
-              across 3+ Stations, and board recommendations.
+              Evaluation-scale scenarios. Fictional enterprise Brief, scarce Probe Budget across 3+
+              Stations, and board recommendations.
             </p>
           </div>
         </div>
@@ -409,17 +383,11 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({ onStartRapidFire
       {/* Troubleshooting Track */}
       <div className="bg-miro-card rounded-2xl border border-miro-hairline p-5 flex flex-col justify-between hover:border-miro-hairlineStrong transition-colors shadow-xs group">
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-miro-surfaceSoft text-miro-primary border border-miro-hairline">
-              <Search className="h-3 w-3 text-purple-500" />
-              Troubleshoot
-            </span>
-          </div>
           <div className="space-y-1">
             <h3 className="text-base font-medium text-miro-primary">Incident Triage</h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              Real architectural failures (~8 min). Inspect system topology diagrams, uncover
-              pivotal facts with scarce probes, and commit root causes.
+              Real architectural failures. Inspect system topology diagrams, uncover pivotal facts
+              with scarce probes, and commit root causes.
             </p>
           </div>
         </div>

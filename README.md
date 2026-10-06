@@ -83,7 +83,7 @@ flowchart TD
         F1["📱 ArcGym Web Platform<br/><b>React 19 + Cloudflare Pages</b>"]
         
         subgraph Archetypes ["Unified Rapid Fire Engine"]
-            G1["⚡ Rapid Fire<br/>Multi-rep decisions; optional topology previews"]
+            G1["Rapid Fire<br/>Multi-rep decisions; optional topology previews"]
         end
 
         H1["🔒 Universal Pre-Submit Confidence Gate<br/>50% Speculative | 70% Plausible | 85% High Conviction | 95% Axiom"]
