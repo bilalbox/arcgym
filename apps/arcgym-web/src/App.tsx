@@ -12,7 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 import type React from 'react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { RapidFireRunner } from '@/components/drill/RapidFireRunner';
-import { GymFloor } from '@/components/home/GymFloor';
+import { Home } from '@/components/home/Home';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { ProgressDialog } from '@/components/progress/ProgressDialog';
@@ -411,7 +411,7 @@ export const App: React.FC = () => {
             className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            Exit to Gym Floor
+            Exit to Home
           </button>
 
           <div className="flex items-center gap-2">
@@ -467,7 +467,7 @@ export const App: React.FC = () => {
 
   return shell(
     <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <GymFloor
+      <Home
         rapidFireCatalog={rapidFireCatalog}
         caseFiles={caseFiles}
         incidents={incidents}

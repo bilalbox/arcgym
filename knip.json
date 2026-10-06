@@ -4,21 +4,18 @@
     ".": {
       "entry": ["scripts/*.ts", "scripts/**/*.ts"],
       "project": ["scripts/**/*.ts"],
-      "ignoreDependencies": ["@swc/core", "dependency-cruiser", "jscpd", "vitest"],
+      "ignoreDependencies": ["@swc/core", "vitest"],
       "ignoreBinaries": ["uv", "wrangler"]
     },
     "apps/arcgym-web": {
-      "entry": ["src/main.tsx", "functions/**/!(*.test).ts"],
+      "entry": ["functions/**/!(*.test).ts"],
       "project": ["src/**/*.{ts,tsx}", "functions/**/*.ts"],
       "ignoreDependencies": ["tailwindcss", "tw-animate-css"]
     },
     "packages/drill-core": {
-      "entry": ["src/index.ts"],
-      "project": ["src/**/*.ts"],
-      "ignore": ["prototypes/**"]
+      "project": ["src/**/*.ts"]
     },
     "packages/diagrams": {
-      "entry": ["src/index.ts", "src/qa/auditSvgGeometry.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     }
   },

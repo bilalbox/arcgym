@@ -15,7 +15,7 @@ import { useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-interface GymFloorProps {
+interface HomeProps {
   rapidFireCatalog: RapidFireDrillDefinition[];
   caseFiles: CaseFileDrillDefinition[];
   incidents: ClientTroubleshootingDrillDefinition[];
@@ -32,7 +32,7 @@ interface GymFloorProps {
   navigate: (to: string) => void;
 }
 
-export const GymFloor: React.FC<GymFloorProps> = ({
+export const Home: React.FC<HomeProps> = ({
   rapidFireCatalog,
   caseFiles: _caseFiles,
   incidents: _incidents,

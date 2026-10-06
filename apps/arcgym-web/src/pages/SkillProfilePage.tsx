@@ -51,7 +51,7 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
           className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
         >
           <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Gym Floor
+          Back to Home
         </button>
       </div>
 
