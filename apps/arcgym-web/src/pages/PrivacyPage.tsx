@@ -37,10 +37,11 @@ export const PrivacyPage: React.FC<PrivacyPageProps> = ({ navigate }) => {
             1. Practice Telemetry & Cloud Synchronization
           </h2>
           <p className="text-sm text-miro-slate leading-relaxed">
-            New learners can practice immediately without creating an account under a Trial
-            Allowance. While unauthenticated, all practice telemetry—including completed drills,
-            mastery streaks, confidence calibration ratings, and total points—is stored exclusively
-            in your browser’s local storage.
+            Visitors can browse the catalog, inspect system architecture diagrams, and review
+            scenarios freely without creating an account. To participate in interactive drills,
+            commit decisions, and receive AI evaluations, learners sign in with Google or GitHub.
+            Practice is 100% free with an account. Any previously stored local practice telemetry is
+            automatically synchronized upon sign-in.
           </p>
           <p className="text-sm text-miro-slate leading-relaxed">
             When you sign in with Google or GitHub, ArcGym synchronizes your practice telemetry

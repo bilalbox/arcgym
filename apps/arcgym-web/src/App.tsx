@@ -18,7 +18,7 @@ import { Header } from '@/components/layout/Header';
 import { ProgressDialog } from '@/components/progress/ProgressDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { GithubIcon, GoogleIcon } from '@/components/ui/icons';
+
 import { getWebFormatDescriptor } from '@/formats';
 import { ALL_DRILLS, useDrillRecommendation } from '@/hooks/useDrillRecommendation';
 import { useRouter } from '@/hooks/useRouter';
@@ -238,29 +238,6 @@ export const App: React.FC = () => {
         onSignIn={openProgressModal}
         onOpenProgressModal={openProgressModal}
       />
-      {isTrialExhausted && (
-        <div className="bg-miro-charcoal text-miro-onPrimary px-4 py-2.5 text-xs sm:text-sm font-medium flex items-center justify-between gap-3 shadow-xs">
-          <span>Trial complete · Save streak and unlock unlimited architectural drills.</span>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => signInWithGoogle()}
-              className="px-3 py-1 bg-miro-blue hover:bg-miro-blueDeep text-white rounded-full text-xs font-semibold cursor-pointer shrink-0 transition-colors inline-flex items-center gap-1.5"
-            >
-              <GoogleIcon className="h-3 w-3" />
-              <span>Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => signInWithGithub()}
-              className="px-3 py-1 bg-miro-surface text-miro-primary hover:bg-miro-surfaceSoft rounded-full text-xs font-semibold cursor-pointer shrink-0 transition-colors inline-flex items-center gap-1.5"
-            >
-              <GithubIcon className="h-3 w-3" />
-              <span>GitHub</span>
-            </button>
-          </div>
-        </div>
-      )}
       {body}
       {progressDialog}
     </div>
@@ -363,6 +340,9 @@ export const App: React.FC = () => {
           allDrills={ALL_DRILLS}
           caseFiles={caseFiles}
           completedDrills={completedDrills}
+          isAuthenticated={isAuthenticated}
+          onSignInGoogle={signInWithGoogle}
+          onSignInGithub={signInWithGithub}
           onDrillComplete={handleDrillComplete}
           navigate={navigate}
           pathname={pathname}
@@ -392,6 +372,9 @@ export const App: React.FC = () => {
           allDrills={ALL_DRILLS}
           incidents={incidents}
           completedDrills={completedDrills}
+          isAuthenticated={isAuthenticated}
+          onSignInGoogle={signInWithGoogle}
+          onSignInGithub={signInWithGithub}
           onDrillComplete={handleDrillComplete}
           navigate={navigate}
           pathname={pathname}
@@ -407,6 +390,9 @@ export const App: React.FC = () => {
           drillId={routeDrillId}
           allDrills={rapidFireCatalog}
           completedDrills={completedDrills}
+          isAuthenticated={isAuthenticated}
+          onSignInGoogle={signInWithGoogle}
+          onSignInGithub={signInWithGithub}
           onDrillComplete={handleDrillComplete}
           navigate={navigate}
           pathname={pathname}
@@ -493,8 +479,8 @@ export const App: React.FC = () => {
         activeDomain={activeDomain}
         dailyWorkout={dailyWorkout}
         onDomainChange={handleDomainChange}
-        onStartRapidFireWorkout={handleStartRapidFireWorkout}
-        onLaunchDailyWorkout={handleLaunchDailyWorkout}
+        onStartRapidFireWorkout={isAuthenticated ? handleStartRapidFireWorkout : openProgressModal}
+        onLaunchDailyWorkout={isAuthenticated ? handleLaunchDailyWorkout : openProgressModal}
         navigate={navigate}
       />
 

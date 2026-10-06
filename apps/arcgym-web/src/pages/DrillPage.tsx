@@ -19,6 +19,9 @@ interface DrillPageProps {
   drillId: string;
   allDrills: RapidFireDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
+  isAuthenticated?: boolean;
+  onSignInGoogle?: (returnUrl?: string) => void;
+  onSignInGithub?: (returnUrl?: string) => void;
   onDrillComplete: (result: {
     drillId: string;
     format: DrillFormat;
@@ -35,6 +38,9 @@ export const DrillPage: React.FC<DrillPageProps> = ({
   drillId,
   allDrills,
   completedDrills,
+  isAuthenticated = true,
+  onSignInGoogle,
+  onSignInGithub,
   onDrillComplete,
   navigate,
   pathname,
@@ -169,6 +175,9 @@ export const DrillPage: React.FC<DrillPageProps> = ({
           drill={drill}
           isReviewMode={Boolean(previousAttempt)}
           previousAttempt={previousAttempt}
+          isAuthenticated={isAuthenticated}
+          onSignInGoogle={onSignInGoogle}
+          onSignInGithub={onSignInGithub}
           onDrillComplete={onDrillComplete}
           onNextDrill={handleNextDrill}
         />

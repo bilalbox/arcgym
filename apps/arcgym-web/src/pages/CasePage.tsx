@@ -20,6 +20,9 @@ interface CasePageProps {
   allDrills: ClientDrillDefinitionDTO[];
   caseFiles: CaseFileDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
+  isAuthenticated?: boolean;
+  onSignInGoogle?: (returnUrl?: string) => void;
+  onSignInGithub?: (returnUrl?: string) => void;
   onDrillComplete: (result: {
     drillId: string;
     format: DrillFormat;
@@ -37,6 +40,9 @@ export const CasePage: React.FC<CasePageProps> = ({
   allDrills,
   caseFiles,
   completedDrills,
+  isAuthenticated = true,
+  onSignInGoogle,
+  onSignInGithub,
   onDrillComplete,
   navigate,
   pathname,
@@ -145,6 +151,9 @@ export const CasePage: React.FC<CasePageProps> = ({
         drill={drill}
         isReviewMode={Boolean(previousAttempt)}
         previousAttempt={previousAttempt}
+        isAuthenticated={isAuthenticated}
+        onSignInGoogle={onSignInGoogle}
+        onSignInGithub={onSignInGithub}
         onDrillComplete={onDrillComplete}
         onNextDrill={handleNextDrill}
       />

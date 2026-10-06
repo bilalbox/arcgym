@@ -31,6 +31,7 @@ import {
 import { GithubIcon, GoogleIcon } from '@/components/ui/icons';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
+import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 
 export interface RapidFireRunnerProps {
@@ -521,16 +522,25 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           })}
         </div>
 
-        {/* Universal Pre-Submit Confidence Gate */}
+        {/* Universal Pre-Submit Confidence Gate or Auth Barrier */}
         {!isSubmitted && (
           <div className="pt-2">
-            <ConfidenceGate
-              selectedConfidence={selectedConfidence}
-              onSelectConfidence={setSelectedConfidence}
-              onSubmit={handleSubmit}
-              disabled={!selectedOptionId}
-              hasSelectedAnswer={Boolean(selectedOptionId)}
-            />
+            {isAuthenticated ? (
+              <ConfidenceGate
+                selectedConfidence={selectedConfidence}
+                onSelectConfidence={setSelectedConfidence}
+                onSubmit={handleSubmit}
+                disabled={!selectedOptionId}
+                hasSelectedAnswer={Boolean(selectedOptionId)}
+              />
+            ) : (
+              <DrillAuthGate
+                title="Sign in to commit your decision"
+                description="Practice is 100% free. Sign in with Google or GitHub to submit your answer, unlock rationale and citations, and build your streak."
+                onSignInGoogle={onSignInGoogle}
+                onSignInGithub={onSignInGithub}
+              />
+            )}
           </div>
         )}
 

@@ -1,7 +1,11 @@
 import type { TroubleshootingDrillDefinition } from '@arcgym/drill-core';
 import { describe, expect, it, vi } from 'vitest';
 import type { Env } from '../../_shared/env';
+import { signSessionJwt } from '../../_shared/learnerAuth';
 import { onRequestPost } from './grade';
+
+const TEST_SECRET = 'test_session_secret_32_characters_minimum_length';
+const TEST_LEARNER_ID = 'test_learner_123';
 
 const FIXTURE_DRILL: TroubleshootingDrillDefinition = {
   id: 'AGD-01001',
@@ -58,6 +62,7 @@ function createMockEnv(overrides: Partial<Env> = {}): Env {
   const kvMap = new Map<string, unknown>([['drill:id:AGD-01001', FIXTURE_DRILL]]);
 
   return {
+    SESSION_SECRET: TEST_SECRET,
     AI: {
       run: vi.fn(async () => ({
         answers: {
@@ -73,19 +78,45 @@ function createMockEnv(overrides: Partial<Env> = {}): Env {
         if (!kvMap.has(key)) return null;
         const val = kvMap.get(key);
         if (format === 'json') return val;
-        return JSON.stringify(val);
+        return typeof val === 'string' ? val : JSON.stringify(val);
+      }),
+      put: vi.fn(async (key: string, value: string) => {
+        kvMap.set(key, value);
       }),
     } as unknown as Env['DRILL_KV'],
     ...overrides,
   };
 }
 
+async function createAuthHeaders(learnerId = TEST_LEARNER_ID, secret = TEST_SECRET) {
+  const token = await signSessionJwt(learnerId, secret, 3600);
+  return {
+    'content-type': 'application/json',
+    Cookie: `arcgym_session=${token}`,
+  };
+}
+
 describe('POST /api/troubleshoot/grade Pages Function', () => {
-  it('returns 503 if env.AI is missing', async () => {
-    const env = createMockEnv({ AI: undefined });
+  it('returns 401 if unauthenticated (missing session cookie)', async () => {
+    const env = createMockEnv();
     const request = new Request('http://localhost/api/troubleshoot/grade', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ drillId: 'AGD-01001', causeText: 'Formula fields collision' }),
+    });
+
+    const response = await onRequestPost({ request, env });
+    expect(response.status).toBe(401);
+    const body = (await response.json()) as { error: string };
+    expect(body.error).toMatch(/Authentication required/i);
+  });
+
+  it('returns 503 if env.AI is missing', async () => {
+    const env = createMockEnv({ AI: undefined });
+    const headers = await createAuthHeaders();
+    const request = new Request('http://localhost/api/troubleshoot/grade', {
+      method: 'POST',
+      headers,
       body: JSON.stringify({ drillId: 'AGD-01001', causeText: 'Formula fields collision' }),
     });
 
@@ -97,11 +128,12 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
 
   it('returns 400 on malformed input (bad drillId or empty causeText)', async () => {
     const env = createMockEnv();
+    const headers = await createAuthHeaders();
 
     // Bad drill ID
     const reqBadId = new Request('http://localhost/api/troubleshoot/grade', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify({ drillId: 'NOT-A-DRILL', causeText: 'Some diagnosis' }),
     });
     const resBadId = await onRequestPost({ request: reqBadId, env });
@@ -110,7 +142,7 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
     // Empty causeText
     const reqEmptyCause = new Request('http://localhost/api/troubleshoot/grade', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify({ drillId: 'AGD-01001', causeText: '   ' }),
     });
     const resEmptyCause = await onRequestPost({ request: reqEmptyCause, env });
@@ -119,9 +151,10 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
 
   it('returns 404 on missing drill in KV', async () => {
     const env = createMockEnv();
+    const headers = await createAuthHeaders();
     const request = new Request('http://localhost/api/troubleshoot/grade', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify({ drillId: 'AGD-99999', causeText: 'Some diagnosis' }),
     });
 
@@ -131,11 +164,45 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
     expect(body.error).toMatch(/Unknown troubleshooting drill/i);
   });
 
+  it('returns 429 when per-learner rate limit is exceeded', async () => {
+    const env = createMockEnv();
+    const headers = await createAuthHeaders('spammer_learner');
+
+    // Fire 10 allowed requests
+    for (let i = 0; i < 10; i++) {
+      const req = new Request('http://localhost/api/troubleshoot/grade', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          drillId: 'AGD-01001',
+          causeText: 'Formula fields collision',
+        }),
+      });
+      const res = await onRequestPost({ request: req, env });
+      expect(res.status).toBe(200);
+    }
+
+    // 11th request exceeds limit
+    const reqExceeded = new Request('http://localhost/api/troubleshoot/grade', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        drillId: 'AGD-01001',
+        causeText: 'Formula fields collision',
+      }),
+    });
+    const resExceeded = await onRequestPost({ request: reqExceeded, env });
+    expect(resExceeded.status).toBe(429);
+    const body = (await resExceeded.json()) as { error: string };
+    expect(body.error).toMatch(/Rate limit exceeded/i);
+  });
+
   it('returns 200 with GradeCauseResult on valid input with mock AI', async () => {
     const env = createMockEnv();
+    const headers = await createAuthHeaders();
     const request = new Request('http://localhost/api/troubleshoot/grade', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify({
         drillId: 'AGD-01001',
         causeText: 'Formula fields collision with refresh',

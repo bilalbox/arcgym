@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { gradeCauseViaApi } from '@/lib/gradeCauseApi';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
+import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
@@ -25,6 +26,9 @@ export interface TroubleshootRunnerProps {
   drill: ClientTroubleshootingDrillDefinition;
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
+  isAuthenticated?: boolean;
+  onSignInGoogle?: (returnUrl?: string) => void;
+  onSignInGithub?: (returnUrl?: string) => void;
   onDrillComplete?: (result: {
     drillId: string;
     format: DrillFormat;
@@ -40,6 +44,9 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
   drill,
   isReviewMode = false,
   previousAttempt,
+  isAuthenticated = true,
+  onSignInGoogle,
+  onSignInGithub,
   onDrillComplete,
   onNextDrill,
 }) => {
@@ -126,12 +133,21 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
           <div className="rounded-xl border border-miro-hairline p-4 text-sm text-miro-slate leading-relaxed">
             {drill.issue}
           </div>
-          <Button
-            onClick={() => dispatch({ type: 'BEGIN_PROBES' })}
-            className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
-          >
-            Begin <ArrowRight className="h-4 w-4" />
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              onClick={() => dispatch({ type: 'BEGIN_PROBES' })}
+              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+            >
+              Begin <ArrowRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <DrillAuthGate
+              title="Sign in to investigate this incident"
+              description="Inspect system logs, run diagnostic probes, and diagnose the architectural root cause with Workers AI feedback. Free with an account."
+              onSignInGoogle={onSignInGoogle}
+              onSignInGithub={onSignInGithub}
+            />
+          )}
         </CardContent>
       </Card>
     );

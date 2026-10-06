@@ -20,6 +20,9 @@ interface TroubleshootPageProps {
   allDrills: ClientDrillDefinitionDTO[];
   incidents: ClientTroubleshootingDrillDefinition[];
   completedDrills: Record<string, DrillAttemptRecord>;
+  isAuthenticated?: boolean;
+  onSignInGoogle?: (returnUrl?: string) => void;
+  onSignInGithub?: (returnUrl?: string) => void;
   onDrillComplete: (result: {
     drillId: string;
     format: DrillFormat;
@@ -37,6 +40,9 @@ export const TroubleshootPage: React.FC<TroubleshootPageProps> = ({
   allDrills,
   incidents,
   completedDrills,
+  isAuthenticated = true,
+  onSignInGoogle,
+  onSignInGithub,
   onDrillComplete,
   navigate,
   pathname,
@@ -141,6 +147,9 @@ export const TroubleshootPage: React.FC<TroubleshootPageProps> = ({
         drill={drill}
         isReviewMode={Boolean(previousAttempt)}
         previousAttempt={previousAttempt}
+        isAuthenticated={isAuthenticated}
+        onSignInGoogle={onSignInGoogle}
+        onSignInGithub={onSignInGithub}
         onDrillComplete={onDrillComplete}
         onNextDrill={handleNextDrill}
       />

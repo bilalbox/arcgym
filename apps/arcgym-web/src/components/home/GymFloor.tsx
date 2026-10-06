@@ -4,27 +4,26 @@ import {
   type CaseFileDrillDefinition,
   type ClientDrillDefinitionDTO,
   type ClientTroubleshootingDrillDefinition,
-  calculateProficiencyReport,
   type DailyWorkoutAssignment,
   type DrillAttemptRecord,
   type DrillFormat,
   type RapidFireDrillDefinition,
 } from '@arcgym/drill-core';
-import { ArrowRight, BarChart2, CheckCircle2, FileText, Flame, Search, Zap } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileText, Flame, Search, Zap } from 'lucide-react';
 import type React from 'react';
 import { useMemo } from 'react';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 
 interface GymFloorProps {
   rapidFireCatalog: RapidFireDrillDefinition[];
   caseFiles: CaseFileDrillDefinition[];
   incidents: ClientTroubleshootingDrillDefinition[];
-  allDrills: ClientDrillDefinitionDTO[];
-  completedDrills: Record<string, DrillAttemptRecord>;
+  allDrills?: ClientDrillDefinitionDTO[];
+  completedDrills?: Record<string, DrillAttemptRecord>;
   streakDays: number;
   isStreakEarnedToday: boolean;
-  totalPoints: number;
+  totalPoints?: number;
   activeDomain?: ArchitecturalDomain;
   dailyWorkout: DailyWorkoutAssignment | null;
   onDomainChange: (domain: ArchitecturalDomain | undefined) => void;
@@ -35,13 +34,13 @@ interface GymFloorProps {
 
 export const GymFloor: React.FC<GymFloorProps> = ({
   rapidFireCatalog,
-  caseFiles,
-  incidents,
-  allDrills,
-  completedDrills,
+  caseFiles: _caseFiles,
+  incidents: _incidents,
+  allDrills: _allDrills,
+  completedDrills: _completedDrills,
   streakDays,
   isStreakEarnedToday,
-  totalPoints,
+  totalPoints: _totalPoints = 0,
   activeDomain,
   dailyWorkout,
   onDomainChange,
@@ -55,26 +54,6 @@ export const GymFloor: React.FC<GymFloorProps> = ({
       present.has(d),
     );
   }, [rapidFireCatalog]);
-
-  const completedRapidFireCount = useMemo(
-    () => rapidFireCatalog.filter((d) => Boolean(completedDrills[d.id])).length,
-    [rapidFireCatalog, completedDrills],
-  );
-
-  const completedCasesCount = useMemo(
-    () => caseFiles.filter((d) => Boolean(completedDrills[d.id])).length,
-    [caseFiles, completedDrills],
-  );
-
-  const completedIncidentsCount = useMemo(
-    () => incidents.filter((d) => Boolean(completedDrills[d.id])).length,
-    [incidents, completedDrills],
-  );
-
-  const proficiencyReport = useMemo(
-    () => calculateProficiencyReport(completedDrills, allDrills, 4),
-    [completedDrills, allDrills],
-  );
 
   return (
     <div className="space-y-8">
@@ -100,24 +79,7 @@ export const GymFloor: React.FC<GymFloorProps> = ({
       />
 
       {/* Practice Tracks (3 Disciplines) */}
-      <PracticeTracksSection
-        rapidFireCount={completedRapidFireCount}
-        rapidFireTotal={rapidFireCatalog.length}
-        casesCount={completedCasesCount}
-        casesTotal={caseFiles.length}
-        incidentsCount={completedIncidentsCount}
-        incidentsTotal={incidents.length}
-        totalAllDrills={allDrills.length}
-        onStartRapidFire={onStartRapidFireWorkout}
-        navigate={navigate}
-      />
-
-      {/* Architectural Readiness & Skill Profile Snapshot */}
-      <ReadinessSnapshotSection
-        report={proficiencyReport}
-        totalPoints={totalPoints}
-        navigate={navigate}
-      />
+      <PracticeTracksSection onStartRapidFire={onStartRapidFireWorkout} navigate={navigate} />
     </div>
   );
 };
@@ -375,35 +337,13 @@ const DailyWorkoutHero: React.FC<DailyWorkoutHeroProps> = ({
 };
 
 interface PracticeTracksProps {
-  rapidFireCount: number;
-  rapidFireTotal: number;
-  casesCount: number;
-  casesTotal: number;
-  incidentsCount: number;
-  incidentsTotal: number;
-  totalAllDrills: number;
   onStartRapidFire: () => void;
   navigate: (to: string) => void;
 }
 
-const PracticeTracksSection: React.FC<PracticeTracksProps> = ({
-  rapidFireCount,
-  rapidFireTotal,
-  casesCount,
-  casesTotal,
-  incidentsCount,
-  incidentsTotal,
-  totalAllDrills,
-  onStartRapidFire,
-  navigate,
-}) => (
+const PracticeTracksSection: React.FC<PracticeTracksProps> = ({ onStartRapidFire, navigate }) => (
   <section className="space-y-4">
-    <div className="flex items-center justify-between">
-      <h2 className="text-lg font-medium text-miro-primary tracking-tight">Practice Tracks</h2>
-      <span className="text-xs text-miro-muted font-mono">
-        {rapidFireCount + casesCount + incidentsCount} / {totalAllDrills} completed
-      </span>
-    </div>
+    <h2 className="text-lg font-medium text-miro-primary tracking-tight">Practice Tracks</h2>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Rapid Fire Track */}
@@ -413,9 +353,6 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-miro-surfaceSoft text-miro-primary border border-miro-hairline">
               <Zap className="h-3 w-3 text-amber-500" />
               Rapid Fire
-            </span>
-            <span className="text-xs font-mono text-miro-muted tabular-nums">
-              {rapidFireCount} / {rapidFireTotal}
             </span>
           </div>
           <div className="space-y-1">
@@ -447,9 +384,6 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({
               <FileText className="h-3 w-3 text-miro-blue" />
               Cases
             </span>
-            <span className="text-xs font-mono text-miro-muted tabular-nums">
-              {casesCount} / {casesTotal}
-            </span>
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-medium text-miro-primary">CTA Case Files</h3>
@@ -480,9 +414,6 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({
               <Search className="h-3 w-3 text-purple-500" />
               Troubleshoot
             </span>
-            <span className="text-xs font-mono text-miro-muted tabular-nums">
-              {incidentsCount} / {incidentsTotal}
-            </span>
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-medium text-miro-primary">Incident Triage</h3>
@@ -507,93 +438,3 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({
     </div>
   </section>
 );
-
-interface ReadinessSnapshotProps {
-  report: ReturnType<typeof calculateProficiencyReport>;
-  totalPoints: number;
-  navigate: (to: string) => void;
-}
-
-const ReadinessSnapshotSection: React.FC<ReadinessSnapshotProps> = ({
-  report,
-  totalPoints,
-  navigate,
-}) => {
-  const topStrength = report.strengths[0];
-  const recommendedFocus = report.whereToStart[0];
-
-  return (
-    <section className="bg-miro-card rounded-2xl border border-miro-hairline p-6 sm:p-7 shadow-xs">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-miro-hairlineSoft">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="h-4 w-4 text-miro-blue" />
-            <h2 className="text-lg font-medium text-miro-primary tracking-tight">
-              Architectural Readiness Snapshot
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm text-miro-slate">
-            Proficiency and calibration calibrated against the 7 Architectural Domains.
-          </p>
-        </div>
-
-        <Button
-          variant="outline"
-          onClick={() => navigate('/skills')}
-          className="rounded-full border-miro-hairline hover:border-miro-hairlineStrong text-xs font-medium text-miro-primary inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-        >
-          <span>View Radar & Analysis</span>
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-5">
-        <div className="p-3.5 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
-          <span className="text-xs text-miro-muted font-medium block mb-1">Question Reps</span>
-          <p className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
-            {report.totalQuestionsAnswered}
-          </p>
-        </div>
-
-        <div className="p-3.5 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
-          <span className="text-xs text-miro-muted font-medium block mb-1">Lifetime Points</span>
-          <p className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
-            {totalPoints.toLocaleString()}
-          </p>
-        </div>
-
-        <div className="p-3.5 rounded-xl border border-miro-hairline bg-miro-surfaceSoft">
-          <span className="text-xs text-miro-muted font-medium block mb-1">Calibrated Domains</span>
-          <p className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
-            {report.measuredCount}
-            <span className="text-xs font-normal text-miro-muted"> of {report.totalCount}</span>
-          </p>
-        </div>
-      </div>
-
-      {(topStrength || recommendedFocus) && (
-        <div className="mt-4 pt-4 border-t border-miro-hairlineSoft flex flex-wrap items-center gap-4 text-xs">
-          {topStrength && (
-            <div className="flex items-center gap-2">
-              <span className="text-miro-muted">Top Strength:</span>
-              <Badge variant="domain" className="text-[11px] py-0 px-2">
-                {topStrength.label}
-              </Badge>
-              <span className="font-mono text-miro-successText font-medium">
-                {Math.round(topStrength.accuracy)}%
-              </span>
-            </div>
-          )}
-          {recommendedFocus && (
-            <div className="flex items-center gap-2">
-              <span className="text-miro-muted">Recommended Focus:</span>
-              <Badge variant="outline" className="text-[11px] py-0 px-2 font-normal">
-                {recommendedFocus.label}
-              </Badge>
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
-};

@@ -434,8 +434,8 @@ export function useVisitorProgress() {
 
   const totalCompleted = Object.keys(state.completedDrills).length;
 
-  // Trial Allowance: 1 workout (e.g. 1 completed drill / set) allowed anonymously before gating
-  const isTrialExhausted = !isAuthenticated && totalCompleted >= 1;
+  // Guest status: unauthenticated visitors are prompted to sign in for free practice
+  const isTrialExhausted = !isAuthenticated;
 
   const activeStreak = useMemo(() => {
     return calculateActiveStreak(state.streakDays, state.lastActiveDate, totalCompleted);

@@ -26,10 +26,11 @@ ArcGym initially stored all practice progress, streaks, and calibration scores i
 * **Learner Progress**: Stored in Cloudflare D1 (`DB` binding) using the **Hybrid Document Pattern** (`learner_progress` table with indexed `learner_id`, `streak_days`, `last_active_date`, `total_points`, and a compressed JSON column `completed_drills_json`).
 * **Drill Feedback & Ratings**: Stored in Cloudflare D1 (`drill_rating_stats` for aggregated totals/percentages and `drill_feedback` for individual submissions with learner pseudonymity and dedup tokens), replacing ephemeral KV storage and eliminating data loss during KV purges.
 
-### 4. Onboarding & Gating: Trial Allowance
-* New visitors practice immediately without an account.
-* The **Trial Allowance** permits exactly one full Rapid Fire workout (3 reps) or one Case File / Incident.
-* Upon completing the trial, the results card prompts the learner to sign in with Google to preserve their streak and unlock subsequent days. The catalog remains inspectable, but interactive option commits and probe discoveries are gated until authentication.
+### 4. Onboarding & Gating: Upfront In-Context Gate & Workers AI Protection
+* **Open Exploration**: Anonymous visitors can browse the Gym Floor and track catalogs (`/troubleshoot`, `/cases`), and directly deep-link into drills to inspect full briefs, system architecture diagrams, and scenario symptoms.
+* **In-Context Gating**: To start an interactive investigation, uncover probe facts, commit decisions, or invoke AI grading, visitors must authenticate via Google or GitHub. Practice is 100% free with an account.
+* **Deep-Link State Preservation**: In-context gates pass `returnUrl` through OAuth 2.0 authorization redirects, returning the learner directly back into their intended drill upon successful sign-in.
+* **Workers AI Route Protection & Rate Limiting**: The Cloudflare Workers AI grading endpoint (`/api/troubleshoot/grade`) strictly enforces authenticated learner sessions (`401` on unauthenticated requests) and applies a KV-backed sliding window rate limit per `learnerId` (max 10 requests per 10 minutes, returning `429` on exhaustion) to prevent anonymous resource drain and automated loop abuse.
 
 ### 5. Sync Engine: Deterministic Monotonic Merge
 * Merging local and cloud state performs a mathematical set-union on `completedDrills` keyed by `drillId`.

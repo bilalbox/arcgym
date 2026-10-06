@@ -1,5 +1,14 @@
 import type { ClientDrillDefinitionDTO, DrillAttemptRecord } from '@arcgym/drill-core';
-import { AlertTriangle, Calendar, Cloud, FileText, RotateCcw, Shield, User } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BarChart2,
+  Calendar,
+  Cloud,
+  FileText,
+  RotateCcw,
+  Shield,
+} from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -85,6 +94,79 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-sm flex flex-col p-6 gap-0">
+          <DialogHeader className="pb-4 border-b border-miro-hairlineSoft">
+            <DialogTitle className="text-lg font-medium text-miro-primary">
+              Sign in to ArcGym
+            </DialogTitle>
+            <DialogDescription className="text-sm text-miro-slate">
+              Practice is 100% free. Sign in to start drills, commit decisions, and track your
+              streak.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 space-y-3">
+            {(onSignInGoogle || onSignIn) && (
+              <Button
+                type="button"
+                onClick={onSignInGoogle || onSignIn}
+                className="w-full py-2.5 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary text-xs font-semibold rounded-full inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <GoogleIcon className="h-4 w-4" />
+                <span>Continue with Google</span>
+              </Button>
+            )}
+            {onSignInGithub && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSignInGithub}
+                className="w-full py-2.5 bg-miro-card border-miro-hairline hover:border-miro-hairlineStrong hover:bg-miro-surfaceSoft text-miro-primary text-xs font-semibold rounded-full inline-flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <GithubIcon className="h-4 w-4" />
+                <span>Continue with GitHub</span>
+              </Button>
+            )}
+          </div>
+
+          <DialogFooter className="pt-3 border-t border-miro-hairlineSoft flex items-center justify-between gap-3 w-full">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleOpenPrivacy}
+                className="text-xs text-miro-slate hover:text-miro-primary gap-1 cursor-pointer"
+              >
+                <Shield className="h-3 w-3" />
+                <span>Privacy</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleOpenTerms}
+                className="text-xs text-miro-slate hover:text-miro-primary gap-1 cursor-pointer"
+              >
+                <FileText className="h-3 w-3" />
+                <span>Terms</span>
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+              className="text-xs"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog
       open={open}
@@ -105,60 +187,27 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
 
         <div className="space-y-4 py-2">
           {/* Identity & Cloud Sync Card */}
-          {isAuthenticated ? (
-            <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5 text-miro-successText">
-                <Cloud className="h-4 w-4 shrink-0" />
-                <div>
-                  <span className="font-semibold block text-miro-primary">Cloud Sync Active</span>
-                  <span className="text-[11px] text-miro-slate">
-                    Telemetry synced across devices with Zero-PII protection.
-                  </span>
-                </div>
-              </div>
-              {onSignOut && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onSignOut}
-                  className="text-xs h-7 border-miro-hairline hover:bg-miro-card"
-                >
-                  Sign out
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 font-medium text-miro-primary">
-                  <User className="h-3.5 w-3.5 text-miro-muted" />
-                  <span>Sync Streak Across Devices</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {(onSignInGoogle || onSignIn) && (
-                  <Button
-                    size="sm"
-                    onClick={onSignInGoogle || onSignIn}
-                    className="text-xs h-7 px-2.5 bg-miro-primary text-miro-onPrimary hover:bg-miro-charcoal inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <GoogleIcon className="h-3 w-3" />
-                    <span>Google</span>
-                  </Button>
-                )}
-                {onSignInGithub && (
-                  <Button
-                    size="sm"
-                    onClick={onSignInGithub}
-                    className="text-xs h-7 px-2.5 bg-miro-card border border-miro-hairline text-miro-primary hover:border-miro-hairlineStrong hover:bg-miro-surfaceSoft inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <GithubIcon className="h-3 w-3" />
-                    <span>GitHub</span>
-                  </Button>
-                )}
+          <div className="p-3.5 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2.5 text-miro-successText">
+              <Cloud className="h-4 w-4 shrink-0" />
+              <div>
+                <span className="font-semibold block text-miro-primary">Cloud Sync Active</span>
+                <span className="text-[11px] text-miro-slate">
+                  Telemetry synced across devices with Zero-PII protection.
+                </span>
               </div>
             </div>
-          )}
+            {onSignOut && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onSignOut}
+                className="text-xs h-7 border-miro-hairline hover:bg-miro-card"
+              >
+                Sign out
+              </Button>
+            )}
+          </div>
 
           {/* Practice Telemetry Overview */}
           <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
@@ -205,6 +254,31 @@ export const ProgressDialog: React.FC<ProgressDialogProps> = ({
               className="h-1.5 bg-miro-surface"
               indicatorClassName="bg-miro-primary"
             />
+          </div>
+
+          {/* Skill Profile & Radar Access */}
+          <div className="p-3 bg-miro-surfaceSoft border border-miro-hairline rounded-xl flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <BarChart2 className="h-4 w-4 text-miro-blue shrink-0" />
+              <div className="min-w-0">
+                <span className="font-semibold block text-miro-primary">Skill Profile & Radar</span>
+                <span className="text-[11px] text-miro-slate truncate block">
+                  Domain proficiency, calibration scores, and readiness analysis.
+                </span>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onOpenChange(false);
+                navigate?.('/skills');
+              }}
+              className="text-xs h-7 px-2.5 border-miro-hairline hover:bg-miro-card shrink-0 inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>View Radar</span>
+              <ArrowRight className="h-3 w-3" />
+            </Button>
           </div>
         </div>
 

@@ -12,7 +12,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, currentPath = '/' }) =
   return (
     <footer className="pt-8 pb-12 border-t border-miro-hairlineSoft text-center space-y-3">
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-miro-muted">
-        <span>Powered by Cloudflare Pages</span>
+        <span>© 2026 23p Technologies, LLC</span>
         <span className="text-miro-hairlineStrong">•</span>
         <a
           href="/privacy"

@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
+import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
@@ -27,6 +28,9 @@ export interface CaseFileRunnerProps {
   drill: CaseFileDrillDefinition;
   isReviewMode?: boolean;
   previousAttempt?: DrillAttemptRecord;
+  isAuthenticated?: boolean;
+  onSignInGoogle?: (returnUrl?: string) => void;
+  onSignInGithub?: (returnUrl?: string) => void;
   onDrillComplete?: (result: {
     drillId: string;
     format: DrillFormat;
@@ -42,6 +46,9 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
   drill,
   isReviewMode = false,
   previousAttempt,
+  isAuthenticated = true,
+  onSignInGoogle,
+  onSignInGithub,
   onDrillComplete,
   onNextDrill,
 }) => {
@@ -111,12 +118,21 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
           <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed whitespace-pre-wrap">
             {drill.brief.synopsis}
           </div>
-          <Button
-            onClick={() => dispatch({ type: 'BEGIN_STATIONS' })}
-            className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
-          >
-            Begin <ArrowRight className="h-4 w-4" />
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              onClick={() => dispatch({ type: 'BEGIN_STATIONS' })}
+              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+            >
+              Begin <ArrowRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <DrillAuthGate
+              title="Sign in to begin this CTA Case File"
+              description="Review architecture stations, uncover facts with your probe budget, and commit board recommendations. Free with an account."
+              onSignInGoogle={onSignInGoogle}
+              onSignInGithub={onSignInGithub}
+            />
+          )}
         </CardContent>
       </Card>
     );
