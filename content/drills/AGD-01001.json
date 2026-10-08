@@ -14,14 +14,14 @@
     "diagramUrl": "/diagrams/agd-01001-cached-topology.svg",
     "diagramLabel": "Zero Copy acceleration cache between Snowflake and Agentforce / segments"
   },
-  "issue": "Following a compliance purge in Snowflake, auditing reveals that hundreds of hard-deleted customer accounts are still being actively queried by Agentforce and included in hourly segment activations 36 hours later.",
+  "issue": "Following a routine data lifecycle maintenance job in Snowflake (hard-deleting expired trial accounts), auditing reveals that hundreds of purged accounts are still being actively queried by Agentforce and included in hourly segment activations 36 hours later.",
   "probeBudget": 3,
   "probes": [
     {
       "id": "p1",
       "tier": "pivotal",
       "label": "How were the customer accounts purged upstream in Snowflake?",
-      "answer": "A compliance batch job executed physical SQL DELETE FROM accounts WHERE ... statements without soft-delete flags or tombstone records."
+      "answer": "A routine lifecycle maintenance script executed physical SQL DELETE FROM accounts WHERE status = 'expired_trial' statements directly against Snowflake tables without soft-delete flags or tombstone records."
     },
     {
       "id": "p2",
@@ -100,9 +100,9 @@
     },
     {
       "id": "d3",
-      "text": "Hourly segment refresh jobs failed to run, causing segments to retain stale membership lists.",
-      "antipattern": "Segment Schedule Blame",
-      "rationale": "Segment jobs are running and completing successfully; the stale data resides in the accelerated DMO cache itself."
+      "text": "Call Data Cloud's Consent REST API to issue Right to be Forgotten deletion requests for the purged trial accounts.",
+      "antipattern": "Consent API Sledgehammer",
+      "rationale": "The Consent API is an overly destructive sledgehammer designed for low-volume DSAR privacy compliance, not bulk data warehouse lifecycle management. Calling it for routine trial account maintenance permanently dissolves unified identity clusters and wipes historical analytics, while risking API rate limits and heavy credit consumption from repeated identity recalculations."
     }
   ]
 }
