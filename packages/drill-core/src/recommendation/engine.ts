@@ -94,7 +94,7 @@ export function selectRecommendedRound(params: {
     todayDateStr,
     domain,
     sessionSkipCount = 0,
-    setCount = 3,
+    setCount = RAPID_FIRE_REPS_PER_DRILL,
   } = params;
 
   // Daily streak filters by isDailyEligible format descriptor.
@@ -193,7 +193,7 @@ export const selectRecommendedRapidFireSet = selectRecommendedRound;
 
 /**
  * Selects today's assigned workout for a specific user deterministically.
- * Randomizes across Rapid Fire (5 reps), Case File (1 scenario), and Troubleshooting (1 incident),
+ * Randomizes across Rapid Fire (3 reps), Case File (1 scenario), and Troubleshooting (1 incident),
  * seeded by date + visitor ID (Question 1 = B).
  */
 export function selectDailyWorkout(params: {
@@ -275,7 +275,7 @@ export function selectDailyWorkout(params: {
     };
   }
 
-  // Rapid_Fire (5 reps, ~5 min)
+  // Rapid_Fire (3 reps, ~5 min)
   const round = selectRecommendedRound({
     drills: rapidFireCatalog,
     completedDrills,
