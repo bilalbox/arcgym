@@ -211,6 +211,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     dispatch({ type: 'SELECT_AUTOPSY_CHIP', optionId });
   };
 
+  const handleSkipAutopsy = () => {
+    dispatch({ type: 'SKIP_AUTOPSY' });
+  };
+
   const handleNext = () => {
     if (currentRep && isAutopsyPending(currentRep)) return;
     setSelectedConfidence(null);
@@ -416,10 +420,14 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const matchedDistractor = hypercorrectionActive
     ? currentStep.options.find((o) => o.id === excludedOptionId)
     : undefined;
+  const interceptCitationUrl = matchedDistractor?.citationUrl;
+  const interceptCitationHref = safeCitationHref(interceptCitationUrl);
+  const interceptCitationHost = citationHostname(interceptCitationUrl);
   const autopsyPrompt =
     isRevealed && currentRep.isCorrect === false
       ? buildDistractorAutopsy(currentStep.options, currentRep.selectedOptionId)
       : null;
+  const autopsyResolved = Boolean(currentRep.autopsySelectedOptionId || currentRep.autopsySkipped);
 
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
@@ -595,14 +603,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
         {hypercorrectionActive && matchedDistractor && (
           <div className="mt-6 pt-4 border-t border-miro-hairlineSoft space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="destructive" className="gap-1.5 px-3 py-1">
-                  <XCircle className="h-3.5 w-3.5" /> Antipattern Detected
-                </Badge>
-                <span className="text-xs text-miro-slate">
-                  Confidence: {Math.round((currentRep.committedConfidence ?? 0) * 100)}%
-                </span>
-              </div>
+              <span className="text-xs text-miro-slate">
+                Confidence: {Math.round((currentRep.committedConfidence ?? 0) * 100)}%
+              </span>
               <span className="text-sm font-mono font-semibold text-miro-primary">
                 Score: {currentScore && currentScore > 0 ? '+' : ''}
                 {currentScore} pts
@@ -617,7 +620,19 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
             </div>
 
             <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <p className="text-xs text-miro-slate">Choose another option, or skip.</p>
+              {interceptCitationHref && interceptCitationHost ? (
+                <a
+                  href={interceptCitationHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-miro-blue hover:text-miro-blueDeep font-medium flex items-center gap-1.5 underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  View guidance on {interceptCitationHost}
+                </a>
+              ) : (
+                <p className="text-xs text-miro-slate">Retry or skip.</p>
+              )}
               <Button
                 onClick={handleSkipHypercorrection}
                 variant="secondary"
@@ -668,26 +683,23 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
 
             {autopsyPrompt && (
               <div className="rounded-xl border border-miro-hairlineSoft bg-miro-surface p-3.5 space-y-3">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-miro-primary">Distractor Autopsy</p>
-                  <p className="text-xs text-miro-slate leading-relaxed">
-                    A common community miss
-                    {autopsyPrompt.focusAntipattern
-                      ? ` — why does ${autopsyPrompt.focusAntipattern} fail here?`
-                      : ' — why does this antipattern fail here?'}
-                  </p>
-                </div>
+                <p className="text-xs text-miro-slate leading-relaxed">
+                  {autopsyPrompt.focusAntipattern
+                    ? `Why does ${autopsyPrompt.focusAntipattern} fail here?`
+                    : 'Why does this antipattern fail here?'}
+                </p>
                 <div className="flex flex-col gap-2">
                   {autopsyPrompt.chips.map((chip) => {
                     const isPicked = autopsySelectedOptionId === chip.optionId;
                     const isFocusReveal =
+                      autopsyResolved &&
                       Boolean(autopsySelectedOptionId) &&
                       chip.optionId === autopsyPrompt.focusOptionId;
                     return (
                       <button
                         key={chip.optionId}
                         type="button"
-                        disabled={Boolean(autopsySelectedOptionId)}
+                        disabled={autopsyResolved}
                         onClick={() => handleSelectAutopsyChip(chip.optionId)}
                         className={`text-left rounded-lg border px-3 py-2.5 text-xs leading-relaxed transition-colors cursor-pointer disabled:cursor-default ${
                           isPicked || isFocusReveal
@@ -706,7 +718,15 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   })}
                 </div>
                 {autopsyPending && (
-                  <p className="text-[11px] text-miro-muted">Tap one explanation to continue.</p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSkipAutopsy}
+                    className="w-full sm:w-auto"
+                  >
+                    Skip
+                  </Button>
                 )}
               </div>
             )}

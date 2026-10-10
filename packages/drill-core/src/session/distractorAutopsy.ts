@@ -50,5 +50,5 @@ export function isAutopsyApplicable(rep: PracticeRepState): boolean {
 }
 
 export function isAutopsyPending(rep: PracticeRepState): boolean {
-  return isAutopsyApplicable(rep) && !rep.autopsySelectedOptionId;
+  return isAutopsyApplicable(rep) && !rep.autopsySelectedOptionId && !rep.autopsySkipped;
 }

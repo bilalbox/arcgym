@@ -53,7 +53,7 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
   onNextDrill,
 }) => {
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
-  const [firstCallOptionId, setFirstCallOptionId] = useState<string | null>(null);
+  const [firstCallHypothesis, setFirstCallHypothesis] = useState('');
   const [firstCallConfidence, setFirstCallConfidence] = useState<ConfidenceLevel | null>(null);
   const [session, dispatch] = useReducer(caseSessionReducer, drill, createCaseSessionState);
   const canSkipFirstCall = drill.difficulty === 'Associate_Domain_Architect';
@@ -62,7 +62,7 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
   useEffect(() => {
     dispatch({ type: 'RESET_SESSION' });
     setSelectedConfidence(null);
-    setFirstCallOptionId(null);
+    setFirstCallHypothesis('');
     setFirstCallConfidence(null);
   }, [drill.id]);
 
@@ -242,7 +242,7 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
             <Button
               onClick={() => {
                 setSelectedConfidence(null);
-                setFirstCallOptionId(null);
+                setFirstCallHypothesis('');
                 setFirstCallConfidence(null);
                 dispatch({ type: 'RESET_SESSION' });
               }}
@@ -286,53 +286,38 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
       <CardContent className="space-y-5">
         {session.phase === 'first_call' && (
           <div className="space-y-3">
-            <div className="rounded-xl border border-miro-hairline bg-miro-surface p-3.5 space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
+            <label className="block space-y-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
                 First Call
-              </p>
-              <p className="text-sm text-miro-primary">
-                Your unscored gut hypothesis before probes unlock.
-                {canSkipFirstCall
-                  ? ' You may skip on Associate drills.'
-                  : ' Required before the Probe Budget unlocks.'}
-              </p>
-            </div>
-            <div className="space-y-2">
-              {orderedOptions.map((option) => {
-                const selected = firstCallOptionId === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setFirstCallOptionId(option.id)}
-                    className={`w-full text-left rounded-xl border px-3.5 py-3 text-sm transition-colors cursor-pointer ${
-                      selected
-                        ? 'border-miro-primary bg-miro-surface text-miro-primary'
-                        : 'border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong'
-                    }`}
-                  >
-                    <span className="font-medium">{option.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+              </span>
+              <textarea
+                value={firstCallHypothesis}
+                onChange={(e) => setFirstCallHypothesis(e.target.value)}
+                rows={2}
+                maxLength={280}
+                placeholder="One-line hypothesis"
+                className="w-full rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary placeholder:text-miro-muted focus:outline-none focus:border-miro-hairlineStrong resize-none"
+              />
+            </label>
             <ConfidenceGate
               selectedConfidence={firstCallConfidence}
               onSelectConfidence={setFirstCallConfidence}
-              hasSelectedAnswer={Boolean(firstCallOptionId)}
+              hasSelectedAnswer={firstCallHypothesis.trim().length > 0}
               requireConfidence={false}
               confidenceLabel="Confidence"
-              submitLabel="Lock First Call"
+              answerRequiredHint="Write a hypothesis first"
+              submitLabel="Lock"
               onSubmit={() => {
-                if (!firstCallOptionId) return;
+                const hypothesis = firstCallHypothesis.trim();
+                if (!hypothesis) return;
                 dispatch({
                   type: 'SUBMIT_FIRST_CALL',
-                  optionId: firstCallOptionId,
+                  hypothesis,
                   confidence: firstCallConfidence
                     ? ((firstCallConfidence / 100) as ConfidenceAnchor)
                     : undefined,
                 });
-                setFirstCallOptionId(null);
+                setFirstCallHypothesis('');
                 setFirstCallConfidence(null);
               }}
             />
@@ -342,11 +327,11 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
                 className="w-full"
                 onClick={() => {
                   dispatch({ type: 'SKIP_FIRST_CALL' });
-                  setFirstCallOptionId(null);
+                  setFirstCallHypothesis('');
                   setFirstCallConfidence(null);
                 }}
               >
-                Skip First Call
+                Skip
               </Button>
             )}
           </div>
@@ -445,19 +430,13 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
                 {(() => {
                   const first = current.firstCall;
                   if (!first) return null;
-                  const firstLabel = first.skipped
-                    ? 'Skipped'
-                    : (current.station.options.find((o) => o.id === first.optionId)?.label ?? '—');
+                  const firstLabel = first.skipped ? 'Skipped' : first.hypothesis?.trim() || '—';
                   const finalLabel =
                     current.station.options.find((o) => o.id === current.selectedOptionId)?.label ??
                     '—';
-                  const flippingProbe = current.flippingProbeId
+                  const discoveryProbe = current.flippingProbeId
                     ? current.station.probes.find((p) => p.id === current.flippingProbeId)
                     : null;
-                  const revised =
-                    !first.skipped &&
-                    Boolean(first.optionId) &&
-                    first.optionId !== current.selectedOptionId;
                   return (
                     <div className="rounded-xl border border-miro-hairline bg-miro-card p-3.5 text-sm space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
@@ -475,17 +454,14 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
                           <p className="text-miro-primary mt-0.5">{finalLabel}</p>
                         </div>
                       </div>
-                      {revised && flippingProbe && (
+                      {discoveryProbe && (
                         <div className="rounded-lg border border-miro-blue/30 bg-miro-blue/5 px-3 py-2">
                           <span className="text-[11px] font-semibold uppercase tracking-wider text-miro-blue">
-                            Flipping probe
+                            Discovery
                           </span>
-                          <p className="text-miro-primary mt-0.5">{flippingProbe.label}</p>
-                          <p className="text-xs text-miro-slate mt-1">{flippingProbe.answer}</p>
+                          <p className="text-miro-primary mt-0.5">{discoveryProbe.label}</p>
+                          <p className="text-xs text-miro-slate mt-1">{discoveryProbe.answer}</p>
                         </div>
-                      )}
-                      {revised && !flippingProbe && (
-                        <p className="text-xs text-miro-slate">Probes revised your First Call.</p>
                       )}
                     </div>
                   );
@@ -494,7 +470,7 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
                 <Button
                   onClick={() => {
                     setSelectedConfidence(null);
-                    setFirstCallOptionId(null);
+                    setFirstCallHypothesis('');
                     setFirstCallConfidence(null);
                     dispatch({ type: 'ADVANCE_STATION' });
                   }}

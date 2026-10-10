@@ -33,12 +33,12 @@ An authored group of Rapid Fire Drills that share one deciding architectural var
 _Avoid_: Flashcard deck, question family, tagged topic cluster, sourceCardIds heuristic
 
 ### Distractor Autopsy
-A short post-reveal prompt that asks why a specific Antipattern Distractor fails in this Drill, answered by tapping one of several authored explanation chips (usually from option rationales). Unscored.
+A short post-reveal prompt that asks why a specific Antipattern Distractor fails in this Drill, answered by tapping one of several authored explanation chips (usually from option rationales). Unscored; skippable.
 _Avoid_: Shame framing, free-text essay, scored follow-up quiz
 
 ### First Call
-An unscored gut hypothesis (and optional Confidence Calibration) captured on a Case File Station after the Brief and before the Probe Budget unlocks. Compared to the final recommendation so probe-driven revisions are visible.
-_Avoid_: Scored pretest, mandatory Associate gate, oral defense
+An unscored one-line free-text gut hypothesis (and optional Confidence Calibration) captured on a Case File Station after the Brief and before the Probe Budget unlocks. Compared to the final recommendation so probe-driven revisions are visible.
+_Avoid_: Scored pretest, mandatory Associate gate, oral defense, recommendation-option pick
 
 ### Architectural Trade-Off
 A design tension evaluated across the Salesforce Well-Architected Framework pillars (Trust, Reliability, Operational Excellence, Resource and Cost Optimization, Fairness).

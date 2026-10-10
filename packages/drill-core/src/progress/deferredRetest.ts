@@ -1,3 +1,4 @@
+import { isHypercorrectionEligible } from '../session/hypercorrection.js';
 import type {
   DeferredRetestSlot,
   DrillAttemptRecord,
@@ -13,11 +14,6 @@ export type { DeferredRetestSlot };
 export const DEFERRED_RETEST_MIN_DELAY_DAYS = 2;
 /** Inclusive end of the injection window after a hypercorrection miss (calendar days). */
 export const DEFERRED_RETEST_MAX_DELAY_DAYS = 5;
-
-/** Matches Hypercorrection Intercept gate (≥85% wrong). */
-function isHypercorrectionMiss(confidence: number, isCorrect: boolean): boolean {
-  return !isCorrect && confidence >= 0.85;
-}
 
 /** Add calendar days to a YYYY-MM-DD string (UTC-noon to avoid DST edge cases). */
 export function addCalendarDays(dateStr: string, days: number): string {
@@ -65,7 +61,7 @@ export function pickContrastSiblingDrillId(
 
 function attemptIsHypercorrectionMiss(attempt: DrillAttemptRecord): boolean {
   return (attempt.steps ?? []).some((step) =>
-    isHypercorrectionMiss(step.confidence, step.isCorrect),
+    isHypercorrectionEligible(step.confidence, step.isCorrect),
   );
 }
 

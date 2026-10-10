@@ -31,8 +31,9 @@ export function getDrillQuestionCount(
 }
 
 /**
- * Counts Case File stations where First Call differed from the final recommendation
- * (probe-driven revisions). Skipped First Calls do not count.
+ * Counts Case File stations with a non-empty First Call hypothesis where the learner
+ * selected probes before committing a final recommendation (probe-driven revisions).
+ * Skipped First Calls do not count.
  */
 export function countProbeDrivenRevisions(
   completedDrills: Record<string, DrillAttemptRecord>,
@@ -41,8 +42,12 @@ export function countProbeDrivenRevisions(
   for (const attempt of Object.values(completedDrills)) {
     for (const step of attempt.steps ?? []) {
       const first = step.firstCall;
-      if (!first || first.skipped || !first.optionId || !step.selectedOptionId) continue;
-      if (first.optionId !== step.selectedOptionId) count += 1;
+      if (!first || first.skipped || !first.hypothesis?.trim() || !step.selectedOptionId) {
+        continue;
+      }
+      if ((step.selectedProbeIds?.length ?? 0) > 0 || step.flippingProbeId) {
+        count += 1;
+      }
     }
   }
   return count;
