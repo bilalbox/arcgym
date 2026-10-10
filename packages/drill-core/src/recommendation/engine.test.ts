@@ -298,7 +298,7 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
       expect(formatsSeen.size).toBeGreaterThan(1);
     });
 
-    it('assigns 5 reps when Rapid_Fire format is selected', () => {
+    it('assigns 3 reps when Rapid_Fire format is selected', () => {
       // Find a visitorId that lands on Rapid_Fire
       let rfAssignment = null;
       for (let i = 0; i < 30; i++) {
@@ -316,7 +316,7 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
 
       expect(rfAssignment).not.toBeNull();
       expect(rfAssignment?.format).toBe('Rapid_Fire');
-      expect(rfAssignment?.rapidFireRound?.drills.length).toBe(5);
+      expect(rfAssignment?.rapidFireRound?.drills.length).toBe(3);
       expect(rfAssignment?.estimatedMinutes).toBe(5);
     });
   });

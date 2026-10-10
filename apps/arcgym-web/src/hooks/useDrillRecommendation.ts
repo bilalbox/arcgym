@@ -4,6 +4,7 @@ import {
   type DailyWorkoutAssignment,
   type DrillAttemptRecord,
   isRapidFireDrill,
+  RAPID_FIRE_REPS_PER_DRILL,
   type RapidFireDrillDefinition,
   type RecommendedRound,
   selectDailyWorkout,
@@ -30,7 +31,7 @@ export function useDrillRecommendation(
       completedDrills,
       todayDateStr,
       visitorId: visitorId || 'guest',
-      rapidFireReps: 5,
+      rapidFireReps: RAPID_FIRE_REPS_PER_DRILL,
     });
   }, [completedDrills, todayDateStr, visitorId]);
 
@@ -41,7 +42,7 @@ export function useDrillRecommendation(
       todayDateStr,
       domain,
       sessionSkipCount,
-      setCount: 5,
+      setCount: RAPID_FIRE_REPS_PER_DRILL,
     });
   }, [completedDrills, todayDateStr, domain, sessionSkipCount]);
 

@@ -161,7 +161,7 @@ const WorkoutMetaTags: React.FC<{ format?: DrillFormat; estimatedMinutes: number
   }
   return (
     <div className="flex items-center gap-3 text-xs text-miro-muted">
-      <span>5 reps / round</span>
+      <span>3 reps / round</span>
       <span>•</span>
       <span>~{estimatedMinutes} min</span>
       <span>•</span>
@@ -231,9 +231,9 @@ function getWorkoutInfo(
     format,
     title: activeDomain
       ? `${ARCHITECTURAL_DOMAIN_LABELS[activeDomain]} Workout`
-      : '5-Rep Architectural Judgment Workout',
+      : '3-Rep Architectural Judgment Workout',
     description:
-      '5 high-tempo decision reps. Calibrate your certainty across platform trade-offs before committing recommendations.',
+      '3 high-tempo decision reps. Calibrate your certainty across platform trade-offs before committing recommendations.',
     estimatedMinutes: 5,
   };
 }
@@ -254,7 +254,7 @@ function getWorkoutButton(format: DrillFormat, isStreakEarnedToday: boolean) {
   if (format === 'Troubleshooting') {
     return { text: 'Launch Daily Incident' };
   }
-  return { text: 'Start Daily Workout (5 Reps)' };
+  return { text: 'Start Daily Workout (3 Reps)' };
 }
 
 interface DailyWorkoutHeroProps {
@@ -339,7 +339,7 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({ onStartRapidFire
           <div className="space-y-1">
             <h3 className="text-base font-medium text-miro-primary">Rapid Fire Drills</h3>
             <p className="text-xs text-miro-slate leading-relaxed">
-              5 architectural judgment reps with antipattern distractors.
+              3 architectural judgment reps with antipattern distractors.
             </p>
           </div>
         </div>
@@ -350,7 +350,7 @@ const PracticeTracksSection: React.FC<PracticeTracksProps> = ({ onStartRapidFire
             onClick={onStartRapidFire}
             className="w-full rounded-full text-xs font-medium border-miro-hairline hover:border-miro-hairlineStrong hover:bg-miro-surface text-miro-primary justify-between"
           >
-            <span>Launch 5-Rep Set</span>
+            <span>Launch 3-Rep Set</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </div>
