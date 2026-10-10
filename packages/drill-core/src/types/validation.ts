@@ -5,6 +5,13 @@ export function isValidDrillId(id: unknown): id is string {
   return typeof id === 'string' && DRILL_ID_PATTERN.test(id);
 }
 
+/** Authored Contrast Set ids (e.g. CS-zero-copy-vs-copy). Exactly three published Rapid Fire siblings share one id. */
+export const CONTRAST_SET_ID_PATTERN = /^CS-[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export function isValidContrastSetId(id: unknown): id is string {
+  return typeof id === 'string' && CONTRAST_SET_ID_PATTERN.test(id);
+}
+
 /** Approved Friction Card ID pattern (e.g. FC-0D5KX00000jATZ10AO). */
 export const FRICTION_CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
 

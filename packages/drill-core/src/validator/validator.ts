@@ -16,6 +16,7 @@ import { isValidDrillId, isValidFrictionCardId } from '../types/validation.js';
 
 import type { ValidationContext, ValidationFinding, ValidationRuleId } from './types.js';
 
+export { CONTRAST_SET_SIZE, validateContrastSetCatalog } from './contrastSet.js';
 export type { ValidationContext, ValidationFinding, ValidationRuleId };
 
 export type ValidationResult =
@@ -164,6 +165,18 @@ export function validateDrill(raw: unknown, ctx: ValidationContext = {}): Valida
   }
 
   const format = drill.format as DrillFormat;
+
+  if (
+    format !== 'Rapid_Fire' &&
+    (drill.contrastSetId !== undefined || drill.contrastPrinciple !== undefined)
+  ) {
+    findings.push({
+      ruleId: 'contrast-set',
+      where: 'contrastSetId',
+      message: 'contrastSetId and contrastPrinciple are only valid on Rapid_Fire drills',
+    });
+  }
+
   getDrillFormatDescriptor(format).validate(drill, ctx, findings);
 
   if (findings.length > 0) {

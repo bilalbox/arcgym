@@ -13,6 +13,8 @@ import {
   type RapidFireDrillDefinition,
 } from '../types/drill.js';
 
+export { contrastPrincipleForRound } from './contrastRound.js';
+
 export type RecommendationReason = 'daily' | 'next_uncompleted' | 'review';
 
 export interface RecommendedRound {
@@ -22,6 +24,10 @@ export interface RecommendedRound {
   uncompletedCount: number;
   totalCount: number;
   completionPercentage: number;
+  /** Present when the round is one complete Contrast Set of three siblings. */
+  contrastSetId?: string;
+  /** Principle line for a contrast round; shown once after the third rep. */
+  contrastPrinciple?: string;
 }
 
 /** Backward compatibility alias */
@@ -142,6 +148,28 @@ export function selectRecommendedRound(params: {
     reason = uncompletedCount > 0 ? 'next_uncompleted' : 'review';
   }
 
+  const contrastRound = pickContrastSetRound({
+    candidateDrills,
+    completedDrills,
+    todayDateStr,
+    sessionSkipCount,
+    setCount,
+  });
+
+  if (contrastRound) {
+    const isDaily = contrastRound.drills.some((d) => d.id === todayDrill.id);
+    return {
+      drills: contrastRound.drills,
+      reason,
+      isDaily,
+      uncompletedCount,
+      totalCount,
+      completionPercentage,
+      contrastSetId: contrastRound.contrastSetId,
+      contrastPrinciple: contrastRound.contrastPrinciple,
+    };
+  }
+
   const selectedDrills: DrillDefinitionDTO[] = [];
   const selectedIds = new Set<string>();
 
@@ -185,6 +213,73 @@ export function selectRecommendedRound(params: {
     uncompletedCount,
     totalCount,
     completionPercentage,
+  };
+}
+
+/**
+ * When a complete Contrast Set has all members still uncompleted, return those
+ * three siblings as the round. Deterministic pick among eligible sets via date + skip.
+ */
+function pickContrastSetRound(params: {
+  candidateDrills: DrillDefinitionDTO[];
+  completedDrills: Record<string, DrillAttemptRecord>;
+  todayDateStr: string;
+  sessionSkipCount: number;
+  setCount: number;
+}): {
+  drills: DrillDefinitionDTO[];
+  contrastSetId: string;
+  contrastPrinciple: string;
+} | null {
+  const { candidateDrills, completedDrills, todayDateStr, sessionSkipCount, setCount } = params;
+  // Contrast Sets preferentially fill the first daily round only; later skips use independent picks.
+  if (sessionSkipCount > 0) return null;
+  if (setCount !== RAPID_FIRE_REPS_PER_DRILL) return null;
+
+  const bySet = new Map<string, RapidFireDrillDefinition[]>();
+  for (const drill of candidateDrills) {
+    if (!isRapidFireDrill(drill) || !drill.contrastSetId) continue;
+    const siblings = bySet.get(drill.contrastSetId) ?? [];
+    siblings.push(drill);
+    bySet.set(drill.contrastSetId, siblings);
+  }
+
+  const eligible: Array<{
+    contrastSetId: string;
+    contrastPrinciple: string;
+    drills: RapidFireDrillDefinition[];
+  }> = [];
+
+  for (const [contrastSetId, siblings] of bySet) {
+    if (siblings.length !== RAPID_FIRE_REPS_PER_DRILL) continue;
+    if (siblings.some((d) => completedDrills[d.id])) continue;
+    const principle = siblings[0]?.contrastPrinciple?.trim();
+    if (!principle) continue;
+    if (!siblings.every((d) => (d.contrastPrinciple ?? '').trim() === principle)) continue;
+
+    // Stable order by catalog position so the round is deterministic.
+    const ordered = [...siblings].sort((a, b) => {
+      const idxA = candidateDrills.findIndex((d) => d.id === a.id);
+      const idxB = candidateDrills.findIndex((d) => d.id === b.id);
+      return idxA - idxB;
+    });
+
+    eligible.push({
+      contrastSetId,
+      contrastPrinciple: principle,
+      drills: ordered,
+    });
+  }
+
+  if (eligible.length === 0) return null;
+
+  eligible.sort((a, b) => a.contrastSetId.localeCompare(b.contrastSetId));
+  const pickIndex = hashDateString(todayDateStr) % eligible.length;
+  const picked = eligible[pickIndex];
+  return {
+    drills: picked.drills,
+    contrastSetId: picked.contrastSetId,
+    contrastPrinciple: picked.contrastPrinciple,
   };
 }
 
