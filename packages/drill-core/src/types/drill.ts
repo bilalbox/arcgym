@@ -282,6 +282,13 @@ export interface AttemptSubmissionDTO {
 
 export type CauseVerdict = 'correct' | 'incorrect_distractor' | 'incorrect_miss';
 
+/** Unscored Case File First Call capture persisted on step telemetry. */
+export interface FirstCallTelemetry {
+  optionId?: string;
+  confidence?: ConfidenceAnchor;
+  skipped: boolean;
+}
+
 export interface StepAttemptTelemetry {
   stepId: string;
   confidence: ConfidenceAnchor;
@@ -296,6 +303,10 @@ export interface StepAttemptTelemetry {
   missedPivotal?: boolean;
   /** Troubleshooting: free-text cause grading verdict. */
   causeVerdict?: CauseVerdict;
+  /** Case File: gut hypothesis before Probe Budget unlock (unscored). */
+  firstCall?: FirstCallTelemetry;
+  /** Case File: probe that flipped First Call → final recommendation when they diverge. */
+  flippingProbeId?: string;
 }
 
 export interface DrillAttemptRecord {
