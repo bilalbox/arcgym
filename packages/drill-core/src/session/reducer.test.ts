@@ -4,6 +4,8 @@ import {
   createPracticeSessionState,
   getCurrentRep,
   getRoundCompletionResult,
+  isAutopsyPending,
+  isRepRevealed,
   practiceSessionReducer,
 } from './reducer.js';
 
@@ -113,11 +115,18 @@ describe('PracticeSession Reducer', () => {
     let state = createPracticeSessionState(drills);
 
     for (let i = 0; i < 5; i++) {
+      const optionId = i % 2 === 0 ? 'opt_correct' : 'opt_wrong';
       state = practiceSessionReducer(state, {
         type: 'SELECT_OPTION',
-        optionId: i % 2 === 0 ? 'opt_correct' : 'opt_wrong',
+        optionId,
       });
-      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.8 });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+      if (optionId === 'opt_wrong') {
+        state = practiceSessionReducer(state, {
+          type: 'SELECT_AUTOPSY_CHIP',
+          optionId: 'opt_wrong',
+        });
+      }
       state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
     }
 
@@ -247,6 +256,81 @@ describe('PracticeSession Reducer', () => {
       expect(afterSkip?.score).toBe(lockedScore);
       expect(afterSkip?.isCorrect).toBe(false);
 
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_AUTOPSY_CHIP',
+        optionId: 'opt_wrong',
+      });
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+    });
+  });
+
+  describe('Distractor Autopsy', () => {
+    it('is pending after immediate reveal on ≤70 miss and blocks advance until chip pick', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+
+      const rep = getCurrentRep(state);
+      expect(rep).not.toBeNull();
+      expect(isRepRevealed(rep)).toBe(true);
+      expect(isAutopsyPending(rep)).toBe(true);
+
+      const lockedScore = rep.score;
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(false);
+
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_AUTOPSY_CHIP',
+        optionId: 'opt_wrong',
+      });
+      const afterChip = getCurrentRep(state);
+      expect(afterChip).not.toBeNull();
+      expect(afterChip.autopsySelectedOptionId).toBe('opt_wrong');
+      expect(afterChip.score).toBe(lockedScore);
+      expect(isAutopsyPending(afterChip)).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+      expect(state.totalScore).toBe(lockedScore);
+    });
+
+    it('opens after hypercorrection resolve and does not change Brier or correctness', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.95 });
+
+      const beforeRetry = getCurrentRep(state);
+      expect(beforeRetry).not.toBeNull();
+      expect(isAutopsyPending(beforeRetry)).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_correct' });
+      const revealed = getCurrentRep(state);
+      expect(revealed).not.toBeNull();
+      expect(isRepRevealed(revealed)).toBe(true);
+      expect(isAutopsyPending(revealed)).toBe(true);
+
+      const lockedScore = revealed.score;
+      const lockedQuadrant = revealed.quadrant;
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_AUTOPSY_CHIP',
+        optionId: 'opt_wrong_b',
+      });
+      const after = getCurrentRep(state);
+      expect(after?.autopsySelectedOptionId).toBe('opt_wrong_b');
+      expect(after?.score).toBe(lockedScore);
+      expect(after?.quadrant).toBe(lockedQuadrant);
+      expect(after?.isCorrect).toBe(false);
+    });
+
+    it('is not required after a correct first commit', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_correct' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+
+      const rep = getCurrentRep(state);
+      expect(rep).not.toBeNull();
+      expect(isAutopsyPending(rep)).toBe(false);
       state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
       expect(state.isCompleted).toBe(true);
     });

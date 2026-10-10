@@ -23,6 +23,8 @@ export interface PracticeRepState {
   hypercorrectionExcludedOptionId?: string;
   /** Second-try option after intercept resolve; scoring stays on first commit. */
   retryOptionId?: string;
+  /** Unscored Distractor Autopsy chip pick (wrong-option rationale id). */
+  autopsySelectedOptionId?: string;
 }
 
 export interface PracticeSessionState {
@@ -40,6 +42,7 @@ export type PracticeSessionAction =
   | { type: 'COMMIT_CONFIDENCE'; confidence: ConfidenceAnchor }
   | { type: 'RETRY_OPTION'; optionId: string }
   | { type: 'SKIP_HYPERCORRECTION' }
+  | { type: 'SELECT_AUTOPSY_CHIP'; optionId: string }
   | { type: 'ADVANCE_REP' }
   | { type: 'RESET_SESSION'; drills?: RapidFireDrillDefinition[] };
 
