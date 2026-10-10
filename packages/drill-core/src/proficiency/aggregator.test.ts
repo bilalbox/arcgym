@@ -263,7 +263,7 @@ describe('calculateProficiencyReport', () => {
 });
 
 describe('countProbeDrivenRevisions', () => {
-  it('counts stations where First Call differs from final recommendation', () => {
+  it('counts stations with non-empty First Call text and probe discovery', () => {
     const attempts: Record<string, DrillAttemptRecord> = {
       'AGD-00901': {
         drillId: 'AGD-00901',
@@ -279,7 +279,12 @@ describe('countProbeDrivenRevisions', () => {
             isCorrect: true,
             score: 133,
             selectedOptionId: 'o1',
-            firstCall: { optionId: 'o2', confidence: 0.7, skipped: false },
+            selectedProbeIds: ['p1', 'p2'],
+            firstCall: {
+              hypothesis: 'Sync callouts',
+              confidence: 0.7,
+              skipped: false,
+            },
             flippingProbeId: 'p2',
           },
           {
@@ -288,7 +293,7 @@ describe('countProbeDrivenRevisions', () => {
             isCorrect: true,
             score: 120,
             selectedOptionId: 'o1',
-            firstCall: { optionId: 'o1', skipped: false },
+            firstCall: { hypothesis: 'Platform events', skipped: false },
           },
           {
             stepId: 'st3',

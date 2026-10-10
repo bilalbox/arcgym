@@ -12,7 +12,7 @@ import type {
 export type CasePhase = 'brief' | 'first_call' | 'probes' | 'commit' | 'feedback';
 
 export interface FirstCallCapture {
-  optionId: string | null;
+  hypothesis: string | null;
   confidence: ConfidenceAnchor | null;
   skipped: boolean;
 }
@@ -49,7 +49,7 @@ export interface CaseSessionState {
 
 export type CaseSessionAction =
   | { type: 'BEGIN_STATIONS' }
-  | { type: 'SUBMIT_FIRST_CALL'; optionId: string; confidence?: ConfidenceAnchor }
+  | { type: 'SUBMIT_FIRST_CALL'; hypothesis: string; confidence?: ConfidenceAnchor }
   | { type: 'SKIP_FIRST_CALL' }
   | { type: 'TOGGLE_PROBE'; probeId: string }
   | { type: 'LOCK_PROBES' }
@@ -95,15 +95,19 @@ export function getCurrentCaseStation(state: CaseSessionState): CaseStationState
   return state.stations[state.currentStationIndex] ?? null;
 }
 
-/** Last selected pivotal probe, else last selected probe — the discovery that flipped the call. */
+/**
+ * Last selected pivotal probe, else last selected probe — discovery highlight after First Call.
+ * Requires a non-skipped First Call with non-empty hypothesis text and at least one probe.
+ * Does not compare free-text to the final recommendation option (no false “flip”).
+ */
 export function resolveFlippingProbeId(
   selectedProbeIds: string[],
   probes: CaseFileStationDTO['probes'],
   firstCall: FirstCallCapture | null,
-  finalOptionId: string | null,
 ): string | null {
-  if (!firstCall || firstCall.skipped || !firstCall.optionId || !finalOptionId) return null;
-  if (firstCall.optionId === finalOptionId) return null;
+  if (!firstCall || firstCall.skipped) return null;
+  if (!firstCall.hypothesis?.trim()) return null;
+  if (selectedProbeIds.length === 0) return null;
 
   for (let i = selectedProbeIds.length - 1; i >= 0; i--) {
     const probeId = selectedProbeIds[i];
@@ -143,7 +147,7 @@ function synthesizeAttempt(state: CaseSessionState): {
     missedPivotal: s.missedAllPivotal ?? undefined,
     firstCall: s.firstCall
       ? {
-          optionId: s.firstCall.optionId ?? undefined,
+          hypothesis: s.firstCall.hypothesis ?? undefined,
           confidence: s.firstCall.confidence ?? undefined,
           skipped: s.firstCall.skipped,
         }
@@ -183,10 +187,12 @@ export function caseSessionReducer(
       const idx = state.currentStationIndex;
       const current = state.stations[idx];
       if (!current) return state;
-      if (!current.station.options.some((o) => o.id === action.optionId)) return state;
+
+      const hypothesis = action.hypothesis.trim();
+      if (!hypothesis) return state;
 
       const firstCall: FirstCallCapture = {
-        optionId: action.optionId,
+        hypothesis,
         confidence: action.confidence ?? null,
         skipped: false,
       };
@@ -199,7 +205,7 @@ export function caseSessionReducer(
       if (state.drill.difficulty !== 'Associate_Domain_Architect') return state;
       const idx = state.currentStationIndex;
       const firstCall: FirstCallCapture = {
-        optionId: null,
+        hypothesis: null,
         confidence: null,
         skipped: true,
       };
@@ -272,7 +278,6 @@ export function caseSessionReducer(
         current.selectedProbeIds,
         current.station.probes,
         current.firstCall,
-        current.selectedOptionId,
       );
 
       const stations = state.stations.map((s, i) =>

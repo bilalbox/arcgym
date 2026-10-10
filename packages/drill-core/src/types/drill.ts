@@ -294,7 +294,8 @@ export type CauseVerdict = 'correct' | 'incorrect_distractor' | 'incorrect_miss'
 
 /** Unscored Case File First Call capture persisted on step telemetry. */
 export interface FirstCallTelemetry {
-  optionId?: string;
+  /** One-line free-text gut hypothesis (absent when skipped). */
+  hypothesis?: string;
   confidence?: ConfidenceAnchor;
   skipped: boolean;
 }
@@ -315,7 +316,10 @@ export interface StepAttemptTelemetry {
   causeVerdict?: CauseVerdict;
   /** Case File: gut hypothesis before Probe Budget unlock (unscored). */
   firstCall?: FirstCallTelemetry;
-  /** Case File: probe that flipped First Call → final recommendation when they diverge. */
+  /**
+   * Case File: last selected pivotal (else last probe) after a non-empty First Call.
+   * Heuristic discovery highlight — not a scored “flip” vs recommendation options.
+   */
   flippingProbeId?: string;
 }
 

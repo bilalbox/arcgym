@@ -16,6 +16,8 @@ interface ConfidenceGateProps {
   /** When false, confidence is optional and submit only needs an answer. */
   requireConfidence?: boolean;
   confidenceLabel?: string;
+  /** Hint when hasSelectedAnswer is false. */
+  answerRequiredHint?: string;
 }
 
 export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
@@ -27,6 +29,7 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
   hasSelectedAnswer,
   requireConfidence = true,
   confidenceLabel = 'Confidence',
+  answerRequiredHint = 'Select an option first',
 }) => {
   const canSubmit = hasSelectedAnswer && (!requireConfidence || selectedConfidence !== null);
 
@@ -72,7 +75,7 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
           {!hasSelectedAnswer ? (
             <>
               <AlertCircle className="h-3 w-3 text-miro-yellowText shrink-0" />
-              <span>Select an option first</span>
+              <span>{answerRequiredHint}</span>
             </>
           ) : requireConfidence && !selectedConfidence ? (
             <>

@@ -121,12 +121,12 @@ describe('caseSessionReducer', () => {
 
     state = caseSessionReducer(state, {
       type: 'SUBMIT_FIRST_CALL',
-      optionId: 'o2',
+      hypothesis: 'Sync callouts per warehouse',
       confidence: 0.7,
     });
     expect(state.phase).toBe('probes');
     expect(getCurrentCaseStation(state)?.firstCall).toEqual({
-      optionId: 'o2',
+      hypothesis: 'Sync callouts per warehouse',
       confidence: 0.7,
       skipped: false,
     });
@@ -155,7 +155,7 @@ describe('caseSessionReducer', () => {
     expect(state.attempt?.format).toBe('Case_File');
     expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
     expect(state.attempt?.steps?.[0]?.firstCall).toEqual({
-      optionId: 'o2',
+      hypothesis: 'Sync callouts per warehouse',
       confidence: 0.7,
       skipped: false,
     });
@@ -164,7 +164,10 @@ describe('caseSessionReducer', () => {
 
   it('does not let First Call affect station score', () => {
     let withCall = walkToFirstCall();
-    withCall = caseSessionReducer(withCall, { type: 'SUBMIT_FIRST_CALL', optionId: 'o2' });
+    withCall = caseSessionReducer(withCall, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Platform events',
+    });
     withCall = completeStationAfterFirstCall(withCall, 'o1');
 
     let withoutCallPath = walkToFirstCall(ASSOCIATE_DRILL);
@@ -184,30 +187,49 @@ describe('caseSessionReducer', () => {
     expect(getCurrentCaseStation(state)?.firstCall).toBeNull();
   });
 
+  it('rejects empty First Call hypothesis', () => {
+    let state = walkToFirstCall(DRILL);
+    state = caseSessionReducer(state, { type: 'SUBMIT_FIRST_CALL', hypothesis: '   ' });
+    expect(state.phase).toBe('first_call');
+    expect(getCurrentCaseStation(state)?.firstCall).toBeNull();
+  });
+
   it('allows Associate_Domain_Architect to skip First Call', () => {
     let state = walkToFirstCall(ASSOCIATE_DRILL);
     state = caseSessionReducer(state, { type: 'SKIP_FIRST_CALL' });
     expect(state.phase).toBe('probes');
     expect(getCurrentCaseStation(state)?.firstCall).toEqual({
-      optionId: null,
+      hypothesis: null,
       confidence: null,
       skipped: true,
     });
   });
 
-  it('records no flipping probe when First Call matches final recommendation', () => {
+  it('records discovery probe when First Call text exists and probes were selected', () => {
     let state = walkToFirstCall();
-    state = caseSessionReducer(state, { type: 'SUBMIT_FIRST_CALL', optionId: 'o1' });
+    state = caseSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Event-driven publish',
+    });
+    state = completeStationAfterFirstCall(state, 'o1');
+    expect(getCurrentCaseStation(state)?.flippingProbeId).toBe('p2');
+  });
+
+  it('records no discovery probe when First Call was skipped', () => {
+    let state = walkToFirstCall(ASSOCIATE_DRILL);
+    state = caseSessionReducer(state, { type: 'SKIP_FIRST_CALL' });
     state = completeStationAfterFirstCall(state, 'o1');
     expect(getCurrentCaseStation(state)?.flippingProbeId).toBeNull();
-    expect(state.attempt).toBeNull(); // still on feedback
     state = caseSessionReducer(state, { type: 'ADVANCE_STATION' });
     expect(state.attempt?.steps?.[0]?.flippingProbeId).toBeUndefined();
   });
 
   it('rejects unknown probe IDs not present in the station probe pool', () => {
     let state = walkToFirstCall();
-    state = caseSessionReducer(state, { type: 'SUBMIT_FIRST_CALL', optionId: 'o1' });
+    state = caseSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Platform events',
+    });
     state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'non_existent_probe' });
     expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([]);
   });

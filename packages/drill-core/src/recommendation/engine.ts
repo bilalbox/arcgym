@@ -305,7 +305,7 @@ export const selectRecommendedRapidFireSet = selectRecommendedRound;
 
 /**
  * Selects today's assigned workout for a specific user deterministically.
- * Randomizes across Rapid Fire (3 reps), Case File (1 scenario), and Troubleshooting (1 incident),
+ * Randomizes across Rapid Fire (3 reps), Case File (1 Case File), and Troubleshooting (1 incident),
  * seeded by date + visitor ID (Question 1 = B).
  */
 export function selectDailyWorkout(params: {

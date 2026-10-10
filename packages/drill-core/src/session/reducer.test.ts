@@ -266,7 +266,7 @@ describe('PracticeSession Reducer', () => {
   });
 
   describe('Distractor Autopsy', () => {
-    it('is pending after immediate reveal on ≤70 miss and blocks advance until chip pick', () => {
+    it('is pending after immediate reveal on ≤70 miss and blocks advance until chip pick or skip', () => {
       let state = createPracticeSessionState([createMockDrill('D1')]);
       state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
       state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
@@ -289,6 +289,25 @@ describe('PracticeSession Reducer', () => {
       expect(afterChip.autopsySelectedOptionId).toBe('opt_wrong');
       expect(afterChip.score).toBe(lockedScore);
       expect(isAutopsyPending(afterChip)).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+      expect(state.totalScore).toBe(lockedScore);
+    });
+
+    it('allows skip without chip pick and does not change Brier', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+
+      const lockedScore = getCurrentRep(state)?.score;
+      state = practiceSessionReducer(state, { type: 'SKIP_AUTOPSY' });
+      const afterSkip = getCurrentRep(state);
+      expect(afterSkip).not.toBeNull();
+      expect(afterSkip.autopsySkipped).toBe(true);
+      expect(afterSkip.autopsySelectedOptionId).toBeUndefined();
+      expect(afterSkip.score).toBe(lockedScore);
+      expect(isAutopsyPending(afterSkip)).toBe(false);
 
       state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
       expect(state.isCompleted).toBe(true);
