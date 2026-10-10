@@ -179,6 +179,16 @@ export interface DrillDefinitionBase {
 export interface RapidFireDrillDefinition extends DrillDefinitionBase {
   format: 'Rapid_Fire';
   steps: RapidFireStepDTO[];
+  /**
+   * Optional Contrast Set id shared by exactly three published Rapid Fire siblings.
+   * When a complete set is available, the daily round uses all three as one contrast round.
+   */
+  contrastSetId?: string;
+  /**
+   * One-line principle shown once after the third contrast rep
+   * (e.g. "The deciding variable was…"). Required when contrastSetId is set.
+   */
+  contrastPrinciple?: string;
 }
 
 export interface CaseFileDrillDefinition extends DrillDefinitionBase {

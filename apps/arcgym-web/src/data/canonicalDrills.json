@@ -11,7 +11,7 @@
       "Reliability",
       "Trust"
     ],
-    "version": 3,
+    "version": 4,
     "status": "published",
     "steps": [
       {
@@ -41,7 +41,9 @@
           }
         ]
       }
-    ]
+    ],
+    "contrastSetId": "CS-zero-copy-vs-copy",
+    "contrastPrinciple": "The deciding variable was whether live federation meets freshness and scale without copying lake data into Salesforce storage."
   },
   {
     "id": "AGD-00202",
@@ -163,7 +165,7 @@
       "Cost_Optimization",
       "Reliability"
     ],
-    "version": 3,
+    "version": 4,
     "status": "published",
     "steps": [
       {
@@ -193,7 +195,9 @@
           }
         ]
       }
-    ]
+    ],
+    "contrastSetId": "CS-zero-copy-vs-copy",
+    "contrastPrinciple": "The deciding variable was whether live federation meets freshness and scale without copying lake data into Salesforce storage."
   },
   {
     "id": "AGD-00205",
@@ -1710,7 +1714,7 @@
       "Cost_Optimization",
       "Operational_Excellence"
     ],
-    "version": 2,
+    "version": 3,
     "status": "published",
     "steps": [
       {
@@ -1743,7 +1747,9 @@
           }
         ]
       }
-    ]
+    ],
+    "contrastSetId": "CS-zero-copy-vs-copy",
+    "contrastPrinciple": "The deciding variable was whether live federation meets freshness and scale without copying lake data into Salesforce storage."
   },
   {
     "id": "AGD-00807",

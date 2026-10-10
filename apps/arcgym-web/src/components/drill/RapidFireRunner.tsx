@@ -2,6 +2,7 @@ import {
   buildDistractorAutopsy,
   type ConfidenceAnchor,
   citationHostname,
+  contrastPrincipleForRound,
   createPracticeSessionState,
   type DrillAttemptRecord,
   type DrillFormat,
@@ -172,6 +173,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     if (!activeDrill || !currentStep) return [];
     return orderOptions(currentStep.options, optionSeed(activeDrill.id, currentStep.id));
   }, [activeDrill, currentStep]);
+
+  const contrastPrinciple = useMemo(() => contrastPrincipleForRound(drillList), [drillList]);
+  const isLastRep = currentStepIndex + 1 >= repList.length;
+  const showContrastPrinciple = Boolean(isRevealed && isLastRep && contrastPrinciple);
 
   const progressPercent =
     repList.length > 0
@@ -654,6 +659,12 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                 {currentStep.options.find((o) => o.isCorrect)?.rationale}
               </p>
             </div>
+
+            {showContrastPrinciple && contrastPrinciple && (
+              <p className="text-sm text-miro-primary font-medium leading-relaxed border-l-2 border-miro-hairlineStrong pl-3">
+                {contrastPrinciple}
+              </p>
+            )}
 
             {autopsyPrompt && (
               <div className="rounded-xl border border-miro-hairlineSoft bg-miro-surface p-3.5 space-y-3">

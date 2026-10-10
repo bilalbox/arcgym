@@ -1,4 +1,5 @@
 import type { RapidFireDrillDefinition } from '../types/drill.js';
+import { isValidContrastSetId } from '../types/validation.js';
 import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 import type { DrillFormatDescriptor } from './types.js';
 import { validateMcqOptions } from './validationHelpers.js';
@@ -13,11 +14,47 @@ export function isRapidFireDrillAuthored(drill: unknown): drill is RapidFireDril
   );
 }
 
+function validateContrastLinkage(
+  drill: Record<string, unknown>,
+  findings: ValidationFinding[],
+): void {
+  const hasSetId = drill.contrastSetId !== undefined;
+  const hasPrinciple = drill.contrastPrinciple !== undefined;
+
+  if (hasSetId) {
+    if (!isValidContrastSetId(drill.contrastSetId)) {
+      findings.push({
+        ruleId: 'contrast-set',
+        where: 'contrastSetId',
+        message: 'contrastSetId must match CS-<slug> (lowercase letters, digits, hyphen segments)',
+      });
+    }
+    if (
+      typeof drill.contrastPrinciple !== 'string' ||
+      drill.contrastPrinciple.trim().length === 0
+    ) {
+      findings.push({
+        ruleId: 'contrast-set',
+        where: 'contrastPrinciple',
+        message: 'contrastPrinciple is required when contrastSetId is set',
+      });
+    }
+  } else if (hasPrinciple) {
+    findings.push({
+      ruleId: 'contrast-set',
+      where: 'contrastSetId',
+      message: 'contrastSetId is required when contrastPrinciple is set',
+    });
+  }
+}
+
 export function validateRapidFire(
   drill: Record<string, unknown>,
   ctx: ValidationContext,
   findings: ValidationFinding[],
 ): void {
+  validateContrastLinkage(drill, findings);
+
   if (!Array.isArray(drill.steps) || drill.steps.length === 0) {
     findings.push({
       ruleId: 'missing-field',

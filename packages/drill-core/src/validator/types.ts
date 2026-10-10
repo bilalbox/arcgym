@@ -8,7 +8,8 @@ export type ValidationRuleId =
   | 'station-set'
   | 'hidden-distractors'
   | 'citation-manifest'
-  | 'missing-asset';
+  | 'missing-asset'
+  | 'contrast-set';
 
 export interface ValidationFinding {
   ruleId: ValidationRuleId;
