@@ -82,13 +82,54 @@ const DRILL: CaseFileDrillDefinition = {
   ],
 };
 
+const ASSOCIATE_DRILL: CaseFileDrillDefinition = {
+  ...DRILL,
+  id: 'AGD-00901-assoc',
+  difficulty: 'Associate_Domain_Architect',
+};
+
+function walkToFirstCall(drill: CaseFileDrillDefinition = DRILL) {
+  let state = createCaseSessionState(drill);
+  state = caseSessionReducer(state, { type: 'BEGIN_STATIONS' });
+  return state;
+}
+
+function completeStationAfterFirstCall(
+  state: ReturnType<typeof createCaseSessionState>,
+  finalOptionId: string,
+) {
+  state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
+  state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
+  state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p4' });
+  state = caseSessionReducer(state, { type: 'LOCK_PROBES' });
+  state = caseSessionReducer(state, { type: 'SELECT_OPTION', optionId: finalOptionId });
+  state = caseSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
+  return state;
+}
+
 describe('caseSessionReducer', () => {
-  it('walks brief → probes → commit → feedback → complete', () => {
+  it('walks brief → first_call → probes → commit → feedback → complete', () => {
     let state = createCaseSessionState(DRILL);
     expect(state.phase).toBe('brief');
 
     state = caseSessionReducer(state, { type: 'BEGIN_STATIONS' });
+    expect(state.phase).toBe('first_call');
+
+    // Probes stay locked until First Call is committed
+    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
+    expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([]);
+
+    state = caseSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      optionId: 'o2',
+      confidence: 0.7,
+    });
     expect(state.phase).toBe('probes');
+    expect(getCurrentCaseStation(state)?.firstCall).toEqual({
+      optionId: 'o2',
+      confidence: 0.7,
+      skipped: false,
+    });
 
     state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
@@ -107,16 +148,66 @@ describe('caseSessionReducer', () => {
     expect(station?.isSubmitted).toBe(true);
     expect(station?.isCorrect).toBe(true);
     expect(station?.probeScore).toBe(35); // 50 pivotal - 15 distractor
+    expect(station?.flippingProbeId).toBe('p2'); // last selected pivotal
 
     state = caseSessionReducer(state, { type: 'ADVANCE_STATION' });
     expect(state.isCompleted).toBe(true);
     expect(state.attempt?.format).toBe('Case_File');
     expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
+    expect(state.attempt?.steps?.[0]?.firstCall).toEqual({
+      optionId: 'o2',
+      confidence: 0.7,
+      skipped: false,
+    });
+    expect(state.attempt?.steps?.[0]?.flippingProbeId).toBe('p2');
+  });
+
+  it('does not let First Call affect station score', () => {
+    let withCall = walkToFirstCall();
+    withCall = caseSessionReducer(withCall, { type: 'SUBMIT_FIRST_CALL', optionId: 'o2' });
+    withCall = completeStationAfterFirstCall(withCall, 'o1');
+
+    let withoutCallPath = walkToFirstCall(ASSOCIATE_DRILL);
+    withoutCallPath = caseSessionReducer(withoutCallPath, { type: 'SKIP_FIRST_CALL' });
+    withoutCallPath = completeStationAfterFirstCall(withoutCallPath, 'o1');
+
+    expect(getCurrentCaseStation(withCall)?.stationScore).toBe(
+      getCurrentCaseStation(withoutCallPath)?.stationScore,
+    );
+    expect(getCurrentCaseStation(withCall)?.stationScore).toBe(133); // 35 probe + 98 Brier @ 0.85 correct
+  });
+
+  it('requires First Call on Lead_CTA and blocks skip', () => {
+    let state = walkToFirstCall(DRILL);
+    state = caseSessionReducer(state, { type: 'SKIP_FIRST_CALL' });
+    expect(state.phase).toBe('first_call');
+    expect(getCurrentCaseStation(state)?.firstCall).toBeNull();
+  });
+
+  it('allows Associate_Domain_Architect to skip First Call', () => {
+    let state = walkToFirstCall(ASSOCIATE_DRILL);
+    state = caseSessionReducer(state, { type: 'SKIP_FIRST_CALL' });
+    expect(state.phase).toBe('probes');
+    expect(getCurrentCaseStation(state)?.firstCall).toEqual({
+      optionId: null,
+      confidence: null,
+      skipped: true,
+    });
+  });
+
+  it('records no flipping probe when First Call matches final recommendation', () => {
+    let state = walkToFirstCall();
+    state = caseSessionReducer(state, { type: 'SUBMIT_FIRST_CALL', optionId: 'o1' });
+    state = completeStationAfterFirstCall(state, 'o1');
+    expect(getCurrentCaseStation(state)?.flippingProbeId).toBeNull();
+    expect(state.attempt).toBeNull(); // still on feedback
+    state = caseSessionReducer(state, { type: 'ADVANCE_STATION' });
+    expect(state.attempt?.steps?.[0]?.flippingProbeId).toBeUndefined();
   });
 
   it('rejects unknown probe IDs not present in the station probe pool', () => {
-    let state = createCaseSessionState(DRILL);
-    state = caseSessionReducer(state, { type: 'BEGIN_STATIONS' });
+    let state = walkToFirstCall();
+    state = caseSessionReducer(state, { type: 'SUBMIT_FIRST_CALL', optionId: 'o1' });
     state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'non_existent_probe' });
     expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([]);
   });

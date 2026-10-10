@@ -1,4 +1,5 @@
 import {
+  buildDistractorAutopsy,
   type ConfidenceAnchor,
   citationHostname,
   contrastPrincipleForRound,
@@ -7,6 +8,7 @@ import {
   type DrillFormat,
   getCurrentRep,
   getRoundCompletionResult,
+  isAutopsyPending,
   isRepRevealed,
   optionSeed,
   orderOptions,
@@ -125,8 +127,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const isSubmitted = currentRep?.isSubmitted ?? false;
   const hypercorrectionActive = currentRep?.hypercorrectionActive ?? false;
   const isRevealed = currentRep ? isRepRevealed(currentRep) : false;
+  const autopsyPending = currentRep ? isAutopsyPending(currentRep) : false;
   const selectedOptionId = currentRep?.selectedOptionId ?? null;
   const excludedOptionId = currentRep?.hypercorrectionExcludedOptionId;
+  const autopsySelectedOptionId = currentRep?.autopsySelectedOptionId;
   const isCompleted = session.isCompleted;
 
   // Track completion callback invocation to avoid double execution
@@ -203,7 +207,12 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     dispatch({ type: 'SKIP_HYPERCORRECTION' });
   };
 
+  const handleSelectAutopsyChip = (optionId: string) => {
+    dispatch({ type: 'SELECT_AUTOPSY_CHIP', optionId });
+  };
+
   const handleNext = () => {
+    if (currentRep && isAutopsyPending(currentRep)) return;
     setSelectedConfidence(null);
     dispatch({ type: 'ADVANCE_REP' });
   };
@@ -407,6 +416,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const matchedDistractor = hypercorrectionActive
     ? currentStep.options.find((o) => o.id === excludedOptionId)
     : undefined;
+  const autopsyPrompt =
+    isRevealed && currentRep.isCorrect === false
+      ? buildDistractorAutopsy(currentStep.options, currentRep.selectedOptionId)
+      : null;
 
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
@@ -653,6 +666,51 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
               </p>
             )}
 
+            {autopsyPrompt && (
+              <div className="rounded-xl border border-miro-hairlineSoft bg-miro-surface p-3.5 space-y-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-miro-primary">Distractor Autopsy</p>
+                  <p className="text-xs text-miro-slate leading-relaxed">
+                    A common community miss
+                    {autopsyPrompt.focusAntipattern
+                      ? ` — why does ${autopsyPrompt.focusAntipattern} fail here?`
+                      : ' — why does this antipattern fail here?'}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {autopsyPrompt.chips.map((chip) => {
+                    const isPicked = autopsySelectedOptionId === chip.optionId;
+                    const isFocusReveal =
+                      Boolean(autopsySelectedOptionId) &&
+                      chip.optionId === autopsyPrompt.focusOptionId;
+                    return (
+                      <button
+                        key={chip.optionId}
+                        type="button"
+                        disabled={Boolean(autopsySelectedOptionId)}
+                        onClick={() => handleSelectAutopsyChip(chip.optionId)}
+                        className={`text-left rounded-lg border px-3 py-2.5 text-xs leading-relaxed transition-colors cursor-pointer disabled:cursor-default ${
+                          isPicked || isFocusReveal
+                            ? 'border-miro-primary bg-miro-surfaceSoft text-miro-primary'
+                            : 'border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong'
+                        }`}
+                      >
+                        {chip.distractorAntipattern && (
+                          <span className="block text-[10px] uppercase tracking-wider font-bold text-miro-muted mb-1">
+                            {chip.distractorAntipattern}
+                          </span>
+                        )}
+                        {chip.rationale}
+                      </button>
+                    );
+                  })}
+                </div>
+                {autopsyPending && (
+                  <p className="text-[11px] text-miro-muted">Tap one explanation to continue.</p>
+                )}
+              </div>
+            )}
+
             <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               {correctCitationHref && correctCitationHost && (
                 <a
@@ -665,7 +723,11 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   View guidance on {correctCitationHost}
                 </a>
               )}
-              <Button onClick={handleNext} className="w-full sm:w-auto gap-2 ml-auto">
+              <Button
+                onClick={handleNext}
+                disabled={autopsyPending}
+                className="w-full sm:w-auto gap-2 ml-auto"
+              >
                 {currentStepIndex + 1 < repList.length ? (
                   <>
                     Next rep ({currentStepIndex + 2} of {repList.length}){' '}
