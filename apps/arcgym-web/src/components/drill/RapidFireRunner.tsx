@@ -6,6 +6,7 @@ import {
   type DrillFormat,
   getCurrentRep,
   getRoundCompletionResult,
+  isRepRevealed,
   optionSeed,
   orderOptions,
   type PracticeSessionState,
@@ -121,7 +122,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const activeDrill = currentRep?.drill;
   const currentStep = currentRep?.step;
   const isSubmitted = currentRep?.isSubmitted ?? false;
+  const hypercorrectionActive = currentRep?.hypercorrectionActive ?? false;
+  const isRevealed = currentRep ? isRepRevealed(currentRep) : false;
   const selectedOptionId = currentRep?.selectedOptionId ?? null;
+  const excludedOptionId = currentRep?.hypercorrectionExcludedOptionId;
   const isCompleted = session.isCompleted;
 
   // Track completion callback invocation to avoid double execution
@@ -175,6 +179,11 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   const correctCitationHost = citationHostname(correctCitationUrl);
 
   const handleSelectOption = (optionId: string) => {
+    if (hypercorrectionActive) {
+      if (optionId === excludedOptionId) return;
+      dispatch({ type: 'RETRY_OPTION', optionId });
+      return;
+    }
     if (isSubmitted) return;
     dispatch({ type: 'SELECT_OPTION', optionId });
   };
@@ -183,6 +192,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
     if (!selectedOptionId || !selectedConfidence) return;
     const confidenceAnchor = (selectedConfidence / 100) as ConfidenceAnchor;
     dispatch({ type: 'COMMIT_CONFIDENCE', confidence: confidenceAnchor });
+  };
+
+  const handleSkipHypercorrection = () => {
+    dispatch({ type: 'SKIP_HYPERCORRECTION' });
   };
 
   const handleNext = () => {
@@ -386,6 +399,9 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
   }
 
   const currentScore = currentRep.score;
+  const matchedDistractor = hypercorrectionActive
+    ? currentStep.options.find((o) => o.id === excludedOptionId)
+    : undefined;
 
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
@@ -433,10 +449,20 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
         <div className="space-y-3 mb-6">
           {orderedOptions.map((opt, index) => {
             const isSelected = selectedOptionId === opt.id;
+            const isExcluded = hypercorrectionActive && opt.id === excludedOptionId;
+            const canRetry = hypercorrectionActive && !isExcluded;
             let containerStyle =
               'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
 
-            if (isSubmitted) {
+            if (hypercorrectionActive) {
+              if (isExcluded) {
+                containerStyle =
+                  'border-2 border-miro-dangerText bg-miro-dangerLight text-miro-primary';
+              } else {
+                containerStyle =
+                  'border-miro-hairline hover:border-miro-hairlineStrong bg-miro-card';
+              }
+            } else if (isRevealed) {
               if (opt.isCorrect) {
                 containerStyle =
                   'border-2 border-miro-successText bg-miro-successLight text-miro-primary';
@@ -450,6 +476,10 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
               containerStyle = 'border-2 border-miro-primary bg-miro-surfaceSoft text-miro-primary';
             }
 
+            const showAntipattern =
+              (isRevealed && !opt.isCorrect && Boolean(opt.distractorAntipattern)) ||
+              (isExcluded && Boolean(opt.distractorAntipattern));
+
             return (
               <div
                 key={opt.id}
@@ -457,22 +487,22 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
               >
                 <button
                   type="button"
-                  disabled={isSubmitted}
+                  disabled={isRevealed || isExcluded || (isSubmitted && !hypercorrectionActive)}
                   aria-pressed={isSelected}
                   onClick={() => handleSelectOption(opt.id)}
                   className={`min-w-0 flex-1 text-left p-4 transition-all duration-150 cursor-pointer text-sm leading-normal flex items-start gap-3.5 disabled:cursor-default ${
-                    opt.diagramUrl || (isSubmitted && opt.distractorAntipattern) ? 'pb-2.5' : ''
-                  }`}
+                    opt.diagramUrl || showAntipattern ? 'pb-2.5' : ''
+                  } ${canRetry ? 'hover:border-miro-primary' : ''}`}
                 >
                   <div className="mt-0.5 shrink-0">
-                    {isSubmitted && opt.isCorrect ? (
+                    {isRevealed && opt.isCorrect ? (
                       <CheckCircle2 className="h-5 w-5 text-miro-successText" />
-                    ) : isSubmitted && isSelected && !opt.isCorrect ? (
+                    ) : (isRevealed && isSelected && !opt.isCorrect) || isExcluded ? (
                       <XCircle className="h-5 w-5 text-miro-dangerText" />
                     ) : (
                       <div
                         className={`h-5 w-5 rounded-full border flex items-center justify-center text-xs font-semibold ${
-                          isSelected
+                          isSelected && !hypercorrectionActive
                             ? 'border-miro-primary bg-miro-primary text-miro-onPrimary'
                             : 'border-miro-hairlineStrong text-miro-slate'
                         }`}
@@ -484,8 +514,7 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
                   <div className="flex-1 min-w-0">
                     <span className="font-normal text-miro-primary block">{opt.label}</span>
 
-                    {/* Antipattern Pill under distractor */}
-                    {isSubmitted && !opt.isCorrect && opt.distractorAntipattern && (
+                    {showAntipattern && opt.distractorAntipattern && (
                       <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-miro-surface border border-miro-hairlineSoft text-xs">
                         <span className="text-[10px] uppercase font-bold tracking-wider text-miro-muted">
                           Antipattern:
@@ -544,8 +573,46 @@ export const RapidFireRunner: React.FC<RapidFireRunnerProps> = ({
           </div>
         )}
 
-        {/* Result & Architectural Rationale upon submit */}
-        {isSubmitted && (
+        {/* Hypercorrection Intercept: withhold correct option + rationale */}
+        {hypercorrectionActive && matchedDistractor && (
+          <div className="mt-6 pt-4 border-t border-miro-hairlineSoft space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="destructive" className="gap-1.5 px-3 py-1">
+                  <XCircle className="h-3.5 w-3.5" /> Antipattern Detected
+                </Badge>
+                <span className="text-xs text-miro-slate">
+                  Confidence: {Math.round((currentRep.committedConfidence ?? 0) * 100)}%
+                </span>
+              </div>
+              <span className="text-sm font-mono font-semibold text-miro-primary">
+                Score: {currentScore && currentScore > 0 ? '+' : ''}
+                {currentScore} pts
+              </span>
+            </div>
+
+            <div className="text-xs sm:text-sm text-miro-slate space-y-1.5">
+              <p className="font-medium text-miro-primary">
+                {matchedDistractor.distractorAntipattern}
+              </p>
+              <p className="leading-relaxed">{matchedDistractor.rationale}</p>
+            </div>
+
+            <div className="pt-3 border-t border-miro-hairlineSoft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <p className="text-xs text-miro-slate">Choose another option, or skip.</p>
+              <Button
+                onClick={handleSkipHypercorrection}
+                variant="secondary"
+                className="w-full sm:w-auto gap-2 ml-auto"
+              >
+                Skip
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Result & Architectural Rationale after reveal */}
+        {isRevealed && (
           <div className="mt-6 pt-4 border-t border-miro-hairlineSoft space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
