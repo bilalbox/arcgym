@@ -31,6 +31,13 @@ function createMockDrill(id: string): RapidFireDrillDefinition {
             rationale: 'Fails under load',
           },
           {
+            id: 'opt_wrong_b',
+            label: 'Another Wrong Approach',
+            isCorrect: false,
+            distractorAntipattern: 'Polling Antipattern',
+            rationale: 'Burns API limits',
+          },
+          {
             id: 'opt_correct',
             label: 'Optimal Pattern',
             isCorrect: true,
@@ -160,5 +167,88 @@ describe('PracticeSession Reducer', () => {
     state = practiceSessionReducer(state, { type: 'RESET_SESSION', drills: newDrills });
     expect(state.reps.length).toBe(2);
     expect(getCurrentRep(state)?.drill.id).toBe('D2');
+  });
+
+  describe('Hypercorrection Intercept', () => {
+    it('enters intercept on wrong commit at 85% and blocks advance until resolved', () => {
+      const drills = [createMockDrill('D1')];
+      let state = createPracticeSessionState(drills);
+
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
+
+      const rep = getCurrentRep(state);
+      expect(rep?.isSubmitted).toBe(true);
+      expect(rep?.hypercorrectionActive).toBe(true);
+      expect(rep?.isCorrect).toBe(false);
+      expect(rep?.quadrant).toBe('Hazardous_Assumption');
+      expect(rep?.distractorAntipattern).toBe('Synchronous Antipattern');
+      expect(rep?.hypercorrectionExcludedOptionId).toBe('opt_wrong');
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.currentRepIndex).toBe(0);
+      expect(state.isCompleted).toBe(false);
+    });
+
+    it('reveals immediately on wrong commit at 50% or 70%', () => {
+      for (const confidence of [0.5, 0.7] as const) {
+        let state = createPracticeSessionState([createMockDrill('D1')]);
+        state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+        state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence });
+
+        const rep = getCurrentRep(state);
+        expect(rep?.isSubmitted).toBe(true);
+        expect(rep?.hypercorrectionActive).toBe(false);
+        expect(rep?.isCorrect).toBe(false);
+      }
+    });
+
+    it('allows one retry on remaining options only and locks score to first commit', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.95 });
+
+      const lockedScore = getCurrentRep(state)?.score;
+      const lockedQuadrant = getCurrentRep(state)?.quadrant;
+      expect(lockedScore).toBe(-126);
+      expect(lockedQuadrant).toBe('Hazardous_Assumption');
+
+      // Excluded first wrong option cannot be retried
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_wrong' });
+      expect(getCurrentRep(state)?.hypercorrectionActive).toBe(true);
+      expect(getCurrentRep(state)?.retryOptionId).toBeUndefined();
+
+      // Second try on correct option does not change Brier / quadrant / correctness of first commit
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_correct' });
+      const afterRetry = getCurrentRep(state);
+      expect(afterRetry?.hypercorrectionActive).toBe(false);
+      expect(afterRetry?.retryOptionId).toBe('opt_correct');
+      expect(afterRetry?.selectedOptionId).toBe('opt_wrong');
+      expect(afterRetry?.isCorrect).toBe(false);
+      expect(afterRetry?.score).toBe(lockedScore);
+      expect(afterRetry?.quadrant).toBe(lockedQuadrant);
+
+      // No second retry after resolve
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_wrong_b' });
+      expect(getCurrentRep(state)?.retryOptionId).toBe('opt_correct');
+    });
+
+    it('skip resolves intercept without changing first-commit scoring', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
+
+      const lockedScore = getCurrentRep(state)?.score;
+      state = practiceSessionReducer(state, { type: 'SKIP_HYPERCORRECTION' });
+
+      const afterSkip = getCurrentRep(state);
+      expect(afterSkip?.hypercorrectionActive).toBe(false);
+      expect(afterSkip?.retryOptionId).toBeUndefined();
+      expect(afterSkip?.score).toBe(lockedScore);
+      expect(afterSkip?.isCorrect).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+    });
   });
 });

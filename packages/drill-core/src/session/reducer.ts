@@ -1,12 +1,29 @@
 import { RAPID_FIRE_REPS_PER_DRILL } from '../progress/streak.js';
 import { ArcGymScoringEngine } from '../scoring/brier.js';
-import type { RapidFireDrillDefinition, StepAttemptTelemetry } from '../types/drill.js';
+import type {
+  ConfidenceAnchor,
+  RapidFireDrillDefinition,
+  StepAttemptTelemetry,
+} from '../types/drill.js';
 import type {
   PracticeRepState,
   PracticeSessionAction,
   PracticeSessionState,
   RoundCompletionResult,
 } from './types.js';
+
+/** High-confidence wrong commits enter Hypercorrection Intercept (85% / 95%). */
+export function isHypercorrectionEligible(
+  confidence: ConfidenceAnchor,
+  isCorrect: boolean,
+): boolean {
+  return !isCorrect && confidence >= 0.85;
+}
+
+/** Reveal is available after first commit when intercept is closed or never opened. */
+export function isRepRevealed(rep: PracticeRepState): boolean {
+  return rep.isSubmitted && !rep.hypercorrectionActive;
+}
 
 export function createPracticeSessionState(
   drills: RapidFireDrillDefinition[],
@@ -25,6 +42,7 @@ export function createPracticeSessionState(
     quadrant: null,
     distractorAntipattern: undefined,
     isSubmitted: false,
+    hypercorrectionActive: false,
   }));
 
   return {
@@ -71,6 +89,7 @@ export function practiceSessionReducer(
       const isCorrect = Boolean(chosenOption?.isCorrect);
 
       const brierResult = ArcGymScoringEngine.calculateDecisionScore(action.confidence, isCorrect);
+      const enterHypercorrection = isHypercorrectionEligible(action.confidence, isCorrect);
 
       const updatedReps: PracticeRepState[] = state.reps.map((rep, idx) => {
         if (idx !== state.currentRepIndex) return rep;
@@ -82,6 +101,10 @@ export function practiceSessionReducer(
           quadrant: brierResult.quadrant,
           distractorAntipattern: isCorrect ? undefined : chosenOption?.distractorAntipattern,
           isSubmitted: true,
+          hypercorrectionActive: enterHypercorrection,
+          hypercorrectionExcludedOptionId: enterHypercorrection
+            ? (currentRep.selectedOptionId ?? undefined)
+            : undefined,
         };
       });
 
@@ -91,10 +114,42 @@ export function practiceSessionReducer(
       };
     }
 
+    case 'RETRY_OPTION': {
+      if (state.isCompleted) return state;
+      const currentRep = state.reps[state.currentRepIndex];
+      if (!currentRep?.hypercorrectionActive || !currentRep.isSubmitted) return state;
+      if (action.optionId === currentRep.hypercorrectionExcludedOptionId) return state;
+      if (!currentRep.step.options.some((o) => o.id === action.optionId)) return state;
+
+      const updatedReps = state.reps.map((rep, idx) =>
+        idx === state.currentRepIndex
+          ? {
+              ...rep,
+              retryOptionId: action.optionId,
+              hypercorrectionActive: false,
+            }
+          : rep,
+      );
+
+      return { ...state, reps: updatedReps };
+    }
+
+    case 'SKIP_HYPERCORRECTION': {
+      if (state.isCompleted) return state;
+      const currentRep = state.reps[state.currentRepIndex];
+      if (!currentRep?.hypercorrectionActive || !currentRep.isSubmitted) return state;
+
+      const updatedReps = state.reps.map((rep, idx) =>
+        idx === state.currentRepIndex ? { ...rep, hypercorrectionActive: false } : rep,
+      );
+
+      return { ...state, reps: updatedReps };
+    }
+
     case 'ADVANCE_REP': {
       if (state.isCompleted) return state;
       const currentRep = state.reps[state.currentRepIndex];
-      if (!currentRep?.isSubmitted) return state;
+      if (!currentRep?.isSubmitted || currentRep.hypercorrectionActive) return state;
 
       if (state.currentRepIndex + 1 < state.reps.length) {
         return {
