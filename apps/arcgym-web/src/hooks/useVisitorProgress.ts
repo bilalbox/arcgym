@@ -1,8 +1,10 @@
 import {
+  applyDeferredRetestAfterRound,
   calculateActiveStreak,
   calculateTotalPoints,
   computeNewStreak,
   type DrillAttemptRecord,
+  type DrillDefinitionDTO,
   type DrillFormat,
   getDrillFormatDescriptor,
   getTodayString,
@@ -11,6 +13,9 @@ import {
   type VisitorProgressState,
 } from '@arcgym/drill-core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import rawCanonicalDrills from '../data/canonicalDrills.json';
+
+const DEFERRED_RETEST_CATALOG = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
 
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
@@ -320,10 +325,11 @@ export function useVisitorProgress() {
 
         const updatedCompleted = { ...prev.completedDrills };
         const now = new Date().toISOString();
+        const attemptRecords: DrillAttemptRecord[] = [];
 
         for (const item of attempts) {
           const existingRecord = updatedCompleted[item.drillId];
-          updatedCompleted[item.drillId] = {
+          const record: DrillAttemptRecord = {
             drillId: item.drillId,
             format: item.format,
             completedAt: now,
@@ -332,14 +338,22 @@ export function useVisitorProgress() {
             attemptsCount: (existingRecord?.attemptsCount || 0) + 1,
             ...(item.steps ? { steps: item.steps } : {}),
           };
+          updatedCompleted[item.drillId] = record;
+          attemptRecords.push(record);
         }
 
-        const updated: VisitorProgressState = {
+        const withCompletions: VisitorProgressState = {
           ...prev,
           streakDays: newStreak,
           lastActiveDate: today,
           completedDrills: updatedCompleted,
         };
+
+        const updated = applyDeferredRetestAfterRound(withCompletions, {
+          attempts: attemptRecords,
+          catalog: DEFERRED_RETEST_CATALOG,
+          todayDateStr: today,
+        });
 
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -371,6 +385,7 @@ export function useVisitorProgress() {
       streakDays: 0,
       lastActiveDate: '',
       completedDrills: {},
+      // deferredRetest intentionally omitted
     };
     saveState(cleanState);
   }, [saveState]);
@@ -454,6 +469,7 @@ export function useVisitorProgress() {
     isStreakEarnedToday,
     totalPoints,
     completedDrills: state.completedDrills,
+    deferredRetest: state.deferredRetest,
     totalCompleted,
     isAuthenticated,
     learnerId,

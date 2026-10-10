@@ -1,10 +1,12 @@
 import type { DrillAttemptRecord, VisitorProgressState } from '../types/drill.js';
+import { mergeDeferredRetestSlots } from './deferredRetest.js';
 import { calculateActiveStreak, getLocalDateString } from './streak.js';
 
 /**
  * Deterministic Two-Way Monotonic Merge for Learner Progress states.
  * Reconciles local and cloud attempts by taking the union of completed drills,
  * preserving maximum score and attemptsCount, and calculating active streak.
+ * At most one Deferred Retest survives (earlier schedule wins; expired/completed cleared).
  */
 export function mergeProgressStates(
   local: VisitorProgressState,
@@ -68,11 +70,18 @@ export function mergeProgressStates(
   );
 
   const mergedStreak = Math.max(localActive, cloudActive);
+  const deferredRetest = mergeDeferredRetestSlots(
+    local.deferredRetest,
+    cloud.deferredRetest,
+    today,
+    mergedCompleted,
+  );
 
   return {
     version: 1,
     streakDays: mergedStreak,
     lastActiveDate: latestActive,
     completedDrills: mergedCompleted,
+    ...(deferredRetest ? { deferredRetest } : {}),
   };
 }

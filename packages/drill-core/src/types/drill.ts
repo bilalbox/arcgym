@@ -341,9 +341,21 @@ export interface DimensionProficiency {
   drillsCompleted: number;
 }
 
+/** Outstanding Deferred Retest (at most one per learner). See progress/deferredRetest.ts. */
+export interface DeferredRetestSlot {
+  drillId: string;
+  sourceDrillId: string;
+  contrastSetId: string;
+  scheduledOn: string;
+  dueFrom: string;
+  dueUntil: string;
+}
+
 export interface VisitorProgressState {
   version: 1;
   streakDays: number;
   lastActiveDate: string; // YYYY-MM-DD
   completedDrills: Record<string, DrillAttemptRecord>;
+  /** At most one outstanding Deferred Retest; omitted when none. */
+  deferredRetest?: DeferredRetestSlot;
 }
