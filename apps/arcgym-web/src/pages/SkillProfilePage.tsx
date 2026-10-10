@@ -2,6 +2,7 @@ import {
   type ClientDrillDefinitionDTO,
   calculateProficiencyReport,
   calculateTotalPoints,
+  countProbeDrivenRevisions,
   type DrillAttemptRecord,
 } from '@arcgym/drill-core';
 import { ArrowLeft } from 'lucide-react';
@@ -38,6 +39,11 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
     [completedDrills, allDrills],
   );
 
+  const probeDrivenRevisions = useMemo(
+    () => countProbeDrivenRevisions(completedDrills),
+    [completedDrills],
+  );
+
   const handleReviewDrills = (id: string) => {
     navigate(`/?domain=${id}`);
   };
@@ -66,7 +72,7 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-miro-card rounded-2xl border border-miro-hairline">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-miro-card rounded-2xl border border-miro-hairline">
         <div>
           <span className="text-xs text-miro-muted font-medium block mb-0.5">Question reps</span>
           <span className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
@@ -86,6 +92,15 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
           <span className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
             {report.measuredCount}
             <span className="text-xs font-normal text-miro-muted"> of {report.totalCount}</span>
+          </span>
+        </div>
+
+        <div>
+          <span className="text-xs text-miro-muted font-medium block mb-0.5">
+            Probe-driven revisions
+          </span>
+          <span className="text-base sm:text-lg font-semibold text-miro-primary font-mono tabular-nums">
+            {probeDrivenRevisions}
           </span>
         </div>
       </div>
