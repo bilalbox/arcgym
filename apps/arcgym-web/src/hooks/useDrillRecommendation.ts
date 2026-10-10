@@ -2,6 +2,7 @@ import {
   type ArchitecturalDomain,
   type ClientDrillDefinitionDTO,
   type DailyWorkoutAssignment,
+  type DeferredRetestSlot,
   type DrillAttemptRecord,
   isRapidFireDrill,
   RAPID_FIRE_REPS_PER_DRILL,
@@ -20,6 +21,7 @@ export function useDrillRecommendation(
   completedDrills: Record<string, DrillAttemptRecord>,
   domain?: ArchitecturalDomain,
   visitorId?: string,
+  deferredRetest?: DeferredRetestSlot | null,
 ) {
   const [sessionSkipCount, setSessionSkipCount] = useState<number>(0);
 
@@ -32,8 +34,9 @@ export function useDrillRecommendation(
       todayDateStr,
       visitorId: visitorId || 'guest',
       rapidFireReps: RAPID_FIRE_REPS_PER_DRILL,
+      deferredRetest,
     });
-  }, [completedDrills, todayDateStr, visitorId]);
+  }, [completedDrills, todayDateStr, visitorId, deferredRetest]);
 
   const activeRound: RecommendedRound | null = useMemo(() => {
     return selectRecommendedRound({
@@ -43,8 +46,9 @@ export function useDrillRecommendation(
       domain,
       sessionSkipCount,
       setCount: RAPID_FIRE_REPS_PER_DRILL,
+      deferredRetest,
     });
-  }, [completedDrills, todayDateStr, domain, sessionSkipCount]);
+  }, [completedDrills, todayDateStr, domain, sessionSkipCount, deferredRetest]);
 
   const advanceToNextDrill = useCallback(() => {
     setSessionSkipCount((prev) => prev + 1);

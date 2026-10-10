@@ -1,10 +1,12 @@
 import { getDrillFormatDescriptor } from '../formats/index.js';
+import { injectDeferredRetestIntoRound, isDeferredRetestDue } from '../progress/deferredRetest.js';
 import { RAPID_FIRE_REPS_PER_DRILL } from '../progress/streak.js';
 import {
   type ArchitecturalDomain,
   type CaseFileDrillDefinition,
   type ClientDrillDefinitionDTO,
   type ClientTroubleshootingDrillDefinition,
+  type DeferredRetestSlot,
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
   isCaseFileDrill,
@@ -93,6 +95,8 @@ export function selectRecommendedRound(params: {
   domain?: ArchitecturalDomain;
   sessionSkipCount?: number;
   setCount?: number;
+  /** Outstanding Deferred Retest; when due, replaces one ordinary slot. */
+  deferredRetest?: DeferredRetestSlot | null;
 }): RecommendedRound | null {
   const {
     drills,
@@ -101,6 +105,7 @@ export function selectRecommendedRound(params: {
     domain,
     sessionSkipCount = 0,
     setCount = RAPID_FIRE_REPS_PER_DRILL,
+    deferredRetest,
   } = params;
 
   // Daily streak filters by isDailyEligible format descriptor.
@@ -148,13 +153,18 @@ export function selectRecommendedRound(params: {
     reason = uncompletedCount > 0 ? 'next_uncompleted' : 'review';
   }
 
-  const contrastRound = pickContrastSetRound({
-    candidateDrills,
-    completedDrills,
-    todayDateStr,
-    sessionSkipCount,
-    setCount,
-  });
+  // Due Deferred Retest replaces an ordinary slot; skip whole Contrast Set rounds that day.
+  const deferredDue = isDeferredRetestDue(deferredRetest, todayDateStr);
+
+  const contrastRound = deferredDue
+    ? null
+    : pickContrastSetRound({
+        candidateDrills,
+        completedDrills,
+        todayDateStr,
+        sessionSkipCount,
+        setCount,
+      });
 
   if (contrastRound) {
     const isDaily = contrastRound.drills.some((d) => d.id === todayDrill.id);
@@ -204,10 +214,17 @@ export function selectRecommendedRound(params: {
     }
   }
 
-  const isDaily = selectedDrills.some((d) => d.id === todayDrill.id);
+  const withDeferred = injectDeferredRetestIntoRound({
+    drills: selectedDrills,
+    deferredRetest,
+    catalog: drills,
+    todayDateStr,
+  });
+
+  const isDaily = withDeferred.some((d) => d.id === todayDrill.id);
 
   return {
-    drills: selectedDrills,
+    drills: withDeferred,
     reason,
     isDaily,
     uncompletedCount,
@@ -297,6 +314,7 @@ export function selectDailyWorkout(params: {
   todayDateStr: string;
   visitorId: string;
   rapidFireReps?: number;
+  deferredRetest?: DeferredRetestSlot | null;
 }): DailyWorkoutAssignment | null {
   const {
     allDrills,
@@ -304,6 +322,7 @@ export function selectDailyWorkout(params: {
     todayDateStr,
     visitorId,
     rapidFireReps = RAPID_FIRE_REPS_PER_DRILL,
+    deferredRetest,
   } = params;
 
   if (allDrills.length === 0) return null;
@@ -376,6 +395,7 @@ export function selectDailyWorkout(params: {
     completedDrills,
     todayDateStr,
     setCount: rapidFireReps,
+    deferredRetest,
   });
 
   const isCompletedToday = Boolean(

@@ -4,6 +4,8 @@ export * from './ingest/findings.js';
 export * from './lint/wording.js';
 export * from './probeBudget/index.js';
 export * from './proficiency/aggregator.js';
+export * from './progress/deferredRetest.js';
+export * from './progress/document.js';
 export * from './progress/merge.js';
 export * from './progress/streak.js';
 export * from './recommendation/engine.js';

@@ -291,6 +291,41 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
     });
   });
 
+  describe('Deferred Retest injection', () => {
+    it('injects one due Deferred Retest into the next Rapid Fire round', () => {
+      const catalog: DrillDefinitionDTO[] = [
+        mockDrill('RF-1', 'Platform_Core'),
+        mockDrill('RF-2', 'Platform_Core'),
+        mockDrill('RF-3', 'Platform_Core'),
+        mockDrill('RF-4', 'Platform_Core'),
+        {
+          ...mockDrill('AGD-00204', 'Data_Architecture'),
+          contrastSetId: 'CS-zero-copy-vs-copy',
+          contrastPrinciple: 'x',
+        } as DrillDefinitionDTO,
+      ];
+
+      const result = selectRecommendedRound({
+        drills: catalog,
+        completedDrills: {},
+        todayDateStr: '2026-10-04',
+        deferredRetest: {
+          drillId: 'AGD-00204',
+          sourceDrillId: 'AGD-00201',
+          contrastSetId: 'CS-zero-copy-vs-copy',
+          scheduledOn: '2026-10-01',
+          dueFrom: '2026-10-03',
+          dueUntil: '2026-10-06',
+        },
+      });
+
+      expect(result?.drills).toHaveLength(3);
+      expect(result?.drills[0]?.id).toBe('AGD-00204');
+      expect(result?.drills.filter((d) => d.id === 'AGD-00204')).toHaveLength(1);
+      expect(result?.contrastSetId).toBeUndefined();
+    });
+  });
+
   it('advances to next set when sessionSkipCount increments', () => {
     const tenDrills: DrillDefinitionDTO[] = [
       mockDrill('RF-1', 'Platform_Core'),

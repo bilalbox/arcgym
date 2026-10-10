@@ -77,6 +77,7 @@ export const App: React.FC = () => {
     isStreakEarnedToday,
     totalPoints,
     completedDrills,
+    deferredRetest,
     totalCompleted,
     isAuthenticated,
     visitorId,
@@ -116,7 +117,7 @@ export const App: React.FC = () => {
   }, [search]);
 
   const { rapidFireDrills, dailyWorkout, isReviewMode, previousAttempt, resetSessionSkip } =
-    useDrillRecommendation(completedDrills, activeDomain, visitorId);
+    useDrillRecommendation(completedDrills, activeDomain, visitorId, deferredRetest);
 
   const handleDomainChange = (domain: ArchitecturalDomain | undefined) => {
     setActiveDomain(domain);

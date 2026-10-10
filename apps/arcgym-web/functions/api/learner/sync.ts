@@ -1,6 +1,9 @@
 import {
   calculateTotalPoints,
   mergeProgressStates,
+  parseProgressDocument,
+  progressStateFromDocument,
+  serializeProgressDocument,
   type VisitorProgressState,
 } from '@arcgym/drill-core';
 import {
@@ -49,19 +52,11 @@ export async function onRequestGet(context: { request: Request; env: Env }) {
 
     let progress: VisitorProgressState | null = null;
     if (row) {
-      let completedDrills = {};
-      try {
-        completedDrills = JSON.parse(row.completed_drills_json || '{}');
-      } catch {
-        completedDrills = {};
-      }
-
-      progress = {
-        version: 1,
+      const doc = parseProgressDocument(row.completed_drills_json || '{}');
+      progress = progressStateFromDocument(doc, {
         streakDays: row.streak_days || 0,
         lastActiveDate: row.last_active_date || '',
-        completedDrills,
-      };
+      });
     }
 
     const headers = new Headers({ 'Content-Type': 'application/json' });
@@ -111,18 +106,11 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
 
     let cloudState: VisitorProgressState;
     if (existingRow) {
-      let drills = {};
-      try {
-        drills = JSON.parse(existingRow.completed_drills_json || '{}');
-      } catch {
-        drills = {};
-      }
-      cloudState = {
-        version: 1,
+      const doc = parseProgressDocument(existingRow.completed_drills_json || '{}');
+      cloudState = progressStateFromDocument(doc, {
         streakDays: existingRow.streak_days || 0,
         lastActiveDate: existingRow.last_active_date || '',
-        completedDrills: drills,
-      };
+      });
     } else {
       cloudState = {
         version: 1,
@@ -135,7 +123,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     // Perform two-way monotonic merge
     const mergedState = mergeProgressStates(localState, cloudState);
     const totalPoints = calculateTotalPoints(mergedState.completedDrills);
-    const drillsJson = JSON.stringify(mergedState.completedDrills);
+    const drillsJson = serializeProgressDocument(mergedState);
 
     // Upsert into D1 using SQLite ON CONFLICT
     await db
