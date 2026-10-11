@@ -13,6 +13,11 @@ interface ConfidenceGateProps {
   disabled?: boolean;
   submitLabel?: string;
   hasSelectedAnswer: boolean;
+  /** When false, confidence is optional and submit only needs an answer. */
+  requireConfidence?: boolean;
+  confidenceLabel?: string;
+  /** Hint when hasSelectedAnswer is false. */
+  answerRequiredHint?: string;
 }
 
 export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
@@ -22,14 +27,24 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
   disabled = false,
   submitLabel = 'Commit decision',
   hasSelectedAnswer,
+  requireConfidence = true,
+  confidenceLabel = 'Confidence',
+  answerRequiredHint = 'Select an option first',
 }) => {
+  const canSubmit = hasSelectedAnswer && (!requireConfidence || selectedConfidence !== null);
+
   return (
     <div className="mt-4 sm:mt-5 rounded-xl border border-miro-hairline/80 bg-miro-surfaceSoft/60 p-3.5 sm:p-4 transition-colors">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2.5">
         <div className="flex items-center gap-1.5">
           <ShieldCheck className="h-3.5 w-3.5 text-miro-blue/80" />
           <span className="text-[11px] font-semibold tracking-wider uppercase text-miro-slate">
-            Confidence
+            {confidenceLabel}
+            {!requireConfidence ? (
+              <span className="ml-1.5 font-normal normal-case tracking-normal text-miro-muted">
+                (optional)
+              </span>
+            ) : null}
           </span>
         </div>
       </div>
@@ -60,24 +75,26 @@ export const ConfidenceGate: React.FC<ConfidenceGateProps> = ({
           {!hasSelectedAnswer ? (
             <>
               <AlertCircle className="h-3 w-3 text-miro-yellowText shrink-0" />
-              <span>Select an option first</span>
+              <span>{answerRequiredHint}</span>
             </>
-          ) : !selectedConfidence ? (
+          ) : requireConfidence && !selectedConfidence ? (
             <>
               <span className="h-1.5 w-1.5 rounded-full bg-miro-blue animate-pulse" />
               <span className="font-medium text-miro-slate">Select confidence to commit</span>
             </>
-          ) : (
+          ) : selectedConfidence ? (
             <span className="text-miro-successText font-medium">
               Ready ({selectedConfidence}% confidence)
             </span>
+          ) : (
+            <span className="text-miro-successText font-medium">Ready</span>
           )}
         </div>
 
         <Button
           size="sm"
           onClick={onSubmit}
-          disabled={disabled || !hasSelectedAnswer || !selectedConfidence}
+          disabled={disabled || !canSubmit}
           className="w-full sm:w-auto h-8 px-4 text-xs font-medium"
         >
           {submitLabel}

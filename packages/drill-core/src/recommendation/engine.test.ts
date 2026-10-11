@@ -183,6 +183,149 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
     expect(uniqueIds.size).toBe(3);
   });
 
+  describe('Contrast Set rounds', () => {
+    const principle =
+      'The deciding variable was whether live federation meets freshness without copying into CRM storage.';
+
+    function contrastDrill(id: string, setId = 'CS-zero-copy-vs-copy'): DrillDefinitionDTO {
+      return {
+        ...mockDrill(id, 'Data_Architecture'),
+        contrastSetId: setId,
+        contrastPrinciple: principle,
+      } as DrillDefinitionDTO;
+    }
+
+    it('prefers a complete uncompleted Contrast Set as the whole round', () => {
+      const catalog: DrillDefinitionDTO[] = [
+        mockDrill('RF-independent-1', 'Platform_Core'),
+        mockDrill('RF-independent-2', 'Platform_Core'),
+        mockDrill('RF-independent-3', 'Platform_Core'),
+        contrastDrill('AGD-00201'),
+        contrastDrill('AGD-00204'),
+        contrastDrill('AGD-00806'),
+      ];
+
+      const result = selectRecommendedRound({
+        drills: catalog,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.contrastSetId).toBe('CS-zero-copy-vs-copy');
+      expect(result?.contrastPrinciple).toBe(principle);
+      expect(new Set(result?.drills.map((d) => d.id))).toEqual(
+        new Set(['AGD-00201', 'AGD-00204', 'AGD-00806']),
+      );
+    });
+
+    it('falls back to three independent drills when no complete Contrast Set is available', () => {
+      const catalog: DrillDefinitionDTO[] = [
+        mockDrill('RF-1', 'Platform_Core'),
+        mockDrill('RF-2', 'Platform_Core'),
+        mockDrill('RF-3', 'Platform_Core'),
+        mockDrill('RF-4', 'Platform_Core'),
+        contrastDrill('AGD-00201'),
+        contrastDrill('AGD-00204'),
+      ];
+
+      const result = selectRecommendedRound({
+        drills: catalog,
+        completedDrills: {},
+        todayDateStr: '2026-09-28',
+      });
+
+      expect(result).not.toBeNull();
+      expect(result?.contrastSetId).toBeUndefined();
+      expect(result?.contrastPrinciple).toBeUndefined();
+      expect(result?.drills.length).toBe(3);
+      const ids = result?.drills.map((d) => d.id) ?? [];
+      expect(ids).not.toEqual(expect.arrayContaining(['AGD-00201', 'AGD-00204', 'AGD-00806']));
+    });
+
+    it('skips Contrast Sets whose members are already completed', () => {
+      const catalog: DrillDefinitionDTO[] = [
+        mockDrill('RF-1', 'Platform_Core'),
+        mockDrill('RF-2', 'Platform_Core'),
+        mockDrill('RF-3', 'Platform_Core'),
+        contrastDrill('AGD-00201'),
+        contrastDrill('AGD-00204'),
+        contrastDrill('AGD-00806'),
+      ];
+
+      const completed: Record<string, DrillAttemptRecord> = {
+        'AGD-00201': {
+          drillId: 'AGD-00201',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-20T00:00:00.000Z',
+          score: 10,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+        'AGD-00204': {
+          drillId: 'AGD-00204',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-21T00:00:00.000Z',
+          score: 10,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+        'AGD-00806': {
+          drillId: 'AGD-00806',
+          format: 'Rapid_Fire',
+          completedAt: '2026-09-22T00:00:00.000Z',
+          score: 10,
+          accuracy: 1,
+          attemptsCount: 1,
+        },
+      };
+
+      const result = selectRecommendedRound({
+        drills: catalog,
+        completedDrills: completed,
+        todayDateStr: '2026-09-28',
+      });
+
+      expect(result?.contrastSetId).toBeUndefined();
+      expect(result?.drills.map((d) => d.id).every((id) => id.startsWith('RF-'))).toBe(true);
+    });
+  });
+
+  describe('Deferred Retest injection', () => {
+    it('injects one due Deferred Retest into the next Rapid Fire round', () => {
+      const catalog: DrillDefinitionDTO[] = [
+        mockDrill('RF-1', 'Platform_Core'),
+        mockDrill('RF-2', 'Platform_Core'),
+        mockDrill('RF-3', 'Platform_Core'),
+        mockDrill('RF-4', 'Platform_Core'),
+        {
+          ...mockDrill('AGD-00204', 'Data_Architecture'),
+          contrastSetId: 'CS-zero-copy-vs-copy',
+          contrastPrinciple: 'x',
+        } as DrillDefinitionDTO,
+      ];
+
+      const result = selectRecommendedRound({
+        drills: catalog,
+        completedDrills: {},
+        todayDateStr: '2026-10-04',
+        deferredRetest: {
+          drillId: 'AGD-00204',
+          sourceDrillId: 'AGD-00201',
+          contrastSetId: 'CS-zero-copy-vs-copy',
+          scheduledOn: '2026-10-01',
+          dueFrom: '2026-10-03',
+          dueUntil: '2026-10-06',
+        },
+      });
+
+      expect(result?.drills).toHaveLength(3);
+      expect(result?.drills[0]?.id).toBe('AGD-00204');
+      expect(result?.drills.filter((d) => d.id === 'AGD-00204')).toHaveLength(1);
+      expect(result?.contrastSetId).toBeUndefined();
+    });
+  });
+
   it('advances to next set when sessionSkipCount increments', () => {
     const tenDrills: DrillDefinitionDTO[] = [
       mockDrill('RF-1', 'Platform_Core'),
@@ -298,7 +441,7 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
       expect(formatsSeen.size).toBeGreaterThan(1);
     });
 
-    it('assigns 5 reps when Rapid_Fire format is selected', () => {
+    it('assigns 3 reps when Rapid_Fire format is selected', () => {
       // Find a visitorId that lands on Rapid_Fire
       let rfAssignment = null;
       for (let i = 0; i < 30; i++) {
@@ -316,7 +459,7 @@ describe('Recommendation Engine (selectRecommendedRound)', () => {
 
       expect(rfAssignment).not.toBeNull();
       expect(rfAssignment?.format).toBe('Rapid_Fire');
-      expect(rfAssignment?.rapidFireRound?.drills.length).toBe(5);
+      expect(rfAssignment?.rapidFireRound?.drills.length).toBe(3);
       expect(rfAssignment?.estimatedMinutes).toBe(5);
     });
   });

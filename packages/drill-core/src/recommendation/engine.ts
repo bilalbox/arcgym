@@ -1,10 +1,12 @@
 import { getDrillFormatDescriptor } from '../formats/index.js';
+import { injectDeferredRetestIntoRound, isDeferredRetestDue } from '../progress/deferredRetest.js';
 import { RAPID_FIRE_REPS_PER_DRILL } from '../progress/streak.js';
 import {
   type ArchitecturalDomain,
   type CaseFileDrillDefinition,
   type ClientDrillDefinitionDTO,
   type ClientTroubleshootingDrillDefinition,
+  type DeferredRetestSlot,
   type DrillAttemptRecord,
   type DrillDefinitionDTO,
   isCaseFileDrill,
@@ -12,6 +14,8 @@ import {
   isTroubleshootingDrill,
   type RapidFireDrillDefinition,
 } from '../types/drill.js';
+
+export { contrastPrincipleForRound } from './contrastRound.js';
 
 export type RecommendationReason = 'daily' | 'next_uncompleted' | 'review';
 
@@ -22,6 +26,10 @@ export interface RecommendedRound {
   uncompletedCount: number;
   totalCount: number;
   completionPercentage: number;
+  /** Present when the round is one complete Contrast Set of three siblings. */
+  contrastSetId?: string;
+  /** Principle line for a contrast round; shown once after the third rep. */
+  contrastPrinciple?: string;
 }
 
 /** Backward compatibility alias */
@@ -87,6 +95,8 @@ export function selectRecommendedRound(params: {
   domain?: ArchitecturalDomain;
   sessionSkipCount?: number;
   setCount?: number;
+  /** Outstanding Deferred Retest; when due, replaces one ordinary slot. */
+  deferredRetest?: DeferredRetestSlot | null;
 }): RecommendedRound | null {
   const {
     drills,
@@ -94,7 +104,8 @@ export function selectRecommendedRound(params: {
     todayDateStr,
     domain,
     sessionSkipCount = 0,
-    setCount = 3,
+    setCount = RAPID_FIRE_REPS_PER_DRILL,
+    deferredRetest,
   } = params;
 
   // Daily streak filters by isDailyEligible format descriptor.
@@ -142,6 +153,33 @@ export function selectRecommendedRound(params: {
     reason = uncompletedCount > 0 ? 'next_uncompleted' : 'review';
   }
 
+  // Due Deferred Retest replaces an ordinary slot; skip whole Contrast Set rounds that day.
+  const deferredDue = isDeferredRetestDue(deferredRetest, todayDateStr);
+
+  const contrastRound = deferredDue
+    ? null
+    : pickContrastSetRound({
+        candidateDrills,
+        completedDrills,
+        todayDateStr,
+        sessionSkipCount,
+        setCount,
+      });
+
+  if (contrastRound) {
+    const isDaily = contrastRound.drills.some((d) => d.id === todayDrill.id);
+    return {
+      drills: contrastRound.drills,
+      reason,
+      isDaily,
+      uncompletedCount,
+      totalCount,
+      completionPercentage,
+      contrastSetId: contrastRound.contrastSetId,
+      contrastPrinciple: contrastRound.contrastPrinciple,
+    };
+  }
+
   const selectedDrills: DrillDefinitionDTO[] = [];
   const selectedIds = new Set<string>();
 
@@ -176,10 +214,17 @@ export function selectRecommendedRound(params: {
     }
   }
 
-  const isDaily = selectedDrills.some((d) => d.id === todayDrill.id);
+  const withDeferred = injectDeferredRetestIntoRound({
+    drills: selectedDrills,
+    deferredRetest,
+    catalog: drills,
+    todayDateStr,
+  });
+
+  const isDaily = withDeferred.some((d) => d.id === todayDrill.id);
 
   return {
-    drills: selectedDrills,
+    drills: withDeferred,
     reason,
     isDaily,
     uncompletedCount,
@@ -188,12 +233,79 @@ export function selectRecommendedRound(params: {
   };
 }
 
+/**
+ * When a complete Contrast Set has all members still uncompleted, return those
+ * three siblings as the round. Deterministic pick among eligible sets via date + skip.
+ */
+function pickContrastSetRound(params: {
+  candidateDrills: DrillDefinitionDTO[];
+  completedDrills: Record<string, DrillAttemptRecord>;
+  todayDateStr: string;
+  sessionSkipCount: number;
+  setCount: number;
+}): {
+  drills: DrillDefinitionDTO[];
+  contrastSetId: string;
+  contrastPrinciple: string;
+} | null {
+  const { candidateDrills, completedDrills, todayDateStr, sessionSkipCount, setCount } = params;
+  // Contrast Sets preferentially fill the first daily round only; later skips use independent picks.
+  if (sessionSkipCount > 0) return null;
+  if (setCount !== RAPID_FIRE_REPS_PER_DRILL) return null;
+
+  const bySet = new Map<string, RapidFireDrillDefinition[]>();
+  for (const drill of candidateDrills) {
+    if (!isRapidFireDrill(drill) || !drill.contrastSetId) continue;
+    const siblings = bySet.get(drill.contrastSetId) ?? [];
+    siblings.push(drill);
+    bySet.set(drill.contrastSetId, siblings);
+  }
+
+  const eligible: Array<{
+    contrastSetId: string;
+    contrastPrinciple: string;
+    drills: RapidFireDrillDefinition[];
+  }> = [];
+
+  for (const [contrastSetId, siblings] of bySet) {
+    if (siblings.length !== RAPID_FIRE_REPS_PER_DRILL) continue;
+    if (siblings.some((d) => completedDrills[d.id])) continue;
+    const principle = siblings[0]?.contrastPrinciple?.trim();
+    if (!principle) continue;
+    if (!siblings.every((d) => (d.contrastPrinciple ?? '').trim() === principle)) continue;
+
+    // Stable order by catalog position so the round is deterministic.
+    const ordered = [...siblings].sort((a, b) => {
+      const idxA = candidateDrills.findIndex((d) => d.id === a.id);
+      const idxB = candidateDrills.findIndex((d) => d.id === b.id);
+      return idxA - idxB;
+    });
+
+    eligible.push({
+      contrastSetId,
+      contrastPrinciple: principle,
+      drills: ordered,
+    });
+  }
+
+  if (eligible.length === 0) return null;
+
+  eligible.sort((a, b) => a.contrastSetId.localeCompare(b.contrastSetId));
+  const pickIndex = hashDateString(todayDateStr) % eligible.length;
+  const picked = eligible[pickIndex];
+  return {
+    drills: picked.drills,
+    contrastSetId: picked.contrastSetId,
+    contrastPrinciple: picked.contrastPrinciple,
+  };
+}
+
 /** Backward-compatibility alias */
 export const selectRecommendedRapidFireSet = selectRecommendedRound;
 
 /**
  * Selects today's assigned workout for a specific user deterministically.
- * Randomizes across Rapid Fire (5 reps), Case File (1 scenario), and Troubleshooting (1 incident),
+ * Randomizes across Rapid Fire (3 reps), Case File (1 Case File), and Troubleshooting (1 incident),
  * seeded by date + visitor ID (Question 1 = B).
  */
 export function selectDailyWorkout(params: {
@@ -202,6 +314,7 @@ export function selectDailyWorkout(params: {
   todayDateStr: string;
   visitorId: string;
   rapidFireReps?: number;
+  deferredRetest?: DeferredRetestSlot | null;
 }): DailyWorkoutAssignment | null {
   const {
     allDrills,
@@ -209,6 +322,7 @@ export function selectDailyWorkout(params: {
     todayDateStr,
     visitorId,
     rapidFireReps = RAPID_FIRE_REPS_PER_DRILL,
+    deferredRetest,
   } = params;
 
   if (allDrills.length === 0) return null;
@@ -275,12 +389,13 @@ export function selectDailyWorkout(params: {
     };
   }
 
-  // Rapid_Fire (5 reps, ~5 min)
+  // Rapid_Fire (3 reps, ~5 min)
   const round = selectRecommendedRound({
     drills: rapidFireCatalog,
     completedDrills,
     todayDateStr,
     setCount: rapidFireReps,
+    deferredRetest,
   });
 
   const isCompletedToday = Boolean(

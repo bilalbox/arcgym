@@ -9,10 +9,18 @@ import type {
   StepAttemptTelemetry,
 } from '../types/drill.js';
 
-export type CasePhase = 'brief' | 'probes' | 'commit' | 'feedback';
+export type CasePhase = 'brief' | 'first_call' | 'probes' | 'commit' | 'feedback';
+
+export interface FirstCallCapture {
+  hypothesis: string | null;
+  confidence: ConfidenceAnchor | null;
+  skipped: boolean;
+}
 
 export interface CaseStationState {
   station: CaseFileStationDTO;
+  firstCall: FirstCallCapture | null;
+  flippingProbeId: string | null;
   selectedProbeIds: string[];
   probesLocked: boolean;
   selectedOptionId: string | null;
@@ -41,6 +49,8 @@ export interface CaseSessionState {
 
 export type CaseSessionAction =
   | { type: 'BEGIN_STATIONS' }
+  | { type: 'SUBMIT_FIRST_CALL'; hypothesis: string; confidence?: ConfidenceAnchor }
+  | { type: 'SKIP_FIRST_CALL' }
   | { type: 'TOGGLE_PROBE'; probeId: string }
   | { type: 'LOCK_PROBES' }
   | { type: 'SELECT_OPTION'; optionId: string }
@@ -51,6 +61,8 @@ export type CaseSessionAction =
 function createStationState(station: CaseFileStationDTO): CaseStationState {
   return {
     station,
+    firstCall: null,
+    flippingProbeId: null,
     selectedProbeIds: [],
     probesLocked: false,
     selectedOptionId: null,
@@ -83,6 +95,28 @@ export function getCurrentCaseStation(state: CaseSessionState): CaseStationState
   return state.stations[state.currentStationIndex] ?? null;
 }
 
+/**
+ * Last selected pivotal probe, else last selected probe — discovery highlight after First Call.
+ * Requires a non-skipped First Call with non-empty hypothesis text and at least one probe.
+ * Does not compare free-text to the final recommendation option (no false “flip”).
+ */
+export function resolveFlippingProbeId(
+  selectedProbeIds: string[],
+  probes: CaseFileStationDTO['probes'],
+  firstCall: FirstCallCapture | null,
+): string | null {
+  if (!firstCall || firstCall.skipped) return null;
+  if (!firstCall.hypothesis?.trim()) return null;
+  if (selectedProbeIds.length === 0) return null;
+
+  for (let i = selectedProbeIds.length - 1; i >= 0; i--) {
+    const probeId = selectedProbeIds[i];
+    const probe = probes.find((p) => p.id === probeId);
+    if (probe?.tier === 'pivotal') return probeId ?? null;
+  }
+  return selectedProbeIds[selectedProbeIds.length - 1] ?? null;
+}
+
 function synthesizeAttempt(state: CaseSessionState): {
   attempt: DrillAttemptRecord;
   totalScore: number;
@@ -111,6 +145,14 @@ function synthesizeAttempt(state: CaseSessionState): {
     probeScore: s.probeScore ?? undefined,
     recommendationScore: s.recommendationScore ?? undefined,
     missedPivotal: s.missedAllPivotal ?? undefined,
+    firstCall: s.firstCall
+      ? {
+          hypothesis: s.firstCall.hypothesis ?? undefined,
+          confidence: s.firstCall.confidence ?? undefined,
+          skipped: s.firstCall.skipped,
+        }
+      : undefined,
+    flippingProbeId: s.flippingProbeId ?? undefined,
   }));
 
   return {
@@ -138,7 +180,38 @@ export function caseSessionReducer(
       return createCaseSessionState(state.drill);
 
     case 'BEGIN_STATIONS':
-      return { ...state, phase: 'probes', currentStationIndex: 0 };
+      return { ...state, phase: 'first_call', currentStationIndex: 0 };
+
+    case 'SUBMIT_FIRST_CALL': {
+      if (state.phase !== 'first_call') return state;
+      const idx = state.currentStationIndex;
+      const current = state.stations[idx];
+      if (!current) return state;
+
+      const hypothesis = action.hypothesis.trim();
+      if (!hypothesis) return state;
+
+      const firstCall: FirstCallCapture = {
+        hypothesis,
+        confidence: action.confidence ?? null,
+        skipped: false,
+      };
+      const stations = state.stations.map((s, i) => (i === idx ? { ...s, firstCall } : s));
+      return { ...state, stations, phase: 'probes' };
+    }
+
+    case 'SKIP_FIRST_CALL': {
+      if (state.phase !== 'first_call') return state;
+      if (state.drill.difficulty !== 'Associate_Domain_Architect') return state;
+      const idx = state.currentStationIndex;
+      const firstCall: FirstCallCapture = {
+        hypothesis: null,
+        confidence: null,
+        skipped: true,
+      };
+      const stations = state.stations.map((s, i) => (i === idx ? { ...s, firstCall } : s));
+      return { ...state, stations, phase: 'probes' };
+    }
 
     case 'TOGGLE_PROBE': {
       if (state.phase !== 'probes') return state;
@@ -201,6 +274,12 @@ export function caseSessionReducer(
         isCorrect: option.isCorrect,
       });
 
+      const flippingProbeId = resolveFlippingProbeId(
+        current.selectedProbeIds,
+        current.station.probes,
+        current.firstCall,
+      );
+
       const stations = state.stations.map((s, i) =>
         i === idx
           ? {
@@ -213,6 +292,7 @@ export function caseSessionReducer(
               quadrant: scored.quadrant,
               missedAllPivotal: scored.probe.missedAllPivotal,
               distractorAntipattern: option.isCorrect ? undefined : option.distractorAntipattern,
+              flippingProbeId,
               isSubmitted: true,
             }
           : s,
@@ -238,7 +318,7 @@ export function caseSessionReducer(
       return {
         ...state,
         currentStationIndex: nextIndex,
-        phase: 'probes',
+        phase: 'first_call',
       };
     }
 

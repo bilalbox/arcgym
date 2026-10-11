@@ -20,6 +20,26 @@ _Avoid_: Architectural Domain, subtitle, SEO keyword
 The practice of rating self-assessed certainty before committing an answer, scoring architects on whether they know what they know (and know what they don't know).
 _Avoid_: Guess, bet, probability score
 
+### Hypercorrection Intercept
+The feedback path after a wrong commit at high Confidence Calibration (85% or 95%): withhold the correct option and its rationale, name the matched Antipattern Distractor and why it tempts, then allow one second try before the normal reveal.
+_Avoid_: Surprise card, surprise chrome, flashcard, adaptive lesson
+
+### Deferred Retest
+A single later Rapid Fire rep on the same architectural principle as a prior high-confidence miss, drawn from an authored sibling Drill rather than repeating the same stem. Not a spaced-repetition deck.
+_Avoid_: Flashcard, SRS queue, review deck, same-question retry
+
+### Contrast Set
+An authored group of Rapid Fire Drills that share one deciding architectural variable and differ in stem; identified by a shared `contrastSetId`. Used to schedule same-round contrast reps and to pick a sibling for a Deferred Retest.
+_Avoid_: Flashcard deck, question family, tagged topic cluster, sourceCardIds heuristic
+
+### Distractor Autopsy
+A short post-reveal prompt that asks why a specific Antipattern Distractor fails in this Drill, answered by tapping one of several authored explanation chips (usually from option rationales). Unscored; skippable.
+_Avoid_: Shame framing, free-text essay, scored follow-up quiz
+
+### First Call
+An unscored one-line free-text gut hypothesis (and optional Confidence Calibration) captured on a Case File Station after the Brief and before the Probe Budget unlocks. Compared to the final recommendation so probe-driven revisions are visible.
+_Avoid_: Scored pretest, mandatory Associate gate, oral defense, recommendation-option pick
+
 ### Architectural Trade-Off
 A design tension evaluated across the Salesforce Well-Architected Framework pillars (Trust, Reliability, Operational Excellence, Resource and Cost Optimization, Fairness).
 _Avoid_: Feature preference, single right answer
@@ -29,8 +49,8 @@ The interaction archetype for a Drill. ArcGym supports three formats: Rapid Fire
 _Avoid_: Question type, quiz mode, Currency, Scenario, Lesson, Diagram-as-separate-format
 
 ### Rapid Fire Drill
-A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises 3 decision reps (drills), requiring completion of all 3 reps to achieve that day's practice streak. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
-_Avoid_: Single-question rapid fire, partial streak award, flashcard round, separate Diagram runner
+A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises exactly 3 decision reps (drills), requiring completion of all 3 reps to achieve that day's practice streak. A round may be three independent drills or one Contrast Set. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
+_Avoid_: Single-question rapid fire, 5-rep round, partial streak award, flashcard round, separate Diagram runner
 
 ### Case File Drill
 An Evaluation-scale architectural judgment exercise: a Brief (fictional narrative), three or more Stations under that Brief, a scarce Probe Budget of clarifying questions that unlock scenario facts at each Station, then a confidence-gated recommendation. Outside the daily Rapid Fire streak. Always at least three Stations — never a solo station.

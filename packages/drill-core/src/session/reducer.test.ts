@@ -4,6 +4,8 @@ import {
   createPracticeSessionState,
   getCurrentRep,
   getRoundCompletionResult,
+  isAutopsyPending,
+  isRepRevealed,
   practiceSessionReducer,
 } from './reducer.js';
 
@@ -29,6 +31,13 @@ function createMockDrill(id: string): RapidFireDrillDefinition {
             isCorrect: false,
             distractorAntipattern: 'Synchronous Antipattern',
             rationale: 'Fails under load',
+          },
+          {
+            id: 'opt_wrong_b',
+            label: 'Another Wrong Approach',
+            isCorrect: false,
+            distractorAntipattern: 'Polling Antipattern',
+            rationale: 'Burns API limits',
           },
           {
             id: 'opt_correct',
@@ -106,11 +115,18 @@ describe('PracticeSession Reducer', () => {
     let state = createPracticeSessionState(drills);
 
     for (let i = 0; i < 5; i++) {
+      const optionId = i % 2 === 0 ? 'opt_correct' : 'opt_wrong';
       state = practiceSessionReducer(state, {
         type: 'SELECT_OPTION',
-        optionId: i % 2 === 0 ? 'opt_correct' : 'opt_wrong',
+        optionId,
       });
-      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.8 });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+      if (optionId === 'opt_wrong') {
+        state = practiceSessionReducer(state, {
+          type: 'SELECT_AUTOPSY_CHIP',
+          optionId: 'opt_wrong',
+        });
+      }
       state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
     }
 
@@ -160,5 +176,182 @@ describe('PracticeSession Reducer', () => {
     state = practiceSessionReducer(state, { type: 'RESET_SESSION', drills: newDrills });
     expect(state.reps.length).toBe(2);
     expect(getCurrentRep(state)?.drill.id).toBe('D2');
+  });
+
+  describe('Hypercorrection Intercept', () => {
+    it('enters intercept on wrong commit at 85% and blocks advance until resolved', () => {
+      const drills = [createMockDrill('D1')];
+      let state = createPracticeSessionState(drills);
+
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
+
+      const rep = getCurrentRep(state);
+      expect(rep?.isSubmitted).toBe(true);
+      expect(rep?.hypercorrectionActive).toBe(true);
+      expect(rep?.isCorrect).toBe(false);
+      expect(rep?.quadrant).toBe('Hazardous_Assumption');
+      expect(rep?.distractorAntipattern).toBe('Synchronous Antipattern');
+      expect(rep?.hypercorrectionExcludedOptionId).toBe('opt_wrong');
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.currentRepIndex).toBe(0);
+      expect(state.isCompleted).toBe(false);
+    });
+
+    it('reveals immediately on wrong commit at 50% or 70%', () => {
+      for (const confidence of [0.5, 0.7] as const) {
+        let state = createPracticeSessionState([createMockDrill('D1')]);
+        state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+        state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence });
+
+        const rep = getCurrentRep(state);
+        expect(rep?.isSubmitted).toBe(true);
+        expect(rep?.hypercorrectionActive).toBe(false);
+        expect(rep?.isCorrect).toBe(false);
+      }
+    });
+
+    it('allows one retry on remaining options only and locks score to first commit', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.95 });
+
+      const lockedScore = getCurrentRep(state)?.score;
+      const lockedQuadrant = getCurrentRep(state)?.quadrant;
+      expect(lockedScore).toBe(-126);
+      expect(lockedQuadrant).toBe('Hazardous_Assumption');
+
+      // Excluded first wrong option cannot be retried
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_wrong' });
+      expect(getCurrentRep(state)?.hypercorrectionActive).toBe(true);
+      expect(getCurrentRep(state)?.retryOptionId).toBeUndefined();
+
+      // Second try on correct option does not change Brier / quadrant / correctness of first commit
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_correct' });
+      const afterRetry = getCurrentRep(state);
+      expect(afterRetry?.hypercorrectionActive).toBe(false);
+      expect(afterRetry?.retryOptionId).toBe('opt_correct');
+      expect(afterRetry?.selectedOptionId).toBe('opt_wrong');
+      expect(afterRetry?.isCorrect).toBe(false);
+      expect(afterRetry?.score).toBe(lockedScore);
+      expect(afterRetry?.quadrant).toBe(lockedQuadrant);
+
+      // No second retry after resolve
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_wrong_b' });
+      expect(getCurrentRep(state)?.retryOptionId).toBe('opt_correct');
+    });
+
+    it('skip resolves intercept without changing first-commit scoring', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
+
+      const lockedScore = getCurrentRep(state)?.score;
+      state = practiceSessionReducer(state, { type: 'SKIP_HYPERCORRECTION' });
+
+      const afterSkip = getCurrentRep(state);
+      expect(afterSkip?.hypercorrectionActive).toBe(false);
+      expect(afterSkip?.retryOptionId).toBeUndefined();
+      expect(afterSkip?.score).toBe(lockedScore);
+      expect(afterSkip?.isCorrect).toBe(false);
+
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_AUTOPSY_CHIP',
+        optionId: 'opt_wrong',
+      });
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+    });
+  });
+
+  describe('Distractor Autopsy', () => {
+    it('is pending after immediate reveal on ≤70 miss and blocks advance until chip pick or skip', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+
+      const rep = getCurrentRep(state);
+      expect(rep).not.toBeNull();
+      expect(isRepRevealed(rep)).toBe(true);
+      expect(isAutopsyPending(rep)).toBe(true);
+
+      const lockedScore = rep.score;
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(false);
+
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_AUTOPSY_CHIP',
+        optionId: 'opt_wrong',
+      });
+      const afterChip = getCurrentRep(state);
+      expect(afterChip).not.toBeNull();
+      expect(afterChip.autopsySelectedOptionId).toBe('opt_wrong');
+      expect(afterChip.score).toBe(lockedScore);
+      expect(isAutopsyPending(afterChip)).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+      expect(state.totalScore).toBe(lockedScore);
+    });
+
+    it('allows skip without chip pick and does not change Brier', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+
+      const lockedScore = getCurrentRep(state)?.score;
+      state = practiceSessionReducer(state, { type: 'SKIP_AUTOPSY' });
+      const afterSkip = getCurrentRep(state);
+      expect(afterSkip).not.toBeNull();
+      expect(afterSkip.autopsySkipped).toBe(true);
+      expect(afterSkip.autopsySelectedOptionId).toBeUndefined();
+      expect(afterSkip.score).toBe(lockedScore);
+      expect(isAutopsyPending(afterSkip)).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+      expect(state.totalScore).toBe(lockedScore);
+    });
+
+    it('opens after hypercorrection resolve and does not change Brier or correctness', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_wrong' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.95 });
+
+      const beforeRetry = getCurrentRep(state);
+      expect(beforeRetry).not.toBeNull();
+      expect(isAutopsyPending(beforeRetry)).toBe(false);
+
+      state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_correct' });
+      const revealed = getCurrentRep(state);
+      expect(revealed).not.toBeNull();
+      expect(isRepRevealed(revealed)).toBe(true);
+      expect(isAutopsyPending(revealed)).toBe(true);
+
+      const lockedScore = revealed.score;
+      const lockedQuadrant = revealed.quadrant;
+      state = practiceSessionReducer(state, {
+        type: 'SELECT_AUTOPSY_CHIP',
+        optionId: 'opt_wrong_b',
+      });
+      const after = getCurrentRep(state);
+      expect(after?.autopsySelectedOptionId).toBe('opt_wrong_b');
+      expect(after?.score).toBe(lockedScore);
+      expect(after?.quadrant).toBe(lockedQuadrant);
+      expect(after?.isCorrect).toBe(false);
+    });
+
+    it('is not required after a correct first commit', () => {
+      let state = createPracticeSessionState([createMockDrill('D1')]);
+      state = practiceSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'opt_correct' });
+      state = practiceSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.7 });
+
+      const rep = getCurrentRep(state);
+      expect(rep).not.toBeNull();
+      expect(isAutopsyPending(rep)).toBe(false);
+      state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
+      expect(state.isCompleted).toBe(true);
+    });
   });
 });

@@ -4,7 +4,11 @@ import type {
   DrillDefinitionDTO,
   RapidFireDrillDefinition,
 } from '../types/drill.js';
-import { calculateProficiencyReport, getDrillQuestionCount } from './aggregator.js';
+import {
+  calculateProficiencyReport,
+  countProbeDrivenRevisions,
+  getDrillQuestionCount,
+} from './aggregator.js';
 
 const mockRapidFireDrill: RapidFireDrillDefinition = {
   id: 'DR-001',
@@ -255,5 +259,70 @@ describe('calculateProficiencyReport', () => {
     expect(dataArch.accuracy).toBe(100);
     expect(dataArch.isMeasured).toBe(true);
     expect(report.strengths).toContainEqual(dataArch);
+  });
+});
+
+describe('countProbeDrivenRevisions', () => {
+  it('counts stations with non-empty First Call text and probe discovery', () => {
+    const attempts: Record<string, DrillAttemptRecord> = {
+      'AGD-00901': {
+        drillId: 'AGD-00901',
+        format: 'Case_File',
+        completedAt: '2026-10-10T00:00:00Z',
+        score: 100,
+        accuracy: 1,
+        attemptsCount: 2,
+        steps: [
+          {
+            stepId: 'st1',
+            confidence: 0.85,
+            isCorrect: true,
+            score: 133,
+            selectedOptionId: 'o1',
+            selectedProbeIds: ['p1', 'p2'],
+            firstCall: {
+              hypothesis: 'Sync callouts',
+              confidence: 0.7,
+              skipped: false,
+            },
+            flippingProbeId: 'p2',
+          },
+          {
+            stepId: 'st2',
+            confidence: 0.85,
+            isCorrect: true,
+            score: 120,
+            selectedOptionId: 'o1',
+            firstCall: { hypothesis: 'Platform events', skipped: false },
+          },
+          {
+            stepId: 'st3',
+            confidence: 0.7,
+            isCorrect: true,
+            score: 110,
+            selectedOptionId: 'o1',
+            firstCall: { skipped: true },
+          },
+        ],
+      },
+    };
+
+    expect(countProbeDrivenRevisions(attempts)).toBe(1);
+  });
+
+  it('returns 0 when no First Call telemetry is present', () => {
+    expect(
+      countProbeDrivenRevisions({
+        'DR-001': {
+          drillId: 'DR-001',
+          format: 'Rapid_Fire',
+          completedAt: '2026-10-10T00:00:00Z',
+          score: 50,
+          accuracy: 1,
+          attemptsCount: 1,
+          steps: [{ stepId: 's1', confidence: 0.85, isCorrect: true, score: 50 }],
+        },
+      }),
+    ).toBe(0);
   });
 });

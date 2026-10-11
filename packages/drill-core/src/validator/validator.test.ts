@@ -225,6 +225,76 @@ const manifestCtx: ValidationContext = {
   assetExists: () => true,
 };
 
+describe('Contrast Set linkage (Rapid Fire)', () => {
+  it('accepts Rapid Fire with optional contrastSetId and matching principle', () => {
+    const drill = {
+      ...minimalRapidFire(),
+      contrastSetId: 'CS-zero-copy-vs-copy',
+      contrastPrinciple:
+        'The deciding variable was whether live federation meets freshness without copying into CRM storage.',
+    };
+    const res = validateDrill(drill, manifestCtx);
+    expect(res.ok).toBe(true);
+    if (res.ok && res.drill.format === 'Rapid_Fire') {
+      expect(res.drill.contrastSetId).toBe('CS-zero-copy-vs-copy');
+      expect(res.drill.contrastPrinciple).toContain('deciding variable');
+    }
+  });
+
+  it('rejects contrastSetId without contrastPrinciple', () => {
+    const raw = asMutable({
+      ...minimalRapidFire(),
+      contrastSetId: 'CS-zero-copy-vs-copy',
+    });
+    const res = validateDrill(raw, manifestCtx);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.findings).toContainEqual(
+        expect.objectContaining({
+          ruleId: 'contrast-set',
+          where: 'contrastPrinciple',
+        }),
+      );
+    }
+  });
+
+  it('rejects invalid contrastSetId shape', () => {
+    const raw = asMutable({
+      ...minimalRapidFire(),
+      contrastSetId: 'not-a-contrast-id',
+      contrastPrinciple: 'The deciding variable was X.',
+    });
+    const res = validateDrill(raw, manifestCtx);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.findings).toContainEqual(
+        expect.objectContaining({
+          ruleId: 'contrast-set',
+          where: 'contrastSetId',
+        }),
+      );
+    }
+  });
+
+  it('rejects contrast linkage on non-Rapid Fire formats', () => {
+    const raw = asMutable({
+      ...minimalCaseFile(),
+      contrastSetId: 'CS-zero-copy-vs-copy',
+      contrastPrinciple: 'The deciding variable was X.',
+    });
+    const res = validateDrill(raw, manifestCtx);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.findings).toContainEqual(
+        expect.objectContaining({
+          ruleId: 'contrast-set',
+          where: 'contrastSetId',
+        }),
+      );
+    }
+  });
+});
+
 describe('validateDrill fixtures', () => {
   it('validates minimal Rapid Fire fixture successfully', () => {
     const res = validateDrill(minimalRapidFire(), manifestCtx);

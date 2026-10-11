@@ -179,6 +179,16 @@ export interface DrillDefinitionBase {
 export interface RapidFireDrillDefinition extends DrillDefinitionBase {
   format: 'Rapid_Fire';
   steps: RapidFireStepDTO[];
+  /**
+   * Optional Contrast Set id shared by exactly three published Rapid Fire siblings.
+   * When a complete set is available, the daily round uses all three as one contrast round.
+   */
+  contrastSetId?: string;
+  /**
+   * One-line principle shown once after the third contrast rep
+   * (e.g. "The deciding variable was…"). Required when contrastSetId is set.
+   */
+  contrastPrinciple?: string;
 }
 
 export interface CaseFileDrillDefinition extends DrillDefinitionBase {
@@ -282,6 +292,14 @@ export interface AttemptSubmissionDTO {
 
 export type CauseVerdict = 'correct' | 'incorrect_distractor' | 'incorrect_miss';
 
+/** Unscored Case File First Call capture persisted on step telemetry. */
+export interface FirstCallTelemetry {
+  /** One-line free-text gut hypothesis (absent when skipped). */
+  hypothesis?: string;
+  confidence?: ConfidenceAnchor;
+  skipped: boolean;
+}
+
 export interface StepAttemptTelemetry {
   stepId: string;
   confidence: ConfidenceAnchor;
@@ -296,6 +314,13 @@ export interface StepAttemptTelemetry {
   missedPivotal?: boolean;
   /** Troubleshooting: free-text cause grading verdict. */
   causeVerdict?: CauseVerdict;
+  /** Case File: gut hypothesis before Probe Budget unlock (unscored). */
+  firstCall?: FirstCallTelemetry;
+  /**
+   * Case File: last selected pivotal (else last probe) after a non-empty First Call.
+   * Heuristic discovery highlight — not a scored “flip” vs recommendation options.
+   */
+  flippingProbeId?: string;
 }
 
 export interface DrillAttemptRecord {
@@ -320,9 +345,21 @@ export interface DimensionProficiency {
   drillsCompleted: number;
 }
 
+/** Outstanding Deferred Retest (at most one per learner). See progress/deferredRetest.ts. */
+export interface DeferredRetestSlot {
+  drillId: string;
+  sourceDrillId: string;
+  contrastSetId: string;
+  scheduledOn: string;
+  dueFrom: string;
+  dueUntil: string;
+}
+
 export interface VisitorProgressState {
   version: 1;
   streakDays: number;
   lastActiveDate: string; // YYYY-MM-DD
   completedDrills: Record<string, DrillAttemptRecord>;
+  /** At most one outstanding Deferred Retest; omitted when none. */
+  deferredRetest?: DeferredRetestSlot;
 }

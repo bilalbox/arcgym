@@ -9,7 +9,7 @@
     "Cost_Optimization",
     "Operational_Excellence"
   ],
-  "version": 2,
+  "version": 3,
   "status": "published",
   "steps": [
     {
@@ -42,5 +42,7 @@
         }
       ]
     }
-  ]
+  ],
+  "contrastSetId": "CS-zero-copy-vs-copy",
+  "contrastPrinciple": "The deciding variable was whether live federation meets freshness and scale without copying lake data into Salesforce storage."
 }

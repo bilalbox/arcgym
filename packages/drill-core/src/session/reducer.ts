@@ -1,12 +1,34 @@
 import { RAPID_FIRE_REPS_PER_DRILL } from '../progress/streak.js';
 import { ArcGymScoringEngine } from '../scoring/brier.js';
 import type { RapidFireDrillDefinition, StepAttemptTelemetry } from '../types/drill.js';
+import {
+  buildDistractorAutopsy,
+  isAutopsyApplicable,
+  isAutopsyPending,
+} from './distractorAutopsy.js';
+import { isHypercorrectionEligible } from './hypercorrection.js';
 import type {
   PracticeRepState,
   PracticeSessionAction,
   PracticeSessionState,
   RoundCompletionResult,
 } from './types.js';
+
+export type {
+  DistractorAutopsyChip,
+  DistractorAutopsyPrompt,
+} from './distractorAutopsy.js';
+export {
+  buildDistractorAutopsy,
+  isAutopsyApplicable,
+  isAutopsyPending,
+} from './distractorAutopsy.js';
+export { isHypercorrectionEligible } from './hypercorrection.js';
+
+/** Reveal is available after first commit when intercept is closed or never opened. */
+export function isRepRevealed(rep: PracticeRepState): boolean {
+  return rep.isSubmitted && !rep.hypercorrectionActive;
+}
 
 export function createPracticeSessionState(
   drills: RapidFireDrillDefinition[],
@@ -25,6 +47,7 @@ export function createPracticeSessionState(
     quadrant: null,
     distractorAntipattern: undefined,
     isSubmitted: false,
+    hypercorrectionActive: false,
   }));
 
   return {
@@ -71,6 +94,7 @@ export function practiceSessionReducer(
       const isCorrect = Boolean(chosenOption?.isCorrect);
 
       const brierResult = ArcGymScoringEngine.calculateDecisionScore(action.confidence, isCorrect);
+      const enterHypercorrection = isHypercorrectionEligible(action.confidence, isCorrect);
 
       const updatedReps: PracticeRepState[] = state.reps.map((rep, idx) => {
         if (idx !== state.currentRepIndex) return rep;
@@ -82,6 +106,10 @@ export function practiceSessionReducer(
           quadrant: brierResult.quadrant,
           distractorAntipattern: isCorrect ? undefined : chosenOption?.distractorAntipattern,
           isSubmitted: true,
+          hypercorrectionActive: enterHypercorrection,
+          hypercorrectionExcludedOptionId: enterHypercorrection
+            ? (currentRep.selectedOptionId ?? undefined)
+            : undefined,
         };
       });
 
@@ -91,10 +119,76 @@ export function practiceSessionReducer(
       };
     }
 
+    case 'RETRY_OPTION': {
+      if (state.isCompleted) return state;
+      const currentRep = state.reps[state.currentRepIndex];
+      if (!currentRep?.hypercorrectionActive || !currentRep.isSubmitted) return state;
+      if (action.optionId === currentRep.hypercorrectionExcludedOptionId) return state;
+      if (!currentRep.step.options.some((o) => o.id === action.optionId)) return state;
+
+      const updatedReps = state.reps.map((rep, idx) =>
+        idx === state.currentRepIndex
+          ? {
+              ...rep,
+              retryOptionId: action.optionId,
+              hypercorrectionActive: false,
+            }
+          : rep,
+      );
+
+      return { ...state, reps: updatedReps };
+    }
+
+    case 'SKIP_HYPERCORRECTION': {
+      if (state.isCompleted) return state;
+      const currentRep = state.reps[state.currentRepIndex];
+      if (!currentRep?.hypercorrectionActive || !currentRep.isSubmitted) return state;
+
+      const updatedReps = state.reps.map((rep, idx) =>
+        idx === state.currentRepIndex ? { ...rep, hypercorrectionActive: false } : rep,
+      );
+
+      return { ...state, reps: updatedReps };
+    }
+
+    case 'SELECT_AUTOPSY_CHIP': {
+      if (state.isCompleted) return state;
+      const currentRep = state.reps[state.currentRepIndex];
+      if (!currentRep || !isRepRevealed(currentRep) || currentRep.isCorrect !== false) {
+        return state;
+      }
+      if (currentRep.autopsySelectedOptionId || currentRep.autopsySkipped) return state;
+
+      const autopsy = buildDistractorAutopsy(currentRep.step.options, currentRep.selectedOptionId);
+      if (!autopsy?.chips.some((chip) => chip.optionId === action.optionId)) {
+        return state;
+      }
+
+      const updatedReps = state.reps.map((rep, idx) =>
+        idx === state.currentRepIndex ? { ...rep, autopsySelectedOptionId: action.optionId } : rep,
+      );
+
+      return { ...state, reps: updatedReps };
+    }
+
+    case 'SKIP_AUTOPSY': {
+      if (state.isCompleted) return state;
+      const currentRep = state.reps[state.currentRepIndex];
+      if (!currentRep || !isAutopsyApplicable(currentRep)) return state;
+      if (currentRep.autopsySelectedOptionId || currentRep.autopsySkipped) return state;
+
+      const updatedReps = state.reps.map((rep, idx) =>
+        idx === state.currentRepIndex ? { ...rep, autopsySkipped: true } : rep,
+      );
+
+      return { ...state, reps: updatedReps };
+    }
+
     case 'ADVANCE_REP': {
       if (state.isCompleted) return state;
       const currentRep = state.reps[state.currentRepIndex];
-      if (!currentRep?.isSubmitted) return state;
+      if (!currentRep?.isSubmitted || currentRep.hypercorrectionActive) return state;
+      if (isAutopsyPending(currentRep)) return state;
 
       if (state.currentRepIndex + 1 < state.reps.length) {
         return {

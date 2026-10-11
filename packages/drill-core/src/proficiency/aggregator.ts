@@ -31,6 +31,29 @@ export function getDrillQuestionCount(
 }
 
 /**
+ * Counts Case File stations with a non-empty First Call hypothesis where the learner
+ * selected probes before committing a final recommendation (probe-driven revisions).
+ * Skipped First Calls do not count.
+ */
+export function countProbeDrivenRevisions(
+  completedDrills: Record<string, DrillAttemptRecord>,
+): number {
+  let count = 0;
+  for (const attempt of Object.values(completedDrills)) {
+    for (const step of attempt.steps ?? []) {
+      const first = step.firstCall;
+      if (!first || first.skipped || !first.hypothesis?.trim() || !step.selectedOptionId) {
+        continue;
+      }
+      if ((step.selectedProbeIds?.length ?? 0) > 0 || step.flippingProbeId) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+}
+
+/**
  * Aggregates client-side drill attempts into proficiency data for the 7 Architectural Domains.
  */
 export function calculateProficiencyReport(

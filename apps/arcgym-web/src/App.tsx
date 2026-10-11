@@ -77,6 +77,7 @@ export const App: React.FC = () => {
     isStreakEarnedToday,
     totalPoints,
     completedDrills,
+    deferredRetest,
     totalCompleted,
     isAuthenticated,
     visitorId,
@@ -116,7 +117,7 @@ export const App: React.FC = () => {
   }, [search]);
 
   const { rapidFireDrills, dailyWorkout, isReviewMode, previousAttempt, resetSessionSkip } =
-    useDrillRecommendation(completedDrills, activeDomain, visitorId);
+    useDrillRecommendation(completedDrills, activeDomain, visitorId, deferredRetest);
 
   const handleDomainChange = (domain: ArchitecturalDomain | undefined) => {
     setActiveDomain(domain);
@@ -416,7 +417,7 @@ export const App: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <span className="font-mono text-[11px] text-miro-muted font-medium bg-miro-surface px-2 py-0.5 rounded border border-miro-hairline">
-              5-Rep Round
+              3-Rep Round
             </span>
             <Badge variant="outline" className="text-[11px] py-0 px-2 font-normal">
               Rapid Fire
