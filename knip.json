@@ -1,24 +1,28 @@
 {
   "$schema": "https://unpkg.com/knip@5/overview/configuration/schema.json",
-  "workspaces": {
-    ".": {
-      "entry": ["scripts/*.ts", "scripts/**/*.ts"],
-      "project": ["scripts/**/*.ts"],
-      "ignoreDependencies": ["@swc/core", "vitest"],
-      "ignoreBinaries": ["uv", "wrangler"]
-    },
-    "apps/arcgym-web": {
-      "entry": ["functions/**/!(*.test).ts"],
-      "project": ["src/**/*.{ts,tsx}", "functions/**/*.ts"],
-      "ignoreDependencies": ["tailwindcss", "tw-animate-css"]
-    },
-    "packages/drill-core": {
-      "project": ["src/**/*.ts"]
-    },
-    "packages/diagrams": {
-      "project": ["src/**/*.{ts,tsx}"]
-    }
-  },
+  "entry": [
+    "apps/arcgym-web/functions/**/!(*.test).ts",
+    "packages/drill-core/src/index.ts",
+    "packages/diagrams/src/index.ts",
+    "packages/diagrams/src/tokens.css",
+    "packages/diagrams/src/qa/auditSvgGeometry.ts",
+    "packages/diagrams/scripts/*.tsx",
+    "packages/diagrams/tests/**/*.spec.ts",
+    "scripts/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "project": [
+    "apps/arcgym-web/src/**/*.{ts,tsx,css}",
+    "apps/arcgym-web/functions/**/*.ts",
+    "apps/arcgym-web/vite/**/*.ts",
+    "packages/drill-core/src/**/*.ts",
+    "packages/diagrams/src/**/*.{ts,tsx,css}",
+    "packages/diagrams/scripts/**/*.tsx",
+    "packages/diagrams/tests/**/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "ignoreDependencies": ["@swc/core"],
+  "ignoreBinaries": ["uv"],
   "rules": {
     "files": "error",
     "dependencies": "error",

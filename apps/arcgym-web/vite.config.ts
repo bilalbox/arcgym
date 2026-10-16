@@ -5,12 +5,13 @@ import { defineConfig, loadEnv } from 'vite';
 import { studioFsPlugin } from './vite/studioFsPlugin.ts';
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const cfBeaconToken = env.VITE_CF_BEACON_TOKEN || process.env.VITE_CF_BEACON_TOKEN || '';
   const appRoot = import.meta.dirname;
   const repoRoot = path.resolve(appRoot, '../..');
+  const env = loadEnv(mode, appRoot, '');
+  const cfBeaconToken = env.VITE_CF_BEACON_TOKEN || process.env.VITE_CF_BEACON_TOKEN || '';
 
   return {
+    root: appRoot,
     plugins: [
       react(),
       tailwindcss(),
@@ -34,6 +35,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(appRoot, './src'),
+        '@arcgym/drill-core': path.resolve(repoRoot, './packages/drill-core/src/index.ts'),
+        '@arcgym/diagrams': path.resolve(repoRoot, './packages/diagrams/src/index.ts'),
       },
     },
     server: {

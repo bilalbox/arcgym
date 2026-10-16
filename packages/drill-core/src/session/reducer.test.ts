@@ -273,6 +273,7 @@ describe('PracticeSession Reducer', () => {
 
       const rep = getCurrentRep(state);
       expect(rep).not.toBeNull();
+      if (!rep) throw new Error('expected rep');
       expect(isRepRevealed(rep)).toBe(true);
       expect(isAutopsyPending(rep)).toBe(true);
 
@@ -286,6 +287,7 @@ describe('PracticeSession Reducer', () => {
       });
       const afterChip = getCurrentRep(state);
       expect(afterChip).not.toBeNull();
+      if (!afterChip) throw new Error('expected afterChip');
       expect(afterChip.autopsySelectedOptionId).toBe('opt_wrong');
       expect(afterChip.score).toBe(lockedScore);
       expect(isAutopsyPending(afterChip)).toBe(false);
@@ -304,6 +306,7 @@ describe('PracticeSession Reducer', () => {
       state = practiceSessionReducer(state, { type: 'SKIP_AUTOPSY' });
       const afterSkip = getCurrentRep(state);
       expect(afterSkip).not.toBeNull();
+      if (!afterSkip) throw new Error('expected afterSkip');
       expect(afterSkip.autopsySkipped).toBe(true);
       expect(afterSkip.autopsySelectedOptionId).toBeUndefined();
       expect(afterSkip.score).toBe(lockedScore);
@@ -321,11 +324,13 @@ describe('PracticeSession Reducer', () => {
 
       const beforeRetry = getCurrentRep(state);
       expect(beforeRetry).not.toBeNull();
+      if (!beforeRetry) throw new Error('expected beforeRetry');
       expect(isAutopsyPending(beforeRetry)).toBe(false);
 
       state = practiceSessionReducer(state, { type: 'RETRY_OPTION', optionId: 'opt_correct' });
       const revealed = getCurrentRep(state);
       expect(revealed).not.toBeNull();
+      if (!revealed) throw new Error('expected revealed');
       expect(isRepRevealed(revealed)).toBe(true);
       expect(isAutopsyPending(revealed)).toBe(true);
 
@@ -349,6 +354,7 @@ describe('PracticeSession Reducer', () => {
 
       const rep = getCurrentRep(state);
       expect(rep).not.toBeNull();
+      if (!rep) throw new Error('expected rep');
       expect(isAutopsyPending(rep)).toBe(false);
       state = practiceSessionReducer(state, { type: 'ADVANCE_REP' });
       expect(state.isCompleted).toBe(true);

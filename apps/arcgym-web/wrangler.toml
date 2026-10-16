@@ -27,14 +27,14 @@ binding = "AI"
 #   SESSION_SECRET           — HMAC-SHA256 secret for signing arcgym_session cookies (min 32 chars)
 #   LEARNER_PEPPER           — Private salt for HMAC-SHA256 pseudonymous learner IDs (min 32 chars)
 #
-#   pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_HMAC_SECRET --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_ADMIN_KEY --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_VOTE_HMAC_SECRET --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put GOOGLE_CLIENT_ID --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put GITHUB_CLIENT_ID --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put GITHUB_CLIENT_SECRET --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put SESSION_SECRET --project-name=arcgym
-#   pnpm --filter @arcgym/web exec wrangler pages secret put LEARNER_PEPPER --project-name=arcgym
+#   pnpm exec wrangler pages secret put ARCGYM_HMAC_SECRET --project-name=arcgym
+#   pnpm exec wrangler pages secret put ARCGYM_ADMIN_KEY --project-name=arcgym
+#   pnpm exec wrangler pages secret put ARCGYM_VOTE_HMAC_SECRET --project-name=arcgym
+#   pnpm exec wrangler pages secret put GOOGLE_CLIENT_ID --project-name=arcgym
+#   pnpm exec wrangler pages secret put GOOGLE_CLIENT_SECRET --project-name=arcgym
+#   pnpm exec wrangler pages secret put GITHUB_CLIENT_ID --project-name=arcgym
+#   pnpm exec wrangler pages secret put GITHUB_CLIENT_SECRET --project-name=arcgym
+#   pnpm exec wrangler pages secret put SESSION_SECRET --project-name=arcgym
+#   pnpm exec wrangler pages secret put LEARNER_PEPPER --project-name=arcgym
 #
 # Local Pages Functions: copy apps/arcgym-web/.dev.vars.example → apps/arcgym-web/.dev.vars

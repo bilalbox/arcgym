@@ -92,7 +92,7 @@ function pullFromCloudflare(useLocal = false): FeedbackSnapshot {
 
   try {
     const rawRatings = execSync(
-      `pnpm --filter @arcgym/web exec wrangler d1 execute arcgym-d1 ${flag} --command="SELECT * FROM drill_rating_stats;" --json`,
+      `pnpm exec wrangler d1 execute arcgym-d1 --config apps/arcgym-web/wrangler.toml ${flag} --command="SELECT * FROM drill_rating_stats;" --json`,
       { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
     );
 
@@ -126,7 +126,7 @@ function pullFromCloudflare(useLocal = false): FeedbackSnapshot {
     // Pull recent feedback submissions
     try {
       const rawRecords = execSync(
-        `pnpm --filter @arcgym/web exec wrangler d1 execute arcgym-d1 ${flag} --command="SELECT id, drill_id, rating, tags_json, learner_id, created_at FROM drill_feedback ORDER BY created_at DESC LIMIT 500;" --json`,
+        `pnpm exec wrangler d1 execute arcgym-d1 --config apps/arcgym-web/wrangler.toml ${flag} --command="SELECT id, drill_id, rating, tags_json, learner_id, created_at FROM drill_feedback ORDER BY created_at DESC LIMIT 500;" --json`,
         { cwd: ROOT_DIR, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'ignore'] },
       );
 

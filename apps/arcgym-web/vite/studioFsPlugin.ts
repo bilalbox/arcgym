@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import type { Plugin } from 'vite';
 import {
   citationManifestUrlsFromExports,
   type DrillDefinitionDTO,
@@ -18,8 +19,7 @@ import {
   type ValidationFinding,
   validateDrill,
   type WordingFinding,
-} from '@arcgym/drill-core';
-import type { Plugin } from 'vite';
+} from '../../../packages/drill-core/src/index.js';
 
 const execFileAsync = promisify(execFile);
 

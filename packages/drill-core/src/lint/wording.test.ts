@@ -4,6 +4,7 @@ import {
   lintDrillWording,
   type RapidFireDrillDefinition,
   type TroubleshootingDrillDefinition,
+  type WellArchitectedPillar,
   type WordingRuleId,
 } from '../index.js';
 
@@ -13,7 +14,7 @@ const BASE = {
   domain: 'Integration_Apis',
   domainLabel: 'Integration APIs',
   difficulty: 'Lead_CTA',
-  pillars: ['Reliability'],
+  pillars: ['Reliability'] as WellArchitectedPillar[],
   version: 1,
   status: 'draft',
 } as const;

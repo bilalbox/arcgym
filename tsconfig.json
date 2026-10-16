@@ -1,13 +1,36 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024"],
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "useDefineForClassFields": true,
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
     "types": ["node"],
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": ["./apps/arcgym-web/src/*"],
+      "@arcgym/drill-core": ["./packages/drill-core/src/index.ts"],
+      "@arcgym/diagrams": ["./packages/diagrams/src/index.ts"]
+    }
   },
-  "include": ["scripts/**/*"]
+  "include": [
+    "apps/arcgym-web/src/**/*",
+    "apps/arcgym-web/vite.config.ts",
+    "apps/arcgym-web/vite/**/*",
+    "packages/drill-core/src/**/*",
+    "packages/diagrams/src/**/*",
+    "packages/diagrams/scripts/**/*",
+    "packages/diagrams/tests/**/*",
+    "packages/diagrams/playwright.config.ts",
+    "scripts/**/*"
+  ],
+  "exclude": ["node_modules", "**/dist", "**/test-results"]
 }
