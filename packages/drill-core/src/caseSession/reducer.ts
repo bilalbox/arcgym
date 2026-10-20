@@ -5,17 +5,14 @@ import type {
   CaseFileStationDTO,
   ConfidenceAnchor,
   DrillAttemptRecord,
+  FirstCallCapture,
   MetacognitiveQuadrant,
   StepAttemptTelemetry,
 } from '../types/drill.js';
 
 export type CasePhase = 'brief' | 'first_call' | 'probes' | 'commit' | 'feedback';
 
-export interface FirstCallCapture {
-  hypothesis: string | null;
-  confidence: ConfidenceAnchor | null;
-  skipped: boolean;
-}
+export type { FirstCallCapture };
 
 export interface CaseStationState {
   station: CaseFileStationDTO;

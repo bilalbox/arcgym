@@ -15,7 +15,9 @@ import {
   type GroundingChunkExport,
   isTroubleshootingDrill,
   lintDrillWording,
+  MAX_CAUSE_CHARS,
   StubCauseGrader,
+  type TroubleshootingDrillDefinition,
   type ValidationFinding,
   validateDrill,
   type WordingFinding,
@@ -283,12 +285,19 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
               .trim()
               .toUpperCase();
             const causeText = String((body as { causeText?: unknown }).causeText ?? '').trim();
+            const firstCallText = String(
+              (body as { firstCallText?: unknown }).firstCallText ?? '',
+            ).trim();
             if (!drillId) {
               sendJson(res, 400, { error: 'Invalid drill ID' });
               return;
             }
-            if (!causeText) {
+            if (!causeText || causeText.length > MAX_CAUSE_CHARS) {
               sendJson(res, 400, { error: 'causeText is required' });
+              return;
+            }
+            if (firstCallText.length > MAX_CAUSE_CHARS) {
+              sendJson(res, 400, { error: 'firstCallText is too long' });
               return;
             }
 
@@ -297,12 +306,19 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
               sendJson(res, 404, { error: 'Unknown troubleshooting drill' });
               return;
             }
+            const incident = drill as TroubleshootingDrillDefinition;
+            const fixOptions = incident.fix?.options;
+            if (
+              !Array.isArray(fixOptions) ||
+              fixOptions.length !== 3 ||
+              fixOptions.filter((o) => o.isCorrect).length !== 1
+            ) {
+              sendJson(res, 422, { error: 'Incident is missing a valid Fix definition' });
+              return;
+            }
 
             const grader = new StubCauseGrader();
-            const result = await grader.grade({ drill, causeText });
-            const firstCallText = String(
-              (body as { firstCallText?: unknown }).firstCallText ?? '',
-            ).trim();
+            const result = await grader.grade({ drill: incident, causeText });
             let firstCallGrade:
               | {
                   verdict: unknown;
@@ -311,14 +327,14 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
                 }
               | undefined;
             if (firstCallText) {
-              const fcResult = await grader.grade({ drill, causeText: firstCallText });
+              const fcResult = await grader.grade({ drill: incident, causeText: firstCallText });
               firstCallGrade = {
                 verdict: fcResult.verdict,
                 matchedDistractor: fcResult.matchedDistractor,
                 chosenId: fcResult.chosenId,
               };
             }
-            sendJson(res, 200, { ...result, fix: drill.fix, firstCallGrade });
+            sendJson(res, 200, { ...result, fix: incident.fix, firstCallGrade });
             return;
           } catch (err) {
             sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });

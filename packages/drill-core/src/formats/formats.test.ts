@@ -302,7 +302,7 @@ describe('Drill Format Descriptors & Registry', () => {
     });
 
     it('calculates question count as 1', () => {
-      expect(desc.getQuestionCount(ts)).toBe(1);
+      expect(desc.getQuestionCount(ts)).toBe(2);
     });
 
     it('sanitizes drill by stripping goldCause, hiddenDistractors, and fix', () => {

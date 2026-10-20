@@ -173,7 +173,7 @@ function loadFrictionCard(cardId: string): FrictionCard {
   return card;
 }
 
-/** Generated Rapid_Fire drills use AGD-00401..00499. */
+/** Generated drills use AGD-00401..00499. */
 function getNextDrillId(): string {
   const [floor, ceiling] = [400, 500];
   const files = fs.existsSync(DRILLS_DIR) ? fs.readdirSync(DRILLS_DIR) : [];

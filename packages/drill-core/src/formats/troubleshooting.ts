@@ -365,7 +365,7 @@ export const troubleshootingDescriptor: DrillFormatDescriptor<
   isClient: isTroubleshootingDrillClient,
   validate: validateTroubleshooting,
   lintWording: lintTroubleshootingExtras,
-  getQuestionCount: (_drill) => 1,
+  getQuestionCount: (_drill) => 2,
   sanitizeForClient: (drill) => {
     const { goldCause: _gold, hiddenDistractors: _distractors, fix: _fix, ...rest } = drill;
     return rest;

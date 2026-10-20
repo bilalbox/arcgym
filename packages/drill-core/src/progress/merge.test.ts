@@ -14,7 +14,7 @@ describe('mergeProgressStates', () => {
       completedDrills: {
         'drill-1': {
           drillId: 'drill-1',
-          format: 'Rapid_Fire',
+          format: 'Case_File',
           completedAt: `${TODAY}T10:00:00Z`,
           score: 80,
           accuracy: 1,
@@ -30,7 +30,7 @@ describe('mergeProgressStates', () => {
       completedDrills: {
         'drill-2': {
           drillId: 'drill-2',
-          format: 'Rapid_Fire',
+          format: 'Case_File',
           completedAt: `${YESTERDAY}T15:00:00Z`,
           score: 95,
           accuracy: 1,
@@ -57,7 +57,7 @@ describe('mergeProgressStates', () => {
       completedDrills: {
         'drill-1': {
           drillId: 'drill-1',
-          format: 'Rapid_Fire',
+          format: 'Case_File',
           completedAt: `${TODAY}T12:00:00Z`,
           score: 100,
           accuracy: 1,
@@ -73,7 +73,7 @@ describe('mergeProgressStates', () => {
       completedDrills: {
         'drill-1': {
           drillId: 'drill-1',
-          format: 'Rapid_Fire',
+          format: 'Case_File',
           completedAt: `${YESTERDAY}T09:00:00Z`,
           score: 60,
           accuracy: 0.67,

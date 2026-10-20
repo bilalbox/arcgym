@@ -34,17 +34,9 @@ export function hashString(str: string): number {
   return Math.abs(hash);
 }
 
-/**
- * Hashes a date string (e.g. "2026-09-27") into a stable positive 32-bit integer.
- */
+/** Hashes a date string (e.g. "2026-09-27") into a stable positive 32-bit integer. */
 export function hashDateString(dateStr: string): number {
-  let hash = 0;
-  for (let i = 0; i < dateStr.length; i++) {
-    const char = dateStr.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
-  }
-  return Math.abs(hash);
+  return hashString(dateStr);
 }
 
 /**

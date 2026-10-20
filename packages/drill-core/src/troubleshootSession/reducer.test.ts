@@ -122,8 +122,24 @@ const DRILL: TroubleshootingDrillDefinition = {
   },
 };
 
+function correctGrade(): GradeCauseResult {
+  return {
+    verdict: 'correct',
+    isCorrect: true,
+    chosenId: 'gold',
+    scores: [],
+    goldScore: 0.9,
+    bestDistractorScore: 0.05,
+    otherScore: 0.05,
+    matchedDistractor: null,
+    goldText: DRILL.goldCause.text,
+    goldRationale: DRILL.goldCause.rationale,
+    goldCitationUrl: DRILL.goldCause.citationUrl,
+  };
+}
+
 describe('troubleshootSessionReducer', () => {
-  it('walks brief → first_call → probes → cause → commit_cause → cause_reveal → fix → commit_fix → feedback → complete', () => {
+  it('walks brief → first_call → probes → cause → commit_cause → cause_reveal → fix → feedback → complete', () => {
     let state = createTroubleshootSessionState(DRILL);
     expect(state.phase).toBe('brief');
 
@@ -141,7 +157,6 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p4' });
-    // Budget exhausted — fourth pick ignored
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p3' });
     expect(state.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
 
@@ -156,28 +171,24 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
     expect(state.phase).toBe('commit_cause');
 
-    const correctGrade: GradeCauseResult = {
-      verdict: 'correct',
-      isCorrect: true,
-      score: 100,
-      confidence: 0.85,
-      rationale: 'Matches root cause',
-      goldText: DRILL.goldCause.text,
-      goldRationale: DRILL.goldCause.rationale,
-      fix: DRILL.fix,
-    };
     state = troubleshootSessionReducer(state, {
       type: 'RECEIVE_CAUSE_GRADE',
       confidence: 0.85,
-      grade: correctGrade,
+      grade: correctGrade(),
       fix: DRILL.fix,
+      firstCallGrade: {
+        verdict: 'incorrect_distractor',
+        chosenId: 'd1',
+        matchedDistractor: { ...DRILL.hiddenDistractors[0], score: 0.7 },
+      },
     });
     expect(state.phase).toBe('cause_reveal');
     expect(state.grade?.verdict).toBe('correct');
     expect(state.isCorrect).toBe(true);
-    expect(state.probeScore).toBe(35); // 50 pivotal - 15 distractor
+    expect(state.probeScore).toBe(35);
     expect(state.missedAllPivotal).toBe(false);
     expect(state.causeScore).toBe(98);
+    expect(state.firstCallGrade?.verdict).toBe('incorrect_distractor');
 
     state = troubleshootSessionReducer(state, { type: 'PROCEED_TO_FIX' });
     expect(state.phase).toBe('fix');
@@ -188,11 +199,9 @@ describe('troubleshootSessionReducer', () => {
     });
     expect(state.selectedFixOptionId).toBe('fix_gold');
 
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_FIX' });
-    expect(state.phase).toBe('commit_fix');
-
     state = troubleshootSessionReducer(state, {
-      type: 'COMMIT_FIX_CONFIDENCE',
+      type: 'COMMIT_FIX',
+      optionId: 'fix_gold',
       confidence: 0.85,
     });
     expect(state.phase).toBe('feedback');
@@ -204,14 +213,44 @@ describe('troubleshootSessionReducer', () => {
     expect(state.isCompleted).toBe(true);
     expect(state.attempt?.format).toBe('Troubleshooting');
     expect(state.attempt?.accuracy).toBe(1);
+    expect(state.attempt?.steps).toHaveLength(2);
+    expect(state.attempt?.steps?.[0]?.stepId).toBe('cause');
     expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
     expect(state.attempt?.steps?.[0]?.causeVerdict).toBe('correct');
     expect(state.attempt?.steps?.[0]?.isCorrect).toBe(true);
     expect(state.attempt?.steps?.[0]?.firstCall?.hypothesis).toBe(
       'Warehouse is probably undersized during peak hours',
     );
-    expect(state.attempt?.steps?.[0]?.selectedFixOptionId).toBe('fix_gold');
-    expect(state.attempt?.steps?.[0]?.fixScore).toBe(98);
+    expect(state.attempt?.steps?.[0]?.firstCallVerdict).toBe('incorrect_distractor');
+    expect(state.attempt?.steps?.[1]?.stepId).toBe('fix');
+    expect(state.attempt?.steps?.[1]?.selectedFixOptionId).toBe('fix_gold');
+    expect(state.attempt?.steps?.[1]?.fixScore).toBe(98);
+    expect(state.attempt?.steps?.[1]?.isCorrect).toBe(true);
+  });
+
+  it('refuses PROCEED_TO_FIX when Fix is missing', () => {
+    let state = createTroubleshootSessionState(DRILL);
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
+    state = troubleshootSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Guess',
+    });
+    state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
+    state = troubleshootSessionReducer(state, { type: 'LOCK_PROBES' });
+    state = troubleshootSessionReducer(state, {
+      type: 'SET_CAUSE_TEXT',
+      text: 'Formula fields.',
+    });
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
+    state = {
+      ...state,
+      phase: 'cause_reveal',
+      grade: correctGrade(),
+      isCorrect: true,
+      fix: null,
+    };
+    const next = troubleshootSessionReducer(state, { type: 'PROCEED_TO_FIX' });
+    expect(next.phase).toBe('cause_reveal');
   });
 
   it('counts a correct cause after poor probes without voiding the cause grade', () => {
@@ -230,20 +269,10 @@ describe('troubleshootSessionReducer', () => {
       text: 'Formula fields overlap BDT with segment refresh.',
     });
     state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
-    const correctGrade: GradeCauseResult = {
-      verdict: 'correct',
-      isCorrect: true,
-      score: 100,
-      confidence: 0.7,
-      rationale: 'Correct',
-      goldText: DRILL.goldCause.text,
-      goldRationale: DRILL.goldCause.rationale,
-      fix: DRILL.fix,
-    };
     state = troubleshootSessionReducer(state, {
       type: 'RECEIVE_CAUSE_GRADE',
       confidence: 0.7,
-      grade: correctGrade,
+      grade: correctGrade(),
       fix: DRILL.fix,
     });
 
@@ -270,16 +299,14 @@ describe('troubleshootSessionReducer', () => {
     const distractorGrade: GradeCauseResult = {
       verdict: 'incorrect_distractor',
       isCorrect: false,
-      score: 10,
-      confidence: 0.95,
-      rationale: 'Matched distractor',
-      matchedDistractor: {
-        antipattern: 'Scale First Warehouse',
-        rationale: 'Warehouse was enlarged.',
-      },
+      chosenId: 'd1',
+      scores: [],
+      goldScore: 0.1,
+      bestDistractorScore: 0.8,
+      otherScore: 0.1,
+      matchedDistractor: { ...DRILL.hiddenDistractors[0], score: 0.8 },
       goldText: DRILL.goldCause.text,
       goldRationale: DRILL.goldCause.rationale,
-      fix: DRILL.fix,
     };
     state = troubleshootSessionReducer(state, {
       type: 'RECEIVE_CAUSE_GRADE',

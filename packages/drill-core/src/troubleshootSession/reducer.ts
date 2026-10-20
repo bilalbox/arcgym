@@ -1,11 +1,12 @@
 import { probeBudgetReducer } from '../probeBudget/index.js';
 import { ArcGymScoringEngine } from '../scoring/brier.js';
-import type { GradeCauseResult } from '../scoring/grader/types.js';
+import type { FirstCallGradeSummary, GradeCauseResult } from '../scoring/grader/types.js';
 import { calculateProbeDecisionScore } from '../scoring/probe.js';
 import type {
   ClientTroubleshootingDrillDefinition,
   ConfidenceAnchor,
   DrillAttemptRecord,
+  FirstCallCapture,
   MetacognitiveQuadrant,
   StepAttemptTelemetry,
   TroubleshootingDrillDefinition,
@@ -20,28 +21,24 @@ export type TroubleshootPhase =
   | 'commit_cause'
   | 'cause_reveal'
   | 'fix'
-  | 'commit_fix'
   | 'feedback';
 
-export interface TroubleshootFirstCallCapture {
-  hypothesis: string | null;
-  confidence: ConfidenceAnchor | null;
-  skipped: boolean;
-}
+/** @deprecated Prefer FirstCallCapture from types/drill. */
+export type TroubleshootFirstCallCapture = FirstCallCapture;
 
 export interface TroubleshootSessionState {
   drill: TroubleshootingDrillDefinition | ClientTroubleshootingDrillDefinition;
   phase: TroubleshootPhase;
-  firstCall: TroubleshootFirstCallCapture | null;
+  firstCall: FirstCallCapture | null;
   selectedProbeIds: string[];
   probesLocked: boolean;
   causeText: string;
   committedConfidence: ConfidenceAnchor | null;
   grade: GradeCauseResult | null;
+  firstCallGrade: FirstCallGradeSummary | null;
   isCorrect: boolean | null;
   probeScore: number | null;
   causeScore: number | null;
-  // Fix state
   fix: TroubleshootingFixDefinition | null;
   selectedFixOptionId: string | null;
   committedFixConfidence: ConfidenceAnchor | null;
@@ -49,7 +46,6 @@ export interface TroubleshootSessionState {
   fixScore: number | null;
   fixQuadrant: MetacognitiveQuadrant | null;
   fixDistractorAntipattern?: string;
-  // Total & telemetry
   totalScore: number;
   quadrant: MetacognitiveQuadrant | null;
   missedAllPivotal: boolean | null;
@@ -71,18 +67,17 @@ export type TroubleshootSessionAction =
       type: 'RECEIVE_CAUSE_GRADE';
       confidence: ConfidenceAnchor;
       grade: GradeCauseResult;
-      fix?: TroubleshootingFixDefinition;
+      fix: TroubleshootingFixDefinition;
+      firstCallGrade?: FirstCallGradeSummary;
     }
   | { type: 'PROCEED_TO_FIX' }
   | { type: 'SELECT_FIX_OPTION'; optionId: string }
-  | { type: 'BEGIN_COMMIT_FIX' }
-  | { type: 'COMMIT_FIX_CONFIDENCE'; confidence: ConfidenceAnchor }
+  | { type: 'COMMIT_FIX'; optionId: string; confidence: ConfidenceAnchor }
   | { type: 'FINISH' };
 
 export function createTroubleshootSessionState(
   drill: TroubleshootingDrillDefinition | ClientTroubleshootingDrillDefinition,
 ): TroubleshootSessionState {
-  const initialFix = 'fix' in drill && drill.fix ? drill.fix : null;
   return {
     drill,
     phase: 'brief',
@@ -92,10 +87,11 @@ export function createTroubleshootSessionState(
     causeText: '',
     committedConfidence: null,
     grade: null,
+    firstCallGrade: null,
     isCorrect: null,
     probeScore: null,
     causeScore: null,
-    fix: initialFix,
+    fix: null,
     selectedFixOptionId: null,
     committedFixConfidence: null,
     isFixCorrect: null,
@@ -115,11 +111,11 @@ function synthesizeAttempt(state: TroubleshootSessionState): DrillAttemptRecord 
   const fixCorrect = state.isFixCorrect ? 1 : 0;
   const accuracy = (causeCorrect + fixCorrect) / 2;
 
-  const step: StepAttemptTelemetry = {
-    stepId: 'incident',
+  const causeStep: StepAttemptTelemetry = {
+    stepId: 'cause',
     confidence: state.committedConfidence ?? 0.5,
     isCorrect: state.isCorrect ?? false,
-    score: state.totalScore,
+    score: (state.probeScore ?? 0) + (state.causeScore ?? 0),
     distractorAntipattern: state.distractorAntipattern,
     selectedProbeIds: state.selectedProbeIds,
     probeScore: state.probeScore ?? undefined,
@@ -133,9 +129,18 @@ function synthesizeAttempt(state: TroubleshootSessionState): DrillAttemptRecord 
           skipped: state.firstCall.skipped,
         }
       : undefined,
+    firstCallVerdict: state.firstCallGrade?.verdict,
+  };
+
+  const fixStep: StepAttemptTelemetry = {
+    stepId: 'fix',
+    confidence: state.committedFixConfidence ?? 0.5,
+    isCorrect: state.isFixCorrect ?? false,
+    score: state.fixScore ?? 0,
     fixScore: state.fixScore ?? undefined,
     fixConfidence: state.committedFixConfidence ?? undefined,
     selectedFixOptionId: state.selectedFixOptionId ?? undefined,
+    distractorAntipattern: state.fixDistractorAntipattern,
   };
 
   return {
@@ -145,7 +150,7 @@ function synthesizeAttempt(state: TroubleshootSessionState): DrillAttemptRecord 
     score: state.totalScore,
     accuracy,
     attemptsCount: 1,
-    steps: [step],
+    steps: [causeStep, fixStep],
   };
 }
 
@@ -233,13 +238,12 @@ export function troubleshootSessionReducer(
         isCorrect: grade.isCorrect,
       });
 
-      const fix = action.fix ?? state.fix;
-
       return {
         ...state,
         phase: 'cause_reveal',
         committedConfidence: action.confidence,
         grade,
+        firstCallGrade: action.firstCallGrade ?? null,
         isCorrect: grade.isCorrect,
         probeScore: scored.probe.probeScore,
         causeScore: scored.decisionScore,
@@ -247,12 +251,13 @@ export function troubleshootSessionReducer(
         quadrant: scored.quadrant,
         missedAllPivotal: scored.probe.missedAllPivotal,
         distractorAntipattern: grade.matchedDistractor?.antipattern,
-        fix,
+        fix: action.fix,
       };
     }
 
     case 'PROCEED_TO_FIX': {
       if (state.phase !== 'cause_reveal') return state;
+      if (!state.fix) return state;
       return { ...state, phase: 'fix' };
     }
 
@@ -261,20 +266,15 @@ export function troubleshootSessionReducer(
       return { ...state, selectedFixOptionId: action.optionId };
     }
 
-    case 'BEGIN_COMMIT_FIX': {
+    case 'COMMIT_FIX': {
       if (state.phase !== 'fix') return state;
-      if (!state.selectedFixOptionId) return state;
-      return { ...state, phase: 'commit_fix' };
-    }
+      if (!state.fix) return state;
 
-    case 'COMMIT_FIX_CONFIDENCE': {
-      if (state.phase !== 'commit_fix') return state;
-      if (!state.selectedFixOptionId || !state.fix) return state;
+      const chosenOption = state.fix.options.find((o) => o.id === action.optionId);
+      if (!chosenOption) return state;
 
-      const chosenOption = state.fix.options.find((o) => o.id === state.selectedFixOptionId);
-      const isFixCorrect = Boolean(chosenOption?.isCorrect);
+      const isFixCorrect = Boolean(chosenOption.isCorrect);
       const fixBrier = ArcGymScoringEngine.calculateDecisionScore(action.confidence, isFixCorrect);
-
       const fixScore = fixBrier.pointsAwarded;
       const currentProbe = state.probeScore ?? 0;
       const currentCause = state.causeScore ?? 0;
@@ -283,11 +283,12 @@ export function troubleshootSessionReducer(
       return {
         ...state,
         phase: 'feedback',
+        selectedFixOptionId: action.optionId,
         committedFixConfidence: action.confidence,
         isFixCorrect,
         fixScore,
         fixQuadrant: fixBrier.quadrant,
-        fixDistractorAntipattern: isFixCorrect ? undefined : chosenOption?.distractorAntipattern,
+        fixDistractorAntipattern: isFixCorrect ? undefined : chosenOption.distractorAntipattern,
         totalScore,
       };
     }

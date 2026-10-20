@@ -140,7 +140,7 @@ describe('getDrillQuestionCount', () => {
   it('correctly counts stations or questions for drills', () => {
     expect(getDrillQuestionCount(mockCaseFile1)).toBe(3);
     expect(getDrillQuestionCount(mockCaseFile2)).toBe(2);
-    expect(getDrillQuestionCount(mockIncident)).toBe(1);
+    expect(getDrillQuestionCount(mockIncident)).toBe(2);
   });
 });
 

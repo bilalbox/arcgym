@@ -23,6 +23,7 @@ import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
+import { FirstCallPanel } from './FirstCallPanel';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
 export interface CaseFileRunnerProps {
@@ -319,56 +320,24 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
           </div>
         )}
         {session.phase === 'first_call' && (
-          <div className="space-y-3">
-            <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
-                First Call
-              </span>
-              <textarea
-                value={firstCallHypothesis}
-                onChange={(e) => setFirstCallHypothesis(e.target.value)}
-                rows={2}
-                maxLength={280}
-                placeholder="One-line hypothesis"
-                className="w-full rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary placeholder:text-miro-muted focus:outline-none focus:border-miro-hairlineStrong resize-none"
-              />
-            </label>
-            <ConfidenceGate
-              selectedConfidence={firstCallConfidence}
-              onSelectConfidence={setFirstCallConfidence}
-              hasSelectedAnswer={firstCallHypothesis.trim().length > 0}
-              requireConfidence={false}
-              confidenceLabel="Confidence"
-              answerRequiredHint="Write a hypothesis first"
-              submitLabel="Lock"
-              onSubmit={() => {
-                const hypothesis = firstCallHypothesis.trim();
-                if (!hypothesis) return;
-                dispatch({
-                  type: 'SUBMIT_FIRST_CALL',
-                  hypothesis,
-                  confidence: firstCallConfidence
-                    ? ((firstCallConfidence / 100) as ConfidenceAnchor)
-                    : undefined,
-                });
-                setFirstCallHypothesis('');
-                setFirstCallConfidence(null);
-              }}
-            />
-            {canSkipFirstCall && (
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => {
-                  dispatch({ type: 'SKIP_FIRST_CALL' });
-                  setFirstCallHypothesis('');
-                  setFirstCallConfidence(null);
-                }}
-              >
-                Skip
-              </Button>
-            )}
-          </div>
+          <FirstCallPanel
+            submitLabel="Lock"
+            canSkip={canSkipFirstCall}
+            hypothesis={firstCallHypothesis}
+            onHypothesisChange={setFirstCallHypothesis}
+            confidence={firstCallConfidence}
+            onConfidenceChange={setFirstCallConfidence}
+            onSubmit={(hypothesis, confidence) => {
+              dispatch({ type: 'SUBMIT_FIRST_CALL', hypothesis, confidence });
+              setFirstCallHypothesis('');
+              setFirstCallConfidence(null);
+            }}
+            onSkip={() => {
+              dispatch({ type: 'SKIP_FIRST_CALL' });
+              setFirstCallHypothesis('');
+              setFirstCallConfidence(null);
+            }}
+          />
         )}
 
         {(session.phase === 'probes' || current.probesLocked) && (

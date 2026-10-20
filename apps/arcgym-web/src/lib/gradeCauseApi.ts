@@ -1,4 +1,4 @@
-import type { GradeCauseResult } from '@arcgym/drill-core';
+import type { TroubleshootGradeResponse } from '@arcgym/drill-core';
 
 /**
  * Evaluates the learner's root-cause statement via the /api/troubleshoot/grade endpoint.
@@ -9,7 +9,7 @@ export async function gradeCauseViaApi(
   drillId: string,
   causeText: string,
   firstCallText?: string,
-): Promise<GradeCauseResult> {
+): Promise<TroubleshootGradeResponse> {
   const res = await fetch('/api/troubleshoot/grade', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -20,11 +20,11 @@ export async function gradeCauseViaApi(
     }),
   });
 
-  const data = (await res.json()) as GradeCauseResult & { error?: string };
+  const data = (await res.json()) as TroubleshootGradeResponse & { error?: string };
   if (!res.ok) {
     throw new Error(data.error || `grade ${res.status}`);
   }
-  if (!data.verdict || typeof data.isCorrect !== 'boolean') {
+  if (!data.verdict || typeof data.isCorrect !== 'boolean' || !data.fix) {
     throw new Error('Invalid grade response payload');
   }
   return data;

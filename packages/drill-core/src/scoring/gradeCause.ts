@@ -3,6 +3,9 @@ import type { GradeCauseResult, GradedPassage } from './grader/types.js';
 
 export type { GradeCauseResult, GradedPassage };
 
+/** Max length for free-text cause / First Call strings accepted by the grade API. */
+export const MAX_CAUSE_CHARS = 4_000;
+
 /** Catchall CLEF choice id for vague / unmatched wrong causes. */
 export const CAUSE_OTHER_ID = 'other';
 

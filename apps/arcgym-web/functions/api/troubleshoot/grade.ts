@@ -114,8 +114,17 @@ function parseGradeRequestBody(
   if (!causeText || causeText.length > MAX_CAUSE_CHARS) {
     return { ok: false, response: opaqueError(400, 'causeText is required') };
   }
+  if (firstCallText.length > MAX_CAUSE_CHARS) {
+    return { ok: false, response: opaqueError(400, 'firstCallText is too long') };
+  }
 
   return { ok: true, drillId, causeText, firstCallText };
+}
+
+function hasValidFix(drill: TroubleshootingDrillDefinition): boolean {
+  const options = drill.fix?.options;
+  if (!Array.isArray(options) || options.length !== 3) return false;
+  return options.filter((o) => o.isCorrect).length === 1;
 }
 
 async function gradeFirstCallSilently(
@@ -167,6 +176,9 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     const drill = await loadDrill(kv, drillId);
     if (!drill) {
       return opaqueError(404, 'Unknown troubleshooting drill');
+    }
+    if (!hasValidFix(drill)) {
+      return opaqueError(422, 'Incident is missing a valid Fix definition');
     }
 
     const rateLimitError = await enforceRateLimit(kv, auth.session.learnerId);

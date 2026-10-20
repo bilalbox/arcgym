@@ -45,7 +45,6 @@
         "apps/arcgym-web/src/App.tsx",
         "apps/arcgym-web/src/components/drill/CaseFileRunner.tsx",
         "apps/arcgym-web/src/components/drill/DrillFeedbackWidget.tsx",
-        "apps/arcgym-web/src/components/drill/RapidFireRunner.tsx",
         "apps/arcgym-web/src/components/drill/TroubleshootRunner.tsx",
         "apps/arcgym-web/src/components/layout/Header.tsx",
         "apps/arcgym-web/src/components/proficiency/ArchitecturalRadarChart.tsx",

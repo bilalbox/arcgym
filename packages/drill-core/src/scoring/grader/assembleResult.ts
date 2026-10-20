@@ -79,6 +79,5 @@ export function assembleGradeCauseResult(
     goldText: drill.goldCause.text,
     goldRationale: drill.goldCause.rationale,
     goldCitationUrl: drill.goldCause.citationUrl,
-    fix: drill.fix,
   };
 }

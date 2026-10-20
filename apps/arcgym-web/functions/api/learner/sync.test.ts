@@ -94,7 +94,7 @@ describe('Learner sync edge route', () => {
       completedDrills: {
         'drill-a': {
           drillId: 'drill-a',
-          format: 'Rapid_Fire',
+          format: 'Troubleshooting',
           completedAt: '2026-10-04T10:00:00Z',
           score: 85,
           accuracy: 1,

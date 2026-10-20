@@ -82,7 +82,7 @@ Suggested package name: `@arcgym/diagrams`.
 2. DNS (likely CNAME) under the `23p.tech` zone.
 3. Confirm HTTPS, SPA `_redirects`, and Pages Functions (`/api/*`) still work on the custom host.
 4. Update ArcGym canonical URLs / privacy copy if they hardcode the old `*.pages.dev` host.
-5. Smoke: home, `/drills/:id`, `/cases/:id`, `/api/drills/today`.
+5. Smoke: home, `/drills/:id`, `/cases/:id`, `/troubleshoot/:id`.
 
 ### B. Package `@arcgym/diagrams`
 

@@ -237,12 +237,11 @@ export interface TroubleshootingDrillDefinition extends DrillDefinitionBase {
   fix: TroubleshootingFixDefinition;
 }
 
+/** Client catalog payload — Fix arrives only via the grade API after cause commit. */
 export type ClientTroubleshootingDrillDefinition = Omit<
   TroubleshootingDrillDefinition,
   'goldCause' | 'hiddenDistractors' | 'fix'
-> & {
-  fix?: TroubleshootingFixDefinition;
-};
+>;
 
 export type DrillDefinitionDTO = CaseFileDrillDefinition | TroubleshootingDrillDefinition;
 
@@ -277,7 +276,14 @@ export interface AttemptSubmissionDTO {
 
 export type CauseVerdict = 'correct' | 'incorrect_distractor' | 'incorrect_miss';
 
-/** Unscored Case File First Call capture persisted on step telemetry. */
+/** In-session First Call capture before Probe Budget unlock. */
+export interface FirstCallCapture {
+  hypothesis: string | null;
+  confidence: ConfidenceAnchor | null;
+  skipped: boolean;
+}
+
+/** Unscored Case File / Incident First Call capture persisted on step telemetry. */
 export interface FirstCallTelemetry {
   /** One-line free-text gut hypothesis (absent when skipped). */
   hypothesis?: string;
@@ -306,10 +312,11 @@ export interface StepAttemptTelemetry {
    * Heuristic discovery highlight — not a scored “flip” vs recommendation options.
    */
   flippingProbeId?: string;
-  /** Troubleshooting: Fix decision score, confidence, and chosen option */
+  /** Troubleshooting Fix step: decision score, confidence, and chosen option. */
   fixScore?: number;
   fixConfidence?: ConfidenceAnchor;
   selectedFixOptionId?: string;
+  /** Troubleshooting cause step: CLEF verdict of the (unscored) First Call. */
   firstCallVerdict?: CauseVerdict;
 }
 

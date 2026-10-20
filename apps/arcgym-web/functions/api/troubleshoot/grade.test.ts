@@ -216,6 +216,32 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
     expect(body.error).toMatch(/Rate limit exceeded/i);
   });
 
+  it('returns 422 when authored drill lacks a valid Fix', async () => {
+    const broken = { ...FIXTURE_DRILL, fix: { prompt: 'x', options: [] } };
+    const env = createMockEnv();
+    (env.DRILL_KV.get as ReturnType<typeof vi.fn>).mockImplementation(
+      async (key: string, format?: string) => {
+        if (key === 'drill:id:AGD-01001') {
+          return format === 'json' ? broken : JSON.stringify(broken);
+        }
+        return null;
+      },
+    );
+    const headers = await createAuthHeaders();
+    const request = new Request('http://localhost/api/troubleshoot/grade', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        drillId: 'AGD-01001',
+        causeText: 'Formula fields collision with refresh',
+      }),
+    });
+    const response = await onRequestPost({ request, env });
+    expect(response.status).toBe(422);
+    const body = (await response.json()) as { error: string };
+    expect(body.error).toMatch(/Fix/i);
+  });
+
   it('returns 200 with GradeCauseResult on valid input with mock AI', async () => {
     const env = createMockEnv();
     const headers = await createAuthHeaders();

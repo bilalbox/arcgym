@@ -20,6 +20,7 @@ import { gradeCauseViaApi } from '@/lib/gradeCauseApi';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
+import { FirstCallPanel } from './FirstCallPanel';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
 export interface TroubleshootRunnerProps {
@@ -122,16 +123,18 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     setGrading(true);
     setGradeError(null);
     try {
-      const grade = await gradeCauseViaApi(
+      const response = await gradeCauseViaApi(
         drill.id,
         session.causeText,
         session.firstCall?.hypothesis ?? undefined,
       );
+      const { fix, firstCallGrade, ...grade } = response;
       dispatch({
         type: 'RECEIVE_CAUSE_GRADE',
         confidence: (selectedConfidence / 100) as ConfidenceAnchor,
         grade,
-        fix: grade.fix,
+        fix,
+        firstCallGrade,
       });
     } catch (err) {
       setGradeError(err instanceof Error ? err.message : 'Grading failed');
@@ -280,65 +283,35 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
       <CardContent className="space-y-5 pt-6">
         {session.phase === 'first_call' && (
-          <div className="space-y-4">
+          <FirstCallPanel
+            label="First Call Hypothesis"
+            placeholder="What is your immediate gut hypothesis before opening diagnostic probes?"
+            rows={3}
+            submitLabel="Lock First Call & Open Probes"
+            skipLabel="Skip First Call"
+            canSkip={canSkipFirstCall}
+            hypothesis={firstCallHypothesis}
+            onHypothesisChange={setFirstCallHypothesis}
+            confidence={firstCallConfidence}
+            onConfidenceChange={setFirstCallConfidence}
+            onSubmit={(hypothesis, confidence) => {
+              dispatch({ type: 'SUBMIT_FIRST_CALL', hypothesis, confidence });
+              setFirstCallHypothesis('');
+              setFirstCallConfidence(null);
+            }}
+            onSkip={() => {
+              dispatch({ type: 'SKIP_FIRST_CALL' });
+              setFirstCallHypothesis('');
+              setFirstCallConfidence(null);
+            }}
+          >
             <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed">
               <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block mb-1">
                 Incident Issue
               </span>
               {drill.issue}
             </div>
-
-            <label className="block space-y-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
-                First Call Hypothesis
-              </span>
-              <textarea
-                value={firstCallHypothesis}
-                onChange={(e) => setFirstCallHypothesis(e.target.value)}
-                rows={3}
-                maxLength={280}
-                placeholder="What is your immediate gut hypothesis before opening diagnostic probes?"
-                className="w-full rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary placeholder:text-miro-muted focus:outline-none focus:border-miro-hairlineStrong resize-none"
-              />
-            </label>
-
-            <ConfidenceGate
-              selectedConfidence={firstCallConfidence}
-              onSelectConfidence={setFirstCallConfidence}
-              hasSelectedAnswer={firstCallHypothesis.trim().length > 0}
-              requireConfidence={false}
-              confidenceLabel="Confidence"
-              answerRequiredHint="Write a hypothesis first"
-              submitLabel="Lock First Call & Open Probes"
-              onSubmit={() => {
-                const hypothesis = firstCallHypothesis.trim();
-                if (!hypothesis) return;
-                dispatch({
-                  type: 'SUBMIT_FIRST_CALL',
-                  hypothesis,
-                  confidence: firstCallConfidence
-                    ? ((firstCallConfidence / 100) as ConfidenceAnchor)
-                    : undefined,
-                });
-                setFirstCallHypothesis('');
-                setFirstCallConfidence(null);
-              }}
-            />
-
-            {canSkipFirstCall && (
-              <Button
-                variant="secondary"
-                className="w-full"
-                onClick={() => {
-                  dispatch({ type: 'SKIP_FIRST_CALL' });
-                  setFirstCallHypothesis('');
-                  setFirstCallConfidence(null);
-                }}
-              >
-                Skip First Call
-              </Button>
-            )}
-          </div>
+          </FirstCallPanel>
         )}
 
         {(session.phase === 'probes' || session.probesLocked) && (
@@ -471,21 +444,27 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
                     <p className="mt-0.5">{session.causeText}</p>
                   </div>
                 </div>
-                {session.grade.firstCallGrade?.matchedDistractor && (
+                {session.firstCallGrade?.matchedDistractor && (
                   <p className="text-[11px] text-amber-700 bg-amber-50 rounded p-2 border border-amber-200">
                     Gut instinct matched antipattern:{' '}
-                    <strong>{session.grade.firstCallGrade.matchedDistractor.antipattern}</strong>
+                    <strong>{session.firstCallGrade.matchedDistractor.antipattern}</strong>
                   </p>
                 )}
               </div>
             )}
 
-            <Button
-              onClick={() => dispatch({ type: 'PROCEED_TO_FIX' })}
-              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
-            >
-              Proceed to Architectural Fix <ArrowRight className="h-4 w-4" />
-            </Button>
+            {session.fix ? (
+              <Button
+                onClick={() => dispatch({ type: 'PROCEED_TO_FIX' })}
+                className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+              >
+                Proceed to Architectural Fix <ArrowRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <p className="text-sm text-miro-danger">
+                This Incident is missing a Fix definition and cannot continue.
+              </p>
+            )}
           </div>
         )}
 
@@ -528,9 +507,9 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
               hasSelectedAnswer={Boolean(session.selectedFixOptionId)}
               onSubmit={() => {
                 if (!selectedFixConfidence || !session.selectedFixOptionId) return;
-                dispatch({ type: 'BEGIN_COMMIT_FIX' });
                 dispatch({
-                  type: 'COMMIT_FIX_CONFIDENCE',
+                  type: 'COMMIT_FIX',
+                  optionId: session.selectedFixOptionId,
                   confidence: (selectedFixConfidence / 100) as ConfidenceAnchor,
                 });
               }}

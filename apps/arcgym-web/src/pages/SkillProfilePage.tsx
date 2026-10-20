@@ -44,8 +44,17 @@ export const SkillProfilePage: React.FC<SkillProfilePageProps> = ({
     [completedDrills],
   );
 
-  const handleReviewDrills = (id: string) => {
-    navigate(`/?domain=${id}`);
+  const handleReviewDrills = (domainId: string) => {
+    const incomplete = allDrills.find((d) => d.domain === domainId && !completedDrills[d.id]);
+    if (!incomplete) {
+      navigate('/cases');
+      return;
+    }
+    navigate(
+      incomplete.format === 'Case_File'
+        ? `/cases/${incomplete.id}`
+        : `/troubleshoot/${incomplete.id}`,
+    );
   };
 
   return (
