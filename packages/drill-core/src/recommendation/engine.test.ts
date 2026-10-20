@@ -1,466 +1,162 @@
 import { describe, expect, it } from 'vitest';
 import type {
-  ArchitecturalDomain,
+  CaseFileDrillDefinition,
   DrillAttemptRecord,
   DrillDefinitionDTO,
+  TroubleshootingDrillDefinition,
 } from '../types/drill.js';
-import {
-  getDailyDrillIndex,
-  hashDateString,
-  selectDailyWorkout,
-  selectRecommendedRound,
-} from './engine.js';
+import { hashDateString, hashString, selectDailyWorkout } from './engine.js';
 
-function mockDrill(
-  id: string,
-  domain: ArchitecturalDomain,
-  domainLabel = domain,
-): DrillDefinitionDTO {
+function mockCaseFile(id: string, title = `Case ${id}`): CaseFileDrillDefinition {
   return {
     id,
-    title: `Drill ${id}`,
-    format: 'Rapid_Fire',
-    domain,
-    domainLabel,
+    title,
+    format: 'Case_File',
+    domain: 'Platform_Core',
+    domainLabel: 'Platform Core',
     difficulty: 'Lead_CTA',
     pillars: ['Reliability'],
-    steps: [],
     version: 1,
     status: 'published',
+    brief: {
+      title: `${title} Brief`,
+      synopsis: 'Evaluation brief narrative',
+    },
+    stations: [],
   };
 }
 
-describe('Recommendation Engine (selectRecommendedRound)', () => {
-  it('hashDateString is deterministic for the same date', () => {
-    const h1 = hashDateString('2026-09-27');
-    const h2 = hashDateString('2026-09-27');
-    const h3 = hashDateString('2026-09-28');
-    expect(h1).toBe(h2);
-    expect(h1).not.toBe(h3);
+function mockIncident(id: string, title = `Incident ${id}`): TroubleshootingDrillDefinition {
+  return {
+    id,
+    title,
+    format: 'Troubleshooting',
+    domain: 'Data_Architecture',
+    domainLabel: 'Data Architecture',
+    difficulty: 'Lead_CTA',
+    pillars: ['Operational_Excellence'],
+    version: 1,
+    status: 'published',
+    architecture: {
+      synopsis: 'Topology synopsis',
+      diagramUrl: '/diagrams/test.svg',
+    },
+    issue: 'Issue description',
+    probeBudget: 3,
+    probes: [],
+    goldCause: {
+      text: 'Cause',
+      rationale: 'Rationale',
+    },
+    hiddenDistractors: [
+      { id: 'd1', text: 'Wrong 1', antipattern: 'AP 1', rationale: 'R1' },
+      { id: 'd2', text: 'Wrong 2', antipattern: 'AP 2', rationale: 'R2' },
+      { id: 'd3', text: 'Wrong 3', antipattern: 'AP 3', rationale: 'R3' },
+    ],
+    fix: {
+      prompt: 'Fix prompt',
+      options: [
+        { id: 'f1', label: 'Fix 1', rationale: 'r1', isCorrect: true },
+        { id: 'f2', label: 'Fix 2', rationale: 'r2', isCorrect: false },
+        { id: 'f3', label: 'Fix 3', rationale: 'r3', isCorrect: false },
+      ],
+    },
+  };
+}
+
+describe('Recommendation Engine (selectDailyWorkout)', () => {
+  it('hashString and hashDateString are deterministic', () => {
+    expect(hashString('2026-09-27:user1')).toBe(hashString('2026-09-27:user1'));
+    expect(hashString('2026-09-27:user1')).not.toBe(hashString('2026-09-28:user1'));
+    expect(hashDateString('2026-09-27')).toBe(hashDateString('2026-09-27'));
   });
 
-  const sevenDrills: DrillDefinitionDTO[] = [
-    mockDrill('RF-1', 'Platform_Core'),
-    mockDrill('RF-2', 'Platform_Core'),
-    mockDrill('RF-3', 'Platform_Core'),
-    mockDrill('RF-4', 'Data_Architecture'),
-    mockDrill('RF-5', 'Platform_Core'),
-    mockDrill('RF-6', 'Platform_Core'),
-    mockDrill('RF-7', 'Data_Architecture'),
-  ];
-
-  it('returns exactly 3 drills for a round when pool has >= 3 drills', () => {
-    const result = selectRecommendedRound({
-      drills: sevenDrills,
+  it('returns null when allDrills is empty', () => {
+    const result = selectDailyWorkout({
+      allDrills: [],
       completedDrills: {},
-      todayDateStr: '2026-09-28',
+      todayDateStr: '2026-10-20',
+      visitorId: 'visitor1',
     });
-
-    expect(result).not.toBeNull();
-    expect(result?.drills.length).toBe(3);
-    const uniqueIds = new Set(result?.drills.map((d) => d.id));
-    expect(uniqueIds.size).toBe(3);
-    expect(result?.reason).toBe('daily');
-    expect(result?.uncompletedCount).toBe(7);
-    expect(result?.totalCount).toBe(7);
-  });
-
-  it('includes today featured drill when uncompleted', () => {
-    const today = '2026-09-28';
-    const dailyIdx = getDailyDrillIndex(today, sevenDrills.length);
-    const expectedDaily = sevenDrills[dailyIdx];
-
-    const result = selectRecommendedRound({
-      drills: sevenDrills,
-      completedDrills: {},
-      todayDateStr: today,
-      sessionSkipCount: 0,
-    });
-
-    expect(result).not.toBeNull();
-    expect(result?.isDaily).toBe(true);
-    expect(result?.drills.map((d) => d.id)).toContain(expectedDaily.id);
-  });
-
-  it('hard-filters by Architectural Domain when provided', () => {
-    const result = selectRecommendedRound({
-      drills: sevenDrills,
-      completedDrills: {},
-      todayDateStr: '2026-09-28',
-      domain: 'Data_Architecture',
-    });
-
-    expect(result).not.toBeNull();
-    expect(result?.totalCount).toBe(2);
-    expect(result?.drills.length).toBe(3);
-    expect(result?.drills.every((d) => d.domain === 'Data_Architecture')).toBe(true);
-  });
-
-  it('returns null when domain is empty', () => {
-    const result = selectRecommendedRound({
-      drills: sevenDrills,
-      completedDrills: {},
-      todayDateStr: '2026-09-28',
-      domain: 'Infrastructure',
-    });
-
     expect(result).toBeNull();
   });
 
-  it('cycles candidate drills when domain pool has fewer than 3 drills', () => {
-    const twoDrills = [
-      mockDrill('D-A', 'Security_And_Access'),
-      mockDrill('D-B', 'Security_And_Access'),
+  it('selects deterministically for a date and visitor', () => {
+    const drills: DrillDefinitionDTO[] = [
+      mockCaseFile('AGD-00403'),
+      mockCaseFile('AGD-00901'),
+      mockIncident('AGD-01001'),
+      mockIncident('AGD-01002'),
     ];
 
-    const result = selectRecommendedRound({
-      drills: twoDrills,
+    const res1 = selectDailyWorkout({
+      allDrills: drills,
       completedDrills: {},
-      todayDateStr: '2026-09-28',
+      todayDateStr: '2026-10-20',
+      visitorId: 'user-a',
     });
-
-    expect(result).not.toBeNull();
-    expect(result?.drills.length).toBe(3);
-    expect(result?.drills.map((d) => d.id)).toEqual(['D-B', 'D-A', 'D-B']);
+    const res2 = selectDailyWorkout({
+      allDrills: drills,
+      completedDrills: {},
+      todayDateStr: '2026-10-20',
+      visitorId: 'user-a',
+    });
+    expect(res1).not.toBeNull();
+    expect(res1).toEqual(res2);
+    expect(['Case_File', 'Troubleshooting']).toContain(res1?.format);
   });
 
-  it('fills remaining slots from review mode when uncompleted drills are fewer than 3', () => {
+  it('prioritizes uncompleted drills over completed drills', () => {
+    const case1 = mockCaseFile('AGD-00403');
+    const case2 = mockCaseFile('AGD-00901');
+    const drills: DrillDefinitionDTO[] = [case1, case2];
+
     const completed: Record<string, DrillAttemptRecord> = {
-      'RF-1': {
-        drillId: 'RF-1',
-        format: 'Rapid_Fire',
-        completedAt: '2026-09-20',
+      'AGD-00403': {
+        drillId: 'AGD-00403',
+        format: 'Case_File',
+        completedAt: '2026-10-19T10:00:00Z',
         score: 100,
-        accuracy: 1,
-        attemptsCount: 1,
-      },
-      'RF-2': {
-        drillId: 'RF-2',
-        format: 'Rapid_Fire',
-        completedAt: '2026-09-21',
-        score: 80,
-        accuracy: 1,
-        attemptsCount: 1,
-      },
-      'RF-3': {
-        drillId: 'RF-3',
-        format: 'Rapid_Fire',
-        completedAt: '2026-09-22',
-        score: 90,
-        accuracy: 1,
-        attemptsCount: 1,
-      },
-      'RF-4': {
-        drillId: 'RF-4',
-        format: 'Rapid_Fire',
-        completedAt: '2026-09-23',
-        score: 70,
-        accuracy: 1,
-        attemptsCount: 1,
-      },
-      'RF-5': {
-        drillId: 'RF-5',
-        format: 'Rapid_Fire',
-        completedAt: '2026-09-24',
-        score: 95,
         accuracy: 1,
         attemptsCount: 1,
       },
     };
 
-    const result = selectRecommendedRound({
-      drills: sevenDrills,
+    const res = selectDailyWorkout({
+      allDrills: drills,
       completedDrills: completed,
-      todayDateStr: '2026-09-28',
+      todayDateStr: '2026-10-20',
+      visitorId: 'user-a',
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.drills.length).toBe(3);
-    const ids = result?.drills.map((d) => d.id);
-    expect(ids).toContain('RF-6');
-    expect(ids).toContain('RF-7');
-    const uniqueIds = new Set(ids);
-    expect(uniqueIds.size).toBe(3);
+    expect(res).not.toBeNull();
+    expect(res?.drillId).toBe('AGD-00901');
+    expect(res?.isCompletedToday).toBe(false);
   });
 
-  describe('Contrast Set rounds', () => {
-    const principle =
-      'The deciding variable was whether live federation meets freshness without copying into CRM storage.';
+  it('marks isCompletedToday as true when the assigned drill was completed today', () => {
+    const case1 = mockCaseFile('AGD-00403');
+    const drills: DrillDefinitionDTO[] = [case1];
 
-    function contrastDrill(id: string, setId = 'CS-zero-copy-vs-copy'): DrillDefinitionDTO {
-      return {
-        ...mockDrill(id, 'Data_Architecture'),
-        contrastSetId: setId,
-        contrastPrinciple: principle,
-      } as DrillDefinitionDTO;
-    }
-
-    it('prefers a complete uncompleted Contrast Set as the whole round', () => {
-      const catalog: DrillDefinitionDTO[] = [
-        mockDrill('RF-independent-1', 'Platform_Core'),
-        mockDrill('RF-independent-2', 'Platform_Core'),
-        mockDrill('RF-independent-3', 'Platform_Core'),
-        contrastDrill('AGD-00201'),
-        contrastDrill('AGD-00204'),
-        contrastDrill('AGD-00806'),
-      ];
-
-      const result = selectRecommendedRound({
-        drills: catalog,
-        completedDrills: {},
-        todayDateStr: '2026-09-28',
-      });
-
-      expect(result).not.toBeNull();
-      expect(result?.contrastSetId).toBe('CS-zero-copy-vs-copy');
-      expect(result?.contrastPrinciple).toBe(principle);
-      expect(new Set(result?.drills.map((d) => d.id))).toEqual(
-        new Set(['AGD-00201', 'AGD-00204', 'AGD-00806']),
-      );
-    });
-
-    it('falls back to three independent drills when no complete Contrast Set is available', () => {
-      const catalog: DrillDefinitionDTO[] = [
-        mockDrill('RF-1', 'Platform_Core'),
-        mockDrill('RF-2', 'Platform_Core'),
-        mockDrill('RF-3', 'Platform_Core'),
-        mockDrill('RF-4', 'Platform_Core'),
-        contrastDrill('AGD-00201'),
-        contrastDrill('AGD-00204'),
-      ];
-
-      const result = selectRecommendedRound({
-        drills: catalog,
-        completedDrills: {},
-        todayDateStr: '2026-09-28',
-      });
-
-      expect(result).not.toBeNull();
-      expect(result?.contrastSetId).toBeUndefined();
-      expect(result?.contrastPrinciple).toBeUndefined();
-      expect(result?.drills.length).toBe(3);
-      const ids = result?.drills.map((d) => d.id) ?? [];
-      expect(ids).not.toEqual(expect.arrayContaining(['AGD-00201', 'AGD-00204', 'AGD-00806']));
-    });
-
-    it('skips Contrast Sets whose members are already completed', () => {
-      const catalog: DrillDefinitionDTO[] = [
-        mockDrill('RF-1', 'Platform_Core'),
-        mockDrill('RF-2', 'Platform_Core'),
-        mockDrill('RF-3', 'Platform_Core'),
-        contrastDrill('AGD-00201'),
-        contrastDrill('AGD-00204'),
-        contrastDrill('AGD-00806'),
-      ];
-
-      const completed: Record<string, DrillAttemptRecord> = {
-        'AGD-00201': {
-          drillId: 'AGD-00201',
-          format: 'Rapid_Fire',
-          completedAt: '2026-09-20T00:00:00.000Z',
-          score: 10,
-          accuracy: 1,
-          attemptsCount: 1,
-        },
-        'AGD-00204': {
-          drillId: 'AGD-00204',
-          format: 'Rapid_Fire',
-          completedAt: '2026-09-21T00:00:00.000Z',
-          score: 10,
-          accuracy: 1,
-          attemptsCount: 1,
-        },
-        'AGD-00806': {
-          drillId: 'AGD-00806',
-          format: 'Rapid_Fire',
-          completedAt: '2026-09-22T00:00:00.000Z',
-          score: 10,
-          accuracy: 1,
-          attemptsCount: 1,
-        },
-      };
-
-      const result = selectRecommendedRound({
-        drills: catalog,
-        completedDrills: completed,
-        todayDateStr: '2026-09-28',
-      });
-
-      expect(result?.contrastSetId).toBeUndefined();
-      expect(result?.drills.map((d) => d.id).every((id) => id.startsWith('RF-'))).toBe(true);
-    });
-  });
-
-  describe('Deferred Retest injection', () => {
-    it('injects one due Deferred Retest into the next Rapid Fire round', () => {
-      const catalog: DrillDefinitionDTO[] = [
-        mockDrill('RF-1', 'Platform_Core'),
-        mockDrill('RF-2', 'Platform_Core'),
-        mockDrill('RF-3', 'Platform_Core'),
-        mockDrill('RF-4', 'Platform_Core'),
-        {
-          ...mockDrill('AGD-00204', 'Data_Architecture'),
-          contrastSetId: 'CS-zero-copy-vs-copy',
-          contrastPrinciple: 'x',
-        } as DrillDefinitionDTO,
-      ];
-
-      const result = selectRecommendedRound({
-        drills: catalog,
-        completedDrills: {},
-        todayDateStr: '2026-10-04',
-        deferredRetest: {
-          drillId: 'AGD-00204',
-          sourceDrillId: 'AGD-00201',
-          contrastSetId: 'CS-zero-copy-vs-copy',
-          scheduledOn: '2026-10-01',
-          dueFrom: '2026-10-03',
-          dueUntil: '2026-10-06',
-        },
-      });
-
-      expect(result?.drills).toHaveLength(3);
-      expect(result?.drills[0]?.id).toBe('AGD-00204');
-      expect(result?.drills.filter((d) => d.id === 'AGD-00204')).toHaveLength(1);
-      expect(result?.contrastSetId).toBeUndefined();
-    });
-  });
-
-  it('advances to next set when sessionSkipCount increments', () => {
-    const tenDrills: DrillDefinitionDTO[] = [
-      mockDrill('RF-1', 'Platform_Core'),
-      mockDrill('RF-2', 'Platform_Core'),
-      mockDrill('RF-3', 'Platform_Core'),
-      mockDrill('RF-4', 'Platform_Core'),
-      mockDrill('RF-5', 'Platform_Core'),
-      mockDrill('RF-6', 'Platform_Core'),
-      mockDrill('RF-7', 'Platform_Core'),
-      mockDrill('RF-8', 'Platform_Core'),
-      mockDrill('RF-9', 'Platform_Core'),
-      mockDrill('RF-10', 'Platform_Core'),
-    ];
-
-    const set0 = selectRecommendedRound({
-      drills: tenDrills,
-      completedDrills: {},
-      todayDateStr: '2026-09-28',
-      sessionSkipCount: 0,
-    });
-
-    const set1 = selectRecommendedRound({
-      drills: tenDrills,
-      completedDrills: {},
-      todayDateStr: '2026-09-28',
-      sessionSkipCount: 1,
-    });
-
-    expect(set0?.drills.length).toBe(3);
-    expect(set1?.drills.length).toBe(3);
-    const set0Ids = new Set(set0?.drills.map((d) => d.id));
-    const set1Ids = new Set(set1?.drills.map((d) => d.id));
-    for (const id of set1Ids) {
-      expect(set0Ids.has(id)).toBe(false);
-    }
-  });
-
-  describe('selectDailyWorkout (Multi-format daily randomized workout)', () => {
-    const mixedCatalog: DrillDefinitionDTO[] = [
-      mockDrill('RF-1', 'Platform_Core'),
-      mockDrill('RF-2', 'Platform_Core'),
-      mockDrill('RF-3', 'Platform_Core'),
-      mockDrill('RF-4', 'Platform_Core'),
-      mockDrill('RF-5', 'Platform_Core'),
-      {
-        id: 'CF-1',
-        title: 'Global Billing Hub',
+    const completed: Record<string, DrillAttemptRecord> = {
+      'AGD-00403': {
+        drillId: 'AGD-00403',
         format: 'Case_File',
-        domain: 'Platform_Core',
-        domainLabel: 'Platform Core',
-        difficulty: 'Lead_CTA',
-        pillars: ['Reliability'],
-        version: 1,
-        status: 'published',
-        brief: { title: 'Billing', synopsis: 'Complex billing integration' },
-        stations: [],
-      } as unknown as DrillDefinitionDTO,
-      {
-        id: 'INC-1',
-        title: 'Lock Contention Ingestion',
-        format: 'Troubleshooting',
-        domain: 'Data_Architecture',
-        domainLabel: 'Data Architecture',
-        difficulty: 'Lead_CTA',
-        pillars: ['Reliability'],
-        version: 1,
-        status: 'published',
-        architecture: { synopsis: 'Event ingest pipeline', diagramUrl: '/diagrams/test.svg' },
-        issue: 'Lock contention failure under high volume',
-        probeBudget: 3,
-        probes: [],
-        goldCause: { text: 'Row locking issue', rationale: 'Locking' },
-        hiddenDistractors: [],
-      } as unknown as DrillDefinitionDTO,
-    ];
+        completedAt: '2026-10-20T14:30:00Z',
+        score: 120,
+        accuracy: 1,
+        attemptsCount: 1,
+      },
+    };
 
-    it('deterministically returns a workout assignment for a user on a given date', () => {
-      const assignment1 = selectDailyWorkout({
-        allDrills: mixedCatalog,
-        completedDrills: {},
-        todayDateStr: '2026-10-05',
-        visitorId: 'user-alpha-123',
-      });
-      const assignment2 = selectDailyWorkout({
-        allDrills: mixedCatalog,
-        completedDrills: {},
-        todayDateStr: '2026-10-05',
-        visitorId: 'user-alpha-123',
-      });
-
-      expect(assignment1).not.toBeNull();
-      expect(assignment2).not.toBeNull();
-      expect(assignment1?.format).toBe(assignment2?.format);
-      expect(assignment1?.title).toBe(assignment2?.title);
-      expect(assignment1?.estimatedMinutes).toBeLessThanOrEqual(10);
+    const res = selectDailyWorkout({
+      allDrills: drills,
+      completedDrills: completed,
+      todayDateStr: '2026-10-20',
+      visitorId: 'user-a',
     });
 
-    it('randomizes across different users on the same date (Question 1 = B)', () => {
-      const formatsSeen = new Set<string>();
-
-      // Testing across different visitor IDs to verify distribution across available formats
-      for (let i = 0; i < 20; i++) {
-        const res = selectDailyWorkout({
-          allDrills: mixedCatalog,
-          completedDrills: {},
-          todayDateStr: '2026-10-05',
-          visitorId: `visitor-${i}`,
-        });
-        if (res) formatsSeen.add(res.format);
-      }
-
-      // Should have generated more than 1 format across different users
-      expect(formatsSeen.size).toBeGreaterThan(1);
-    });
-
-    it('assigns 3 reps when Rapid_Fire format is selected', () => {
-      // Find a visitorId that lands on Rapid_Fire
-      let rfAssignment = null;
-      for (let i = 0; i < 30; i++) {
-        const res = selectDailyWorkout({
-          allDrills: mixedCatalog,
-          completedDrills: {},
-          todayDateStr: '2026-10-05',
-          visitorId: `visitor-rf-test-${i}`,
-        });
-        if (res?.format === 'Rapid_Fire') {
-          rfAssignment = res;
-          break;
-        }
-      }
-
-      expect(rfAssignment).not.toBeNull();
-      expect(rfAssignment?.format).toBe('Rapid_Fire');
-      expect(rfAssignment?.rapidFireRound?.drills.length).toBe(3);
-      expect(rfAssignment?.estimatedMinutes).toBe(5);
-    });
+    expect(res).not.toBeNull();
+    expect(res?.isCompletedToday).toBe(true);
   });
 });

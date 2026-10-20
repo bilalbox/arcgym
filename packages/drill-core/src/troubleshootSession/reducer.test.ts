@@ -67,6 +67,7 @@ const DRILL: TroubleshootingDrillDefinition = {
   goldCause: {
     text: 'Formula fields force expensive Zero Copy evaluation overlapping segment refresh.',
     rationale: 'Concurrent evaluation plus schedule collision, not warehouse size.',
+    citationUrl: 'https://architect.salesforce.com/principles',
   },
   hiddenDistractors: [
     {
@@ -88,15 +89,54 @@ const DRILL: TroubleshootingDrillDefinition = {
       rationale: 'No latency incident.',
     },
   ],
+  fix: {
+    prompt: 'Select the architectural remediation for the segment refresh timeouts:',
+    options: [
+      {
+        id: 'fix_gold',
+        label:
+          'Materialize curated DLO formula fields into physical Snowflake columns prior to Zero Copy ingestion and stagger the BDT schedule.',
+        rationale:
+          'Eliminates on-the-fly formula recalculation overhead during query execution and separates compute windows.',
+        isCorrect: true,
+        citationUrl: 'https://architect.salesforce.com/principles',
+      },
+      {
+        id: 'fix_d1',
+        label: 'Upsize Snowflake warehouse from 2X-Large to 4X-Large.',
+        rationale:
+          'Fails because formula evaluation on unmaterialized views does not scale linearly with warehouse resize.',
+        isCorrect: false,
+        distractorAntipattern: 'Scale First Warehouse',
+      },
+      {
+        id: 'fix_d2',
+        label:
+          'Configure an AWS Direct Connect dedicated link to reduce network transport latency.',
+        rationale:
+          'Latency was verified normal; connector throughput is constrained by query processing time, not network hops.',
+        isCorrect: false,
+        distractorAntipattern: 'Network Ghost Hunt',
+      },
+    ],
+  },
 };
 
 describe('troubleshootSessionReducer', () => {
-  it('walks brief → probes → cause → commit → feedback → complete with dual score', () => {
+  it('walks brief → first_call → probes → cause → commit_cause → cause_reveal → fix → commit_fix → feedback → complete', () => {
     let state = createTroubleshootSessionState(DRILL);
     expect(state.phase).toBe('brief');
 
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_PROBES' });
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
+    expect(state.phase).toBe('first_call');
+
+    state = troubleshootSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Warehouse is probably undersized during peak hours',
+      confidence: 0.7,
+    });
     expect(state.phase).toBe('probes');
+    expect(state.firstCall?.hypothesis).toBe('Warehouse is probably undersized during peak hours');
 
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
@@ -113,34 +153,52 @@ describe('troubleshootSessionReducer', () => {
       type: 'SET_CAUSE_TEXT',
       text: 'Formula fields plus BDT overlap cause timeouts.',
     });
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
-    expect(state.phase).toBe('commit');
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
+    expect(state.phase).toBe('commit_cause');
 
     const correctGrade: GradeCauseResult = {
       verdict: 'correct',
       isCorrect: true,
-      chosenId: 'gold',
-      scores: [],
-      goldScore: 0.82,
-      bestDistractorScore: 0.08,
-      otherScore: 0.02,
-      matchedDistractor: null,
+      score: 100,
+      confidence: 0.85,
+      rationale: 'Matches root cause',
       goldText: DRILL.goldCause.text,
       goldRationale: DRILL.goldCause.rationale,
+      fix: DRILL.fix,
     };
     state = troubleshootSessionReducer(state, {
-      type: 'COMMIT_CONFIDENCE',
+      type: 'RECEIVE_CAUSE_GRADE',
       confidence: 0.85,
       grade: correctGrade,
+      fix: DRILL.fix,
     });
-    expect(state.phase).toBe('feedback');
+    expect(state.phase).toBe('cause_reveal');
     expect(state.grade?.verdict).toBe('correct');
     expect(state.isCorrect).toBe(true);
     expect(state.probeScore).toBe(35); // 50 pivotal - 15 distractor
     expect(state.missedAllPivotal).toBe(false);
-    // Dual score: probe + Brier on correct @ 0.85 → 50*(1-0.15)^2 wait: points = round(100*(1-(1-0.85)^2)) = round(100*(1-0.0225)) = 98
     expect(state.causeScore).toBe(98);
-    expect(state.totalScore).toBe(35 + 98);
+
+    state = troubleshootSessionReducer(state, { type: 'PROCEED_TO_FIX' });
+    expect(state.phase).toBe('fix');
+
+    state = troubleshootSessionReducer(state, {
+      type: 'SELECT_FIX_OPTION',
+      optionId: 'fix_gold',
+    });
+    expect(state.selectedFixOptionId).toBe('fix_gold');
+
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_FIX' });
+    expect(state.phase).toBe('commit_fix');
+
+    state = troubleshootSessionReducer(state, {
+      type: 'COMMIT_FIX_CONFIDENCE',
+      confidence: 0.85,
+    });
+    expect(state.phase).toBe('feedback');
+    expect(state.isFixCorrect).toBe(true);
+    expect(state.fixScore).toBe(98);
+    expect(state.totalScore).toBe(35 + 98 + 98);
 
     state = troubleshootSessionReducer(state, { type: 'FINISH' });
     expect(state.isCompleted).toBe(true);
@@ -149,11 +207,20 @@ describe('troubleshootSessionReducer', () => {
     expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
     expect(state.attempt?.steps?.[0]?.causeVerdict).toBe('correct');
     expect(state.attempt?.steps?.[0]?.isCorrect).toBe(true);
+    expect(state.attempt?.steps?.[0]?.firstCall?.hypothesis).toBe(
+      'Warehouse is probably undersized during peak hours',
+    );
+    expect(state.attempt?.steps?.[0]?.selectedFixOptionId).toBe('fix_gold');
+    expect(state.attempt?.steps?.[0]?.fixScore).toBe(98);
   });
 
   it('counts a correct cause after poor probes without voiding the cause grade', () => {
     let state = createTroubleshootSessionState(DRILL);
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_PROBES' });
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
+    state = troubleshootSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Initial guess',
+    });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p4' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p5' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p6' });
@@ -162,23 +229,22 @@ describe('troubleshootSessionReducer', () => {
       type: 'SET_CAUSE_TEXT',
       text: 'Formula fields overlap BDT with segment refresh.',
     });
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
     const correctGrade: GradeCauseResult = {
       verdict: 'correct',
       isCorrect: true,
-      chosenId: 'gold',
-      scores: [],
-      goldScore: 0.9,
-      bestDistractorScore: 0.03,
-      otherScore: 0.02,
-      matchedDistractor: null,
+      score: 100,
+      confidence: 0.7,
+      rationale: 'Correct',
       goldText: DRILL.goldCause.text,
       goldRationale: DRILL.goldCause.rationale,
+      fix: DRILL.fix,
     };
     state = troubleshootSessionReducer(state, {
-      type: 'COMMIT_CONFIDENCE',
+      type: 'RECEIVE_CAUSE_GRADE',
       confidence: 0.7,
       grade: correctGrade,
+      fix: DRILL.fix,
     });
 
     expect(state.isCorrect).toBe(true);
@@ -189,30 +255,37 @@ describe('troubleshootSessionReducer', () => {
 
   it('attaches matched distractor antipattern on incorrect_distractor', () => {
     let state = createTroubleshootSessionState(DRILL);
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_PROBES' });
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
+    state = troubleshootSessionReducer(state, {
+      type: 'SUBMIT_FIRST_CALL',
+      hypothesis: 'Guess',
+    });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = troubleshootSessionReducer(state, { type: 'LOCK_PROBES' });
     state = troubleshootSessionReducer(state, {
       type: 'SET_CAUSE_TEXT',
       text: 'Warehouse is undersized.',
     });
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
     const distractorGrade: GradeCauseResult = {
       verdict: 'incorrect_distractor',
       isCorrect: false,
-      chosenId: 'd1',
-      scores: [],
-      goldScore: 0.1,
-      bestDistractorScore: 0.7,
-      otherScore: 0.1,
-      matchedDistractor: { ...DRILL.hiddenDistractors[0], score: 0.7 },
+      score: 10,
+      confidence: 0.95,
+      rationale: 'Matched distractor',
+      matchedDistractor: {
+        antipattern: 'Scale First Warehouse',
+        rationale: 'Warehouse was enlarged.',
+      },
       goldText: DRILL.goldCause.text,
       goldRationale: DRILL.goldCause.rationale,
+      fix: DRILL.fix,
     };
     state = troubleshootSessionReducer(state, {
-      type: 'COMMIT_CONFIDENCE',
+      type: 'RECEIVE_CAUSE_GRADE',
       confidence: 0.95,
       grade: distractorGrade,
+      fix: DRILL.fix,
     });
 
     expect(state.isCorrect).toBe(false);
@@ -224,8 +297,9 @@ describe('troubleshootSessionReducer', () => {
     let state = createTroubleshootSessionState(DRILL);
     state = troubleshootSessionReducer(state, { type: 'LOCK_PROBES' });
     expect(state.phase).toBe('brief');
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_PROBES' });
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT' });
-    expect(state.phase).toBe('probes');
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
+    expect(state.phase).toBe('first_call');
+    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
+    expect(state.phase).toBe('first_call');
   });
 });

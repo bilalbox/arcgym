@@ -66,17 +66,31 @@
   "goldCause": {
     "text": "Streaming Data Transforms evaluate as stateful materialized views keyed on the target primary key. When a subsequent event on that key fails the WHERE filter, the engine issues a streaming retraction that deletes the row from the target DLO.",
     "rationale": "The streaming SQL engine evaluates mutations per target primary key. Filtering an event stream by a business key in the target causes any non-matching event on that key to retract previous rows. The architect must define a composite primary key (e.g., visitor_cookie + event_type) or create separate single-purpose streams to ensure append-only persistence.",
-    "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms",
-    "remediations": [
+    "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+  },
+  "fix": {
+    "prompt": "Which architectural remediation prevents non-matching subsequent events from retracting visitor profile rows in the target DLO?",
+    "options": [
       {
-        "title": "Composite Primary Key in Target DLO",
-        "description": "Define the target DLO primary key as a composite key of visitor_cookie plus event_type so non-login events cannot invalidate or retract previous login records.",
-        "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+        "id": "fix_composite_pk",
+        "label": "Define composite primary key in the target profile DLO",
+        "isCorrect": true,
+        "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms",
+        "rationale": "Defining the target DLO primary key as a composite key of visitor_cookie plus event_type ensures that subsequent navigation events with different event types do not overwrite or retract the login record in the streaming materialized view. Alternatively, separating login and navigation events into dedicated data streams avoids cross-event retractions."
       },
       {
-        "title": "Pre-Filtered Dedicated Ingestion Streams",
-        "description": "Separate login authentication events from general browsing navigation events into dedicated data streams prior to transformation.",
-        "citationUrl": "https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#data-transforms"
+        "id": "fix_extend_ttl",
+        "label": "Increase real-time streaming buffer retention window",
+        "isCorrect": false,
+        "distractorAntipattern": "Buffer Eviction Blame",
+        "rationale": "Increasing buffer retention addresses ingestion queue backpressure or eviction; it has no effect on SQL streaming retraction triggered by primary key state transitions."
+      },
+      {
+        "id": "fix_server_cookie",
+        "label": "Switch Web SDK identity storage to server-side cookies",
+        "isCorrect": false,
+        "distractorAntipattern": "Client Cookie Expiration",
+        "rationale": "Client cookies are already persisting reliably across requests; altering client-side browser storage does nothing to fix stateful retraction inside the Data Cloud engine."
       }
     ]
   },

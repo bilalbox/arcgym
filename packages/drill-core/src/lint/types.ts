@@ -8,7 +8,8 @@ export type WordingRuleId =
   | 'pivotal-leak'
   | 'probe-not-question'
   | 'cause-leak'
-  | 'gold-too-long';
+  | 'gold-too-long'
+  | 'established-decision-leak';
 
 export interface WordingFinding {
   ruleId: WordingRuleId;

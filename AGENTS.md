@@ -8,13 +8,13 @@ Definition of done is `pnpm verify` (syntax, types, tests, arch boundaries, dead
 
 ### Issue tracker
 
-Issues and PRDs live as GitHub issues for this repo; use `gh` per `docs/agents/issue-tracker.md`.
+Issues and specs live as GitHub issues for this repo; use `gh`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Canonical triage roles map to GitHub labels as documented in `docs/agents/triage-labels.md`.
+Canonical triage roles map directly to GitHub labels. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: read root `GLOSSARY.md` (vocabulary), `CONTEXT.md` (product framing), and scoped files under `docs/adr/` (index in `docs/adr/README.md`) per `docs/agents/domain.md`.
+Single-context: read root `GLOSSARY.md` (vocabulary), `CONTEXT.md` (product framing), and scoped files under `docs/adr/` (index in `docs/adr/README.md`). See `docs/agents/domain.md`.
 

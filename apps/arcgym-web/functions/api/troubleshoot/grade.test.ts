@@ -28,11 +28,30 @@ const FIXTURE_DRILL: TroubleshootingDrillDefinition = {
     text: 'Formula fields force expensive Zero Copy evaluation overlapping segment refresh.',
     rationale: 'Concurrent heavy evaluation plus schedule collision, not warehouse size.',
     citationUrl: 'https://architect.salesforce.com/docs/fixture',
-    remediations: [
+  },
+  fix: {
+    prompt: 'How should the concurrency collision be remediated?',
+    options: [
       {
-        title: 'Separate batch transforms from refresh schedules',
-        description: 'Ensure transforms do not overlap segment publish windows.',
+        id: 'fix_stagger',
+        label: 'Stagger transform schedules away from segment publish',
+        isCorrect: true,
         citationUrl: 'https://architect.salesforce.com/docs/fixture',
+        rationale: 'Staggering eliminates query collision.',
+      },
+      {
+        id: 'fix_scale',
+        label: 'Upsize Snowflake warehouse',
+        isCorrect: false,
+        distractorAntipattern: 'Scale First Warehouse',
+        rationale: 'Upsizing does not resolve lock contention.',
+      },
+      {
+        id: 'fix_network',
+        label: 'Relocate multi-region cluster',
+        isCorrect: false,
+        distractorAntipattern: 'Network Ghost Hunt',
+        rationale: 'Network is not the bottleneck.',
       },
     ],
   },
@@ -218,7 +237,7 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
       goldText: string;
       goldRationale: string;
       goldCitationUrl?: string;
-      goldRemediations?: Array<{ title: string; description: string; citationUrl?: string }>;
+      fix?: { prompt: string; options: unknown[] };
     };
     expect(data.verdict).toBe('correct');
     expect(data.isCorrect).toBe(true);
@@ -226,9 +245,8 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
     expect(data.goldText).toBe(FIXTURE_DRILL.goldCause.text);
     expect(data.goldRationale).toBe(FIXTURE_DRILL.goldCause.rationale);
     expect(data.goldCitationUrl).toBe(FIXTURE_DRILL.goldCause.citationUrl);
-    expect(data.goldRemediations).toHaveLength(1);
-    expect(data.goldRemediations?.[0].title).toBe(
-      'Separate batch transforms from refresh schedules',
-    );
+    expect(data.fix).toBeDefined();
+    expect(data.fix?.prompt).toBe(FIXTURE_DRILL.fix.prompt);
+    expect(data.fix?.options).toHaveLength(3);
   });
 });

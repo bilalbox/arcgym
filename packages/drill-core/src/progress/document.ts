@@ -1,31 +1,24 @@
-import type {
-  DeferredRetestSlot,
-  DrillAttemptRecord,
-  VisitorProgressState,
-} from '../types/drill.js';
+import type { DrillAttemptRecord, VisitorProgressState } from '../types/drill.js';
 
 /**
  * On-disk / D1 document shape for the hybrid `completed_drills_json` column.
- * v2 wraps drills + optional Deferred Retest; legacy rows are a bare drills map.
+ * v2 wraps drills; legacy rows are a bare drills map.
  */
 export interface ProgressDocumentV2 {
   v: 2;
   drills: Record<string, DrillAttemptRecord>;
-  deferredRetest?: DeferredRetestSlot | null;
 }
 
 export function serializeProgressDocument(state: VisitorProgressState): string {
   const doc: ProgressDocumentV2 = {
     v: 2,
     drills: state.completedDrills ?? {},
-    deferredRetest: state.deferredRetest ?? null,
   };
   return JSON.stringify(doc);
 }
 
 export function parseProgressDocument(raw: string): {
   completedDrills: Record<string, DrillAttemptRecord>;
-  deferredRetest?: DeferredRetestSlot;
 } {
   let parsed: unknown;
   try {
@@ -40,12 +33,8 @@ export function parseProgressDocument(raw: string): {
 
   const obj = parsed as Record<string, unknown>;
   if (obj.v === 2 && obj.drills && typeof obj.drills === 'object') {
-    const deferred = obj.deferredRetest;
     return {
       completedDrills: obj.drills as Record<string, DrillAttemptRecord>,
-      ...(deferred && typeof deferred === 'object'
-        ? { deferredRetest: deferred as DeferredRetestSlot }
-        : {}),
     };
   }
 
@@ -62,6 +51,5 @@ export function progressStateFromDocument(
     streakDays: meta.streakDays,
     lastActiveDate: meta.lastActiveDate,
     completedDrills: doc.completedDrills,
-    ...(doc.deferredRetest ? { deferredRetest: doc.deferredRetest } : {}),
   };
 }

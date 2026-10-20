@@ -35,9 +35,6 @@ describe('Web Drill Format Registry', () => {
   });
 
   it('provides correct route metadata and catalog paths', () => {
-    expect(WEB_DRILL_FORMAT_DESCRIPTORS.Rapid_Fire.detailRoutePrefix).toBe('/drills');
-    expect(WEB_DRILL_FORMAT_DESCRIPTORS.Rapid_Fire.catalogPath).toBeUndefined();
-
     expect(WEB_DRILL_FORMAT_DESCRIPTORS.Case_File.detailRoutePrefix).toBe('/cases');
     expect(WEB_DRILL_FORMAT_DESCRIPTORS.Case_File.catalogPath).toBe('/cases');
 

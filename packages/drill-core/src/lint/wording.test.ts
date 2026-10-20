@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  type CaseFileDrillDefinition,
   type DrillOptionDTO,
   lintDrillWording,
-  type RapidFireDrillDefinition,
   type TroubleshootingDrillDefinition,
   type WellArchitectedPillar,
   type WordingRuleId,
@@ -19,14 +19,29 @@ const BASE = {
   status: 'draft',
 } as const;
 
-function rapidFire(
+function caseFile(
   options: DrillOptionDTO[],
   prompt = 'Orders arrive at 40 per second and the ERP accepts 10. Which integration pattern should the architect use?',
-): RapidFireDrillDefinition {
-  return { ...BASE, format: 'Rapid_Fire', steps: [{ id: 's1', prompt, options }] };
+): CaseFileDrillDefinition {
+  return {
+    ...BASE,
+    format: 'Case_File',
+    brief: { title: 'Enterprise Brief', synopsis: 'Evaluation brief synopsis narrative.' },
+    stations: [
+      {
+        id: 'st1',
+        domain: 'Integration_Apis',
+        boardDomain: 'Integration',
+        prompt,
+        probeBudget: 2,
+        probes: [],
+        options,
+      },
+    ],
+  };
 }
 
-const RAPID_FIRE_OPTIONS: DrillOptionDTO[] = [
+const CASE_FILE_OPTIONS: DrillOptionDTO[] = [
   {
     id: 's1_a',
     label: 'Publish platform events and let the ERP subscriber drain them',
@@ -58,33 +73,33 @@ describe('lintDrillWording', () => {
       `${text}, then document the decision in the integration runbook for the team`;
 
     it('accepts options of comparable length', () => {
-      expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS)))).not.toContain('length-tell');
+      expect(ruleIds(lintDrillWording(caseFile(CASE_FILE_OPTIONS)))).not.toContain('length-tell');
     });
 
-    it('flags a Rapid Fire correct option far longer than its distractors', () => {
-      const [correct, ...rest] = RAPID_FIRE_OPTIONS;
+    it('flags a correct option far longer than its distractors', () => {
+      const [correct, ...rest] = CASE_FILE_OPTIONS;
       const findings = lintDrillWording(
-        rapidFire([{ ...correct, label: padded(correct.label) }, ...rest]),
+        caseFile([{ ...correct, label: padded(correct.label) }, ...rest]),
       );
       expect(findings).toContainEqual(
-        expect.objectContaining({ ruleId: 'length-tell', where: 'step s1' }),
+        expect.objectContaining({ ruleId: 'length-tell', where: 'station st1' }),
       );
     });
   });
 
   describe('verdict-prefix', () => {
     it('accepts feedback that opens with the mechanism', () => {
-      expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS)))).not.toContain(
+      expect(ruleIds(lintDrillWording(caseFile(CASE_FILE_OPTIONS)))).not.toContain(
         'verdict-prefix',
       );
     });
 
     it('flags verdict prefixes in rationale', () => {
-      const [rfCorrect, rfWrong, ...rfRest] = RAPID_FIRE_OPTIONS;
+      const [rfCorrect, rfWrong, ...rfRest] = CASE_FILE_OPTIONS;
 
       expect(
         lintDrillWording(
-          rapidFire([
+          caseFile([
             rfCorrect,
             { ...rfWrong, rationale: 'Antipattern: the ERP rejects calls.' },
             ...rfRest,
@@ -93,23 +108,23 @@ describe('lintDrillWording', () => {
       ).toContainEqual(
         expect.objectContaining({
           ruleId: 'verdict-prefix',
-          where: 'step s1 option s1_b rationale',
+          where: 'station st1 option s1_b rationale',
         }),
       );
     });
   });
 
   describe('antipattern-name', () => {
-    it('accepts short antipattern names on Rapid Fire distractors', () => {
-      expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS)))).not.toContain(
+    it('accepts short antipattern names on distractors', () => {
+      expect(ruleIds(lintDrillWording(caseFile(CASE_FILE_OPTIONS)))).not.toContain(
         'antipattern-name',
       );
     });
 
     it('flags sentence-like antipattern names', () => {
-      const [correct, wrong, ...rest] = RAPID_FIRE_OPTIONS;
+      const [correct, wrong, ...rest] = CASE_FILE_OPTIONS;
       const findings = lintDrillWording(
-        rapidFire([
+        caseFile([
           correct,
           { ...wrong, distractorAntipattern: 'This couples the trigger to every ERP.' },
           ...rest,
@@ -121,9 +136,9 @@ describe('lintDrillWording', () => {
 
   describe('self-refuting-distractor', () => {
     it('flags giveaway words in distractor labels', () => {
-      const [correct, wrong, ...rest] = RAPID_FIRE_OPTIONS;
+      const [correct, wrong, ...rest] = CASE_FILE_OPTIONS;
       const findings = lintDrillWording(
-        rapidFire([
+        caseFile([
           correct,
           { ...wrong, label: 'Always call the ERP synchronously from the trigger' },
           ...rest,
@@ -137,9 +152,9 @@ describe('lintDrillWording', () => {
 
   describe('label-echo', () => {
     it('flags rationale that mostly repeats the correct option label', () => {
-      const [correct, ...rest] = RAPID_FIRE_OPTIONS;
+      const [correct, ...rest] = CASE_FILE_OPTIONS;
       const findings = lintDrillWording(
-        rapidFire([
+        caseFile([
           {
             ...correct,
             rationale:
@@ -155,7 +170,68 @@ describe('lintDrillWording', () => {
   describe('long-stem', () => {
     it('flags stems over 55 words', () => {
       const long = Array(56).fill('word').join(' ');
-      expect(ruleIds(lintDrillWording(rapidFire(RAPID_FIRE_OPTIONS, long)))).toContain('long-stem');
+      expect(ruleIds(lintDrillWording(caseFile(CASE_FILE_OPTIONS, long)))).toContain('long-stem');
+    });
+  });
+
+  describe('established-decision-leak', () => {
+    it('flags later station prompts that restate gold recommendation of earlier station', () => {
+      const drill: CaseFileDrillDefinition = {
+        ...BASE,
+        format: 'Case_File',
+        brief: { title: 'Brief', synopsis: 'Synopsis' },
+        stations: [
+          {
+            id: 'st1',
+            domain: 'Integration_Apis',
+            boardDomain: 'Integration',
+            prompt: 'Station 1 prompt',
+            probeBudget: 2,
+            probes: [],
+            options: [
+              {
+                id: 'o1',
+                label: 'Publish platform events to EventBridge bus',
+                isCorrect: true,
+                rationale: 'r1',
+              },
+              {
+                id: 'o2',
+                label: 'Call ERP synchronously',
+                isCorrect: false,
+                distractorAntipattern: 'Sync Coupling',
+                rationale: 'r2',
+              },
+            ],
+          },
+          {
+            id: 'st2',
+            domain: 'Integration_Apis',
+            boardDomain: 'Integration',
+            prompt:
+              'Given that you will Publish platform events to EventBridge bus, how should subscribers be authorized?',
+            probeBudget: 2,
+            probes: [],
+            options: [
+              { id: 'o3', label: 'IAM role policy', isCorrect: true, rationale: 'r3' },
+              {
+                id: 'o4',
+                label: 'Hardcoded credentials',
+                isCorrect: false,
+                distractorAntipattern: 'Hardcoded Secrets',
+                rationale: 'r4',
+              },
+            ],
+          },
+        ],
+      };
+      const findings = lintDrillWording(drill);
+      expect(findings).toContainEqual(
+        expect.objectContaining({
+          ruleId: 'established-decision-leak',
+          where: 'station st2 prompt',
+        }),
+      );
     });
   });
 
@@ -217,6 +293,26 @@ describe('lintDrillWording', () => {
           rationale: 'No latency incident.',
         },
       ],
+      fix: {
+        prompt: 'Select remediation:',
+        options: [
+          { id: 'f1', label: 'Gold fix', rationale: 'R1', isCorrect: true },
+          {
+            id: 'f2',
+            label: 'D1 fix',
+            rationale: 'R2',
+            isCorrect: false,
+            distractorAntipattern: 'Antipattern 1',
+          },
+          {
+            id: 'f3',
+            label: 'D2 fix',
+            rationale: 'R3',
+            isCorrect: false,
+            distractorAntipattern: 'Antipattern 2',
+          },
+        ],
+      },
     });
 
     it('accepts a clean Incident brief that withholds the gold cause', () => {

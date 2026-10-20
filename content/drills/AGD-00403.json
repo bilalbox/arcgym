@@ -333,7 +333,7 @@
       "id": "st_act",
       "domain": "Data_Architecture",
       "boardDomain": "Integration",
-      "prompt": "A Streaming Insight marks each abandoned cart. How should Data 360 start the CRM Flow that sends the per-cart offer?",
+      "prompt": "How should Data 360 start the CRM Flow that sends the per-cart offer once an abandoned cart is detected?",
       "probeBudget": 3,
       "probes": [
         {

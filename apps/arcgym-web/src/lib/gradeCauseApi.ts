@@ -8,6 +8,7 @@ import type { GradeCauseResult } from '@arcgym/drill-core';
 export async function gradeCauseViaApi(
   drillId: string,
   causeText: string,
+  firstCallText?: string,
 ): Promise<GradeCauseResult> {
   const res = await fetch('/api/troubleshoot/grade', {
     method: 'POST',
@@ -15,6 +16,7 @@ export async function gradeCauseViaApi(
     body: JSON.stringify({
       drillId,
       causeText,
+      ...(firstCallText ? { firstCallText } : {}),
     }),
   });
 

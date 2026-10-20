@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calculateActiveStreak,
-  calculateTotalPoints,
-  computeNewStreak,
-  isRapidFireStreakRequirementMet,
-  RAPID_FIRE_REPS_PER_DRILL,
-} from './streak.js';
+import { calculateActiveStreak, calculateTotalPoints, computeNewStreak } from './streak.js';
 
 describe('Streak calculation engine', () => {
   const TODAY = '2026-09-28';
@@ -79,23 +73,6 @@ describe('Streak calculation engine', () => {
         'drill-4': { score: 100 },
       };
       expect(calculateTotalPoints(records)).toBe(250);
-    });
-  });
-
-  describe('Rapid Fire streak requirement', () => {
-    it('requires 3 reps by default', () => {
-      expect(RAPID_FIRE_REPS_PER_DRILL).toBe(3);
-    });
-
-    it('returns false when fewer than required reps are completed', () => {
-      expect(isRapidFireStreakRequirementMet(0)).toBe(false);
-      expect(isRapidFireStreakRequirementMet(1)).toBe(false);
-      expect(isRapidFireStreakRequirementMet(2)).toBe(false);
-    });
-
-    it('returns true when all 3 reps are completed', () => {
-      expect(isRapidFireStreakRequirementMet(3)).toBe(true);
-      expect(isRapidFireStreakRequirementMet(4)).toBe(true);
     });
   });
 });

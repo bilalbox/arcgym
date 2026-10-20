@@ -1,10 +1,8 @@
 import {
-  applyDeferredRetestAfterRound,
   calculateActiveStreak,
   calculateTotalPoints,
   computeNewStreak,
   type DrillAttemptRecord,
-  type DrillDefinitionDTO,
   type DrillFormat,
   getDrillFormatDescriptor,
   getTodayString,
@@ -13,9 +11,6 @@ import {
   type VisitorProgressState,
 } from '@arcgym/drill-core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import rawCanonicalDrills from '../data/canonicalDrills.json';
-
-const DEFERRED_RETEST_CATALOG = rawCanonicalDrills as unknown as DrillDefinitionDTO[];
 
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
@@ -306,78 +301,6 @@ export function useVisitorProgress() {
     [isAuthenticated, pushToCloud],
   );
 
-  // Record completion of all reps in a Rapid Fire drill set to achieve that day's streak
-  const recordRapidFireSetCompletion = useCallback(
-    (
-      attempts: Array<{
-        drillId: string;
-        format: DrillFormat;
-        score: number;
-        accuracy: number;
-        steps?: import('@arcgym/drill-core').StepAttemptTelemetry[];
-      }>,
-    ) => {
-      const today = getTodayString();
-      const yesterday = getYesterdayString();
-
-      setState((prev) => {
-        const newStreak = computeNewStreak(prev.streakDays, prev.lastActiveDate, today, yesterday);
-
-        const updatedCompleted = { ...prev.completedDrills };
-        const now = new Date().toISOString();
-        const attemptRecords: DrillAttemptRecord[] = [];
-
-        for (const item of attempts) {
-          const existingRecord = updatedCompleted[item.drillId];
-          const record: DrillAttemptRecord = {
-            drillId: item.drillId,
-            format: item.format,
-            completedAt: now,
-            score: item.score,
-            accuracy: item.accuracy,
-            attemptsCount: (existingRecord?.attemptsCount || 0) + 1,
-            ...(item.steps ? { steps: item.steps } : {}),
-          };
-          updatedCompleted[item.drillId] = record;
-          attemptRecords.push(record);
-        }
-
-        const withCompletions: VisitorProgressState = {
-          ...prev,
-          streakDays: newStreak,
-          lastActiveDate: today,
-          completedDrills: updatedCompleted,
-        };
-
-        const updated = applyDeferredRetestAfterRound(withCompletions, {
-          attempts: attemptRecords,
-          catalog: DEFERRED_RETEST_CATALOG,
-          todayDateStr: today,
-        });
-
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-          localStorage.setItem(
-            LEGACY_STREAK_KEY,
-            JSON.stringify({
-              streakDays: updated.streakDays,
-              lastActiveDate: updated.lastActiveDate,
-            }),
-          );
-        } catch (e) {
-          console.error('Failed to persist progress', e);
-        }
-
-        if (isAuthenticated) {
-          pushToCloud(updated);
-        }
-
-        return updated;
-      });
-    },
-    [isAuthenticated, pushToCloud],
-  );
-
   // Reset progress history
   const resetProgress = useCallback(() => {
     const cleanState: VisitorProgressState = {
@@ -385,7 +308,6 @@ export function useVisitorProgress() {
       streakDays: 0,
       lastActiveDate: '',
       completedDrills: {},
-      // deferredRetest intentionally omitted
     };
     saveState(cleanState);
   }, [saveState]);
@@ -469,7 +391,6 @@ export function useVisitorProgress() {
     isStreakEarnedToday,
     totalPoints,
     completedDrills: state.completedDrills,
-    deferredRetest: state.deferredRetest,
     totalCompleted,
     isAuthenticated,
     learnerId,
@@ -478,7 +399,6 @@ export function useVisitorProgress() {
     isTrialExhausted,
     isDrillCompleted,
     recordDrillCompletion,
-    recordRapidFireSetCompletion,
     resetProgress,
     signInWithGoogle,
     signInWithGithub,

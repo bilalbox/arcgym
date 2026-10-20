@@ -9,7 +9,7 @@ export type ValidationRuleId =
   | 'hidden-distractors'
   | 'citation-manifest'
   | 'missing-asset'
-  | 'contrast-set';
+  | 'fix-options';
 
 export interface ValidationFinding {
   ruleId: ValidationRuleId;

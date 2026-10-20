@@ -21,22 +21,6 @@ export function getYesterdayString(): string {
 }
 
 /**
- * Default number of architectural decision reps per Rapid Fire set.
- */
-export const RAPID_FIRE_REPS_PER_DRILL = 3;
-
-/**
- * Determines whether the user has completed all required reps in a Rapid Fire drill
- * to achieve or maintain that day's practice streak.
- */
-export function isRapidFireStreakRequirementMet(
-  completedRepsCount: number,
-  requiredReps: number = RAPID_FIRE_REPS_PER_DRILL,
-): boolean {
-  return completedRepsCount >= requiredReps;
-}
-
-/**
  * Computes the new streak value after a drill is completed.
  * - If this is the user's first drill: streak becomes 1.
  * - If the user already completed a drill today: streak remains unchanged.

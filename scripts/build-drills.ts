@@ -12,7 +12,6 @@ import {
   type GroundingChunkExport,
   lintDrillWording,
   sanitizeDrillForClient,
-  validateContrastSetCatalog,
   validateDrill,
 } from '../packages/drill-core/src/index.js';
 
@@ -118,10 +117,6 @@ for (const file of drillFiles) {
 
 if (wordingWarningCount > 0) {
   console.warn(`\n${wordingWarningCount} wording warnings (see [WARN] lines).`);
-}
-
-for (const finding of validateContrastSetCatalog(allDrills)) {
-  err('contrast-sets', `validation ${finding.ruleId} at ${finding.where}: ${finding.message}`);
 }
 
 if (errorCount > 0) {

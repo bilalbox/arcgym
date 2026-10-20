@@ -66,22 +66,31 @@
   "goldCause": {
     "text": "Zero Copy incremental acceleration queries external tables using a high-watermark timestamp (updated_at), which only captures inserts and updates. Upstream physical SQL DELETE operations produce no row or updated timestamp, leaving purged records in Data Cloud's accelerated cache until a full refresh or soft-delete pattern is used.",
     "rationale": "Incremental acceleration supports upserts only and does not track hard deletes in the external source. Purging records via physical DELETE in Snowflake leaves zombie records in the accelerated DMO cache. The architect must implement soft deletes (is_deleted flag) with updated timestamps or schedule periodic full cache refreshes.",
-    "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods",
-    "remediations": [
+    "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+  },
+  "fix": {
+    "prompt": "Which architectural remediation ensures purged Snowflake customer records are reliably evicted from Data Cloud's accelerated cache?",
+    "options": [
       {
-        "title": "Logical Soft Deletes with Updated Watermark",
-        "description": "Implement an is_deleted flag in the upstream table and update updated_at during purges so incremental acceleration ingests the tombstone.",
-        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+        "id": "fix_soft_delete",
+        "label": "Implement upstream logical soft deletes with watermark update",
+        "isCorrect": true,
+        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods",
+        "rationale": "Implementing an is_deleted column in Snowflake and updating updated_at during lifecycle purges allows incremental acceleration to ingest the tombstone rows. Alternatively, for compliance-critical entities, routing through Direct Access live query federation or scheduling automated API full refreshes prevents zombie cache keys."
       },
       {
-        "title": "Direct Access Live Query Federation",
-        "description": "Route compliance-critical DMOs through Direct Access without acceleration to guarantee immediate, zero-staleness reads directly from Snowflake.",
-        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+        "id": "fix_consent_api",
+        "label": "Call Consent REST API Right to be Forgotten deletion requests",
+        "isCorrect": false,
+        "distractorAntipattern": "Consent API Sledgehammer",
+        "rationale": "Invoking the Consent API for routine data warehouse maintenance treats operational account purges as regulatory privacy deletions, permanently dissolving identity clusters and analytics while risking rate limits and heavy credit consumption."
       },
       {
-        "title": "Automated Full Cache Re-baselining",
-        "description": "Trigger an automated API-driven full cache refresh immediately following batch delete scripts to clear purged keys from the acceleration store.",
-        "citationUrl": "https://architect.salesforce.com/docs/architect/decision-guides/guide/data-360-interoperability.html#zero-copy-methods"
+        "id": "fix_cdc_stream",
+        "label": "Repoint Data Cloud Zero Copy stream to Snowflake CDC tables",
+        "isCorrect": false,
+        "distractorAntipattern": "CDC Stream Misconfiguration",
+        "rationale": "Zero Copy incremental acceleration queries external tables using SQL watermark timestamps; it does not natively consume raw change-data-capture stream metadata without custom ingestion pipelines."
       }
     ]
   },

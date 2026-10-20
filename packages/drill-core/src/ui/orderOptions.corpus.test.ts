@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   type DrillDefinitionDTO,
   isCaseFileDrill,
-  isRapidFireDrill,
+  isTroubleshootingDrill,
   optionSeed,
   orderOptions,
 } from '../index.js';
@@ -13,14 +13,14 @@ const DRILLS_DIR = path.resolve(import.meta.dirname, '../../../../content/drills
 
 /** Each rendered decision as [runner seed, correct flag per authored option]. */
 function renderedDecisions(drill: DrillDefinitionDTO): [string, boolean[]][] {
-  if (isRapidFireDrill(drill)) {
-    return drill.steps.map((s) => [optionSeed(drill.id, s.id), s.options.map((o) => o.isCorrect)]);
-  }
   if (isCaseFileDrill(drill)) {
     return drill.stations.map((s) => [
       optionSeed(drill.id, s.id),
       s.options.map((o) => o.isCorrect),
     ]);
+  }
+  if (isTroubleshootingDrill(drill) && drill.fix) {
+    return [[optionSeed(drill.id, 'fix'), drill.fix.options.map((o) => o.isCorrect)]];
   }
   return [];
 }

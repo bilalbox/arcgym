@@ -1,5 +1,7 @@
 # Troubleshooting format (Incident drills)
 
+> **Partly superseded by [0007-retire-rapid-fire.md](0007-retire-rapid-fire.md):** Rapid Fire is retired, and a completed Incident now earns the Practice Streak (replacing "No Troubleshoot daily streak in v1").
+
 ArcGym supports three drill formats: **Rapid Fire** (daily streak), **Case File** (Evaluation-scale recommendation under a Brief), and **Troubleshooting** (scarce-probe diagnosis ending in a free-text root-cause commit).
 
 ## Decision

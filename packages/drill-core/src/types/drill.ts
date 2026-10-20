@@ -1,8 +1,8 @@
 export type ConfidenceAnchor = 0.5 | 0.7 | 0.85 | 0.95;
 
-export type DrillFormat = 'Rapid_Fire' | 'Case_File' | 'Troubleshooting';
+export type DrillFormat = 'Case_File' | 'Troubleshooting';
 
-export const DRILL_FORMATS: DrillFormat[] = ['Rapid_Fire', 'Case_File', 'Troubleshooting'];
+export const DRILL_FORMATS: DrillFormat[] = ['Case_File', 'Troubleshooting'];
 
 /** Practice category from Salesforce Architect Fundamentals. Orthogonal to Well-Architected pillars. */
 export type ArchitecturalDomain =
@@ -109,13 +109,12 @@ export interface DrillOptionDTO {
   diagramUrl?: string;
 }
 
-export interface RapidFireStepDTO {
-  id: string;
-  prompt: string;
-  options: DrillOptionDTO[];
+export interface CaseFileExhibit {
+  label: string;
+  diagramUrl: string;
 }
 
-/** Clarifying question in a Case File station. Answers are scenario facts, not architecture advice. */
+/** Clarifying question in a Case File station or Troubleshooting Incident. Answers are scenario facts, not architecture advice. */
 export interface ProbeOptionDTO {
   id: string;
   label: string;
@@ -128,7 +127,7 @@ export interface ProbeOptionDTO {
 export interface CaseBriefDTO {
   title: string;
   synopsis: string;
-  exhibits?: Array<{ label: string; diagramUrl: string }>;
+  exhibits?: CaseFileExhibit[];
 }
 
 /** One CTA-domain decision inside a Case File: Probe Budget then recommendation. */
@@ -140,6 +139,7 @@ export interface CaseFileStationDTO {
   probeBudget: number;
   probes: ProbeOptionDTO[];
   options: DrillOptionDTO[];
+  exhibits?: CaseFileExhibit[];
 }
 
 export type DrillDifficulty = 'Associate_Domain_Architect' | 'Lead_CTA';
@@ -176,21 +176,6 @@ export interface DrillDefinitionBase {
   sourceCardIds?: string[];
 }
 
-export interface RapidFireDrillDefinition extends DrillDefinitionBase {
-  format: 'Rapid_Fire';
-  steps: RapidFireStepDTO[];
-  /**
-   * Optional Contrast Set id shared by exactly three published Rapid Fire siblings.
-   * When a complete set is available, the daily round uses all three as one contrast round.
-   */
-  contrastSetId?: string;
-  /**
-   * One-line principle shown once after the third contrast rep
-   * (e.g. "The deciding variable was…"). Required when contrastSetId is set.
-   */
-  contrastPrinciple?: string;
-}
-
 export interface CaseFileDrillDefinition extends DrillDefinitionBase {
   format: 'Case_File';
   brief: CaseBriefDTO;
@@ -206,22 +191,12 @@ export interface TroubleshootingArchitectureDTO {
   diagramLabel?: string;
 }
 
-/** Remediation path to prevent recurrence of a troubleshooting failure mode. */
-export interface TroubleshootingRemediationDTO {
-  title: string;
-  description: string;
-  /** Optional Citation Manifest URL when the remediation pattern is documentation-backed. */
-  citationUrl?: string;
-}
-
 /** Authored gold root cause — free-text grading target; never shown as an MCQ. */
 export interface GoldCauseDTO {
   text: string;
   rationale: string;
   /** Optional Citation Manifest URL when the failure class is documentation-backed. */
   citationUrl?: string;
-  /** Optional architectural remediations to prevent recurrence. */
-  remediations?: TroubleshootingRemediationDTO[];
 }
 
 /** Hidden antipattern distractor for free-text cause grading — never rendered as a choice. */
@@ -230,6 +205,22 @@ export interface HiddenDistractorDTO {
   text: string;
   antipattern: string;
   rationale: string;
+}
+
+/** Remediation option for Troubleshooting Fix. */
+export interface TroubleshootingFixOption {
+  id: string;
+  label: string;
+  isCorrect: boolean;
+  rationale: string;
+  distractorAntipattern?: string;
+  citationUrl?: string;
+}
+
+/** Remediation decision structure for a Troubleshooting Incident. */
+export interface TroubleshootingFixDefinition {
+  prompt?: string;
+  options: TroubleshootingFixOption[];
 }
 
 export interface TroubleshootingDrillDefinition extends DrillDefinitionBase {
@@ -242,28 +233,22 @@ export interface TroubleshootingDrillDefinition extends DrillDefinitionBase {
   goldCause: GoldCauseDTO;
   /** Exactly three hidden distractors for antipattern-aware grading. */
   hiddenDistractors: HiddenDistractorDTO[];
+  /** Remediation decision choice (1 gold + 2 antipattern distractors). */
+  fix: TroubleshootingFixDefinition;
 }
 
 export type ClientTroubleshootingDrillDefinition = Omit<
   TroubleshootingDrillDefinition,
-  'goldCause' | 'hiddenDistractors'
->;
+  'goldCause' | 'hiddenDistractors' | 'fix'
+> & {
+  fix?: TroubleshootingFixDefinition;
+};
 
-export type DrillDefinitionDTO =
-  | RapidFireDrillDefinition
-  | CaseFileDrillDefinition
-  | TroubleshootingDrillDefinition;
+export type DrillDefinitionDTO = CaseFileDrillDefinition | TroubleshootingDrillDefinition;
 
 export type ClientDrillDefinitionDTO =
-  | RapidFireDrillDefinition
   | CaseFileDrillDefinition
   | ClientTroubleshootingDrillDefinition;
-
-export function isRapidFireDrill(
-  d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
-): d is RapidFireDrillDefinition {
-  return typeof d === 'object' && d !== null && d.format === 'Rapid_Fire';
-}
 
 export function isCaseFileDrill(
   d: DrillDefinitionDTO | ClientDrillDefinitionDTO,
@@ -314,13 +299,18 @@ export interface StepAttemptTelemetry {
   missedPivotal?: boolean;
   /** Troubleshooting: free-text cause grading verdict. */
   causeVerdict?: CauseVerdict;
-  /** Case File: gut hypothesis before Probe Budget unlock (unscored). */
+  /** Case File / Troubleshooting: gut hypothesis before Probe Budget unlock (unscored). */
   firstCall?: FirstCallTelemetry;
   /**
    * Case File: last selected pivotal (else last probe) after a non-empty First Call.
    * Heuristic discovery highlight — not a scored “flip” vs recommendation options.
    */
   flippingProbeId?: string;
+  /** Troubleshooting: Fix decision score, confidence, and chosen option */
+  fixScore?: number;
+  fixConfidence?: ConfidenceAnchor;
+  selectedFixOptionId?: string;
+  firstCallVerdict?: CauseVerdict;
 }
 
 export interface DrillAttemptRecord {
@@ -345,21 +335,9 @@ export interface DimensionProficiency {
   drillsCompleted: number;
 }
 
-/** Outstanding Deferred Retest (at most one per learner). See progress/deferredRetest.ts. */
-export interface DeferredRetestSlot {
-  drillId: string;
-  sourceDrillId: string;
-  contrastSetId: string;
-  scheduledOn: string;
-  dueFrom: string;
-  dueUntil: string;
-}
-
 export interface VisitorProgressState {
   version: 1;
   streakDays: number;
   lastActiveDate: string; // YYYY-MM-DD
   completedDrills: Record<string, DrillAttemptRecord>;
-  /** At most one outstanding Deferred Retest; omitted when none. */
-  deferredRetest?: DeferredRetestSlot;
 }

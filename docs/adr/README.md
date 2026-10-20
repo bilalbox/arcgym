@@ -6,12 +6,14 @@ Canonical architectural decisions for ArcGym. Consult relevant ADRs before modif
 
 | ADR | Title | Status | Scope / Topic |
 |---|---|---|---|
-| [0001](0001-rapid-fire-sole-format.md) | Single Rapid Fire Drill Architecture | Superseded in part by 0002/0004 | Rapid Fire sole format for daily streak reps; retired legacy runners. |
-| [0002](0002-case-file-format.md) | Case File alongside Rapid Fire | Accepted | Multi-step scenario evaluation with Brief and Probe Budget stations. |
+| [0001](0001-rapid-fire-sole-format.md) | Single Rapid Fire Drill Architecture | Superseded by 0007 | Historic: Rapid Fire as sole daily-streak format. |
+| [0002](0002-case-file-format.md) | Case File alongside Rapid Fire | Accepted (streak clause superseded by 0007) | Multi-step scenario evaluation with Brief and Probe Budget stations. |
 | [0003](0003-well-architected-grounding-corpus.md) | Grounding Corpus & Well-Architected Hierarchy | Accepted | Salesforce Well-Architected Framework and Trailblazer community grounding. |
-| [0004](0004-troubleshooting-format.md) | Troubleshooting Format (Incident Drills) | Accepted | Scarce-probe incident diagnosis with CLEF Workers AI root-cause grading. |
+| [0004](0004-troubleshooting-format.md) | Troubleshooting Format (Incident Drills) | Accepted (streak clause superseded by 0007) | Scarce-probe incident diagnosis with CLEF Workers AI root-cause grading. |
 | [0005](0005-passwordless-learner-auth-and-d1-sync.md) | Passwordless Learner Auth & D1 Persistence | Accepted | Google/GitHub OAuth, pseudonymous zero-PII IDs, D1 telemetry & feedback sync. |
 | [0006](0006-deterministic-quality-and-maintainability-gates.md) | Deterministic Quality & Maintainability Gates | Accepted | 4-stage verification gate (`pnpm verify`) enforcing types, Biome, Vitest, arch, dead code, clones. |
+| [0007](0007-retire-rapid-fire.md) | Retire Rapid Fire | Accepted | Case File + Troubleshooting are the only formats; either earns the Practice Streak. |
+| [0008](0008-incident-fix-and-graded-first-call.md) | Incident Fix & Graded First Call | Accepted | Incidents end with a cause-revealed MCQ Fix; Incident First Call is CLEF-graded, unscored. |
 
 ## Data Architecture & Storage Separation
 

@@ -110,38 +110,72 @@ export function validateTroubleshooting(
     }
   }
 
-  if (goldCause?.remediations !== undefined) {
-    if (!Array.isArray(goldCause.remediations)) {
+  const fix = drill.fix as Record<string, unknown> | undefined;
+  if (!fix || typeof fix !== 'object' || !Array.isArray(fix.options)) {
+    findings.push({
+      ruleId: 'missing-field',
+      where: 'fix.options',
+      message: 'Troubleshooting requires fix.options array with exactly 3 options',
+    });
+  } else {
+    if (fix.options.length !== 3) {
       findings.push({
-        ruleId: 'missing-field',
-        where: 'goldCause.remediations',
-        message: 'goldCause.remediations must be an array when present',
+        ruleId: 'fix-options',
+        where: 'fix.options',
+        message: `Troubleshooting requires exactly 3 fix options; got ${fix.options.length}`,
       });
-    } else {
-      goldCause.remediations.forEach((rem, idx) => {
-        const r = rem as Record<string, unknown> | undefined;
-        if (!r || typeof r.title !== 'string' || !r.title.trim()) {
+    }
+    const correctOptions = fix.options.filter(
+      (o) => (o as Record<string, unknown>)?.isCorrect === true,
+    );
+    if (correctOptions.length !== 1) {
+      findings.push({
+        ruleId: 'fix-options',
+        where: 'fix.options',
+        message: `Troubleshooting requires exactly 1 correct fix option; got ${correctOptions.length}`,
+      });
+    }
+    const optionIds = fix.options.map((o) => (o as Record<string, unknown>)?.id);
+    if (new Set(optionIds).size !== optionIds.length) {
+      findings.push({
+        ruleId: 'fix-options',
+        where: 'fix.options',
+        message: 'duplicate fix option ids',
+      });
+    }
+    for (const [idx, opt] of fix.options.entries()) {
+      const o = opt as Record<string, unknown> | undefined;
+      const whereOpt = `fix.options[${idx}]`;
+      if (!o?.id || !o.label || !o.rationale) {
+        findings.push({
+          ruleId: 'missing-field',
+          where: whereOpt,
+          message: `${whereOpt} requires id, label, and rationale`,
+        });
+      }
+      if (o?.isCorrect === true) {
+        if (!o.citationUrl || typeof o.citationUrl !== 'string') {
           findings.push({
             ruleId: 'missing-field',
-            where: `goldCause.remediations[${idx}].title`,
-            message: `remediation ${idx + 1} requires a non-empty title`,
+            where: `${whereOpt}.citationUrl`,
+            message: `correct fix option requires citationUrl`,
           });
-        }
-        if (!r || typeof r.description !== 'string' || !r.description.trim()) {
-          findings.push({
-            ruleId: 'missing-field',
-            where: `goldCause.remediations[${idx}].description`,
-            message: `remediation ${idx + 1} requires a non-empty description`,
-          });
-        }
-        if (r?.citationUrl !== undefined && !isCitationValid(r.citationUrl, ctx)) {
+        } else if (!isCitationValid(o.citationUrl, ctx)) {
           findings.push({
             ruleId: 'citation-manifest',
-            where: `goldCause.remediations[${idx}].citationUrl`,
-            message: `remediation ${idx + 1} citationUrl must be an exact Citation Manifest URL (got ${r.citationUrl})`,
+            where: `${whereOpt}.citationUrl`,
+            message: `${whereOpt}.citationUrl must be an exact Citation Manifest URL (got ${o.citationUrl})`,
           });
         }
-      });
+      } else {
+        if (!o?.distractorAntipattern || typeof o.distractorAntipattern !== 'string') {
+          findings.push({
+            ruleId: 'missing-field',
+            where: `${whereOpt}.distractorAntipattern`,
+            message: `distractor fix option requires distractorAntipattern`,
+          });
+        }
+      }
     }
   }
 
@@ -292,6 +326,29 @@ export function lintTroubleshootingExtras(drill: TroubleshootingDrillDefinition)
     });
   }
 
+  if (drill.fix && Array.isArray(drill.fix.options)) {
+    for (const opt of drill.fix.options) {
+      if (!opt.isCorrect && opt.distractorAntipattern) {
+        const words = wordCount(opt.distractorAntipattern);
+        if (words < 2 || words > 5 || /[.!?]/.test(opt.distractorAntipattern)) {
+          findings.push({
+            ruleId: 'antipattern-name',
+            where: `fix option ${opt.id}`,
+            message: `distractorAntipattern "${opt.distractorAntipattern}" must be a 2–5 word name, not a sentence`,
+          });
+        }
+      }
+      const optPrefix = opt.rationale.match(VERDICT_PREFIX);
+      if (optPrefix) {
+        findings.push({
+          ruleId: 'verdict-prefix',
+          where: `fix option ${opt.id} rationale`,
+          message: `opens with the verdict "${optPrefix[0].trim()}"; the UI already shows the verdict`,
+        });
+      }
+    }
+  }
+
   return findings;
 }
 
@@ -310,7 +367,7 @@ export const troubleshootingDescriptor: DrillFormatDescriptor<
   lintWording: lintTroubleshootingExtras,
   getQuestionCount: (_drill) => 1,
   sanitizeForClient: (drill) => {
-    const { goldCause: _gold, hiddenDistractors: _distractors, ...rest } = drill;
+    const { goldCause: _gold, hiddenDistractors: _distractors, fix: _fix, ...rest } = drill;
     return rest;
   },
 };

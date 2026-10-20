@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { sanitizeDrillForClient } from '../formats/index.js';
-import type { RapidFireDrillDefinition, TroubleshootingDrillDefinition } from '../types/drill.js';
+import type { CaseFileDrillDefinition, TroubleshootingDrillDefinition } from '../types/drill.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,42 +38,58 @@ const FIXTURE_DRILL: TroubleshootingDrillDefinition = {
       rationale: 'Distractor rationale 1',
     },
   ],
+  fix: {
+    prompt: 'Secret fix prompt',
+    options: [
+      {
+        id: 'fix_1',
+        label: 'Secret gold fix',
+        rationale: 'Secret fix rationale',
+        isCorrect: true,
+      },
+    ],
+  },
 };
 
-const FIXTURE_RAPID_FIRE: RapidFireDrillDefinition = {
-  id: 'AGD-00001',
-  title: 'Fixture Rapid Fire',
-  format: 'Rapid_Fire',
+const FIXTURE_CASE_FILE: CaseFileDrillDefinition = {
+  id: 'AGD-00403',
+  title: 'Fixture Case File',
+  format: 'Case_File',
   domain: 'Platform_Core',
   domainLabel: 'Platform Core',
   difficulty: 'Associate_Domain_Architect',
   pillars: ['Trust'],
   version: 1,
   status: 'published',
-  steps: [],
+  brief: {
+    title: 'Brief title',
+    synopsis: 'Synopsis text',
+  },
+  stations: [],
 };
 
 describe('sanitizeDrillForClient', () => {
-  it('omits goldCause and hiddenDistractors from Troubleshooting drills', () => {
+  it('omits goldCause, hiddenDistractors, and fix from Troubleshooting drills', () => {
     const sanitized = sanitizeDrillForClient(FIXTURE_DRILL);
     expect(sanitized.id).toBe('AGD-01001');
     expect(sanitized.format).toBe('Troubleshooting');
     expect('goldCause' in sanitized).toBe(false);
     expect('hiddenDistractors' in sanitized).toBe(false);
+    expect('fix' in sanitized).toBe(false);
     // Other fields preserved
     expect((sanitized as typeof FIXTURE_DRILL).issue).toBe(FIXTURE_DRILL.issue);
     expect((sanitized as typeof FIXTURE_DRILL).probes).toEqual(FIXTURE_DRILL.probes);
     expect((sanitized as typeof FIXTURE_DRILL).architecture).toEqual(FIXTURE_DRILL.architecture);
   });
 
-  it('passes Rapid_Fire and Case_File drills through unchanged', () => {
-    const sanitized = sanitizeDrillForClient(FIXTURE_RAPID_FIRE);
-    expect(sanitized).toBe(FIXTURE_RAPID_FIRE);
+  it('passes Case_File drills through unchanged', () => {
+    const sanitized = sanitizeDrillForClient(FIXTURE_CASE_FILE);
+    expect(sanitized).toBe(FIXTURE_CASE_FILE);
   });
 });
 
 describe('canonicalDrills.json sanitization', () => {
-  it('ensures published canonicalDrills.json contains no goldCause or hiddenDistractors in Troubleshooting drills', () => {
+  it('ensures published canonicalDrills.json contains no goldCause, hiddenDistractors, or fix in Troubleshooting drills', () => {
     const canonicalPath = path.resolve(
       __dirname,
       '../../../../apps/arcgym-web/src/data/canonicalDrills.json',
@@ -94,6 +110,10 @@ describe('canonicalDrills.json sanitization', () => {
       expect(
         incident.hiddenDistractors,
         `Troubleshooting drill ${incident.id} leaked hiddenDistractors into canonicalDrills.json`,
+      ).toBeUndefined();
+      expect(
+        incident.fix,
+        `Troubleshooting drill ${incident.id} leaked fix into canonicalDrills.json`,
       ).toBeUndefined();
     }
   });

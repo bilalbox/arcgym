@@ -7,6 +7,7 @@ import {
   type DrillAttemptRecord,
   type DrillFormat,
   getCurrentCaseStation,
+  getEstablishedDecisions,
   optionSeed,
   orderOptions,
   type StepAttemptTelemetry,
@@ -259,6 +260,8 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
 
   if (!current) return null;
 
+  const establishedDecisions = getEstablishedDecisions(session);
+
   const correctCitationHref = safeCitationHref(
     current.station.options.find((o) => o.isCorrect)?.citationUrl,
   );
@@ -284,6 +287,37 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-5">
+        {establishedDecisions.length > 0 && (
+          <div className="rounded-xl border border-miro-hairline bg-miro-surfaceSoft p-3.5 text-xs space-y-1.5">
+            <div className="font-semibold uppercase tracking-wider text-miro-slate text-[11px]">
+              Decisions so far
+            </div>
+            <ul className="space-y-1 text-miro-primary">
+              {establishedDecisions.map((decisionLabel, idx) => (
+                <li key={decisionLabel} className="flex items-start gap-1.5">
+                  <span className="text-miro-muted font-mono shrink-0">Station {idx + 1}:</span>
+                  <span>{decisionLabel}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {current.station.exhibits && current.station.exhibits.length > 0 && (
+          <div className="space-y-3">
+            {current.station.exhibits.map((exhibit) => (
+              <figure
+                key={exhibit.diagramUrl}
+                className="rounded-xl border border-miro-hairline bg-miro-surface overflow-hidden"
+              >
+                <img src={exhibit.diagramUrl} alt={exhibit.label} className="w-full h-auto" />
+                <figcaption className="px-3.5 py-2 text-xs text-miro-slate border-t border-miro-hairline bg-miro-card">
+                  {exhibit.label}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
         {session.phase === 'first_call' && (
           <div className="space-y-3">
             <label className="block space-y-2">

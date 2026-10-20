@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   type CaseFileDrillDefinition,
   DRILL_FORMATS,
-  type RapidFireDrillDefinition,
   type TroubleshootingDrillDefinition,
 } from '../types/drill.js';
 import type { ValidationFinding } from '../validator/validator.js';
@@ -14,42 +13,6 @@ import {
 } from './index.js';
 
 const VALID_CITATION = 'https://architect.salesforce.com/well-architected/principles';
-
-function createValidRapidFire(): RapidFireDrillDefinition {
-  return {
-    id: 'AGD-00101',
-    title: 'Minimal Rapid Fire Title',
-    domain: 'Platform_Core',
-    domainLabel: 'Platform Core',
-    difficulty: 'Lead_CTA',
-    pillars: ['Trust'],
-    version: 1,
-    status: 'draft',
-    format: 'Rapid_Fire',
-    steps: [
-      {
-        id: 's1',
-        prompt: 'What is the recommended approach for this scenario?',
-        options: [
-          {
-            id: 'opt_a',
-            label: 'Option A description for the question',
-            isCorrect: true,
-            rationale: 'Correct because of principle X in official docs',
-            citationUrl: VALID_CITATION,
-          },
-          {
-            id: 'opt_b',
-            label: 'Option B description for the question',
-            isCorrect: false,
-            distractorAntipattern: 'Antipattern Name',
-            rationale: 'Fails because of constraint Y on the platform',
-          },
-        ],
-      },
-    ],
-  };
-}
 
 function createValidCaseFile(): CaseFileDrillDefinition {
   return {
@@ -73,6 +36,13 @@ function createValidCaseFile(): CaseFileDrillDefinition {
         boardDomain: 'Integration',
         prompt: 'Station 1 prompt',
         probeBudget: 2,
+        exhibits: [
+          {
+            id: 'ex1',
+            label: 'System Topology',
+            diagramUrl: '/diagrams/test-topology.svg',
+          },
+        ],
         probes: [
           { id: 'p1', label: 'Q1?', tier: 'pivotal', answer: 'A1' },
           { id: 'p2', label: 'Q2?', tier: 'pivotal', answer: 'A2' },
@@ -125,14 +95,14 @@ function createValidCaseFile(): CaseFileDrillDefinition {
         options: [
           {
             id: 'opt_1',
-            label: 'Station recommendation 1 option label',
+            label: 'Station recommendation 2 option label',
             isCorrect: true,
             rationale: 'Rec rationale grounds this architecture choice',
             citationUrl: VALID_CITATION,
           },
           {
             id: 'opt_2',
-            label: 'Station recommendation 2 option label',
+            label: 'Station recommendation 2 bad option',
             isCorrect: false,
             distractorAntipattern: 'Bad Approach Pattern',
             rationale: 'Why it fails according to platform constraints',
@@ -161,14 +131,14 @@ function createValidCaseFile(): CaseFileDrillDefinition {
         options: [
           {
             id: 'opt_1',
-            label: 'Station recommendation 1 option label',
+            label: 'Station recommendation 3 option label',
             isCorrect: true,
             rationale: 'Rec rationale grounds this architecture choice',
             citationUrl: VALID_CITATION,
           },
           {
             id: 'opt_2',
-            label: 'Station recommendation 2 option label',
+            label: 'Station recommendation 3 bad option',
             isCorrect: false,
             distractorAntipattern: 'Bad Approach Pattern',
             rationale: 'Why it fails according to platform constraints',
@@ -219,6 +189,32 @@ function createValidTroubleshooting(): TroubleshootingDrillDefinition {
       { id: 'd2', text: 'Wrong cause 2', antipattern: 'Antipattern Name 2', rationale: 'Fails 2' },
       { id: 'd3', text: 'Wrong cause 3', antipattern: 'Antipattern Name 3', rationale: 'Fails 3' },
     ],
+    fix: {
+      prompt: 'Select the architectural remediation:',
+      options: [
+        {
+          id: 'fix_gold',
+          label: 'Adopt Change Data Capture with replay ID retention',
+          rationale: 'Guarantees reliable message delivery without polling locks.',
+          isCorrect: true,
+          citationUrl: VALID_CITATION,
+        },
+        {
+          id: 'fix_d1',
+          label: 'Increase Apex batch size to 2000 records',
+          rationale: 'Exceeds governor limits and triggers locking.',
+          isCorrect: false,
+          distractorAntipattern: 'Governor Limit Exhaustion',
+        },
+        {
+          id: 'fix_d2',
+          label: 'Use Future methods for asynchronous processing',
+          rationale: 'Future methods cannot be monitored or chained.',
+          isCorrect: false,
+          distractorAntipattern: 'Unmanaged Asynchrony',
+        },
+      ],
+    },
   };
 }
 
@@ -245,47 +241,6 @@ describe('Drill Format Descriptors & Registry', () => {
     expect(formats).toEqual(expect.arrayContaining(DRILL_FORMATS));
   });
 
-  describe('Rapid_Fire descriptor', () => {
-    const desc = getDrillFormatDescriptor('Rapid_Fire');
-    const rf = createValidRapidFire();
-
-    it('has expected metadata', () => {
-      expect(desc.format).toBe('Rapid_Fire');
-      expect(desc.label).toBe('Rapid Fire');
-      expect(desc.routePrefix).toBe('/');
-      expect(desc.countsForStreak).toBe(true);
-      expect(desc.isDailyEligible).toBe(true);
-    });
-
-    it('identifies authored and client drills', () => {
-      expect(desc.isAuthored(rf)).toBe(true);
-      expect(desc.isClient(rf)).toBe(true);
-      expect(desc.isAuthored({ format: 'Case_File' })).toBe(false);
-    });
-
-    it('calculates question count from steps', () => {
-      expect(desc.getQuestionCount(rf)).toBe(1);
-      expect(desc.getQuestionCount({ ...rf, steps: [...rf.steps, ...rf.steps] })).toBe(2);
-      expect(desc.getQuestionCount({ ...rf, steps: [] })).toBe(1);
-    });
-
-    it('sanitizes identity for client', () => {
-      const sanitized = desc.sanitizeForClient(rf);
-      expect(sanitized).toBe(rf);
-    });
-
-    it('validates a valid rapid fire drill with no findings', () => {
-      const findings: ValidationFinding[] = [];
-      desc.validate(rf as unknown as Record<string, unknown>, {}, findings);
-      expect(findings).toEqual([]);
-    });
-
-    it('lints wording of rapid fire drill', () => {
-      const findings = desc.lintWording(rf);
-      expect(findings).toEqual([]);
-    });
-  });
-
   describe('Case_File descriptor', () => {
     const desc = getDrillFormatDescriptor('Case_File');
     const cf = createValidCaseFile();
@@ -301,7 +256,7 @@ describe('Drill Format Descriptors & Registry', () => {
     it('identifies authored and client drills', () => {
       expect(desc.isAuthored(cf)).toBe(true);
       expect(desc.isClient(cf)).toBe(true);
-      expect(desc.isAuthored({ format: 'Rapid_Fire' })).toBe(false);
+      expect(desc.isAuthored({ format: 'Troubleshooting' })).toBe(false);
     });
 
     it('calculates question count from stations', () => {
@@ -350,10 +305,11 @@ describe('Drill Format Descriptors & Registry', () => {
       expect(desc.getQuestionCount(ts)).toBe(1);
     });
 
-    it('sanitizes drill by stripping goldCause and hiddenDistractors', () => {
+    it('sanitizes drill by stripping goldCause, hiddenDistractors, and fix', () => {
       const sanitized = desc.sanitizeForClient(ts);
       expect('goldCause' in sanitized).toBe(false);
       expect('hiddenDistractors' in sanitized).toBe(false);
+      expect('fix' in sanitized).toBe(false);
       expect(sanitized.id).toBe(ts.id);
       expect(sanitized.architecture).toEqual(ts.architecture);
       expect(sanitized.issue).toBe(ts.issue);

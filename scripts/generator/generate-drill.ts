@@ -104,7 +104,7 @@ function fail(message: string): never {
 function parsePromptArgs(args: string[]): PromptArgs {
   const result: PromptArgs = {
     topic: '',
-    format: 'Rapid_Fire',
+    format: 'Case_File',
     difficulty: 'Lead_CTA',
     steps: 3,
     topK: 5,
@@ -312,55 +312,10 @@ const WORDING_RULES = `### Wording Rules (ingest rejects drills that break the c
 - Question text (prompt / scenario): the situation, then the constraint(s) the answer depends on, then exactly one question. Every sentence and number must matter to at least one option's reasoning; keep Rapid Fire stems and Case File station prompts to 55 words or fewer. State constraints as facts or numbers (e.g. "the org already uses 80% of its daily API allocation"), never as the negation of an option's approach ("without a polling service" rules out the polling option by keyword). Ask for the decision ("Which pattern should the architect use?"), not "Which is Well-Architected?". Never name the source document. No stakeholder emotion ("Leadership will not accept…").
 - Options: every option answers the same question in the same grammatical shape, with one decision per option. The correct option must not be the longest: keep all options within ±25% of each other in word count. Every distractor is something a competent practitioner would plausibly choose. Never use words that announce a wrong answer: entirely, blindly, immediately, always, never, directly to production, raw, without X.
 - Facts: every number, limit, product name, and API or exception name must be real. A distractor may misapply a real limit but may not invent one.
-- Correct-option rationale (Rapid Fire rationale / Case File recommendation rationale): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
+- Correct-option rationale (Case File recommendation rationale): 1–3 sentences covering the principle from the cited chunk and the constraint in the question that decides it. Do not repeat the option's wording.
 - Feedback text (rationale): no verdict prefixes ("Correct!", "Antipattern:", "Risky!"); the UI already shows the verdict.
 - Case File only: brief.synopsis may be longer (Evaluation-scale, max ~220 words) but must NOT contain pivotal probe answer text. Probe labels are clarifying questions ending with ?. Probe answers are scenario facts only—never architecture advice. Exactly 2 pivotal probes per station; distractor probes need distractorAntipattern.
 `;
-
-function buildRapidFireSchema(
-  drillId: string,
-  args: PromptArgs,
-  domain: string,
-  domainLabel: string,
-  pillarExample: string,
-  sourceCardLine: string,
-  citationUrl: string,
-): string {
-  return `{
-  "id": "${drillId}",
-  "title": "Clear, concise CTA-level drill title",
-  "format": "Rapid_Fire",
-  "domain": "${domain}",
-  "domainLabel": "${domainLabel}",
-  "difficulty": "${args.difficulty}",
-  "pillars": ${pillarExample},
-  "version": 1,
-  "status": "draft",${sourceCardLine}
-  "steps": [
-    {
-      "id": "s1",
-      "prompt": "Situation, then the constraint(s) the answer depends on, then one question...",
-      "options": [
-        {
-          "id": "s1_a",
-          "label": "Option A description...",
-          "isCorrect": false,
-          "distractorAntipattern": "Short Antipattern Name",
-          "rationale": "1–2 sentences: why it fails under this step's constraint",
-          "citationUrl": "${citationUrl}"
-        },
-        {
-          "id": "s1_b",
-          "label": "Option B description (optimal)...",
-          "isCorrect": true,
-          "rationale": "The principle from the cited chunk and the constraint in the prompt that decides it",
-          "citationUrl": "${citationUrl}"
-        }
-      ]
-    }
-  ]
-}`;
-}
 
 function buildTroubleshootingSchema(
   drillId: string,
@@ -439,9 +394,35 @@ function buildTroubleshootingSchema(
       "antipattern": "Short Antipattern Name",
       "rationale": "Why it fails"
     }
-  ]
+  ],
+  "fix": {
+    "prompt": "Select the architectural remediation:",
+    "options": [
+      {
+        "id": "fix_gold",
+        "label": "Gold architectural fix...",
+        "rationale": "Why it resolves the root cause under architecture constraints",
+        "isCorrect": true,
+        "citationUrl": "${citationUrl}"
+      },
+      {
+        "id": "fix_d1",
+        "label": "First distractor fix...",
+        "rationale": "Why it fails or triggers downstream bottlenecks",
+        "isCorrect": false,
+        "distractorAntipattern": "Short Antipattern Name"
+      },
+      {
+        "id": "fix_d2",
+        "label": "Second distractor fix...",
+        "rationale": "Why it fails",
+        "isCorrect": false,
+        "distractorAntipattern": "Short Antipattern Name"
+      }
+    ]
+  }
 }
-Write exactly ${TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT} hiddenDistractors. Require ≥${TROUBLESHOOTING_MIN_PIVOTAL_PROBES} pivotal probes, mix useful + distractor probes (~7 total), probeBudget ${TROUBLESHOOTING_PROBE_BUDGET}. diagramUrl is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Probe answers are scenario fiction; only goldCause.citationUrl cites Well-Architected Grounding when the failure class is doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
+Write exactly ${TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT} hiddenDistractors. Require ≥${TROUBLESHOOTING_MIN_PIVOTAL_PROBES} pivotal probes, mix useful + distractor probes (~7 total), probeBudget ${TROUBLESHOOTING_PROBE_BUDGET}. diagramUrl is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Include a Fix definition with exactly 3 options (1 gold cited + 2 distractor antipatterns). Probe answers are scenario fiction; only goldCause.citationUrl and gold fix citationUrl cite Well-Architected Grounding when doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
 }
 
 function buildCaseFileSchema(
@@ -556,8 +537,8 @@ ${c.content}
   const citationUrl = chunks[0]?.metadata?.url || 'https://architect.salesforce.com';
 
   const schema =
-    args.format === 'Case_File'
-      ? buildCaseFileSchema(
+    args.format === 'Troubleshooting'
+      ? buildTroubleshootingSchema(
           drillId,
           args,
           domain,
@@ -566,25 +547,15 @@ ${c.content}
           sourceCardLine,
           citationUrl,
         )
-      : args.format === 'Troubleshooting'
-        ? buildTroubleshootingSchema(
-            drillId,
-            args,
-            domain,
-            domainLabel,
-            pillarExample,
-            sourceCardLine,
-            citationUrl,
-          )
-        : buildRapidFireSchema(
-            drillId,
-            args,
-            domain,
-            domainLabel,
-            pillarExample,
-            sourceCardLine,
-            citationUrl,
-          );
+      : buildCaseFileSchema(
+          drillId,
+          args,
+          domain,
+          domainLabel,
+          pillarExample,
+          sourceCardLine,
+          citationUrl,
+        );
 
   const formatNotes =
     args.format === 'Case_File'
@@ -592,13 +563,13 @@ ${c.content}
 - Probe Budget: 3 picks from ~7 clarifying questions per station
 - Dual scoring: probe quality + confidence-gated recommendation
 - Grounding: only final correct options cite chunks; probe answers are scenario fiction`
-      : args.format === 'Troubleshooting'
-        ? `- One Incident: architecture synopsis + required diagram + issue
+      : `- One Incident: architecture synopsis + required diagram + issue
+- First Call: initial gut hypothesis (silently graded against antipatterns)
 - Probe Budget: 3 picks from ~7 clarifying questions (≥2 pivotal)
 - Free-text cause graded by CLEF choice over gold + exactly 3 hidden distractors + other catchall (never MCQ)
-- Dual scoring: probe quality + Brier on cause correct/incorrect
-- Grounding: probe answers are scenario fiction; goldCause.citationUrl optional when failure class is doc-backed`
-        : `- Number of Steps: up to ${args.steps}`;
+- Fix: 3-choice remediation (1 gold cited + 2 antipattern distractors), Brier scored
+- Scoring: Probe discovery + Cause Brier + Fix Brier
+- Grounding: probe answers are scenario fiction; goldCause and gold fix cite Well-Architected Grounding`;
 
   return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
 Generate a high-stakes, realistic architectural judgment drill formatted as valid JSON strictly adhering to the ArcGym schema.

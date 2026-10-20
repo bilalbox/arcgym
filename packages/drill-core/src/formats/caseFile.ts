@@ -145,6 +145,34 @@ export function validateCaseFile(
       });
     }
 
+    if (station.exhibits !== undefined) {
+      if (!Array.isArray(station.exhibits)) {
+        findings.push({
+          ruleId: 'missing-field',
+          where: `${whereStation}.exhibits`,
+          message: `${whereStation}.exhibits must be an array when present`,
+        });
+      } else {
+        for (const [i, ex] of station.exhibits.entries()) {
+          const exhibit = ex as Record<string, unknown> | undefined;
+          if (!exhibit?.label || !exhibit.diagramUrl) {
+            findings.push({
+              ruleId: 'missing-field',
+              where: `${whereStation}.exhibits[${i}]`,
+              message: `${whereStation}.exhibits[${i}] requires label and diagramUrl`,
+            });
+          } else {
+            validateDiagramUrl(
+              exhibit.diagramUrl,
+              `${whereStation}.exhibits[${i}].diagramUrl`,
+              ctx,
+              findings,
+            );
+          }
+        }
+      }
+    }
+
     validateProbePool(
       station.probes,
       station.probeBudget,
@@ -215,6 +243,25 @@ export function lintCaseFileExtras(drill: CaseFileDrillDefinition): WordingFindi
             ruleId: 'antipattern-name',
             where: `station ${station.id} probe ${probe.id}`,
             message: `distractorAntipattern "${probe.distractorAntipattern}" must be a 2–5 word name, not a sentence`,
+          });
+        }
+      }
+    }
+  }
+
+  for (let i = 1; i < drill.stations.length; i++) {
+    const currentStation = drill.stations[i];
+    const currentPromptLower = currentStation.prompt.toLowerCase();
+    for (let j = 0; j < i; j++) {
+      const priorStation = drill.stations[j];
+      const priorGold = priorStation.options.find((o) => o.isCorrect);
+      if (priorGold) {
+        const priorLabelLower = priorGold.label.trim().toLowerCase();
+        if (priorLabelLower.length >= 8 && currentPromptLower.includes(priorLabelLower)) {
+          findings.push({
+            ruleId: 'established-decision-leak',
+            where: `station ${currentStation.id} prompt`,
+            message: `prompt repeats earlier station ${priorStation.id} gold decision ("${priorGold.label}"); use Established Decisions instead of restating in prompt`,
           });
         }
       }

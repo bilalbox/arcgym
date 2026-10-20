@@ -300,7 +300,25 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
 
             const grader = new StubCauseGrader();
             const result = await grader.grade({ drill, causeText });
-            sendJson(res, 200, result);
+            const firstCallText = String(
+              (body as { firstCallText?: unknown }).firstCallText ?? '',
+            ).trim();
+            let firstCallGrade:
+              | {
+                  verdict: unknown;
+                  matchedDistractor: unknown;
+                  chosenId: string;
+                }
+              | undefined;
+            if (firstCallText) {
+              const fcResult = await grader.grade({ drill, causeText: firstCallText });
+              firstCallGrade = {
+                verdict: fcResult.verdict,
+                matchedDistractor: fcResult.matchedDistractor,
+                chosenId: fcResult.chosenId,
+              };
+            }
+            sendJson(res, 200, { ...result, fix: drill.fix, firstCallGrade });
             return;
           } catch (err) {
             sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });

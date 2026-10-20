@@ -279,15 +279,22 @@ try {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 }
 
-const grounded = publishedDrills.filter((d) =>
-  d.format === 'Rapid_Fire'
-    ? (d.steps ?? []).some((s) =>
-        (s.options ?? []).some((o) => o.citationUrl?.includes('architect.salesforce.com')),
-      )
-    : false,
-).length;
+const grounded = publishedDrills.filter((d) => {
+  if (d.format === 'Case_File') {
+    return (d.stations ?? []).some((st) =>
+      (st.options ?? []).some((o) => o.citationUrl?.includes('architect.salesforce.com')),
+    );
+  }
+  if (d.format === 'Troubleshooting') {
+    return (
+      d.goldCause?.citationUrl?.includes('architect.salesforce.com') ||
+      (d.fix?.options ?? []).some((o) => o.citationUrl?.includes('architect.salesforce.com'))
+    );
+  }
+  return false;
+}).length;
 
 console.log('\n--- Grounding ---');
 console.log(` • Total published drills: ${publishedDrills.length}`);
-console.log(` • Rapid Fire with architect.salesforce.com citations: ${grounded}`);
+console.log(` • Drills with architect.salesforce.com citations: ${grounded}`);
 console.log('\nSeeding complete.\n');

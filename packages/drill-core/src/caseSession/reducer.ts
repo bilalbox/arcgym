@@ -96,6 +96,24 @@ export function getCurrentCaseStation(state: CaseSessionState): CaseStationState
 }
 
 /**
+ * Returns the gold recommendation labels of all completed prior stations in the Case File.
+ * Carried forward as established facts for later stations.
+ */
+export function getEstablishedDecisions(state: CaseSessionState): string[] {
+  const decisions: string[] = [];
+  for (let i = 0; i < state.currentStationIndex; i++) {
+    const st = state.stations[i];
+    if (st) {
+      const goldOption = st.station.options.find((o) => o.isCorrect);
+      if (goldOption) {
+        decisions.push(goldOption.label);
+      }
+    }
+  }
+  return decisions;
+}
+
+/**
  * Last selected pivotal probe, else last selected probe — discovery highlight after First Call.
  * Requires a non-skipped First Call with non-empty hypothesis text and at least one probe.
  * Does not compare free-text to the final recommendation option (no false “flip”).

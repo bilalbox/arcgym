@@ -5,8 +5,8 @@ Domain terminology for ArcGym architecture and drill authoring, anchored in the 
 ## Domain Terms
 
 ### Drill
-A self-contained architectural judgment practice exercise. Rapid Fire drills target about 2 minutes per rep; Case File stations are Evaluation-scale and longer.
-_Avoid_: Quiz, test, exam, flashcard
+A self-contained architectural judgment practice exercise: either a Case File or an Incident. Every Drill is investigation-scale (minutes, not seconds) and gated by a Probe Budget.
+_Avoid_: Quiz, test, exam, flashcard, rep
 
 ### Architectural Domain
 One of seven practice categories drawn from Salesforce Architect Fundamentals (Platform Core, Data Architecture, Security and Access, Integration APIs, AI and Automation, Infrastructure, DevOps Lifecycle). Every Drill has exactly one primary Architectural Domain. Orthogonal to Well-Architected pillars: domain is *where* on the platform map a Drill sits; pillars are *how* the Architectural Trade-Off is judged.
@@ -20,24 +20,8 @@ _Avoid_: Architectural Domain, subtitle, SEO keyword
 The practice of rating self-assessed certainty before committing an answer, scoring architects on whether they know what they know (and know what they don't know).
 _Avoid_: Guess, bet, probability score
 
-### Hypercorrection Intercept
-The feedback path after a wrong commit at high Confidence Calibration (85% or 95%): withhold the correct option and its rationale, name the matched Antipattern Distractor and why it tempts, then allow one second try before the normal reveal.
-_Avoid_: Surprise card, surprise chrome, flashcard, adaptive lesson
-
-### Deferred Retest
-A single later Rapid Fire rep on the same architectural principle as a prior high-confidence miss, drawn from an authored sibling Drill rather than repeating the same stem. Not a spaced-repetition deck.
-_Avoid_: Flashcard, SRS queue, review deck, same-question retry
-
-### Contrast Set
-An authored group of Rapid Fire Drills that share one deciding architectural variable and differ in stem; identified by a shared `contrastSetId`. Used to schedule same-round contrast reps and to pick a sibling for a Deferred Retest.
-_Avoid_: Flashcard deck, question family, tagged topic cluster, sourceCardIds heuristic
-
-### Distractor Autopsy
-A short post-reveal prompt that asks why a specific Antipattern Distractor fails in this Drill, answered by tapping one of several authored explanation chips (usually from option rationales). Unscored; skippable.
-_Avoid_: Shame framing, free-text essay, scored follow-up quiz
-
 ### First Call
-An unscored one-line free-text gut hypothesis (and optional Confidence Calibration) captured on a Case File Station after the Brief and before the Probe Budget unlocks. Compared to the final recommendation so probe-driven revisions are visible.
+An unscored one-line free-text gut hypothesis (and optional Confidence Calibration) captured after the Brief and before the Probe Budget unlocks — on every Case File Station and on every Incident. Compared to the final commit so probe-driven revisions are visible; on an Incident it is silently graded against the same gold cause and hidden distractors to show which antipattern the first instinct matched.
 _Avoid_: Scored pretest, mandatory Associate gate, oral defense, recommendation-option pick
 
 ### Architectural Trade-Off
@@ -45,15 +29,11 @@ A design tension evaluated across the Salesforce Well-Architected Framework pill
 _Avoid_: Feature preference, single right answer
 
 ### Drill Format
-The interaction archetype for a Drill. ArcGym supports three formats: Rapid Fire (daily streak), Case File (Evaluation-scale CTA practice), and Troubleshooting (scarce-probe diagnosis with free-text cause). Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains. Topology-choice Rapid Fire drills embed optional `diagramUrl` previews inside options (with Inspect lightbox), rather than a separate Diagram runner.
-_Avoid_: Question type, quiz mode, Currency, Scenario, Lesson, Diagram-as-separate-format
-
-### Rapid Fire Drill
-A high-tempo multi-rep architectural decision workout. Each Rapid Fire round comprises exactly 3 decision reps (drills), requiring completion of all 3 reps to achieve that day's practice streak. A round may be three independent drills or one Contrast Set. Options may include an optional topology image (`diagramUrl`) rendered inline with Inspect lightbox zoom.
-_Avoid_: Single-question rapid fire, 5-rep round, partial streak award, flashcard round, separate Diagram runner
+The interaction archetype for a Drill. ArcGym supports exactly two formats: Case File (Evaluation-scale CTA recommendation) and Troubleshooting (scarce-probe diagnosis with free-text cause). Orthogonal to Architectural Domain: Format is *how* the Drill is played; Domain is *what* area it trains.
+_Avoid_: Question type, quiz mode, Rapid Fire, Currency, Scenario, Lesson, Diagram-as-separate-format
 
 ### Case File Drill
-An Evaluation-scale architectural judgment exercise: a Brief (fictional narrative), three or more Stations under that Brief, a scarce Probe Budget of clarifying questions that unlock scenario facts at each Station, then a confidence-gated recommendation. Outside the daily Rapid Fire streak. Always at least three Stations — never a solo station.
+An Evaluation-scale architectural judgment exercise: a Brief (fictional narrative), three or more Stations under that Brief, a scarce Probe Budget of clarifying questions that unlock scenario facts at each Station, then a confidence-gated recommendation. Completing one earns the day's Practice Streak. Always at least three Stations — never a solo station.
 _Avoid_: Board Probe, Board Eval, Scenario, Currency, oral defense, free-text presentation, full Review Board clock, solo station
 
 ### Brief
@@ -61,16 +41,32 @@ The fictional enterprise narrative shared by every Station in a Case File. Leave
 _Avoid_: Exam scenario packet, stem, prompt dump
 
 ### Station
-One CTA-board-domain decision inside a Case File: Probe Budget discovery, then a confidence-gated recommendation.
+One CTA-board-domain decision inside a Case File: Probe Budget discovery, then a confidence-gated recommendation chosen from authored options (never free text). May carry its own Exhibits.
 _Avoid_: Question, quiz item, solo drill, Board Probe station
+
+### Exhibit
+A labeled diagram or artifact attached to a Brief or to a single Station, shown as evidence alongside the narrative.
+_Avoid_: Attachment, hint, illustration
+
+### Established Decision
+The correct recommendation of a completed Station (its gold option label), carried forward as a stated fact into every later Station of the same Case File. The learner's own pick never carries forward, so one miss cannot cascade, and later Station prompts never restate it.
+_Avoid_: Branching path, learner's prior answer, prompt-embedded spoiler
 
 ### Probe Budget
 The limited number of clarifying questions an architect may ask before committing a Case File Station recommendation or a Troubleshooting Incident cause. Pivotal probes narrow the decision space; distractor probes waste budget on irrelevant fishing.
 _Avoid_: Hint unlock, investigation credits, Currency spend
 
 ### Cases
-The learner-facing mode for Case File practice, separate from the daily Rapid Fire streak.
+The learner-facing mode for Case File practice (`/cases`), peer to Troubleshoot.
 _Avoid_: Board Eval, Review Board mock, exam mode
+
+### Practice Streak
+Consecutive calendar days on which the learner completed at least one Drill (a whole Case File or one Incident).
+_Avoid_: Rep streak, partial streak award, per-format streak
+
+### Daily Drill
+The one Case File or Incident the Home page recommends to a learner for today, chosen deterministically from uncompleted Drills.
+_Avoid_: Daily workout, 3-rep round, featured drill
 
 ### Learner Identity
 The cryptographic authentication credential or OAuth voucher establishing a learner's cloud session, decoupled from personal identifying information.
@@ -89,11 +85,15 @@ The deterministic two-way set-union reconciliation of local client attempt telem
 _Avoid_: Cloud save, profile download, state overwrite
 
 ### Troubleshooting Drill
-A diagnosis practice format: architecture synopsis + required diagram + issue, a scarce Probe Budget of clarifying questions that unlock scenario facts, then a confidence-gated free-text root-cause commit. Graded by Workers AI CLEF as a choice over one gold cause, three hidden antipattern distractors (never MCQ), and an `other` catchall. Outside the daily Rapid Fire streak; no separate Troubleshoot streak in v1. See ADR 0004.
-_Avoid_: Quiz, Scenario, Lesson, remediation step (v1), LLM-as-judge, BGE reranker grading
+A diagnosis practice format: architecture synopsis + required diagram + issue, a First Call, a scarce Probe Budget of clarifying questions that unlock scenario facts, a confidence-gated free-text root-cause commit, then — after the gold cause is revealed — a confidence-gated Fix. The cause is graded by Workers AI CLEF as a choice over one gold cause, three hidden antipattern distractors (never MCQ), and an `other` catchall. Completing one earns the day's Practice Streak. See ADR 0004 and ADR 0008.
+_Avoid_: Quiz, Scenario, Lesson, LLM-as-judge, BGE reranker grading
+
+### Fix
+The remediation decision that closes an Incident: chosen from one cited gold fix and two Antipattern Distractor fixes, taken only after the gold cause is revealed so a missed diagnosis does not void the remediation judgment.
+_Avoid_: Remediation reading list, solution cards, second cause guess
 
 ### Incident
-One complete Troubleshooting Drill — the unit of Troubleshoot practice (not a multi-station Case File, not a three-rep Rapid Fire pack).
+One complete Troubleshooting Drill — the unit of Troubleshoot practice (not a multi-station Case File).
 _Avoid_: Station, Brief pack, streak rep
 
 ### Troubleshoot
@@ -104,14 +104,6 @@ _Avoid_: Cases submenu, Quiz mode, daily streak entry
 Learner-facing strings stay sparse. Structure and controls carry meaning; captions that restate the route, format, or mechanic are deleted. Prefer short verbs over tutorials. See `design.md` §7.
 _Avoid_: Meta-explanations, redundant section labels, decorative icon+echo rows, instructional subtitles
 
-### Practice Round
-A sequenced set of architectural decision reps (default 3 for a daily practice workout, or 1 for solo practice) evaluated under the Universal Pre-Submit Gate.
-_Avoid_: Quiz session, test round, question set
-
-### Practice Session
-The state machine governing rep progression, option selection, confidence commitment, and Brier scoring across a Practice Round.
-_Avoid_: Quiz runner, game controller, test runner
-
 ### Well-Architected Grounding
 The architectural rationale, citations, and decision trees anchored in official Salesforce documentation on architect.salesforce.com, developer.salesforce.com, and help.salesforce.com. A correct option's citation must be an exact URL present in the Citation Manifest (the crawled grounding corpus). Trailhead, engineering blogs, practitioner blogs, and Friction Cards are never Well-Architected Grounding; they may inform scenario realism and Antipattern Distractors only. Case File clarifying answers are scenario fiction; only the final recommendation cites Well-Architected Grounding.
 _Avoid_: Opinion, editorializing, dual grounding via Trailhead, community, or blog posts
@@ -121,7 +113,7 @@ The set of exact documentation URLs eligible to ground a correct option. Built o
 _Avoid_: Host allowlist alone, uncrawled URL, blog URL
 
 ### Universal Pre-Submit Gate
-The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Rapid Fire reps, Case File Station recommendations, and Troubleshooting cause commits.
+The mandatory calibration step requiring selection of a confidence anchor before committing any architectural choice, creating uniform calibration telemetry across Case File Station recommendations and Troubleshooting cause commits.
 _Avoid_: Feedback prompt, post-quiz survey
 
 ### Architect Linter

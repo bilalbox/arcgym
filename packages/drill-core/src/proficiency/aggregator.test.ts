@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  CaseFileDrillDefinition,
   DrillAttemptRecord,
   DrillDefinitionDTO,
-  RapidFireDrillDefinition,
+  TroubleshootingDrillDefinition,
 } from '../types/drill.js';
 import {
   calculateProficiencyReport,
@@ -10,138 +11,136 @@ import {
   getDrillQuestionCount,
 } from './aggregator.js';
 
-const mockRapidFireDrill: RapidFireDrillDefinition = {
-  id: 'DR-001',
+const mockCaseFile1: CaseFileDrillDefinition = {
+  id: 'CF-001',
   title: 'Data Cloud Federation',
-  format: 'Rapid_Fire',
+  format: 'Case_File',
   domain: 'Data_Architecture',
   domainLabel: 'Data 360',
   difficulty: 'Lead_CTA',
   pillars: ['Reliability', 'Cost_Optimization'],
   version: 1,
   status: 'published',
-  steps: [
+  brief: {
+    title: 'Data Cloud Federation Brief',
+    synopsis: 'Synopsis',
+  },
+  stations: [
     {
-      id: 's1',
-      prompt: 'Step 1',
+      id: 'st1',
+      domain: 'Data_Architecture',
+      boardDomain: 'Data',
+      prompt: 'Station 1',
+      probeBudget: 2,
+      probes: [],
       options: [
         { id: 'o1', label: 'Option 1', isCorrect: true, rationale: 'r1' },
-        {
-          id: 'o2',
-          label: 'Option 2',
-          isCorrect: false,
-          rationale: 'r2',
-          distractorAntipattern: 'a2',
-        },
+        { id: 'o2', label: 'Option 2', isCorrect: false, rationale: 'r2' },
       ],
     },
     {
-      id: 's2',
-      prompt: 'Step 2',
+      id: 'st2',
+      domain: 'Data_Architecture',
+      boardDomain: 'Data',
+      prompt: 'Station 2',
+      probeBudget: 2,
+      probes: [],
       options: [{ id: 'o3', label: 'Option 3', isCorrect: true, rationale: 'r3' }],
     },
     {
-      id: 's3',
-      prompt: 'Step 3',
+      id: 'st3',
+      domain: 'Data_Architecture',
+      boardDomain: 'Data',
+      prompt: 'Station 3',
+      probeBudget: 2,
+      probes: [],
       options: [{ id: 'o4', label: 'Option 4', isCorrect: true, rationale: 'r4' }],
     },
   ],
 };
 
-const mockRapidFireDrill2: RapidFireDrillDefinition = {
-  id: 'DR-002',
+const mockCaseFile2: CaseFileDrillDefinition = {
+  id: 'CF-002',
   title: 'Platform Event Architecture',
-  format: 'Rapid_Fire',
+  format: 'Case_File',
   domain: 'Integration_Apis',
   domainLabel: 'Integration',
   difficulty: 'Lead_CTA',
   pillars: ['Reliability', 'Trust'],
   version: 1,
   status: 'published',
-  steps: [
+  brief: {
+    title: 'Platform Event Brief',
+    synopsis: 'Synopsis',
+  },
+  stations: [
     {
-      id: 's1',
-      prompt: 'Which event delivery architecture avoids duplicate triggers?',
+      id: 'st1',
+      domain: 'Integration_Apis',
+      boardDomain: 'Integration',
+      prompt: 'Station 1',
+      probeBudget: 2,
+      probes: [],
       options: [
-        {
-          id: 'o1',
-          label: 'Architecture A',
-          diagramUrl: '/diagrams/event-bus-a.svg',
-          isCorrect: true,
-          rationale: 'Pub-sub pattern with replay ID.',
-        },
-        {
-          id: 'o2',
-          label: 'Architecture B',
-          diagramUrl: '/diagrams/event-bus-b.svg',
-          isCorrect: false,
-          rationale: 'Lacks idempotency token.',
-          distractorAntipattern: 'Missing Idempotency',
-        },
+        { id: 'o1', label: 'Architecture A', isCorrect: true, rationale: 'Pub-sub pattern' },
+        { id: 'o2', label: 'Architecture B', isCorrect: false, rationale: 'Lacks idempotency' },
       ],
     },
     {
-      id: 's2',
-      prompt: 'Step 2',
-      options: [
-        {
-          id: 'o3',
-          label: 'Architecture C',
-          diagramUrl: '/diagrams/event-bus-c.svg',
-          isCorrect: true,
-          rationale: 'Fine',
-        },
-      ],
+      id: 'st2',
+      domain: 'Integration_Apis',
+      boardDomain: 'Integration',
+      prompt: 'Station 2',
+      probeBudget: 2,
+      probes: [],
+      options: [{ id: 'o3', label: 'Architecture C', isCorrect: true, rationale: 'Fine' }],
     },
   ],
 };
 
-const mockRapidFireDrill3: RapidFireDrillDefinition = {
-  id: 'DR-003',
+const mockIncident: TroubleshootingDrillDefinition = {
+  id: 'TR-001',
   title: 'Missing Identity Resolution',
-  format: 'Rapid_Fire',
+  format: 'Troubleshooting',
   domain: 'Data_Architecture',
   domainLabel: 'Data 360',
   difficulty: 'Lead_CTA',
   pillars: ['Trust'],
   version: 1,
   status: 'published',
-  steps: [
-    {
-      id: 's1',
-      prompt: 'Which missing component breaks unified profiles?',
-      options: [
-        {
-          id: 'o1',
-          label: 'Identity Resolution',
-          isCorrect: true,
-          rationale: 'IR unifies profiles before activation.',
-          citationUrl:
-            'https://architect.salesforce.com/docs/architect/fundamentals/guide/data-360-architecture.html#identity-resolution',
-        },
-        {
-          id: 'o2',
-          label: 'Data Action',
-          isCorrect: false,
-          rationale: 'Actions fire after profiles exist.',
-          distractorAntipattern: 'Activation Before Unification',
-        },
-      ],
-    },
+  architecture: {
+    synopsis: 'Topology synopsis',
+    diagramUrl: '/diagrams/test.svg',
+  },
+  issue: 'Profile unification failure',
+  probeBudget: 3,
+  probes: [],
+  goldCause: {
+    text: 'Root cause',
+    rationale: 'Rationale',
+  },
+  hiddenDistractors: [
+    { id: 'd1', text: 'Wrong 1', antipattern: 'AP 1', rationale: 'R1' },
+    { id: 'd2', text: 'Wrong 2', antipattern: 'AP 2', rationale: 'R2' },
+    { id: 'd3', text: 'Wrong 3', antipattern: 'AP 3', rationale: 'R3' },
   ],
+  fix: {
+    prompt: 'Fix prompt',
+    options: [
+      { id: 'f1', label: 'Fix 1', rationale: 'r1', isCorrect: true },
+      { id: 'f2', label: 'Fix 2', rationale: 'r2', isCorrect: false },
+      { id: 'f3', label: 'Fix 3', rationale: 'r3', isCorrect: false },
+    ],
+  },
 };
 
-const allMockDrills: DrillDefinitionDTO[] = [
-  mockRapidFireDrill,
-  mockRapidFireDrill2,
-  mockRapidFireDrill3,
-];
+const allMockDrills: DrillDefinitionDTO[] = [mockCaseFile1, mockCaseFile2, mockIncident];
 
 describe('getDrillQuestionCount', () => {
-  it('correctly counts steps for Rapid Fire drills', () => {
-    expect(getDrillQuestionCount(mockRapidFireDrill)).toBe(3);
-    expect(getDrillQuestionCount(mockRapidFireDrill2)).toBe(2);
-    expect(getDrillQuestionCount(mockRapidFireDrill3)).toBe(1);
+  it('correctly counts stations or questions for drills', () => {
+    expect(getDrillQuestionCount(mockCaseFile1)).toBe(3);
+    expect(getDrillQuestionCount(mockCaseFile2)).toBe(2);
+    expect(getDrillQuestionCount(mockIncident)).toBe(1);
   });
 });
 
@@ -157,11 +156,11 @@ describe('calculateProficiencyReport', () => {
   });
 
   it('aggregates domain stats and enforces 4-question threshold', () => {
-    // DR-001 has 3 questions. Completed with 67% accuracy (2 of 3 right).
+    // CF-001 has 3 questions. Completed with 67% accuracy (2 of 3 right).
     const attempts: Record<string, DrillAttemptRecord> = {
-      'DR-001': {
-        drillId: 'DR-001',
-        format: 'Rapid_Fire',
+      'CF-001': {
+        drillId: 'CF-001',
+        format: 'Case_File',
         completedAt: '2026-09-27T00:00:00Z',
         score: 150,
         accuracy: 2 / 3,
@@ -185,9 +184,9 @@ describe('calculateProficiencyReport', () => {
   it('triages measured domains into strengths (>=80%) and whereToStart (<80%)', () => {
     // Simulate multiple attempts or enriched telemetry surpassing 4 questions
     const attempts: Record<string, DrillAttemptRecord> = {
-      'DR-001': {
-        drillId: 'DR-001',
-        format: 'Rapid_Fire',
+      'CF-001': {
+        drillId: 'CF-001',
+        format: 'Case_File',
         completedAt: '2026-09-27T00:00:00Z',
         score: 150,
         accuracy: 1, // 3/3 right
@@ -199,9 +198,9 @@ describe('calculateProficiencyReport', () => {
           { stepId: 's4', confidence: 0.85, isCorrect: true, score: 90 },
         ],
       },
-      'DR-002': {
-        drillId: 'DR-002',
-        format: 'Rapid_Fire',
+      'CF-002': {
+        drillId: 'CF-002',
+        format: 'Case_File',
         completedAt: '2026-09-27T00:00:00Z',
         score: 50,
         accuracy: 0.5,
@@ -228,17 +227,17 @@ describe('calculateProficiencyReport', () => {
 
   it('aggregates across the 7 Architectural Domains when threshold is passed directly', () => {
     const attempts: Record<string, DrillAttemptRecord> = {
-      'DR-001': {
-        drillId: 'DR-001',
-        format: 'Rapid_Fire',
+      'CF-001': {
+        drillId: 'CF-001',
+        format: 'Case_File',
         completedAt: '2026-09-27T00:00:00Z',
         score: 150,
         accuracy: 1, // 3/3 right
         attemptsCount: 1,
       },
-      'DR-002': {
-        drillId: 'DR-002',
-        format: 'Rapid_Fire',
+      'CF-002': {
+        drillId: 'CF-002',
+        format: 'Case_File',
         completedAt: '2026-09-27T00:00:00Z',
         score: 50,
         accuracy: 0.5, // 1/2 right
@@ -313,9 +312,9 @@ describe('countProbeDrivenRevisions', () => {
   it('returns 0 when no First Call telemetry is present', () => {
     expect(
       countProbeDrivenRevisions({
-        'DR-001': {
-          drillId: 'DR-001',
-          format: 'Rapid_Fire',
+        'TR-001': {
+          drillId: 'TR-001',
+          format: 'Troubleshooting',
           completedAt: '2026-10-10T00:00:00Z',
           score: 50,
           accuracy: 1,

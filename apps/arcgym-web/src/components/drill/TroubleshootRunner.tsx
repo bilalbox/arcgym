@@ -10,7 +10,7 @@ import {
   safeCitationHref,
   troubleshootSessionReducer,
 } from '@arcgym/drill-core';
-import { ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, RotateCcw, XCircle } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -50,7 +50,10 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
   onDrillComplete,
   onNextDrill,
 }) => {
+  const [firstCallHypothesis, setFirstCallHypothesis] = useState('');
+  const [firstCallConfidence, setFirstCallConfidence] = useState<ConfidenceLevel | null>(null);
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
+  const [selectedFixConfidence, setSelectedFixConfidence] = useState<ConfidenceLevel | null>(null);
   const [grading, setGrading] = useState(false);
   const [gradeError, setGradeError] = useState<string | null>(null);
   const [session, dispatch] = useReducer(
@@ -59,10 +62,15 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     createTroubleshootSessionState,
   );
 
+  const canSkipFirstCall = drill.difficulty === 'Associate_Domain_Architect';
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reset when drill id changes
   useEffect(() => {
     dispatch({ type: 'RESET_SESSION' });
+    setFirstCallHypothesis('');
+    setFirstCallConfidence(null);
     setSelectedConfidence(null);
+    setSelectedFixConfidence(null);
     setGradeError(null);
   }, [drill.id]);
 
@@ -71,11 +79,14 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
   useEffect(() => {
     if (session.isCompleted && session.attempt && !completedRef.current) {
       completedRef.current = true;
+      const causeCorrect = session.isCorrect ? 1 : 0;
+      const fixCorrect = session.isFixCorrect ? 1 : 0;
+      const accuracy = (causeCorrect + fixCorrect) / 2;
       onDrillComplete?.({
         drillId: drill.id,
         format: 'Troubleshooting',
         score: session.totalScore,
-        accuracy: session.isCorrect ? 1 : 0,
+        accuracy,
         streakDays: 0,
         steps: session.attempt.steps,
       });
@@ -87,6 +98,7 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     session.attempt,
     session.totalScore,
     session.isCorrect,
+    session.isFixCorrect,
     drill.id,
     onDrillComplete,
   ]);
@@ -96,18 +108,30 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     [drill],
   );
 
-  const citationHref = safeCitationHref(session.grade?.goldCitationUrl);
+  const orderedFixOptions = useMemo(() => {
+    if (!session.fix) return [];
+    return orderOptions(session.fix.options, optionSeed(drill.id, 'fix'));
+  }, [session.fix, drill.id]);
+
+  const causeCitationHref = safeCitationHref(session.grade?.goldCitationUrl);
+  const goldFixOption = session.fix?.options.find((o) => o.isCorrect);
+  const fixCitationHref = safeCitationHref(goldFixOption?.citationUrl);
 
   const commitCause = async () => {
     if (!selectedConfidence || grading) return;
     setGrading(true);
     setGradeError(null);
     try {
-      const grade = await gradeCauseViaApi(drill.id, session.causeText);
+      const grade = await gradeCauseViaApi(
+        drill.id,
+        session.causeText,
+        session.firstCall?.hypothesis ?? undefined,
+      );
       dispatch({
-        type: 'COMMIT_CONFIDENCE',
+        type: 'RECEIVE_CAUSE_GRADE',
         confidence: (selectedConfidence / 100) as ConfidenceAnchor,
         grade,
+        fix: grade.fix,
       });
     } catch (err) {
       setGradeError(err instanceof Error ? err.message : 'Grading failed');
@@ -135,7 +159,7 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
           </div>
           {isAuthenticated ? (
             <Button
-              onClick={() => dispatch({ type: 'BEGIN_PROBES' })}
+              onClick={() => dispatch({ type: 'BEGIN_DRILL' })}
               className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
             >
               Begin <ArrowRight className="h-4 w-4" />
@@ -189,15 +213,27 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
               </p>
             </div>
             <div>
-              <span className="text-xs text-miro-slate font-medium">Discovery</span>
+              <span className="text-xs text-miro-slate font-medium">Fix</span>
               <p
                 className={`text-sm font-medium mt-1.5 ${
-                  session.missedAllPivotal ? 'text-miro-dangerText' : 'text-miro-successText'
+                  session.isFixCorrect ? 'text-miro-successText' : 'text-miro-dangerText'
                 }`}
               >
-                {session.missedAllPivotal ? 'Missed pivotal' : 'Pivotal hit'}
+                {session.isFixCorrect ? 'Correct' : 'Incorrect'}
               </p>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-miro-hairline p-3 text-xs text-miro-slate flex flex-wrap justify-between items-center gap-2">
+            <span>
+              Probe {session.probeScore ?? 0} · Cause {session.causeScore ?? 0} · Fix{' '}
+              {session.fixScore ?? 0}
+            </span>
+            {session.missedAllPivotal && (
+              <Badge variant="destructive" className="text-[10px]">
+                Missed pivotal
+              </Badge>
+            )}
           </div>
 
           {isReviewMode && previousAttempt && (
@@ -211,16 +247,30 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
 
           <DrillFeedbackWidget drillId={drill.id} />
 
-          {onNextDrill && (
-            <div className="pt-1">
+          <div className="flex flex-col gap-2.5 pt-1">
+            {onNextDrill && (
               <Button
                 onClick={onNextDrill}
                 className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
               >
                 Next <ArrowRight className="h-4 w-4" />
               </Button>
-            </div>
-          )}
+            )}
+            <Button
+              onClick={() => {
+                dispatch({ type: 'RESET_SESSION' });
+                setFirstCallHypothesis('');
+                setFirstCallConfidence(null);
+                setSelectedConfidence(null);
+                setSelectedFixConfidence(null);
+                setGradeError(null);
+              }}
+              variant="secondary"
+              className="w-full gap-2"
+            >
+              <RotateCcw className="h-4 w-4" /> Practice again
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -229,6 +279,68 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
       <CardContent className="space-y-5 pt-6">
+        {session.phase === 'first_call' && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed">
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block mb-1">
+                Incident Issue
+              </span>
+              {drill.issue}
+            </div>
+
+            <label className="block space-y-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
+                First Call Hypothesis
+              </span>
+              <textarea
+                value={firstCallHypothesis}
+                onChange={(e) => setFirstCallHypothesis(e.target.value)}
+                rows={3}
+                maxLength={280}
+                placeholder="What is your immediate gut hypothesis before opening diagnostic probes?"
+                className="w-full rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary placeholder:text-miro-muted focus:outline-none focus:border-miro-hairlineStrong resize-none"
+              />
+            </label>
+
+            <ConfidenceGate
+              selectedConfidence={firstCallConfidence}
+              onSelectConfidence={setFirstCallConfidence}
+              hasSelectedAnswer={firstCallHypothesis.trim().length > 0}
+              requireConfidence={false}
+              confidenceLabel="Confidence"
+              answerRequiredHint="Write a hypothesis first"
+              submitLabel="Lock First Call & Open Probes"
+              onSubmit={() => {
+                const hypothesis = firstCallHypothesis.trim();
+                if (!hypothesis) return;
+                dispatch({
+                  type: 'SUBMIT_FIRST_CALL',
+                  hypothesis,
+                  confidence: firstCallConfidence
+                    ? ((firstCallConfidence / 100) as ConfidenceAnchor)
+                    : undefined,
+                });
+                setFirstCallHypothesis('');
+                setFirstCallConfidence(null);
+              }}
+            />
+
+            {canSkipFirstCall && (
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  dispatch({ type: 'SKIP_FIRST_CALL' });
+                  setFirstCallHypothesis('');
+                  setFirstCallConfidence(null);
+                }}
+              >
+                Skip First Call
+              </Button>
+            )}
+          </div>
+        )}
+
         {(session.phase === 'probes' || session.probesLocked) && (
           <ProbeBudgetPanel
             probes={orderedProbes}
@@ -242,42 +354,54 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
 
         {session.phase === 'cause' && (
           <div className="space-y-3">
-            <textarea
-              value={session.causeText}
-              onChange={(e) => dispatch({ type: 'SET_CAUSE_TEXT', text: e.target.value })}
-              placeholder="Likely root cause…"
-              className="w-full min-h-[120px] rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary resize-y"
-            />
+            <label className="block space-y-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
+                Diagnostic Finding
+              </span>
+              <textarea
+                value={session.causeText}
+                onChange={(e) => dispatch({ type: 'SET_CAUSE_TEXT', text: e.target.value })}
+                placeholder="Synthesize the architectural root cause based on uncovered probe evidence…"
+                className="w-full min-h-[120px] rounded-xl border border-miro-hairline bg-miro-card px-3.5 py-3 text-sm text-miro-primary resize-y"
+              />
+            </label>
             <Button
-              onClick={() => dispatch({ type: 'BEGIN_COMMIT' })}
+              onClick={() => dispatch({ type: 'BEGIN_COMMIT_CAUSE' })}
               disabled={!session.causeText.trim()}
               className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary"
             >
-              Commit
+              Commit Cause <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         )}
 
-        {session.phase === 'commit' && (
+        {session.phase === 'commit_cause' && (
           <div className="space-y-4">
-            <p className="text-sm text-miro-slate whitespace-pre-wrap">{session.causeText}</p>
+            <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed whitespace-pre-wrap">
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block mb-1">
+                Your Root Cause Diagnosis
+              </span>
+              {session.causeText}
+            </div>
+
             {gradeError && (
               <p className="text-sm text-miro-dangerText border border-miro-dangerBorder rounded-md px-3 py-2">
                 {gradeError}
               </p>
             )}
+
             <ConfidenceGate
               selectedConfidence={selectedConfidence}
               onSelectConfidence={setSelectedConfidence}
               hasSelectedAnswer={Boolean(session.causeText.trim())}
               disabled={grading}
               onSubmit={() => void commitCause()}
-              submitLabel={grading ? 'Grading…' : 'Submit'}
+              submitLabel={grading ? 'Evaluating Diagnosis…' : 'Submit Cause Diagnosis'}
             />
           </div>
         )}
 
-        {session.phase === 'feedback' && session.grade && (
+        {session.phase === 'cause_reveal' && session.grade && (
           <div className="space-y-4">
             <div
               className={`rounded-xl border p-4 ${
@@ -286,88 +410,195 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
                   : 'border-miro-dangerBorder bg-miro-dangerLight'
               }`}
             >
-              <p className="text-sm font-medium text-miro-primary">
-                {session.grade.verdict === 'correct'
-                  ? 'Correct'
-                  : session.grade.verdict === 'incorrect_distractor'
-                    ? (session.distractorAntipattern ?? 'Incorrect')
-                    : 'Incorrect'}
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-miro-primary">
+                  {session.grade.verdict === 'correct'
+                    ? 'Root Cause Identified'
+                    : session.grade.verdict === 'incorrect_distractor'
+                      ? (session.distractorAntipattern ?? 'Incorrect Distractor')
+                      : 'Incorrect Diagnosis'}
+                </span>
+                <span className="text-xs font-mono font-medium">{session.causeScore ?? 0} pts</span>
+              </div>
               {session.grade.matchedDistractor && (
-                <p className="text-sm text-miro-slate mt-2">
+                <p className="text-xs text-miro-slate mt-2 leading-relaxed">
                   {session.grade.matchedDistractor.rationale}
                 </p>
               )}
             </div>
 
             <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 space-y-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block">
+                Gold Architectural Cause
+              </span>
               <p className="text-sm font-medium text-miro-primary">{session.grade.goldText}</p>
-              <p className="text-sm text-miro-slate">{session.grade.goldRationale}</p>
-              {citationHref && (
-                <a
-                  href={citationHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-miro-blue hover:underline"
-                >
-                  {new URL(citationHref).hostname}
-                </a>
+              <p className="text-xs text-miro-slate leading-relaxed">
+                {session.grade.goldRationale}
+              </p>
+              {causeCitationHref && (
+                <div className="pt-1">
+                  <a
+                    href={causeCitationHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-miro-blue hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>{new URL(causeCitationHref).hostname}</span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </div>
               )}
             </div>
 
-            {session.grade.goldRemediations && session.grade.goldRemediations.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
-                  Architectural Remediation
+            {session.firstCall && (
+              <div className="rounded-xl border border-miro-hairline bg-miro-card p-3.5 text-xs space-y-2">
+                <p className="font-semibold uppercase tracking-wider text-miro-slate text-[11px]">
+                  First Call Reflection
                 </p>
-                <div className="space-y-2">
-                  {session.grade.goldRemediations.map((rem, idx) => (
-                    <div
-                      key={rem.title}
-                      className="rounded-xl border border-miro-hairline bg-miro-surface p-3.5 space-y-1.5"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5 font-mono">
-                          Solution {idx + 1}
-                        </Badge>
-                        <span className="text-sm font-medium text-miro-primary">{rem.title}</span>
-                      </div>
-                      <p className="text-xs text-miro-slate leading-relaxed">{rem.description}</p>
-                      {rem.citationUrl && (
-                        <div className="pt-1">
-                          <a
-                            href={rem.citationUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[11px] text-miro-blue hover:underline inline-flex items-center gap-1"
-                          >
-                            <span>{new URL(rem.citationUrl).hostname}</span>
-                            <span aria-hidden="true">↗</span>
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-miro-primary">
+                  <div>
+                    <span className="text-miro-muted font-medium block text-[10px]">
+                      Initial Gut:
+                    </span>
+                    <p className="mt-0.5">
+                      {session.firstCall.skipped ? 'Skipped' : session.firstCall.hypothesis}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-miro-muted font-medium block text-[10px]">
+                      Diagnosis After Probes:
+                    </span>
+                    <p className="mt-0.5">{session.causeText}</p>
+                  </div>
                 </div>
+                {session.grade.firstCallGrade?.matchedDistractor && (
+                  <p className="text-[11px] text-amber-700 bg-amber-50 rounded p-2 border border-amber-200">
+                    Gut instinct matched antipattern:{' '}
+                    <strong>{session.grade.firstCallGrade.matchedDistractor.antipattern}</strong>
+                  </p>
+                )}
               </div>
             )}
 
-            <div className="rounded-xl border border-miro-hairline p-3 text-sm text-miro-slate flex flex-wrap gap-3">
-              <span className="font-mono">Probe {session.probeScore ?? 0}</span>
-              <span className="font-mono">Cause {session.causeScore ?? 0}</span>
-              <span className="font-mono">Total {session.totalScore}</span>
-              {session.missedAllPivotal && (
-                <Badge variant="destructive" className="text-[10px]">
-                  Missed pivotal
+            <Button
+              onClick={() => dispatch({ type: 'PROCEED_TO_FIX' })}
+              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
+            >
+              Proceed to Architectural Fix <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {session.phase === 'fix' && session.fix && (
+          <div className="space-y-4">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block mb-1">
+                Step 2: Architectural Fix
+              </span>
+              <p className="text-sm font-medium text-miro-primary">{session.fix.prompt}</p>
+            </div>
+
+            <div className="space-y-2">
+              {orderedFixOptions.map((option) => {
+                const selected = session.selectedFixOptionId === option.id;
+                let className =
+                  'w-full text-left rounded-xl border px-3.5 py-3 text-sm transition-colors cursor-pointer ';
+                if (selected) {
+                  className += 'border-miro-primary bg-miro-surface text-miro-primary';
+                } else {
+                  className +=
+                    'border-miro-hairline bg-miro-card text-miro-slate hover:border-miro-hairlineStrong';
+                }
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => dispatch({ type: 'SELECT_FIX_OPTION', optionId: option.id })}
+                    className={className}
+                  >
+                    <span className="font-medium">{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <ConfidenceGate
+              selectedConfidence={selectedFixConfidence}
+              onSelectConfidence={setSelectedFixConfidence}
+              hasSelectedAnswer={Boolean(session.selectedFixOptionId)}
+              onSubmit={() => {
+                if (!selectedFixConfidence || !session.selectedFixOptionId) return;
+                dispatch({ type: 'BEGIN_COMMIT_FIX' });
+                dispatch({
+                  type: 'COMMIT_FIX_CONFIDENCE',
+                  confidence: (selectedFixConfidence / 100) as ConfidenceAnchor,
+                });
+              }}
+              submitLabel="Commit Fix Recommendation"
+            />
+          </div>
+        )}
+
+        {session.phase === 'feedback' && (
+          <div className="space-y-4">
+            <div
+              className={`rounded-xl border p-4 ${
+                session.isFixCorrect
+                  ? 'border-miro-successBorder bg-miro-successLight'
+                  : 'border-miro-dangerBorder bg-miro-dangerLight'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-miro-primary">
+                  {session.isFixCorrect ? 'Fix Correct' : 'Fix Antipattern Selected'}
+                </span>
+                <span className="text-xs font-mono font-medium">{session.fixScore ?? 0} pts</span>
+              </div>
+              {!session.isFixCorrect && session.fixDistractorAntipattern && (
+                <Badge variant="destructive" className="mt-2 text-[10px]">
+                  {session.fixDistractorAntipattern}
                 </Badge>
               )}
             </div>
 
+            {goldFixOption && (
+              <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 space-y-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block">
+                  Gold Architectural Fix
+                </span>
+                <p className="text-sm font-medium text-miro-primary">{goldFixOption.label}</p>
+                <p className="text-xs text-miro-slate leading-relaxed">{goldFixOption.rationale}</p>
+                {fixCitationHref && (
+                  <div className="pt-1">
+                    <a
+                      href={fixCitationHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-miro-blue hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>{new URL(fixCitationHref).hostname}</span>
+                      <span aria-hidden="true">↗</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-miro-hairline p-3 text-sm text-miro-slate flex flex-wrap justify-between items-center gap-3">
+              <span className="font-mono text-xs">
+                Probe {session.probeScore ?? 0} · Cause {session.causeScore ?? 0} · Fix{' '}
+                {session.fixScore ?? 0}
+              </span>
+              <span className="font-mono font-semibold text-miro-primary">
+                Total {session.totalScore} pts
+              </span>
+            </div>
+
             <Button
               onClick={() => dispatch({ type: 'FINISH' })}
-              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary"
+              className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary font-medium"
             >
-              Finish
+              Finish Incident Review <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         )}

@@ -1,49 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   type CaseFileDrillDefinition,
-  type RapidFireDrillDefinition,
   type TroubleshootingDrillDefinition,
   type ValidationContext,
   validateDrill,
 } from '../index.js';
 
 const VALID_CITATION = 'https://architect.salesforce.com/well-architected/principles';
-
-function minimalRapidFire(): RapidFireDrillDefinition {
-  return {
-    id: 'AGD-00101',
-    title: 'Minimal Rapid Fire Title',
-    domain: 'Platform_Core',
-    domainLabel: 'Platform Core',
-    difficulty: 'Lead_CTA',
-    pillars: ['Trust'],
-    version: 1,
-    status: 'draft',
-    format: 'Rapid_Fire',
-    steps: [
-      {
-        id: 's1',
-        prompt: 'What is the recommended approach?',
-        options: [
-          {
-            id: 'opt_a',
-            label: 'Option A description',
-            isCorrect: true,
-            rationale: 'Correct because of principle X',
-            citationUrl: VALID_CITATION,
-          },
-          {
-            id: 'opt_b',
-            label: 'Option B description',
-            isCorrect: false,
-            distractorAntipattern: 'Antipattern Y',
-            rationale: 'Fails because of constraint Y',
-          },
-        ],
-      },
-    ],
-  };
-}
 
 function minimalCaseFile(): CaseFileDrillDefinition {
   return {
@@ -213,6 +176,32 @@ function minimalTroubleshooting(): TroubleshootingDrillDefinition {
       { id: 'd2', text: 'Wrong cause 2', antipattern: 'Antipattern 2', rationale: 'Fails 2' },
       { id: 'd3', text: 'Wrong cause 3', antipattern: 'Antipattern 3', rationale: 'Fails 3' },
     ],
+    fix: {
+      prompt: 'Select architectural remediation:',
+      options: [
+        {
+          id: 'fix_1',
+          label: 'Fix option 1',
+          rationale: 'Why fix holds',
+          isCorrect: true,
+          citationUrl: VALID_CITATION,
+        },
+        {
+          id: 'fix_2',
+          label: 'Fix option 2',
+          rationale: 'Why it fails',
+          isCorrect: false,
+          distractorAntipattern: 'Antipattern A',
+        },
+        {
+          id: 'fix_3',
+          label: 'Fix option 3',
+          rationale: 'Why it fails',
+          isCorrect: false,
+          distractorAntipattern: 'Antipattern B',
+        },
+      ],
+    },
   };
 }
 
@@ -225,86 +214,7 @@ const manifestCtx: ValidationContext = {
   assetExists: () => true,
 };
 
-describe('Contrast Set linkage (Rapid Fire)', () => {
-  it('accepts Rapid Fire with optional contrastSetId and matching principle', () => {
-    const drill = {
-      ...minimalRapidFire(),
-      contrastSetId: 'CS-zero-copy-vs-copy',
-      contrastPrinciple:
-        'The deciding variable was whether live federation meets freshness without copying into CRM storage.',
-    };
-    const res = validateDrill(drill, manifestCtx);
-    expect(res.ok).toBe(true);
-    if (res.ok && res.drill.format === 'Rapid_Fire') {
-      expect(res.drill.contrastSetId).toBe('CS-zero-copy-vs-copy');
-      expect(res.drill.contrastPrinciple).toContain('deciding variable');
-    }
-  });
-
-  it('rejects contrastSetId without contrastPrinciple', () => {
-    const raw = asMutable({
-      ...minimalRapidFire(),
-      contrastSetId: 'CS-zero-copy-vs-copy',
-    });
-    const res = validateDrill(raw, manifestCtx);
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.findings).toContainEqual(
-        expect.objectContaining({
-          ruleId: 'contrast-set',
-          where: 'contrastPrinciple',
-        }),
-      );
-    }
-  });
-
-  it('rejects invalid contrastSetId shape', () => {
-    const raw = asMutable({
-      ...minimalRapidFire(),
-      contrastSetId: 'not-a-contrast-id',
-      contrastPrinciple: 'The deciding variable was X.',
-    });
-    const res = validateDrill(raw, manifestCtx);
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.findings).toContainEqual(
-        expect.objectContaining({
-          ruleId: 'contrast-set',
-          where: 'contrastSetId',
-        }),
-      );
-    }
-  });
-
-  it('rejects contrast linkage on non-Rapid Fire formats', () => {
-    const raw = asMutable({
-      ...minimalCaseFile(),
-      contrastSetId: 'CS-zero-copy-vs-copy',
-      contrastPrinciple: 'The deciding variable was X.',
-    });
-    const res = validateDrill(raw, manifestCtx);
-    expect(res.ok).toBe(false);
-    if (!res.ok) {
-      expect(res.findings).toContainEqual(
-        expect.objectContaining({
-          ruleId: 'contrast-set',
-          where: 'contrastSetId',
-        }),
-      );
-    }
-  });
-});
-
 describe('validateDrill fixtures', () => {
-  it('validates minimal Rapid Fire fixture successfully', () => {
-    const res = validateDrill(minimalRapidFire(), manifestCtx);
-    expect(res.ok).toBe(true);
-    if (res.ok) {
-      expect(res.drill.id).toBe('AGD-00101');
-      expect(res.drill.format).toBe('Rapid_Fire');
-    }
-  });
-
   it('validates minimal Case File fixture successfully', () => {
     const res = validateDrill(minimalCaseFile(), manifestCtx);
     expect(res.ok).toBe(true);
@@ -326,7 +236,7 @@ describe('validateDrill fixtures', () => {
 
 describe('validateDrill ruleId coverage', () => {
   it('detects missing-field', () => {
-    const raw = asMutable(minimalRapidFire());
+    const raw = asMutable(minimalCaseFile());
     delete raw.title;
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
@@ -338,7 +248,7 @@ describe('validateDrill ruleId coverage', () => {
   });
 
   it('detects invalid-enum at domain', () => {
-    const raw = asMutable(minimalRapidFire());
+    const raw = asMutable(minimalCaseFile());
     raw.domain = 'Invalid_Domain_Name';
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
@@ -350,35 +260,35 @@ describe('validateDrill ruleId coverage', () => {
   });
 
   it('detects option-set on fewer than 2 options or missing correct option', () => {
-    const raw = asMutable(minimalRapidFire());
-    const steps = raw.steps as Array<Record<string, unknown>>;
-    steps[0].options = [(steps[0].options as unknown[])[0]]; // only 1 option
+    const raw = asMutable(minimalCaseFile());
+    const stations = raw.stations as Array<Record<string, unknown>>;
+    stations[0].options = [(stations[0].options as unknown[])[0]]; // only 1 option
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.findings).toContainEqual(
-        expect.objectContaining({ ruleId: 'option-set', where: 'step s1 options' }),
+        expect.objectContaining({ ruleId: 'option-set', where: 'station st1 options' }),
       );
     }
 
-    const noCorrect = asMutable(minimalRapidFire());
-    const noCorrectSteps = noCorrect.steps as Array<Record<string, unknown>>;
-    const opts = noCorrectSteps[0].options as Array<Record<string, unknown>>;
+    const noCorrect = asMutable(minimalCaseFile());
+    const noCorrectStations = noCorrect.stations as Array<Record<string, unknown>>;
+    const opts = noCorrectStations[0].options as Array<Record<string, unknown>>;
     opts[0].isCorrect = false;
     opts[0].distractorAntipattern = 'Antipattern';
     const res2 = validateDrill(noCorrect, manifestCtx);
     expect(res2.ok).toBe(false);
     if (!res2.ok) {
       expect(res2.findings).toContainEqual(
-        expect.objectContaining({ ruleId: 'option-set', where: 'step s1 options' }),
+        expect.objectContaining({ ruleId: 'option-set', where: 'station st1 options' }),
       );
     }
   });
 
   it('detects missing-rationale', () => {
-    const raw = asMutable(minimalRapidFire());
-    const steps = raw.steps as Array<Record<string, unknown>>;
-    const opts = steps[0].options as Array<Record<string, unknown>>;
+    const raw = asMutable(minimalCaseFile());
+    const stations = raw.stations as Array<Record<string, unknown>>;
+    const opts = stations[0].options as Array<Record<string, unknown>>;
     opts[0].rationale = '';
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
@@ -386,16 +296,16 @@ describe('validateDrill ruleId coverage', () => {
       expect(res.findings).toContainEqual(
         expect.objectContaining({
           ruleId: 'missing-rationale',
-          where: 'step s1 option opt_a rationale',
+          where: 'station st1 option opt_1 rationale',
         }),
       );
     }
   });
 
   it('detects missing-distractor-antipattern on incorrect option or distractor probe', () => {
-    const raw = asMutable(minimalRapidFire());
-    const steps = raw.steps as Array<Record<string, unknown>>;
-    const opts = steps[0].options as Array<Record<string, unknown>>;
+    const raw = asMutable(minimalCaseFile());
+    const stations = raw.stations as Array<Record<string, unknown>>;
+    const opts = stations[0].options as Array<Record<string, unknown>>;
     delete opts[1].distractorAntipattern;
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
@@ -403,14 +313,14 @@ describe('validateDrill ruleId coverage', () => {
       expect(res.findings).toContainEqual(
         expect.objectContaining({
           ruleId: 'missing-distractor-antipattern',
-          where: 'step s1 option opt_b distractorAntipattern',
+          where: 'station st1 option opt_2 distractorAntipattern',
         }),
       );
     }
 
     const rawCf = asMutable(minimalCaseFile());
-    const stations = rawCf.stations as Array<Record<string, unknown>>;
-    const probes = stations[0].probes as Array<Record<string, unknown>>;
+    const cfStations = rawCf.stations as Array<Record<string, unknown>>;
+    const probes = cfStations[0].probes as Array<Record<string, unknown>>;
     delete probes[4].distractorAntipattern;
     const resCf = validateDrill(rawCf, manifestCtx);
     expect(resCf.ok).toBe(false);
@@ -464,10 +374,33 @@ describe('validateDrill ruleId coverage', () => {
     }
   });
 
+  it('detects fix-options violations in Troubleshooting drills', () => {
+    const rawNoFix = asMutable(minimalTroubleshooting());
+    delete rawNoFix.fix;
+    const resNoFix = validateDrill(rawNoFix, manifestCtx);
+    expect(resNoFix.ok).toBe(false);
+    if (!resNoFix.ok) {
+      expect(resNoFix.findings).toContainEqual(
+        expect.objectContaining({ ruleId: 'missing-field', where: 'fix.options' }),
+      );
+    }
+
+    const rawBadFix = asMutable(minimalTroubleshooting());
+    const fix = rawBadFix.fix as { options: Array<Record<string, unknown>> };
+    fix.options.pop(); // only 2 options instead of 3
+    const resBadFix = validateDrill(rawBadFix, manifestCtx);
+    expect(resBadFix.ok).toBe(false);
+    if (!resBadFix.ok) {
+      expect(resBadFix.findings).toContainEqual(
+        expect.objectContaining({ ruleId: 'fix-options', where: 'fix.options' }),
+      );
+    }
+  });
+
   it('detects citation-manifest violations when manifest is provided', () => {
-    const raw = asMutable(minimalRapidFire());
-    const steps = raw.steps as Array<Record<string, unknown>>;
-    const opts = steps[0].options as Array<Record<string, unknown>>;
+    const raw = asMutable(minimalCaseFile());
+    const stations = raw.stations as Array<Record<string, unknown>>;
+    const opts = stations[0].options as Array<Record<string, unknown>>;
     opts[0].citationUrl = 'https://architect.salesforce.com/not-in-manifest';
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
@@ -475,7 +408,7 @@ describe('validateDrill ruleId coverage', () => {
       expect(res.findings).toContainEqual(
         expect.objectContaining({
           ruleId: 'citation-manifest',
-          where: 'step s1 option opt_a citationUrl',
+          where: 'station st1 option opt_1 citationUrl',
         }),
       );
     }
@@ -515,9 +448,9 @@ describe('validateDrill ruleId coverage', () => {
 
 describe('validateDrill context & short-circuit behavior', () => {
   it('stops validation on top-level failure (returns only top-level findings)', () => {
-    const raw = asMutable(minimalRapidFire());
+    const raw = asMutable(minimalCaseFile());
     raw.domain = 'Invalid_Domain';
-    raw.steps = []; // would produce missing-field on steps if not stopped
+    raw.stations = []; // would produce station-set if not stopped
     const res = validateDrill(raw, manifestCtx);
     expect(res.ok).toBe(false);
     if (!res.ok) {
@@ -529,9 +462,9 @@ describe('validateDrill context & short-circuit behavior', () => {
   });
 
   it('falls back to host allowlist when citationManifest is absent', () => {
-    const raw = asMutable(minimalRapidFire());
-    const steps = raw.steps as Array<Record<string, unknown>>;
-    const opts = steps[0].options as Array<Record<string, unknown>>;
+    const raw = asMutable(minimalCaseFile());
+    const stations = raw.stations as Array<Record<string, unknown>>;
+    const opts = stations[0].options as Array<Record<string, unknown>>;
     // Allowlisted host not in manifest
     opts[0].citationUrl = 'https://help.salesforce.com/some/article';
     const res = validateDrill(raw, {});
@@ -545,7 +478,7 @@ describe('validateDrill context & short-circuit behavior', () => {
       expect(res2.findings).toContainEqual(
         expect.objectContaining({
           ruleId: 'citation-manifest',
-          where: 'step s1 option opt_a citationUrl',
+          where: 'station st1 option opt_1 citationUrl',
         }),
       );
     }
