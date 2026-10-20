@@ -49,6 +49,31 @@ const FIXTURE_DRILL: TroubleshootingDrillDefinition = {
       rationale: 'No latency incident.',
     },
   ],
+  fix: {
+    prompt: 'How should the concurrency collision be remediated?',
+    options: [
+      {
+        id: 'fix_gold',
+        label: 'Stagger transform schedules away from segment publish',
+        isCorrect: true,
+        rationale: 'Staggering eliminates query collision.',
+      },
+      {
+        id: 'fix_d1',
+        label: 'Upsize Snowflake warehouse',
+        isCorrect: false,
+        distractorAntipattern: 'Scale First Warehouse',
+        rationale: 'Upsizing does not resolve lock contention.',
+      },
+      {
+        id: 'fix_d2',
+        label: 'Relocate multi-region cluster',
+        isCorrect: false,
+        distractorAntipattern: 'Network Ghost Hunt',
+        rationale: 'Network is not the bottleneck.',
+      },
+    ],
+  },
 };
 
 describe('normalizeClefChoice', () => {

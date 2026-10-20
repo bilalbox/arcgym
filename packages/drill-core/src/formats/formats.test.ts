@@ -38,7 +38,6 @@ function createValidCaseFile(): CaseFileDrillDefinition {
         probeBudget: 2,
         exhibits: [
           {
-            id: 'ex1',
             label: 'System Topology',
             diagramUrl: '/diagrams/test-topology.svg',
           },
