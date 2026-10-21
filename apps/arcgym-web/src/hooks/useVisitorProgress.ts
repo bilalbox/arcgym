@@ -11,6 +11,7 @@ import {
   type VisitorProgressState,
 } from '@arcgym/drill-core';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { safeFetchJson } from '@/lib/safeFetch';
 
 const STORAGE_KEY = 'arcgym_visitor_state_v1';
 const LEGACY_STREAK_KEY = 'arcgym_streak';
@@ -132,27 +133,26 @@ export function useVisitorProgress() {
   const pushToCloud = useCallback(async (stateToPush: VisitorProgressState) => {
     try {
       setIsSyncing(true);
-      const res = await fetch('/api/learner/sync', {
+      const res = await safeFetchJson<{
+        authenticated: boolean;
+        progress: VisitorProgressState;
+      }>('/api/learner/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(stateToPush),
       });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          authenticated: boolean;
-          progress: VisitorProgressState;
-        };
-        if (data.authenticated && data.progress) {
-          setState((prev) => {
-            const merged = mergeProgressStates(prev, data.progress);
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-            } catch {
-              // ignore
-            }
-            return merged;
-          });
-        }
+
+      if (res.ok && res.data?.authenticated && res.data.progress) {
+        const cloudProgress = res.data.progress;
+        setState((prev) => {
+          const merged = mergeProgressStates(prev, cloudProgress);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          } catch {
+            // ignore
+          }
+          return merged;
+        });
       }
     } catch (err) {
       console.warn('Sync push to cloud failed (offline or unauthenticated)', err);
@@ -168,13 +168,14 @@ export function useVisitorProgress() {
 
     async function initialSync() {
       try {
-        const res = await fetch('/api/learner/sync');
-        if (!res.ok) return;
-        const data = (await res.json()) as {
+        const res = await safeFetchJson<{
           authenticated: boolean;
           learnerId?: string;
           progress: VisitorProgressState | null;
-        };
+        }>('/api/learner/sync');
+
+        if (!res.ok || !res.data) return;
+        const data = res.data;
 
         if (data.authenticated) {
           setIsAuthenticated(true);

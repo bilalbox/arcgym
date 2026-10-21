@@ -1,6 +1,7 @@
 name = "arcgym"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
 
 [[kv_namespaces]]
 binding = "DRILL_KV"

@@ -17,7 +17,7 @@ You are the model. `generate-drill.ts prompt` retrieves Well-Architected Groundi
 
    **Case File rule:** supply a separate `--query` for each Station/dilemma you plan to write (the generator does not auto-decompose a single query into Stations). Done when every station you plan to write has a chunk that states its governing guidance. Case Files always have a Brief and at least three Stations (`--stations N`, default 3).
 
-   **Troubleshooting rule:** one Incident — architecture synopsis + required diagram + issue, a First Call, a Probe Budget, gold cause (≤ ~2 sentences), exactly three hidden distractors, and an architectural Fix step (1 gold cited fix + 2 distractor antipattern fixes). Prefer Friction Card failed approaches as hidden distractors. Brief surface must not leak the gold cause; pivotal facts stay behind probes.
+   **Troubleshooting rule:** one Incident — architecture synopsis + required diagram + issue, a Probe Budget, gold cause (≤ ~2 sentences), exactly three hidden distractors, and an architectural Fix step (1 gold cited fix + 2 distractor antipattern fixes). Prefer Friction Card failed approaches as hidden distractors. Brief surface must not leak the gold cause; pivotal facts stay behind probes.
 
    Example (Case File, three Stations):
 

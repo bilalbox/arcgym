@@ -13,7 +13,7 @@ Canonical architectural decisions for ArcGym. Consult relevant ADRs before modif
 | [0005](0005-passwordless-learner-auth-and-d1-sync.md) | Passwordless Learner Auth & D1 Persistence | Accepted | Google/GitHub OAuth, pseudonymous zero-PII IDs, D1 telemetry & feedback sync. |
 | [0006](0006-deterministic-quality-and-maintainability-gates.md) | Deterministic Quality & Maintainability Gates | Accepted | 4-stage verification gate (`pnpm verify`) enforcing types, Biome, Vitest, arch, dead code, clones. |
 | [0007](0007-retire-rapid-fire.md) | Retire Rapid Fire | Accepted | Case File + Troubleshooting are the only formats; either earns the Practice Streak. |
-| [0008](0008-incident-fix-and-graded-first-call.md) | Incident Fix & Graded First Call | Accepted | Incidents end with a cause-revealed MCQ Fix; Incident First Call is CLEF-graded, unscored. |
+| [0008](0008-incident-fix-and-graded-first-call.md) | Incident Fix (First Call Shelved) | Accepted | Incidents end with a cause-revealed MCQ Fix; First Call is shelved. |
 
 ## Data Architecture & Storage Separation
 

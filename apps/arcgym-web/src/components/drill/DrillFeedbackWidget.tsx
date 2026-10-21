@@ -13,6 +13,7 @@ import {
 import { Check } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { safeFetchJson } from '@/lib/safeFetch';
 
 interface LocalVoteRecord {
   rating: FeedbackRating;
@@ -97,11 +98,10 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
     setSubmitError(null);
 
     let isMounted = true;
-    fetch(`/api/drills/${encodeURIComponent(drillId)}/rating`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: DrillRatingStats | null) => {
-        if (isMounted && data) {
-          setStats(data);
+    safeFetchJson<DrillRatingStats>(`/api/drills/${encodeURIComponent(drillId)}/rating`)
+      .then((result) => {
+        if (isMounted && result.ok && result.data) {
+          setStats(result.data);
         }
       })
       .catch(() => {
@@ -154,14 +154,17 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
     setStats(calculateRatingStats(drillId, nextUp, nextDown, updatedTagCounts));
 
     try {
-      const res = await fetch(`/api/drills/${encodeURIComponent(drillId)}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          rating: selectedRating,
-          tags: tagsArray,
-        }),
-      });
+      const res = await safeFetchJson<{ stats?: DrillRatingStats }>(
+        `/api/drills/${encodeURIComponent(drillId)}/feedback`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rating: selectedRating,
+            tags: tagsArray,
+          }),
+        },
+      );
 
       if (!res.ok) {
         setStats(previousStats);
@@ -174,14 +177,13 @@ export const DrillFeedbackWidget: React.FC<DrillFeedbackWidgetProps> = ({
             timestamp: new Date().toISOString(),
           });
         } else {
-          setSubmitError('Could not save feedback. Please try again.');
+          setSubmitError(res.error || 'Could not save feedback. Please try again.');
         }
         return;
       }
 
-      const data = (await res.json()) as { stats?: DrillRatingStats };
-      if (data.stats) {
-        setStats(data.stats);
+      if (res.data?.stats) {
+        setStats(res.data.stats);
       }
 
       saveLocalVote(drillId, {

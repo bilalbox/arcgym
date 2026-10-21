@@ -219,6 +219,7 @@ describe('POST /api/troubleshoot/grade Pages Function', () => {
   it('returns 422 when authored drill lacks a valid Fix', async () => {
     const broken = { ...FIXTURE_DRILL, fix: { prompt: 'x', options: [] } };
     const env = createMockEnv();
+    if (!env.DRILL_KV) throw new Error('DRILL_KV required');
     (env.DRILL_KV.get as ReturnType<typeof vi.fn>).mockImplementation(
       async (key: string, format?: string) => {
         if (key === 'drill:id:AGD-01001') {

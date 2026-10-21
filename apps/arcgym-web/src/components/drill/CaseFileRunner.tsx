@@ -23,7 +23,6 @@ import { Progress } from '@/components/ui/progress';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
-import { FirstCallPanel } from './FirstCallPanel';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
 export interface CaseFileRunnerProps {
@@ -55,17 +54,12 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
   onNextDrill,
 }) => {
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
-  const [firstCallHypothesis, setFirstCallHypothesis] = useState('');
-  const [firstCallConfidence, setFirstCallConfidence] = useState<ConfidenceLevel | null>(null);
   const [session, dispatch] = useReducer(caseSessionReducer, drill, createCaseSessionState);
-  const canSkipFirstCall = drill.difficulty === 'Associate_Domain_Architect';
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reset when drill id changes
   useEffect(() => {
     dispatch({ type: 'RESET_SESSION' });
     setSelectedConfidence(null);
-    setFirstCallHypothesis('');
-    setFirstCallConfidence(null);
   }, [drill.id]);
 
   const current = getCurrentCaseStation(session);
@@ -244,8 +238,6 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
             <Button
               onClick={() => {
                 setSelectedConfidence(null);
-                setFirstCallHypothesis('');
-                setFirstCallConfidence(null);
                 dispatch({ type: 'RESET_SESSION' });
               }}
               variant="secondary"
@@ -318,26 +310,6 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
               </figure>
             ))}
           </div>
-        )}
-        {session.phase === 'first_call' && (
-          <FirstCallPanel
-            submitLabel="Lock"
-            canSkip={canSkipFirstCall}
-            hypothesis={firstCallHypothesis}
-            onHypothesisChange={setFirstCallHypothesis}
-            confidence={firstCallConfidence}
-            onConfidenceChange={setFirstCallConfidence}
-            onSubmit={(hypothesis, confidence) => {
-              dispatch({ type: 'SUBMIT_FIRST_CALL', hypothesis, confidence });
-              setFirstCallHypothesis('');
-              setFirstCallConfidence(null);
-            }}
-            onSkip={() => {
-              dispatch({ type: 'SKIP_FIRST_CALL' });
-              setFirstCallHypothesis('');
-              setFirstCallConfidence(null);
-            }}
-          />
         )}
 
         {(session.phase === 'probes' || current.probesLocked) && (
@@ -430,51 +402,9 @@ export const CaseFileRunner: React.FC<CaseFileRunnerProps> = ({
                   )}
                 </div>
 
-                {(() => {
-                  const first = current.firstCall;
-                  if (!first) return null;
-                  const firstLabel = first.skipped ? 'Skipped' : first.hypothesis?.trim() || '—';
-                  const finalLabel =
-                    current.station.options.find((o) => o.id === current.selectedOptionId)?.label ??
-                    '—';
-                  const discoveryProbe = current.flippingProbeId
-                    ? current.station.probes.find((p) => p.id === current.flippingProbeId)
-                    : null;
-                  return (
-                    <div className="rounded-xl border border-miro-hairline bg-miro-card p-3.5 text-sm space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-miro-slate">
-                        First Call → Final
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div>
-                          <span className="text-[11px] text-miro-muted font-medium">
-                            First Call
-                          </span>
-                          <p className="text-miro-primary mt-0.5">{firstLabel}</p>
-                        </div>
-                        <div>
-                          <span className="text-[11px] text-miro-muted font-medium">Final</span>
-                          <p className="text-miro-primary mt-0.5">{finalLabel}</p>
-                        </div>
-                      </div>
-                      {discoveryProbe && (
-                        <div className="rounded-lg border border-miro-blue/30 bg-miro-blue/5 px-3 py-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-miro-blue">
-                            Discovery
-                          </span>
-                          <p className="text-miro-primary mt-0.5">{discoveryProbe.label}</p>
-                          <p className="text-xs text-miro-slate mt-1">{discoveryProbe.answer}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
                 <Button
                   onClick={() => {
                     setSelectedConfidence(null);
-                    setFirstCallHypothesis('');
-                    setFirstCallConfidence(null);
                     dispatch({ type: 'ADVANCE_STATION' });
                   }}
                   className="w-full gap-2 bg-miro-primary hover:bg-miro-charcoal text-miro-onPrimary"

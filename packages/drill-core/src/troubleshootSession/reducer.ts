@@ -164,7 +164,7 @@ export function troubleshootSessionReducer(
 
     case 'BEGIN_DRILL':
       if (state.phase !== 'brief') return state;
-      return { ...state, phase: 'first_call' };
+      return { ...state, phase: 'probes' };
 
     case 'SUBMIT_FIRST_CALL': {
       if (state.phase !== 'first_call') return state;

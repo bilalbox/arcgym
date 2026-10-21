@@ -139,20 +139,12 @@ function correctGrade(): GradeCauseResult {
 }
 
 describe('troubleshootSessionReducer', () => {
-  it('walks brief → first_call → probes → cause → commit_cause → cause_reveal → fix → feedback → complete', () => {
+  it('walks brief → probes → cause → commit_cause → cause_reveal → fix → feedback → complete', () => {
     let state = createTroubleshootSessionState(DRILL);
     expect(state.phase).toBe('brief');
 
     state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
-    expect(state.phase).toBe('first_call');
-
-    state = troubleshootSessionReducer(state, {
-      type: 'SUBMIT_FIRST_CALL',
-      hypothesis: 'Warehouse is probably undersized during peak hours',
-      confidence: 0.7,
-    });
     expect(state.phase).toBe('probes');
-    expect(state.firstCall?.hypothesis).toBe('Warehouse is probably undersized during peak hours');
 
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
@@ -176,11 +168,6 @@ describe('troubleshootSessionReducer', () => {
       confidence: 0.85,
       grade: correctGrade(),
       fix: DRILL.fix,
-      firstCallGrade: {
-        verdict: 'incorrect_distractor',
-        chosenId: 'd1',
-        matchedDistractor: { ...DRILL.hiddenDistractors[0], score: 0.7 },
-      },
     });
     expect(state.phase).toBe('cause_reveal');
     expect(state.grade?.verdict).toBe('correct');
@@ -188,7 +175,6 @@ describe('troubleshootSessionReducer', () => {
     expect(state.probeScore).toBe(35);
     expect(state.missedAllPivotal).toBe(false);
     expect(state.causeScore).toBe(98);
-    expect(state.firstCallGrade?.verdict).toBe('incorrect_distractor');
 
     state = troubleshootSessionReducer(state, { type: 'PROCEED_TO_FIX' });
     expect(state.phase).toBe('fix');
@@ -218,10 +204,8 @@ describe('troubleshootSessionReducer', () => {
     expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
     expect(state.attempt?.steps?.[0]?.causeVerdict).toBe('correct');
     expect(state.attempt?.steps?.[0]?.isCorrect).toBe(true);
-    expect(state.attempt?.steps?.[0]?.firstCall?.hypothesis).toBe(
-      'Warehouse is probably undersized during peak hours',
-    );
-    expect(state.attempt?.steps?.[0]?.firstCallVerdict).toBe('incorrect_distractor');
+    expect(state.attempt?.steps?.[0]?.firstCall).toBeUndefined();
+    expect(state.attempt?.steps?.[0]?.firstCallVerdict).toBeUndefined();
     expect(state.attempt?.steps?.[1]?.stepId).toBe('fix');
     expect(state.attempt?.steps?.[1]?.selectedFixOptionId).toBe('fix_gold');
     expect(state.attempt?.steps?.[1]?.fixScore).toBe(98);
@@ -231,10 +215,6 @@ describe('troubleshootSessionReducer', () => {
   it('refuses PROCEED_TO_FIX when Fix is missing', () => {
     let state = createTroubleshootSessionState(DRILL);
     state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
-    state = troubleshootSessionReducer(state, {
-      type: 'SUBMIT_FIRST_CALL',
-      hypothesis: 'Guess',
-    });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = troubleshootSessionReducer(state, { type: 'LOCK_PROBES' });
     state = troubleshootSessionReducer(state, {
@@ -256,10 +236,6 @@ describe('troubleshootSessionReducer', () => {
   it('counts a correct cause after poor probes without voiding the cause grade', () => {
     let state = createTroubleshootSessionState(DRILL);
     state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
-    state = troubleshootSessionReducer(state, {
-      type: 'SUBMIT_FIRST_CALL',
-      hypothesis: 'Initial guess',
-    });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p4' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p5' });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p6' });
@@ -285,10 +261,6 @@ describe('troubleshootSessionReducer', () => {
   it('attaches matched distractor antipattern on incorrect_distractor', () => {
     let state = createTroubleshootSessionState(DRILL);
     state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
-    state = troubleshootSessionReducer(state, {
-      type: 'SUBMIT_FIRST_CALL',
-      hypothesis: 'Guess',
-    });
     state = troubleshootSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
     state = troubleshootSessionReducer(state, { type: 'LOCK_PROBES' });
     state = troubleshootSessionReducer(state, {
@@ -325,8 +297,8 @@ describe('troubleshootSessionReducer', () => {
     state = troubleshootSessionReducer(state, { type: 'LOCK_PROBES' });
     expect(state.phase).toBe('brief');
     state = troubleshootSessionReducer(state, { type: 'BEGIN_DRILL' });
-    expect(state.phase).toBe('first_call');
-    state = troubleshootSessionReducer(state, { type: 'BEGIN_COMMIT_CAUSE' });
-    expect(state.phase).toBe('first_call');
+    expect(state.phase).toBe('probes');
+    state = troubleshootSessionReducer(state, { type: 'PROCEED_TO_FIX' });
+    expect(state.phase).toBe('probes');
   });
 });

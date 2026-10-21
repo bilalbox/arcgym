@@ -20,8 +20,8 @@ _Avoid_: Architectural Domain, subtitle, SEO keyword
 The practice of rating self-assessed certainty before committing an answer, scoring architects on whether they know what they know (and know what they don't know).
 _Avoid_: Guess, bet, probability score
 
-**First Call**:
-An unscored one-line free-text gut hypothesis (and optional Confidence Calibration) captured after the Brief and before the Probe Budget unlocks — on every Case File Station and on every Incident. Compared to the final commit so probe-driven revisions are visible; on an Incident it is silently graded against the same gold cause and hidden distractors to show which antipattern the first instinct matched.
+**First Call** (Shelved):
+An unscored one-line gut hypothesis captured before diagnostic probes. Currently shelved: learner feedback showed the timing was disorienting without enough information or clear choices yet. May be revisited in the future with revised timing or framing.
 _Avoid_: Scored pretest, mandatory Associate gate, oral defense, recommendation-option pick
 
 **Architectural Trade-Off**:
@@ -69,7 +69,7 @@ The one Case File or Incident the Home page recommends to a learner for today, c
 _Avoid_: Daily workout, 3-rep round, featured drill
 
 **Troubleshooting Drill**:
-A diagnosis practice format: architecture synopsis + required diagram + issue, a First Call, a scarce Probe Budget of clarifying questions that unlock scenario facts, a confidence-gated free-text root-cause commit, then — after the gold cause is revealed — a confidence-gated Fix. The cause is graded by Workers AI CLEF as a choice over one gold cause, three hidden antipattern distractors (never MCQ), and an `other` catchall. Completing one earns the day's Practice Streak. See ADR 0004 and ADR 0008.
+A diagnosis practice format: architecture synopsis + required diagram + issue, a scarce Probe Budget of clarifying questions that unlock scenario facts, a confidence-gated free-text root-cause commit, then — after the gold cause is revealed — a confidence-gated Fix. The cause is graded by Workers AI CLEF as a choice over one gold cause, three hidden antipattern distractors (never MCQ), and an `other` catchall. Completing one earns the day's Practice Streak. See ADR 0004 and ADR 0008.
 _Avoid_: Quiz, Scenario, Lesson, LLM-as-judge, BGE reranker grading
 
 **Fix**:

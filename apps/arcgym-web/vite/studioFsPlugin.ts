@@ -9,14 +9,18 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import type { Plugin } from 'vite';
 import {
+  calculateRatingStats,
   citationManifestUrlsFromExports,
   type DrillDefinitionDTO,
+  type DrillFeedbackTag,
+  type DrillRatingStats,
   type DrillStatus,
   type GroundingChunkExport,
   isTroubleshootingDrill,
   lintDrillWording,
   MAX_CAUSE_CHARS,
   StubCauseGrader,
+  sanitizeFeedbackTags,
   type TroubleshootingDrillDefinition,
   type ValidationFinding,
   validateDrill,
@@ -285,19 +289,12 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
               .trim()
               .toUpperCase();
             const causeText = String((body as { causeText?: unknown }).causeText ?? '').trim();
-            const firstCallText = String(
-              (body as { firstCallText?: unknown }).firstCallText ?? '',
-            ).trim();
             if (!drillId) {
               sendJson(res, 400, { error: 'Invalid drill ID' });
               return;
             }
             if (!causeText || causeText.length > MAX_CAUSE_CHARS) {
               sendJson(res, 400, { error: 'causeText is required' });
-              return;
-            }
-            if (firstCallText.length > MAX_CAUSE_CHARS) {
-              sendJson(res, 400, { error: 'firstCallText is too long' });
               return;
             }
 
@@ -319,25 +316,87 @@ export function studioFsPlugin(repoRoot: string, publicDir: string): Plugin {
 
             const grader = new StubCauseGrader();
             const result = await grader.grade({ drill: incident, causeText });
-            let firstCallGrade:
-              | {
-                  verdict: unknown;
-                  matchedDistractor: unknown;
-                  chosenId: string;
-                }
-              | undefined;
-            if (firstCallText) {
-              const fcResult = await grader.grade({ drill: incident, causeText: firstCallText });
-              firstCallGrade = {
-                verdict: fcResult.verdict,
-                matchedDistractor: fcResult.matchedDistractor,
-                chosenId: fcResult.chosenId,
-              };
-            }
-            sendJson(res, 200, { ...result, fix: incident.fix, firstCallGrade });
+            sendJson(res, 200, { ...result, fix: incident.fix });
             return;
           } catch (err) {
             sendJson(res, 500, { error: err instanceof Error ? err.message : String(err) });
+            return;
+          }
+        }
+
+        if (pathname === '/api/learner/sync') {
+          if (!isLocalAddress(req.socket.remoteAddress)) {
+            sendJson(res, 403, { error: 'API is localhost-only' });
+            return;
+          }
+          if (req.method === 'GET') {
+            sendJson(res, 200, { authenticated: false, progress: null });
+            return;
+          }
+          if (req.method === 'POST') {
+            const rawBody = await readBody(req);
+            let body: unknown = null;
+            try {
+              body = JSON.parse(rawBody);
+            } catch {
+              // ignore
+            }
+            sendJson(res, 200, { authenticated: false, progress: body });
+            return;
+          }
+        }
+
+        if (pathname === '/api/auth/status' && req.method === 'GET') {
+          sendJson(res, 200, { authenticated: false });
+          return;
+        }
+
+        if (
+          (pathname === '/api/auth/logout' || pathname === '/api/learner/delete') &&
+          req.method === 'POST'
+        ) {
+          sendJson(res, 200, { success: true });
+          return;
+        }
+
+        const drillFeedbackMatch = pathname.match(/^\/api\/drills\/([^/]+)\/(feedback|rating)$/);
+        if (drillFeedbackMatch) {
+          if (!isLocalAddress(req.socket.remoteAddress)) {
+            sendJson(res, 403, { error: 'API is localhost-only' });
+            return;
+          }
+          const drillId = decodeURIComponent(drillFeedbackMatch[1]).toUpperCase();
+          const subroute = drillFeedbackMatch[2];
+          const snapshot = readFeedbackSnapshot(repoRoot);
+          const ratingStats =
+            (snapshot.ratings as Record<string, DrillRatingStats>)[drillId] ||
+            calculateRatingStats(drillId, 0, 0, {});
+
+          if (subroute === 'rating' && req.method === 'GET') {
+            sendJson(res, 200, ratingStats);
+            return;
+          }
+
+          if (subroute === 'feedback' && req.method === 'POST') {
+            const rawBody = await readBody(req);
+            let body: { rating?: 'up' | 'down'; tags?: unknown } = {};
+            try {
+              body = JSON.parse(rawBody);
+            } catch {
+              // ignore
+            }
+            const rating = body.rating === 'down' ? 'down' : 'up';
+            const nextUp = ratingStats.upVotes + (rating === 'up' ? 1 : 0);
+            const nextDown = ratingStats.downVotes + (rating === 'down' ? 1 : 0);
+            const sanitizedTags = sanitizeFeedbackTags(rating, body.tags);
+            const updatedTagCounts: Partial<Record<DrillFeedbackTag, number>> = {
+              ...(ratingStats.tagCounts || {}),
+            };
+            for (const t of sanitizedTags) {
+              updatedTagCounts[t] = (updatedTagCounts[t] || 0) + 1;
+            }
+            const newStats = calculateRatingStats(drillId, nextUp, nextDown, updatedTagCounts);
+            sendJson(res, 200, { success: true, stats: newStats });
             return;
           }
         }

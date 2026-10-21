@@ -20,7 +20,6 @@ import { gradeCauseViaApi } from '@/lib/gradeCauseApi';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
 import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
-import { FirstCallPanel } from './FirstCallPanel';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
 
 export interface TroubleshootRunnerProps {
@@ -51,8 +50,6 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
   onDrillComplete,
   onNextDrill,
 }) => {
-  const [firstCallHypothesis, setFirstCallHypothesis] = useState('');
-  const [firstCallConfidence, setFirstCallConfidence] = useState<ConfidenceLevel | null>(null);
   const [selectedConfidence, setSelectedConfidence] = useState<ConfidenceLevel | null>(null);
   const [selectedFixConfidence, setSelectedFixConfidence] = useState<ConfidenceLevel | null>(null);
   const [grading, setGrading] = useState(false);
@@ -63,13 +60,9 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     createTroubleshootSessionState,
   );
 
-  const canSkipFirstCall = drill.difficulty === 'Associate_Domain_Architect';
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: Reset when drill id changes
   useEffect(() => {
     dispatch({ type: 'RESET_SESSION' });
-    setFirstCallHypothesis('');
-    setFirstCallConfidence(null);
     setSelectedConfidence(null);
     setSelectedFixConfidence(null);
     setGradeError(null);
@@ -123,18 +116,13 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
     setGrading(true);
     setGradeError(null);
     try {
-      const response = await gradeCauseViaApi(
-        drill.id,
-        session.causeText,
-        session.firstCall?.hypothesis ?? undefined,
-      );
-      const { fix, firstCallGrade, ...grade } = response;
+      const response = await gradeCauseViaApi(drill.id, session.causeText);
+      const { fix, ...grade } = response;
       dispatch({
         type: 'RECEIVE_CAUSE_GRADE',
         confidence: (selectedConfidence / 100) as ConfidenceAnchor,
         grade,
         fix,
-        firstCallGrade,
       });
     } catch (err) {
       setGradeError(err instanceof Error ? err.message : 'Grading failed');
@@ -262,8 +250,6 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
             <Button
               onClick={() => {
                 dispatch({ type: 'RESET_SESSION' });
-                setFirstCallHypothesis('');
-                setFirstCallConfidence(null);
                 setSelectedConfidence(null);
                 setSelectedFixConfidence(null);
                 setGradeError(null);
@@ -282,38 +268,6 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
   return (
     <Card className="border-miro-hairline bg-miro-card shadow-xs">
       <CardContent className="space-y-5 pt-6">
-        {session.phase === 'first_call' && (
-          <FirstCallPanel
-            label="First Call Hypothesis"
-            placeholder="What is your immediate gut hypothesis before opening diagnostic probes?"
-            rows={3}
-            submitLabel="Lock First Call & Open Probes"
-            skipLabel="Skip First Call"
-            canSkip={canSkipFirstCall}
-            hypothesis={firstCallHypothesis}
-            onHypothesisChange={setFirstCallHypothesis}
-            confidence={firstCallConfidence}
-            onConfidenceChange={setFirstCallConfidence}
-            onSubmit={(hypothesis, confidence) => {
-              dispatch({ type: 'SUBMIT_FIRST_CALL', hypothesis, confidence });
-              setFirstCallHypothesis('');
-              setFirstCallConfidence(null);
-            }}
-            onSkip={() => {
-              dispatch({ type: 'SKIP_FIRST_CALL' });
-              setFirstCallHypothesis('');
-              setFirstCallConfidence(null);
-            }}
-          >
-            <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed">
-              <span className="text-xs font-semibold uppercase tracking-wider text-miro-slate block mb-1">
-                Incident Issue
-              </span>
-              {drill.issue}
-            </div>
-          </FirstCallPanel>
-        )}
-
         {(session.phase === 'probes' || session.probesLocked) && (
           <ProbeBudgetPanel
             probes={orderedProbes}
@@ -422,36 +376,6 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
                 </div>
               )}
             </div>
-
-            {session.firstCall && (
-              <div className="rounded-xl border border-miro-hairline bg-miro-card p-3.5 text-xs space-y-2">
-                <p className="font-semibold uppercase tracking-wider text-miro-slate text-[11px]">
-                  First Call Reflection
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-miro-primary">
-                  <div>
-                    <span className="text-miro-muted font-medium block text-[10px]">
-                      Initial Gut:
-                    </span>
-                    <p className="mt-0.5">
-                      {session.firstCall.skipped ? 'Skipped' : session.firstCall.hypothesis}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-miro-muted font-medium block text-[10px]">
-                      Diagnosis After Probes:
-                    </span>
-                    <p className="mt-0.5">{session.causeText}</p>
-                  </div>
-                </div>
-                {session.firstCallGrade?.matchedDistractor && (
-                  <p className="text-[11px] text-amber-700 bg-amber-50 rounded p-2 border border-amber-200">
-                    Gut instinct matched antipattern:{' '}
-                    <strong>{session.firstCallGrade.matchedDistractor.antipattern}</strong>
-                  </p>
-                )}
-              </div>
-            )}
 
             {session.fix ? (
               <Button

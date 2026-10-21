@@ -23,6 +23,7 @@
   },
   "include": [
     "apps/arcgym-web/src/**/*",
+    "apps/arcgym-web/functions/**/*",
     "apps/arcgym-web/vite.config.ts",
     "apps/arcgym-web/vite/**/*",
     "packages/drill-core/src/**/*",

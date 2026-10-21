@@ -564,7 +564,6 @@ ${c.content}
 - Dual scoring: probe quality + confidence-gated recommendation
 - Grounding: only final correct options cite chunks; probe answers are scenario fiction`
       : `- One Incident: architecture synopsis + required diagram + issue
-- First Call: initial gut hypothesis (silently graded against antipatterns)
 - Probe Budget: 3 picks from ~7 clarifying questions (≥2 pivotal)
 - Free-text cause graded by CLEF choice over gold + exactly 3 hidden distractors + other catchall (never MCQ)
 - Fix: 3-choice remediation (1 gold cited + 2 antipattern distractors), Brier scored

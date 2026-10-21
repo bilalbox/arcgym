@@ -115,7 +115,6 @@ Do not rush or dump an ungrounded drill. Walk through each step with the user, s
 1. Present the user with a clickable link to test the incident live in the local Studio UI:
    `http://localhost:5173/dev/drills/<id>`
 2. Ask the user to play through the investigation in Studio:
-   - Verify First Call capture.
    - Test diagnostic probe unlocks and budget constraint.
    - Test free-text cause submission and CLEF grading.
    - Verify gold cause reveal and 3-option Fix selection.

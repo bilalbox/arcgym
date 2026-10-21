@@ -195,7 +195,7 @@ export function caseSessionReducer(
       return createCaseSessionState(state.drill);
 
     case 'BEGIN_STATIONS':
-      return { ...state, phase: 'first_call', currentStationIndex: 0 };
+      return { ...state, phase: 'probes', currentStationIndex: 0 };
 
     case 'SUBMIT_FIRST_CALL': {
       if (state.phase !== 'first_call') return state;
@@ -333,7 +333,7 @@ export function caseSessionReducer(
       return {
         ...state,
         currentStationIndex: nextIndex,
-        phase: 'first_call',
+        phase: 'probes',
       };
     }
 
