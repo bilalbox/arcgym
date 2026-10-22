@@ -17,8 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": ["./apps/arcgym-web/src/*"],
-      "@arcgym/drill-core": ["./packages/drill-core/src/index.ts"],
-      "@arcgym/diagrams": ["./packages/diagrams/src/index.ts"]
+      "@arcgym/drill-core": ["./packages/drill-core/src/index.ts"]
     }
   },
   "include": [
@@ -27,10 +26,6 @@
     "apps/arcgym-web/vite.config.ts",
     "apps/arcgym-web/vite/**/*",
     "packages/drill-core/src/**/*",
-    "packages/diagrams/src/**/*",
-    "packages/diagrams/scripts/**/*",
-    "packages/diagrams/tests/**/*",
-    "packages/diagrams/playwright.config.ts",
     "scripts/**/*"
   ],
   "exclude": ["node_modules", "**/dist", "**/test-results"]

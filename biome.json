@@ -11,6 +11,7 @@
       "**",
       "!**/apps/arcgym-web/src/data/canonicalDrills.json",
       "!**/apps/arcgym-web/public/api/drills/canonical-drills.json",
+      "!**/apps/arcgym-web/public/diagrams",
       "!**/content/drills",
       "!**/data",
       "!**/packages/drill-core/prototypes"
@@ -51,8 +52,6 @@
         "apps/arcgym-web/src/hooks/useVisitorProgress.ts",
         "apps/arcgym-web/src/pages/studio/StudioDrillPage.tsx",
         "apps/arcgym-web/vite/studioFsPlugin.ts",
-        "packages/diagrams/src/primitives.tsx",
-        "packages/diagrams/src/qa/auditSvgGeometry.ts",
         "packages/drill-core/src/caseSession/reducer.ts",
         "packages/drill-core/src/formats/caseFile.ts",
         "packages/drill-core/src/formats/troubleshooting.ts",

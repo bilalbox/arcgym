@@ -20,18 +20,7 @@ module.exports = {
         path: '^packages/drill-core/src',
       },
       to: {
-        path: '^(apps/|packages/diagrams|scripts/|react$|react-dom$)',
-      },
-    },
-    {
-      name: 'diagrams-pure',
-      severity: 'error',
-      comment: 'packages/diagrams must not depend on web app code or scripts.',
-      from: {
-        path: '^packages/diagrams/src',
-      },
-      to: {
-        path: '^(apps/|scripts/)',
+        path: '^(apps/|scripts/|react$|react-dom$)',
       },
     },
     {
@@ -54,7 +43,7 @@ module.exports = {
         path: '^apps/arcgym-web/functions',
       },
       to: {
-        path: '^(apps/arcgym-web/src|packages/diagrams|react$|react-dom$)',
+        path: '^(apps/arcgym-web/src|react$|react-dom$)',
       },
     },
     {

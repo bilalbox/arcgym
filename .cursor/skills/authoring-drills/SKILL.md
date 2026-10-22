@@ -42,7 +42,7 @@ Do not rush or dump an ungrounded drill. Walk through each step with the user, s
 
 2. Establish the failure scenario:
    - **Architecture synopsis**: A concise narrative of the steady-state system architecture (max ~120 words).
-   - **Diagram URL**: Required authored diagram (e.g., from `/diagrams/*.svg` or composed via `@arcgym/diagrams`).
+   - **Diagram Source**: Required authored topology diagram as Mermaid syntax (`diagramSource`), compiled to polished SVG via Pele.
    - **Issue**: The observed failure symptom (e.g. intermittent timeout, lock contention, sync lag). **Crucial rule**: Never leak the gold cause in the issue description.
 
 ---

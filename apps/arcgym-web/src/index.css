@@ -225,4 +225,17 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  .pele {
+    --pele-bg: var(--miro-surface);
+    --pele-fg: var(--miro-primary);
+    --pele-surface: var(--miro-card);
+    --pele-surface-alt: var(--miro-surfaceSoft);
+    --pele-border: var(--miro-hairline);
+    --pele-line: var(--miro-slate);
+    --pele-muted: var(--miro-muted);
+    --pele-accent: var(--miro-blue);
+    --pele-radius: 8px;
+    --pele-font: var(--font-sans);
+  }
 }

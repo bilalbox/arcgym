@@ -36,7 +36,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(appRoot, './src'),
         '@arcgym/drill-core': path.resolve(repoRoot, './packages/drill-core/src/index.ts'),
-        '@arcgym/diagrams': path.resolve(repoRoot, './packages/diagrams/src/index.ts'),
       },
     },
     server: {

@@ -14,6 +14,7 @@ Canonical architectural decisions for ArcGym. Consult relevant ADRs before modif
 | [0006](0006-deterministic-quality-and-maintainability-gates.md) | Deterministic Quality & Maintainability Gates | Accepted | 4-stage verification gate (`pnpm verify`) enforcing types, Biome, Vitest, arch, dead code, clones. |
 | [0007](0007-retire-rapid-fire.md) | Retire Rapid Fire | Accepted | Case File + Troubleshooting are the only formats; either earns the Practice Streak. |
 | [0008](0008-incident-fix-and-graded-first-call.md) | Incident Fix (First Call Shelved) | Accepted | Incidents end with a cause-revealed MCQ Fix; First Call is shelved. |
+| [0009](0009-mermaid-pele-diagram-pipeline.md) | Mermaid Architecture Diagrams with Obsidian Pele | Accepted | Self-contained Mermaid topology diagrams rendered via Obsidian Pele; retired `@arcgym/diagrams`. |
 
 ## Data Architecture & Storage Separation
 

@@ -338,7 +338,7 @@ function buildTroubleshootingSchema(
   "status": "draft",${sourceCardLine}
   "architecture": {
     "synopsis": "Topology narrative without the diagnosis (max ~120 words)",
-    "diagramUrl": "/diagrams/<exported-topology>.svg",
+    "diagramSource": "flowchart LR\\n  A[Source] --> B[Target]",
     "diagramLabel": "Short diagram caption"
   },
   "issue": "Current failure symptom statement; do not leak the gold cause",
@@ -422,7 +422,7 @@ function buildTroubleshootingSchema(
     ]
   }
 }
-Write exactly ${TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT} hiddenDistractors. Require ≥${TROUBLESHOOTING_MIN_PIVOTAL_PROBES} pivotal probes, mix useful + distractor probes (~7 total), probeBudget ${TROUBLESHOOTING_PROBE_BUDGET}. diagramUrl is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Include a Fix definition with exactly 3 options (1 gold cited + 2 distractor antipatterns). Probe answers are scenario fiction; only goldCause.citationUrl and gold fix citationUrl cite Well-Architected Grounding when doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
+Write exactly ${TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT} hiddenDistractors. Require ≥${TROUBLESHOOTING_MIN_PIVOTAL_PROBES} pivotal probes, mix useful + distractor probes (~7 total), probeBudget ${TROUBLESHOOTING_PROBE_BUDGET}. diagramSource (Mermaid string) is required. Gold cause ≤ ~2 sentences. Never render hiddenDistractors as MCQ options. Include a Fix definition with exactly 3 options (1 gold cited + 2 distractor antipatterns). Probe answers are scenario fiction; only goldCause.citationUrl and gold fix citationUrl cite Well-Architected Grounding when doc-backed. Prefer modeling hiddenDistractors from Friction Card failed approaches when a card is provided.`;
 }
 
 function buildCaseFileSchema(

@@ -444,6 +444,55 @@ describe('validateDrill ruleId coverage', () => {
       );
     }
   });
+
+  it('accepts self-contained diagramSource without diagramUrl', () => {
+    const raw = asMutable(minimalTroubleshooting());
+    const arch = raw.architecture as Record<string, unknown>;
+    delete arch.diagramUrl;
+    arch.diagramSource = 'flowchart LR\n  A --> B';
+    const res = validateDrill(raw, {
+      ...manifestCtx,
+      validateMermaid: () => ({ valid: true }),
+    });
+    expect(res.ok).toBe(true);
+  });
+
+  it('flags missing-field when both diagramSource and diagramUrl are omitted', () => {
+    const raw = asMutable(minimalTroubleshooting());
+    const arch = raw.architecture as Record<string, unknown>;
+    delete arch.diagramUrl;
+    delete arch.diagramSource;
+    const res = validateDrill(raw, manifestCtx);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.findings).toContainEqual(
+        expect.objectContaining({
+          ruleId: 'missing-field',
+          where: 'architecture.diagramSource',
+        }),
+      );
+    }
+  });
+
+  it('flags invalid-diagram when validateMermaid fails', () => {
+    const raw = asMutable(minimalTroubleshooting());
+    const arch = raw.architecture as Record<string, unknown>;
+    delete arch.diagramUrl;
+    arch.diagramSource = 'invalid mermaid source';
+    const res = validateDrill(raw, {
+      ...manifestCtx,
+      validateMermaid: () => ({ valid: false, error: 'Syntax error' }),
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.findings).toContainEqual(
+        expect.objectContaining({
+          ruleId: 'invalid-diagram',
+          where: 'architecture.diagramSource',
+        }),
+      );
+    }
+  });
 });
 
 describe('validateDrill context & short-circuit behavior', () => {

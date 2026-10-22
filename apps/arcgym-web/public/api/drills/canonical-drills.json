@@ -683,8 +683,9 @@
     ],
     "architecture": {
       "synopsis": "An enterprise connects customer account records from Snowflake into Data Cloud via a Zero Copy Data Stream. To satisfy low-latency SLAs for Agentforce actions and hourly segment refreshes, Acceleration (Caching) is enabled with an hourly incremental refresh tracking updated_at.",
-      "diagramUrl": "/diagrams/agd-01001-cached-topology.svg",
-      "diagramLabel": "Zero Copy acceleration cache between Snowflake and Agentforce / segments"
+      "diagramSource": "flowchart LR\n  classDef store fill:#f8fafc,stroke:#64748b;\n  classDef cache fill:#f0fdfa,stroke:#0d9488,stroke-width:1.8px;\n  classDef clients fill:#ffffff,stroke:#cbd5e1;\n\n  snowflake[\"`**Snowflake Lakehouse**\n120M Account Records\nExternal Table Storage`\"]:::store\n  cache[\"`**Data Cloud Zero Copy**\nAccelerated Query Cache\nConfigured Cache TTL`\"]:::cache\n  clients[\"`**High-QPS Traffic**\nCRM Users & Agentforce\n600+ Requests / Minute`\"]:::clients\n\n  snowflake -->|\"Refresh\"| cache\n  cache -->|\"Cached\"| clients",
+      "diagramLabel": "Zero Copy acceleration cache between Snowflake and Agentforce / segments",
+      "diagramUrl": "/diagrams/agd-01001-topology.svg"
     },
     "issue": "Following a routine data lifecycle maintenance job in Snowflake (hard-deleting expired trial accounts), auditing reveals that hundreds of purged accounts are still being actively queried by Agentforce and included in hourly segment activations 36 hours later.",
     "probeBudget": 3,
@@ -754,8 +755,9 @@
     ],
     "architecture": {
       "synopsis": "High-velocity clickstream and authentication events are ingested via the Web SDK into an Engagement DLO with unique event UUIDs. A Streaming Data Transform (SDT) filters for login events to populate an AnonymousVisitor Profile DLO mapped to the Individual DMO for real-time personalization.",
-      "diagramUrl": "/diagrams/agd-01002-sdt-retraction-topology.svg",
-      "diagramLabel": "Web SDK engagement stream through filtered SDT into visitor profile DMO"
+      "diagramSource": "flowchart LR\n  classDef stream fill:#ffffff,stroke:#cbd5e1;\n  classDef sdt fill:#f0fdfa,stroke:#0d9488,stroke-width:1.8px;\n  classDef target fill:#ffffff,stroke:#cbd5e1;\n\n  events[\"`**Web SDK Ingestion**\nEngagement DLO\nUUID Primary Key Stream`\"]:::stream\n  sdt[\"`**Streaming SQL Engine**\nStreaming Transform\nWHERE type = 'login'`\"]:::sdt\n  profiles[\"`**Visitor Profiles**\nProfile DMO\nvisitor_cookie Keyed`\"]:::target\n\n  events -->|\"Filter\"| sdt\n  sdt -->|\"Retract\"| profiles",
+      "diagramLabel": "Web SDK engagement stream through filtered SDT into visitor profile DMO",
+      "diagramUrl": "/diagrams/agd-01002-topology.svg"
     },
     "issue": "Shortly after landing on the site and authenticating, visitor profiles appear in the Profile DMO and qualify for real-time personalization. However, within minutes of active browsing, visitors mysteriously vanish from the Profile DMO, dropping active sessions and breaking personalization.",
     "probeBudget": 3,

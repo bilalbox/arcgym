@@ -6,6 +6,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { render } from 'pele';
 import {
   citationManifestUrlsFromExports,
   type DrillDefinitionDTO,
@@ -23,6 +24,33 @@ const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
 const WEB_DATA_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/src/data');
 const WEB_PUBLIC_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/public/api/drills');
 const WEB_PUBLIC_ROOT = path.join(ROOT_DIR, 'apps/arcgym-web/public');
+const DIAGRAMS_OUT_DIR = path.join(WEB_PUBLIC_ROOT, 'diagrams');
+
+/** ArcGym design tokens mapped into Pele CSS variables. */
+const ARCGYM_DIAGRAM_CSS = `
+  --pele-bg: #f8fafc;
+  --pele-fg: #0f172a;
+  --pele-surface: #ffffff;
+  --pele-surface-alt: #f1f5f9;
+  --pele-border: #cbd5e1;
+  --pele-line: #64748b;
+  --pele-muted: #64748b;
+  --pele-accent: #0284c7;
+  --pele-radius: 8px;
+  --pele-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+`;
+
+export function bakeMermaidSvg(source: string, title?: string): string {
+  const res = render(source);
+  let svg = res.svg.replace(
+    /style="([^"]*)"/,
+    `style="$1;${ARCGYM_DIAGRAM_CSS.replace(/[\n\r\s]+/g, ' ')}"`,
+  );
+  if (!svg.includes('<title>')) {
+    svg = svg.replace(/>/, `><title>${title ?? 'Architecture Diagram'}</title>`);
+  }
+  return svg;
+}
 /** Per-source grounding chunk exports; Citation Manifest is their URL union at build time. */
 const GROUNDING_CHUNK_EXPORTS = [
   path.join(ROOT_DIR, 'data/architect_chunks.json'),
@@ -89,9 +117,43 @@ for (const file of drillFiles) {
   const filePath = path.join(DRILLS_DIR, file);
   try {
     const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+
+    // If drill contains self-contained Mermaid diagramSource, bake SVG into public/diagrams/
+    if (
+      raw.architecture &&
+      typeof raw.architecture === 'object' &&
+      typeof raw.architecture.diagramSource === 'string' &&
+      raw.architecture.diagramSource.trim()
+    ) {
+      try {
+        if (!fs.existsSync(DIAGRAMS_OUT_DIR)) {
+          fs.mkdirSync(DIAGRAMS_OUT_DIR, { recursive: true });
+        }
+        const svg = bakeMermaidSvg(
+          raw.architecture.diagramSource,
+          typeof raw.title === 'string' ? raw.title : undefined,
+        );
+        const filename = `${String(raw.id).toLowerCase()}-topology.svg`;
+        const svgPath = path.join(DIAGRAMS_OUT_DIR, filename);
+        fs.writeFileSync(svgPath, svg, 'utf-8');
+        raw.architecture.diagramUrl = `/diagrams/${filename}`;
+      } catch (bakeErr: unknown) {
+        const msg = bakeErr instanceof Error ? bakeErr.message : String(bakeErr);
+        err(file, `Mermaid render failed: ${msg}`);
+      }
+    }
+
     const res = validateDrill(raw, {
       citationManifest: citationManifestUrls,
       assetExists,
+      validateMermaid: (source: string) => {
+        try {
+          render(source);
+          return { valid: true };
+        } catch (e: unknown) {
+          return { valid: false, error: (e as Error).message };
+        }
+      },
     });
 
     if (!res.ok) {

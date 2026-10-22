@@ -121,5 +121,5 @@ A human-reviewed, paraphrased record of one Trailblazer Community thread: the pr
 _Avoid_: Community pattern, frontier solution, dual grounding
 
 **Authored Diagram**:
-A topology SVG composed from `@arcgym/diagrams` React primitives (`AuthoredSvgShell`, `AuthoredCard`, `AuthoredEdge`, `AuthoredZone`, …), exported to `apps/arcgym-web/public/diagrams/` and referenced by `diagramUrl`. Package-emitted SVGs are gated by L1/L2 geometry QA (`pnpm test:diagram-qa`). Learners still see static `<img>` Inspect previews — not live React.
-_Avoid_: Hand-tuned SVG without QA attrs for new art; Mermaid; live FAQ hover engines
+A system topology diagram authored directly as Mermaid syntax (`diagramSource`) inside drill definitions, rendered to themeable SVGs via Obsidian Pele (`pele`). Build-time baking in `pnpm build:drills` emits static SVGs to `apps/arcgym-web/public/diagrams/`, while the web app and Studio editor render dynamic live previews with full dark-mode token support.
+_Avoid_: Hand-coded pixel coordinate geometry; runtime Chromium dependencies

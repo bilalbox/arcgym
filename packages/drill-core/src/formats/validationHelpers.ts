@@ -34,6 +34,33 @@ export function validateDiagramUrl(
   }
 }
 
+export function validateDiagramSource(
+  diagramSource: unknown,
+  where: string,
+  ctx: ValidationContext,
+  findings: ValidationFinding[],
+): void {
+  if (diagramSource === undefined) return;
+  if (typeof diagramSource !== 'string' || !diagramSource.trim()) {
+    findings.push({
+      ruleId: 'missing-field',
+      where,
+      message: `${where} must be a non-empty Mermaid diagram string`,
+    });
+    return;
+  }
+  if (ctx.validateMermaid) {
+    const res = ctx.validateMermaid(diagramSource);
+    if (!res.valid) {
+      findings.push({
+        ruleId: 'invalid-diagram',
+        where,
+        message: `${where} invalid Mermaid syntax: ${res.error ?? 'render failed'}`,
+      });
+    }
+  }
+}
+
 export function validateMcqOptions(
   options: unknown,
   wherePrefix: string,

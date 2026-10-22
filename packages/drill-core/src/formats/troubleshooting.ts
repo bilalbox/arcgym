@@ -9,7 +9,12 @@ import {
 } from '../types/drill.js';
 import type { ValidationContext, ValidationFinding } from '../validator/types.js';
 import type { DrillFormatDescriptor } from './types.js';
-import { isCitationValid, validateDiagramUrl, validateProbePool } from './validationHelpers.js';
+import {
+  isCitationValid,
+  validateDiagramSource,
+  validateDiagramUrl,
+  validateProbePool,
+} from './validationHelpers.js';
 import {
   CAUSE_LEAK_JACCARD,
   contentWordJaccard,
@@ -59,14 +64,24 @@ export function validateTroubleshooting(
       message: 'Troubleshooting requires architecture.synopsis',
     });
   }
-  if (!architecture?.diagramUrl) {
+  if (!architecture?.diagramSource && !architecture?.diagramUrl) {
     findings.push({
       ruleId: 'missing-field',
-      where: 'architecture.diagramUrl',
-      message: 'Troubleshooting requires architecture.diagramUrl',
+      where: 'architecture.diagramSource',
+      message: 'Troubleshooting requires architecture.diagramSource (Mermaid source)',
     });
   } else {
-    validateDiagramUrl(architecture.diagramUrl, 'architecture.diagramUrl', ctx, findings);
+    if (architecture.diagramSource !== undefined) {
+      validateDiagramSource(
+        architecture.diagramSource,
+        'architecture.diagramSource',
+        ctx,
+        findings,
+      );
+    }
+    if (architecture.diagramUrl !== undefined) {
+      validateDiagramUrl(architecture.diagramUrl, 'architecture.diagramUrl', ctx, findings);
+    }
   }
 
   if (typeof drill.issue !== 'string' || !drill.issue) {

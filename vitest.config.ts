@@ -8,7 +8,6 @@ export default defineConfig({
     alias: {
       '@': path.resolve(repoRoot, './apps/arcgym-web/src'),
       '@arcgym/drill-core': path.resolve(repoRoot, './packages/drill-core/src/index.ts'),
-      '@arcgym/diagrams': path.resolve(repoRoot, './packages/diagrams/src/index.ts'),
     },
   },
   test: {

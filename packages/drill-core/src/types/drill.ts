@@ -186,8 +186,10 @@ export interface CaseFileDrillDefinition extends DrillDefinitionBase {
 /** Topology synopsis + required diagram for a Troubleshooting Incident. */
 export interface TroubleshootingArchitectureDTO {
   synopsis: string;
-  /** Absolute path to diagram asset (e.g. /diagrams/...). */
-  diagramUrl: string;
+  /** Mermaid diagram source (self-contained). */
+  diagramSource?: string;
+  /** Precompiled SVG asset URL (baked at build-time or fallback). */
+  diagramUrl?: string;
   diagramLabel?: string;
 }
 

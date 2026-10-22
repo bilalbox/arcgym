@@ -6,6 +6,7 @@ import type {
   TroubleshootingFixOption,
 } from '@arcgym/drill-core';
 import type React from 'react';
+import { DiagramViewer } from '@/components/drill/DiagramViewer';
 import { Button } from '@/components/ui/button';
 import { Field, studioFieldClass, studioSectionClass } from '@/studio/fieldStyles';
 
@@ -103,19 +104,29 @@ export const TroubleshootingEditor: React.FC<TroubleshootingEditorProps> = ({
             }
           />
         </Field>
-        <Field label="Diagram URL">
-          <input
-            type="text"
-            className={studioFieldClass}
-            value={drill.architecture.diagramUrl}
+        <Field label="Diagram Source (Mermaid)">
+          <textarea
+            className={`${studioFieldClass} min-h-[120px] font-mono text-xs`}
+            placeholder="flowchart LR&#10;  A --> B"
+            value={drill.architecture.diagramSource ?? ''}
             onChange={(e) =>
               onChange({
                 ...drill,
-                architecture: { ...drill.architecture, diagramUrl: e.target.value },
+                architecture: { ...drill.architecture, diagramSource: e.target.value },
               })
             }
           />
         </Field>
+        {drill.architecture.diagramSource?.trim() ? (
+          <div className="space-y-1">
+            <span className="text-xs text-miro-muted">Live Diagram Preview:</span>
+            <DiagramViewer
+              source={drill.architecture.diagramSource}
+              url={drill.architecture.diagramUrl}
+              label={drill.architecture.diagramLabel}
+            />
+          </div>
+        ) : null}
         <Field label="Diagram label (optional)">
           <input
             type="text"

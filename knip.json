@@ -3,11 +3,6 @@
   "entry": [
     "apps/arcgym-web/functions/**/!(*.test).ts",
     "packages/drill-core/src/index.ts",
-    "packages/diagrams/src/index.ts",
-    "packages/diagrams/src/tokens.css",
-    "packages/diagrams/src/qa/auditSvgGeometry.ts",
-    "packages/diagrams/scripts/*.tsx",
-    "packages/diagrams/tests/**/*.spec.ts",
     "scripts/*.ts",
     "scripts/**/*.ts"
   ],
@@ -16,9 +11,6 @@
     "apps/arcgym-web/functions/**/*.ts",
     "apps/arcgym-web/vite/**/*.ts",
     "packages/drill-core/src/**/*.ts",
-    "packages/diagrams/src/**/*.{ts,tsx,css}",
-    "packages/diagrams/scripts/**/*.tsx",
-    "packages/diagrams/tests/**/*.ts",
     "scripts/**/*.ts"
   ],
   "ignoreDependencies": ["@swc/core"],

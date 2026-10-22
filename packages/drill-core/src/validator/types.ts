@@ -9,6 +9,7 @@ export type ValidationRuleId =
   | 'hidden-distractors'
   | 'citation-manifest'
   | 'missing-asset'
+  | 'invalid-diagram'
   | 'fix-options';
 
 export interface ValidationFinding {
@@ -20,4 +21,5 @@ export interface ValidationFinding {
 export interface ValidationContext {
   citationManifest?: ReadonlySet<string>;
   assetExists?: (url: string) => boolean;
+  validateMermaid?: (source: string) => { valid: boolean; error?: string };
 }

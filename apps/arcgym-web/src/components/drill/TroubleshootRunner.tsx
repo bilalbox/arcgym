@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { gradeCauseViaApi } from '@/lib/gradeCauseApi';
 import { ConfidenceGate, type ConfidenceLevel } from './ConfidenceGate';
+import { DiagramViewer } from './DiagramViewer';
 import { DrillAuthGate } from './DrillAuthGate';
 import { DrillFeedbackWidget } from './DrillFeedbackWidget';
 import { ProbeBudgetPanel } from './ProbeBudgetPanel';
@@ -138,13 +139,11 @@ export const TroubleshootRunner: React.FC<TroubleshootRunnerProps> = ({
           <div className="rounded-xl border border-miro-hairline bg-miro-surface p-4 text-sm text-miro-primary leading-relaxed whitespace-pre-wrap">
             {drill.architecture.synopsis}
           </div>
-          <figure className="rounded-xl border border-miro-hairline bg-miro-surface overflow-hidden">
-            <img
-              src={drill.architecture.diagramUrl}
-              alt={drill.architecture.diagramLabel ?? 'Architecture diagram'}
-              className="w-full h-auto"
-            />
-          </figure>
+          <DiagramViewer
+            source={drill.architecture.diagramSource}
+            url={drill.architecture.diagramUrl}
+            label={drill.architecture.diagramLabel}
+          />
           <div className="rounded-xl border border-miro-hairline p-4 text-sm text-miro-slate leading-relaxed">
             {drill.issue}
           </div>
