@@ -12,10 +12,15 @@ _worker.bundle/
 .wrangler/
 .dev.vars
 
-# Environment
+# Environment / secrets
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*service-account*.json
+credentials.json
 
 # Logs & OS
 *.log

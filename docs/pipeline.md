@@ -1,0 +1,152 @@
+# ArcGym content pipeline
+
+## Pipeline Architecture
+
+How ArcGym synthesizes official architecture documentation and real-world practitioner friction into high-stakes practice drills:
+
+```mermaid
+flowchart TD
+    %% Source Ingestion
+    subgraph Sources ["1. Dual Knowledge Sources"]
+        direction LR
+        
+        subgraph OfficialSource ["Official Truth Engine (architect.salesforce.com)"]
+            A1["🌐 architect.salesforce.com<br/><b>Well-Architected Framework</b><br/>• Decision Guides<br/>• Reference Architectures<br/>• Platform Core Fundamentals"]
+            A2["⚙️ Doc Crawler & Chunker<br/><code>crawl_architect.py</code><br/>• Hierarchical markdown slicing<br/>• Well-Architected pillar tagging"]
+            A3[("📚 ChromaDB Vector Store<br/><code>salesforce_architect_docs</code><br/>• Cosine similarity embeddings<br/>• Canonical chunk citation URLs")]
+            A1 --> A2 --> A3
+        end
+
+        subgraph CommunitySource ["Practitioner Field Friction (Trailblazer Community)"]
+            B1["👥 Trailblazer Community<br/><b>Select Architect Groups</b><br/>• <i>Data 360</i> group<br/>• Enterprise Architecture forums<br/>• Integration & Core channels"]
+            B2["⚙️ GraphQL Thread Ingest<br/><code>crawl_trailhead.py</code><br/>• Thread & reply extraction<br/>• SQLite storage (<code>trailhead.db</code>)"]
+            B3["📋 Friction Card Pipeline<br/><code>friction_cards.py</code><br/>• Real-world enterprise bottleneck<br/>• Naive approaches & why they fail<br/>• Human audit & tiering (Tiers A–D)"]
+            B4[("🗂️ Approved Friction Catalog<br/><code>data/friction_cards.json</code><br/>• Approved practitioner cards")]
+            B1 --> B2 --> B3 --> B4
+        end
+    end
+
+    %% RAG Pipeline
+    subgraph RAG ["2. RAG Context Assembly Engine"]
+        C1["🎯 Generation Trigger<br/><code>generate-drill.ts prompt</code><br/>• Flag: <code>--from-card FC-xxx</code> or <code>--topic</code>"]
+        C2["🔍 Semantic Vector Search<br/><code>search_chroma.py</code><br/>• Cosine similarity retrieval<br/>• Extracts Top-K official chunks"]
+        C3["🧩 Context Synthesizer & Prompt Assembler<br/><b>ArcGym Authoring Specification</b><br/>• Injects Well-Architected chunks & URLs<br/>• Injects problem & naive attempts<br/>• Injects strict CTA wording & balance rules"]
+        
+        B4 -->|1. Source card problem & naive attempts| C1
+        C1 -->|2. Card official_doc_query| C2
+        A3 -.->|3. Cosine similarity match| C2
+        C2 -->|4. Official chunks| C3
+    end
+
+    %% Drill Engine & Linter
+    subgraph Engine ["3. Drill Engine & Multi-Tier Validation"]
+        D1["🤖 Coding Agent / LLM<br/><b>Architect Author</b><br/>• Synthesizes architectural trade-offs<br/>• Models distractors on naive failures<br/>• Grounds optimal answer in official chunks"]
+        
+        subgraph Linter ["3-Tier Architect Linter"]
+            E1["Tier 1: Schema & Citation Manifest<br/>• Soft ingest / <code>build-drills</code><br/>• Exact crawled URL membership"]
+            E2["Tier 2: Deterministic Wording Lint<br/><code>packages/drill-core/src/lint/wording.ts</code><br/>• ±25% option length balance<br/>• Named distractor antipatterns<br/>• Verdict / giveaway mechanical checks"]
+            E3["Tier 3: Adversarial CTA Red-Team<br/><code>redteaming-drills</code> skill / subagent<br/>• Giveaway stems, dual grounding<br/>• Distractor restates correct<br/>• Correct too obvious"]
+            E1 --> E2
+            E2 -->|Clean ingest| E3
+        end
+
+        D2["💾 Content Draft Store<br/><code>content/drills/AGD-xxxxx.json</code><br/>• Status: <code>draft</code>"]
+        D3["🚀 Build & Distribution Compiler<br/><code>scripts/build-drills.ts</code><br/>• Validates published catalog<br/>• Emits <code>canonicalDrills.json</code><br/>• Seeds Cloudflare KV edge store"]
+
+        C3 --> D1
+        D1 -->|generate-drill.ts ingest| E1
+        E2 -.->|Failed: keep draft + findings sidecar| D1
+        E3 -.->|Failed: redteam findings sidecar| D1
+        E3 -->|Passed (no sidecar)| D2
+        D2 -->|pnpm drill:status --status published| D3
+    end
+
+    %% Learner Experience & Calibration
+    subgraph Delivery ["4. Runtime Delivery & Metacognitive Calibration"]
+        F1["📱 ArcGym Web Platform<br/><b>React 19 + Cloudflare Pages</b>"]
+        
+        subgraph Archetypes ["Unified Rapid Fire Engine"]
+            G1["Rapid Fire<br/>Multi-rep decisions; optional topology previews"]
+        end
+
+        H1["🔒 Universal Pre-Submit Confidence Gate<br/>50% Speculative | 70% Plausible | 85% High Conviction | 95% Axiom"]
+        H2["📊 Brier Calibration Engine<br/><code>@arcgym/drill-core</code><br/>• Calibrated Conviction<br/>• Calibrated Humility<br/>• Hesitant Mastery<br/>• Hazardous Assumption"]
+
+        D3 --> F1
+        F1 --> G1
+        G1 --> H1
+        H1 --> H2
+    end
+
+    %% Styling
+    classDef official fill:#eff6ff,stroke:#0176d3,stroke-width:2px,color:#0f172a
+    classDef friction fill:#fff1f2,stroke:#be123c,stroke-width:2px,color:#0f172a
+    classDef rag fill:#faf5ff,stroke:#6b21a8,stroke-width:2px,color:#0f172a
+    classDef engine fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#0f172a
+    classDef delivery fill:#ecfdf5,stroke:#047857,stroke-width:2px,color:#0f172a
+
+    class A1,A2,A3 official
+    class B1,B2,B3,B4 friction
+    class C1,C2,C3 rag
+    class D1,D2,D3,E1,E2,E3 engine
+    class F1,G1,G2,G3,H1,H2 delivery
+```
+
+### Pipeline Principles & Invariants
+
+| Stage | Component | Technical Role | ArcGym Invariant |
+| :--- | :--- | :--- | :--- |
+| **Official Truth** | [`crawl_architect.py`](./scripts/crawler/crawl_architect.py) & ChromaDB | Slices official documentation into hierarchical chunks tagged by Well-Architected pillar (*Trust*, *Reliability*, *Operational Excellence*, *Cost Optimization*, *Fairness*). | **Well-Architected Grounding**: Official docs are the *sole* authority for correct options. Every correct answer must cite an exact, crawled URL. |
+| **Practitioner Friction** | [`crawl_trailhead.py`](./scripts/crawler/crawl_trailhead.py) & [`friction_cards.py`](./scripts/crawler/friction_cards.py) | Ingests real-world discussions from select groups (such as `* Data 360 *`) into SQLite and synthesizes [Friction Cards](./CONTEXT.md#language). | **Distractor Antipatterns**: Community resolutions are *never* used as official grounding; they strictly source realistic scenario tension and plausible failure modes. |
+| **RAG Retrieval** | [`generate-drill.ts`](./scripts/generator/generate-drill.ts) & [`search_chroma.py`](./scripts/crawler/search_chroma.py) | Executes vector search via `official_doc_query` and builds a constrained prompt pairing official guidance with practitioner friction. | **No Unanchored Prompts**: If Chroma cannot retrieve chunks governing the decision, prompt authoring declines. |
+| **3-Tier Linter** | Soft ingest + [`wording.ts`](./packages/drill-core/src/lint/wording.ts) + [`redteaming-drills`](./.agents/skills/redteaming-drills/SKILL.md) | Schema/Citation Manifest and wording lint in ingest/build; Adversarial CTA Red-Team as a skill/subagent that writes `redteam` findings sidecars (not a CI hard gate). | **Zero AI Visual Tells**: Mechanical wording lint plus CTA traps (giveaway stems, dual grounding, distractor restates correct, correct too obvious). Soft ingest keeps drafts + findings on failure — no hard rollback. |
+| **Learner Practice** | [`apps/arcgym-web`](./apps/arcgym-web) & [`@arcgym/drill-core`](./packages/drill-core) | Delivers 4 interaction formats with the **Universal Pre-Submit Confidence Gate** (50%, 70%, 85%, 95%). | **Metacognitive Calibration**: Tracks Brier scores across four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate architectural blind spots without org dependencies. |
+
+## Content authoring helpers
+
+```bash
+# Validate drills & bake Mermaid diagrams into public/diagrams/
+pnpm build:drills
+
+# Diagram authoring:
+# 1. Author topology directly as Mermaid syntax in drill JSON: "architecture": { "diagramSource": "flowchart LR..." }
+# 2. Studio provides instant live preview as you type
+# 3. pnpm build:drills validates Mermaid syntax and bakes standalone SVGs
+
+# Toggle editorial status (draft stays in content/; published enters the learner catalog)
+pnpm drill:status --status draft --all
+pnpm drill:status --status published --domain-label "Data 360"
+
+# RAG crawl / index Well-Architected Grounding (Python + Chroma under data/chroma/, gitignored).
+# Architect + Data 360 developer guides share one collection via non-destructive upsert
+# (metadata.source_domain). Citation Manifest = URL union of data/*_chunks.json at build time.
+# If upgrading from an older wipe-based index, remove data/chroma/ once before reindexing.
+uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
+  python scripts/crawler/crawl_architect.py
+uv run --with chromadb --with curl_cffi \
+  python scripts/crawler/crawl_developer.py
+uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
+  python scripts/crawler/crawl_help.py
+
+# Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
+python scripts/crawler/crawl_trailhead.py --limit 100
+
+# Friction Cards and drills are written by your coding agent (no mandatory hosted LLM API). Project skills:
+#   .cursor/skills/extracting-friction-cards  — agent answers `friction_cards.py prompt`, then `import`s
+#   .cursor/skills/reviewing-friction-cards   — agent audits pending cards via `audit-prompt` / `apply-verdicts`
+#   .cursor/skills/generating-drills          — agent answers `generate-drill.ts prompt`, then `ingest`s
+#   .cursor/skills/reviewing-drills           — repair soft-ingest / red-team findings sidecars, re-ingest
+#   .cursor/skills/redteaming-drills          — Adversarial CTA Red-Team after clean ingest (skill/subagent)
+# Human steps: review/approve cards (or apply agent verdicts), then export to data/friction_cards.json (gitignored)
+python scripts/crawler/friction_cards.py audit-prompt --tier A --limit 20 --preview-docs > /tmp/audit.md
+python scripts/crawler/friction_cards.py apply-verdicts /tmp/verdicts.json
+python scripts/crawler/friction_cards.py review               # [p] previews official docs, [e] edits it
+python scripts/crawler/friction_cards.py export
+
+# Manual drill flow: build the grounded prompt, answer it, then validate and save as a draft
+npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<discussion_id> [--format Lesson] [--query "…"] > prompt.md
+npx tsx scripts/generator/generate-drill.ts ingest drill.json
+
+# Legacy keyword clustering (superseded by Friction Cards; writes data/curated_community_patterns.json)
+python scripts/crawler/analyze_trailhead_patterns.py
+```

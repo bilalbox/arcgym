@@ -4,7 +4,11 @@ Architectural judgment practice for Salesforce Architects — Core Platform, Dat
 
 Progress and confidence calibration live in the browser. There is no Salesforce org runtime dependency.
 
-> **Note:** ArcGym is heavily inspired by [Analyst Gym](https://analystgym.com/).
+Live: **https://practice.23p.tech**
+
+> Inspired by [Analyst Gym](https://analystgym.com/).
+
+Content pipeline (RAG, Friction Cards, drill lint): [`docs/pipeline.md`](./docs/pipeline.md). Glossary: [`CONTEXT.md`](./CONTEXT.md).
 
 ## Stack
 
@@ -14,121 +18,19 @@ Progress and confidence calibration live in the browser. There is no Salesforce 
 | Design | Miro-inspired system (see [`design.md`](./design.md)) via Tailwind CSS 4 + Radix primitives |
 | Domain | `@arcgym/drill-core` — scoring, calibration, recommendation types |
 | Diagrams | Self-contained Mermaid (`diagramSource`) rendered via Obsidian Pele (`pele`) |
-| Hosting & Analytics | Cloudflare Pages + Pages Functions + KV at **https://practice.23p.tech** (Wrangler 4) + Cloudflare Web Analytics (cookieless) |
+| Hosting | Cloudflare Pages + Pages Functions + KV (Wrangler 4) + cookieless Web Analytics |
 | Content | JSON drills under `content/drills/`, compiled by `scripts/build-drills.ts` |
-
-## Pipeline Architecture
-
-How ArcGym synthesizes official architecture documentation and real-world practitioner friction into high-stakes practice drills:
-
-```mermaid
-flowchart TD
-    %% Source Ingestion
-    subgraph Sources ["1. Dual Knowledge Sources"]
-        direction LR
-        
-        subgraph OfficialSource ["Official Truth Engine (architect.salesforce.com)"]
-            A1["🌐 architect.salesforce.com<br/><b>Well-Architected Framework</b><br/>• Decision Guides<br/>• Reference Architectures<br/>• Platform Core Fundamentals"]
-            A2["⚙️ Doc Crawler & Chunker<br/><code>crawl_architect.py</code><br/>• Hierarchical markdown slicing<br/>• Well-Architected pillar tagging"]
-            A3[("📚 ChromaDB Vector Store<br/><code>salesforce_architect_docs</code><br/>• Cosine similarity embeddings<br/>• Canonical chunk citation URLs")]
-            A1 --> A2 --> A3
-        end
-
-        subgraph CommunitySource ["Practitioner Field Friction (Trailblazer Community)"]
-            B1["👥 Trailblazer Community<br/><b>Select Architect Groups</b><br/>• <i>Data 360</i> group<br/>• Enterprise Architecture forums<br/>• Integration & Core channels"]
-            B2["⚙️ GraphQL Thread Ingest<br/><code>crawl_trailhead.py</code><br/>• Thread & reply extraction<br/>• SQLite storage (<code>trailhead.db</code>)"]
-            B3["📋 Friction Card Pipeline<br/><code>friction_cards.py</code><br/>• Real-world enterprise bottleneck<br/>• Naive approaches & why they fail<br/>• Human audit & tiering (Tiers A–D)"]
-            B4[("🗂️ Approved Friction Catalog<br/><code>data/friction_cards.json</code><br/>• Approved practitioner cards")]
-            B1 --> B2 --> B3 --> B4
-        end
-    end
-
-    %% RAG Pipeline
-    subgraph RAG ["2. RAG Context Assembly Engine"]
-        C1["🎯 Generation Trigger<br/><code>generate-drill.ts prompt</code><br/>• Flag: <code>--from-card FC-xxx</code> or <code>--topic</code>"]
-        C2["🔍 Semantic Vector Search<br/><code>search_chroma.py</code><br/>• Cosine similarity retrieval<br/>• Extracts Top-K official chunks"]
-        C3["🧩 Context Synthesizer & Prompt Assembler<br/><b>ArcGym Authoring Specification</b><br/>• Injects Well-Architected chunks & URLs<br/>• Injects problem & naive attempts<br/>• Injects strict CTA wording & balance rules"]
-        
-        B4 -->|1. Source card problem & naive attempts| C1
-        C1 -->|2. Card official_doc_query| C2
-        A3 -.->|3. Cosine similarity match| C2
-        C2 -->|4. Official chunks| C3
-    end
-
-    %% Drill Engine & Linter
-    subgraph Engine ["3. Drill Engine & Multi-Tier Validation"]
-        D1["🤖 Coding Agent / LLM<br/><b>Architect Author</b><br/>• Synthesizes architectural trade-offs<br/>• Models distractors on naive failures<br/>• Grounds optimal answer in official chunks"]
-        
-        subgraph Linter ["3-Tier Architect Linter"]
-            E1["Tier 1: Schema & Citation Manifest<br/>• Soft ingest / <code>build-drills</code><br/>• Exact crawled URL membership"]
-            E2["Tier 2: Deterministic Wording Lint<br/><code>packages/drill-core/src/lint/wording.ts</code><br/>• ±25% option length balance<br/>• Named distractor antipatterns<br/>• Verdict / giveaway mechanical checks"]
-            E3["Tier 3: Adversarial CTA Red-Team<br/><code>redteaming-drills</code> skill / subagent<br/>• Giveaway stems, dual grounding<br/>• Distractor restates correct<br/>• Correct too obvious"]
-            E1 --> E2
-            E2 -->|Clean ingest| E3
-        end
-
-        D2["💾 Content Draft Store<br/><code>content/drills/AGD-xxxxx.json</code><br/>• Status: <code>draft</code>"]
-        D3["🚀 Build & Distribution Compiler<br/><code>scripts/build-drills.ts</code><br/>• Validates published catalog<br/>• Emits <code>canonicalDrills.json</code><br/>• Seeds Cloudflare KV edge store"]
-
-        C3 --> D1
-        D1 -->|generate-drill.ts ingest| E1
-        E2 -.->|Failed: keep draft + findings sidecar| D1
-        E3 -.->|Failed: redteam findings sidecar| D1
-        E3 -->|Passed (no sidecar)| D2
-        D2 -->|pnpm drill:status --status published| D3
-    end
-
-    %% Learner Experience & Calibration
-    subgraph Delivery ["4. Runtime Delivery & Metacognitive Calibration"]
-        F1["📱 ArcGym Web Platform<br/><b>React 19 + Cloudflare Pages</b>"]
-        
-        subgraph Archetypes ["Unified Rapid Fire Engine"]
-            G1["Rapid Fire<br/>Multi-rep decisions; optional topology previews"]
-        end
-
-        H1["🔒 Universal Pre-Submit Confidence Gate<br/>50% Speculative | 70% Plausible | 85% High Conviction | 95% Axiom"]
-        H2["📊 Brier Calibration Engine<br/><code>@arcgym/drill-core</code><br/>• Calibrated Conviction<br/>• Calibrated Humility<br/>• Hesitant Mastery<br/>• Hazardous Assumption"]
-
-        D3 --> F1
-        F1 --> G1
-        G1 --> H1
-        H1 --> H2
-    end
-
-    %% Styling
-    classDef official fill:#eff6ff,stroke:#0176d3,stroke-width:2px,color:#0f172a
-    classDef friction fill:#fff1f2,stroke:#be123c,stroke-width:2px,color:#0f172a
-    classDef rag fill:#faf5ff,stroke:#6b21a8,stroke-width:2px,color:#0f172a
-    classDef engine fill:#fffbeb,stroke:#b45309,stroke-width:2px,color:#0f172a
-    classDef delivery fill:#ecfdf5,stroke:#047857,stroke-width:2px,color:#0f172a
-
-    class A1,A2,A3 official
-    class B1,B2,B3,B4 friction
-    class C1,C2,C3 rag
-    class D1,D2,D3,E1,E2,E3 engine
-    class F1,G1,G2,G3,H1,H2 delivery
-```
-
-### Pipeline Principles & Invariants
-
-| Stage | Component | Technical Role | ArcGym Invariant |
-| :--- | :--- | :--- | :--- |
-| **Official Truth** | [`crawl_architect.py`](./scripts/crawler/crawl_architect.py) & ChromaDB | Slices official documentation into hierarchical chunks tagged by Well-Architected pillar (*Trust*, *Reliability*, *Operational Excellence*, *Cost Optimization*, *Fairness*). | **Well-Architected Grounding**: Official docs are the *sole* authority for correct options. Every correct answer must cite an exact, crawled URL. |
-| **Practitioner Friction** | [`crawl_trailhead.py`](./scripts/crawler/crawl_trailhead.py) & [`friction_cards.py`](./scripts/crawler/friction_cards.py) | Ingests real-world discussions from select groups (such as `* Data 360 *`) into SQLite and synthesizes [Friction Cards](./CONTEXT.md#language). | **Distractor Antipatterns**: Community resolutions are *never* used as official grounding; they strictly source realistic scenario tension and plausible failure modes. |
-| **RAG Retrieval** | [`generate-drill.ts`](./scripts/generator/generate-drill.ts) & [`search_chroma.py`](./scripts/crawler/search_chroma.py) | Executes vector search via `official_doc_query` and builds a constrained prompt pairing official guidance with practitioner friction. | **No Unanchored Prompts**: If Chroma cannot retrieve chunks governing the decision, prompt authoring declines. |
-| **3-Tier Linter** | Soft ingest + [`wording.ts`](./packages/drill-core/src/lint/wording.ts) + [`redteaming-drills`](./.agents/skills/redteaming-drills/SKILL.md) | Schema/Citation Manifest and wording lint in ingest/build; Adversarial CTA Red-Team as a skill/subagent that writes `redteam` findings sidecars (not a CI hard gate). | **Zero AI Visual Tells**: Mechanical wording lint plus CTA traps (giveaway stems, dual grounding, distractor restates correct, correct too obvious). Soft ingest keeps drafts + findings on failure — no hard rollback. |
-| **Learner Practice** | [`apps/arcgym-web`](./apps/arcgym-web) & [`@arcgym/drill-core`](./packages/drill-core) | Delivers 4 interaction formats with the **Universal Pre-Submit Confidence Gate** (50%, 70%, 85%, 95%). | **Metacognitive Calibration**: Tracks Brier scores across four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate architectural blind spots without org dependencies. |
 
 ## Monorepo layout
 
 ```
 apps/arcgym-web/     Cloudflare Pages React app (UI + Functions + /privacy route)
 packages/drill-core/ Pure TypeScript domain library (scoring, calibration, recommendations)
-content/drills/      Authoritative drill JSON (drills across architectural domains)
+content/drills/      Authoritative drill JSON
 scripts/             Drill build, KV seed, RAG crawler, Friction Card tooling, drill generator
-data/                Local-only RAG corpus, Trailhead SQLite, and Friction Card catalog (gitignored)
-docs/research/       Domain research notes & architectural taxonomy
-design.md            Visual system (Miro × Salesforce craft)
+data/                Local-only RAG corpus / SQLite / Friction Card catalog (gitignored)
+docs/                ADRs, research, pipeline guide
+design.md            Visual system
 CONTEXT.md           Product language / glossary
 ```
 
@@ -142,84 +44,17 @@ CONTEXT.md           Product language / glossary
 
 ```bash
 pnpm install
-
-# Local UI (Vite on :3000)
-pnpm dev
-
-# Run typechecks across workspace packages and scripts
+pnpm dev          # Vite UI on :3000
 pnpm typecheck
-
-# Run Biome checks (fails on any error or warning)
-pnpm check
-
-# Run Biome checks with auto-fixes / formatting
-pnpm check:fix
-pnpm format
-
-# Compile drills → web data/public, bake Mermaid diagrams to SVG, typecheck, Biome check, then build web
-pnpm build
-
-# Unit tests (drill-core & web app)
+pnpm check        # Biome
+pnpm build        # drills → web + typecheck + Biome + web build
 pnpm test
-
-# Preview production build
 pnpm preview
-
-# Automatically runs typecheck, Biome checks, build, and tests before deploying to Cloudflare Pages
-pnpm deploy
-
-# Push compiled drills into KV (after build)
-pnpm seed
+pnpm deploy       # gates then Cloudflare Pages
+pnpm seed         # push compiled drills to KV (after build)
 ```
 
-### Content authoring helpers
-
-```bash
-# Validate drills & bake Mermaid diagrams into public/diagrams/
-pnpm build:drills
-
-# Diagram authoring:
-# 1. Author topology directly as Mermaid syntax in drill JSON: "architecture": { "diagramSource": "flowchart LR..." }
-# 2. Studio provides instant live preview as you type
-# 3. pnpm build:drills validates Mermaid syntax and bakes standalone SVGs
-
-# Toggle editorial status (draft stays in content/; published enters the learner catalog)
-pnpm drill:status --status draft --all
-pnpm drill:status --status published --domain-label "Data 360"
-
-# RAG crawl / index Well-Architected Grounding (Python + Chroma under data/chroma/, gitignored).
-# Architect + Data 360 developer guides share one collection via non-destructive upsert
-# (metadata.source_domain). Citation Manifest = URL union of data/*_chunks.json at build time.
-# If upgrading from an older wipe-based index, remove data/chroma/ once before reindexing.
-uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
-  python scripts/crawler/crawl_architect.py
-uv run --with chromadb --with curl_cffi \
-  python scripts/crawler/crawl_developer.py
-uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml \
-  python scripts/crawler/crawl_help.py
-
-# Ingest Trailhead Community discussions into local SQLite (data/trailhead.db, gitignored)
-python scripts/crawler/crawl_trailhead.py --limit 100
-
-# Friction Cards and drills are written by your coding agent (no mandatory hosted LLM API). Project skills:
-#   .cursor/skills/extracting-friction-cards  — agent answers `friction_cards.py prompt`, then `import`s
-#   .cursor/skills/reviewing-friction-cards   — agent audits pending cards via `audit-prompt` / `apply-verdicts`
-#   .cursor/skills/generating-drills          — agent answers `generate-drill.ts prompt`, then `ingest`s
-#   .cursor/skills/reviewing-drills           — repair soft-ingest / red-team findings sidecars, re-ingest
-#   .cursor/skills/redteaming-drills          — Adversarial CTA Red-Team after clean ingest (skill/subagent)
-# Human steps: review/approve cards (or apply agent verdicts), then export to data/friction_cards.json (gitignored)
-python scripts/crawler/friction_cards.py audit-prompt --tier A --limit 20 --preview-docs > /tmp/audit.md
-python scripts/crawler/friction_cards.py apply-verdicts /tmp/verdicts.json
-python scripts/crawler/friction_cards.py review               # [p] previews official docs, [e] edits it
-python scripts/crawler/friction_cards.py export
-
-# Manual drill flow: build the grounded prompt, answer it, then validate and save as a draft
-npx tsx scripts/generator/generate-drill.ts prompt --from-card FC-<discussion_id> [--format Lesson] [--query "…"] > prompt.md
-npx tsx scripts/generator/generate-drill.ts ingest drill.json
-
-# Legacy keyword clustering (superseded by Friction Cards; writes data/curated_community_patterns.json)
-python scripts/crawler/analyze_trailhead_patterns.py
-```
+Authoring / crawler commands: [`docs/pipeline.md`](./docs/pipeline.md#content-authoring-helpers).
 
 ## Drill format
 
@@ -227,41 +62,43 @@ python scripts/crawler/analyze_trailhead_patterns.py
 
 Every drill uses the universal pre-submit **confidence gate** (50%, 70%, 85%, 95%) for Brier score calibration telemetry.
 
-## Calibration & Privacy Architecture
+## Calibration & privacy
 
-- **Metacognitive Calibration**: Drills map answers against subjective confidence into four quadrants (*Calibrated Conviction*, *Calibrated Humility*, *Hesitant Mastery*, *Hazardous Assumption*) to eliminate dangerous architectural blind spots.
-- **Privacy-First Practice & Zero-PII Sync**: No login is required to start practicing (Trial Allowance stored in `localStorage`). To persist streaks across devices, learners can sign in with Google or GitHub under a pseudonymous, Zero-PII model (Cloudflare D1). No passwords, names, or emails are ever stored, and no Salesforce org connection is required.
-- **Anonymous Drill Ratings**: Optional enum-pill feedback (no free text). Edge anti-sybil uses a short-lived HMAC over date + drill + connecting IP; raw IP is not stored in feedback records. See [`/privacy`](./apps/arcgym-web/src/pages/PrivacyPage.tsx).
-- **Cookieless Telemetry**: Site analytics are aggregated via Cloudflare Web Analytics (no cookies, no cross-site advertising profiles; auto-injected at the Cloudflare edge across custom domains such as `arcgym.23p.tech` and `arcgym.23p.dev`).
+- **Metacognitive calibration** — answers × confidence → four quadrants (Conviction, Humility, Hesitant Mastery, Hazardous Assumption).
+- **Zero-PII sync** — practice without login; optional Google/GitHub under a pseudonymous D1 model (no passwords, names, or emails stored). No Salesforce org connection.
+- **Anonymous ratings** — enum pills only; short-lived HMAC anti-sybil; see [`/privacy`](./apps/arcgym-web/src/pages/PrivacyPage.tsx).
+- **Cookieless analytics** — Cloudflare Web Analytics.
 
-## Edge secrets (required for Functions)
+## Edge secrets
 
-Do **not** put secrets in `wrangler.toml` `[vars]`. Configure three separate Cloudflare Pages secrets (and matching `.dev.vars` for local Functions):
+Do **not** put secrets in `wrangler.toml` `[vars]`. Use Pages secrets (and `.dev.vars` locally):
 
 | Secret | Purpose |
 | --- | --- |
-| `ARCGYM_HMAC_SECRET` | HMAC for `POST /api/webhooks/publish-drill` (`X-ArcGym-Signature`) |
-| `ARCGYM_ADMIN_KEY` | Bearer for `GET /api/admin/feedback` (`X-ArcGym-Admin-Key` header only) |
+| `ARCGYM_HMAC_SECRET` | HMAC for `POST /api/webhooks/publish-drill` |
+| `ARCGYM_ADMIN_KEY` | Bearer for `GET /api/admin/feedback` |
 | `ARCGYM_VOTE_HMAC_SECRET` | HMAC for ephemeral vote-dedup tokens |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth (if enabled) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | OAuth (if enabled) |
+| `SESSION_SECRET` / `LEARNER_PEPPER` | Session + pseudonymous IDs |
 
 ```bash
-# Production (Pages project "arcgym")
 pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_HMAC_SECRET --project-name=arcgym
-pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_ADMIN_KEY --project-name=arcgym
-pnpm --filter @arcgym/web exec wrangler pages secret put ARCGYM_VOTE_HMAC_SECRET --project-name=arcgym
+# …same for the other names…
 
-# Local Functions
 cp apps/arcgym-web/.dev.vars.example apps/arcgym-web/.dev.vars
-# edit .dev.vars with `openssl rand -hex 32` values
+# fill with `openssl rand -hex 32` (and OAuth ids) for local Functions
 ```
-
-If you previously used the committed placeholder `arcgym_hmac_secret_2026_super_secure`, treat it as compromised and rotate all three secrets.
 
 ## Design
 
-UI follows the Miro-adapted ArcGym design system: black-pill primary actions, Salesforce blue reserved for brand/links, hairline surfaces, Geist Sans. Details and tokens live in [`design.md`](./design.md).
+UI follows the Miro-adapted ArcGym design system: black-pill primary actions, Salesforce blue for brand/links, hairline surfaces, Geist Sans. Details in [`design.md`](./design.md).
 
 ## Notes
 
-- `.archive/` may contain retired LWR / SFDX experiments; it is gitignored and not part of the runtime.
-- Local scratch, Chroma indexes, SQLite databases (`data/*.db`), Wrangler caches, and env files are gitignored — see [`.gitignore`](./.gitignore).
+- `.archive/` may contain retired LWR / SFDX experiments; gitignored, not runtime.
+- Local scratch, Chroma, SQLite (`data/*.db`), Wrangler caches, and env files are gitignored — see [`.gitignore`](./.gitignore).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
