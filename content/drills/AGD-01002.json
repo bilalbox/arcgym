@@ -11,7 +11,7 @@
   "sourceCardIds": ["FC-0D5KX00000jAFgt0AG"],
   "architecture": {
     "synopsis": "High-velocity clickstream and authentication events are ingested via the Web SDK into an Engagement DLO with unique event UUIDs. A Streaming Data Transform (SDT) filters for login events to populate an AnonymousVisitor Profile DLO mapped to the Individual DMO for real-time personalization.",
-    "diagramSource": "flowchart LR\n  classDef stream fill:#ffffff,stroke:#cbd5e1;\n  classDef sdt fill:#f0fdfa,stroke:#0d9488,stroke-width:1.8px;\n  classDef target fill:#ffffff,stroke:#cbd5e1;\n\n  events[\"`**Web SDK Ingestion**\nEngagement DLO\nUUID Primary Key Stream`\"]:::stream\n  sdt[\"`**Streaming SQL Engine**\nStreaming Transform\nWHERE type = 'login'`\"]:::sdt\n  profiles[\"`**Visitor Profiles**\nProfile DMO\nvisitor_cookie Keyed`\"]:::target\n\n  events -->|\"Filter\"| sdt\n  sdt -->|\"Retract\"| profiles",
+    "diagramSource": "flowchart LR\n  events[\"`**Web SDK Ingestion**\nEngagement DLO\nUUID Primary Key Stream`\"]:::stream\n  sdt[\"`**Streaming SQL Engine**\nStreaming Transform\nWHERE type = 'login'`\"]:::sdt\n  profiles[\"`**Visitor Profiles**\nProfile DMO\nvisitor_cookie Keyed`\"]:::target\n\n  events -->|\"Filter\"| sdt\n  sdt -->|\"Retract\"| profiles",
     "diagramLabel": "Web SDK engagement stream through filtered SDT into visitor profile DMO"
   },
   "issue": "Shortly after landing on the site and authenticating, visitor profiles appear in the Profile DMO and qualify for real-time personalization. However, within minutes of active browsing, visitors mysteriously vanish from the Profile DMO, dropping active sessions and breaking personalization.",

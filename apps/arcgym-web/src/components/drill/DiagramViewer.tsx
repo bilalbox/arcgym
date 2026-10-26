@@ -8,6 +8,15 @@ export interface DiagramViewerProps {
   className?: string;
 }
 
+/**
+ * Sanitizes Mermaid diagram source by removing legacy classDef and style directives.
+ * Node classes assigned with `:::className` are preserved, allowing ArcGym's Miro CSS tokens
+ * to theme nodes dynamically across light and dark modes without hardcoded hex overrides.
+ */
+export function sanitizeDiagramSource(source: string): string {
+  return source.replace(/^\s*(classDef|style)\s+.*$/gm, '').trim();
+}
+
 export function DiagramViewer({ source, url, label, className = '' }: DiagramViewerProps) {
   const [renderedSvg, setRenderedSvg] = useState<string | null>(null);
 
@@ -17,7 +26,8 @@ export function DiagramViewer({ source, url, label, className = '' }: DiagramVie
       return;
     }
     let cancelled = false;
-    renderAsync(source)
+    const cleanSource = sanitizeDiagramSource(source);
+    renderAsync(cleanSource)
       .then((res) => {
         if (!cancelled) setRenderedSvg(res.svg);
       })

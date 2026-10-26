@@ -26,28 +26,62 @@ const WEB_PUBLIC_DIR = path.join(ROOT_DIR, 'apps/arcgym-web/public/api/drills');
 const WEB_PUBLIC_ROOT = path.join(ROOT_DIR, 'apps/arcgym-web/public');
 const DIAGRAMS_OUT_DIR = path.join(WEB_PUBLIC_ROOT, 'diagrams');
 
-/** ArcGym design tokens mapped into Pele CSS variables. */
-const ARCGYM_DIAGRAM_CSS = `
-  --pele-bg: #f8fafc;
-  --pele-fg: #0f172a;
-  --pele-surface: #ffffff;
-  --pele-surface-alt: #f1f5f9;
-  --pele-border: #cbd5e1;
-  --pele-line: #64748b;
-  --pele-muted: #64748b;
-  --pele-accent: #0284c7;
-  --pele-radius: 8px;
-  --pele-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-`;
+/** ArcGym design tokens and semantic node styles embedded into standalone SVGs. */
+const ARCGYM_DIAGRAM_EMBEDDED_STYLE = `<style>
+  :root, svg {
+    --pele-bg: #f7f8fa;
+    --pele-fg: #1c1c1e;
+    --pele-surface: #ffffff;
+    --pele-surface-alt: #fafbfc;
+    --pele-border: #e0e2e8;
+    --pele-line: #555a6a;
+    --pele-muted: #8e91a0;
+    --pele-accent: #0176d3;
+    --pele-radius: 8px;
+    --pele-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .pele-node.store rect { fill: #fafbfc; stroke: #555a6a; }
+  .pele-node.cache rect, .pele-node.sdt rect, .pele-node.focal rect, .pele-node.teal rect { fill: #c3faf5; stroke: #0d9488; stroke-width: 1.8px; }
+  .pele-node.clients rect, .pele-node.stream rect, .pele-node.target rect, .pele-node.card rect { fill: #ffffff; stroke: #c7cad5; }
+  .pele-node.accent rect, .pele-node.sky rect, .pele-node.blue rect { fill: rgba(1, 118, 211, 0.16); stroke: #0176d3; stroke-width: 1.8px; }
+  .pele-node.warn rect, .pele-node.danger rect, .pele-node.rose rect { fill: #fee2e2; stroke: #dc2626; stroke-width: 1.8px; }
+  .pele-node.yellow rect, .pele-node.amber rect { fill: #fff4c4; stroke: #f0d98a; }
+  .pele-node.lavender rect, .pele-node.violet rect { fill: #f5f3ff; stroke: #c7d2fe; }
+  .pele-node.success rect { fill: #dcfce7; stroke: #86efac; }
+
+  @media (prefers-color-scheme: dark) {
+    :root, svg {
+      --pele-bg: #0f1115;
+      --pele-fg: #eceef2;
+      --pele-surface: #16181f;
+      --pele-surface-alt: #1c1f28;
+      --pele-border: #2a2e3a;
+      --pele-line: #9aa0b0;
+      --pele-muted: #6e7486;
+      --pele-accent: #4aa3f0;
+    }
+    .pele-node.store rect { fill: #1c1f28; stroke: #9aa0b0; }
+    .pele-node.cache rect, .pele-node.sdt rect, .pele-node.focal rect, .pele-node.teal rect { fill: #122826; stroke: #2dd4bf; stroke-width: 1.8px; }
+    .pele-node.clients rect, .pele-node.stream rect, .pele-node.target rect, .pele-node.card rect { fill: #16181f; stroke: #3a3f4e; }
+    .pele-node.accent rect, .pele-node.sky rect, .pele-node.blue rect { fill: rgba(74, 163, 240, 0.22); stroke: #4aa3f0; stroke-width: 1.8px; }
+    .pele-node.warn rect, .pele-node.danger rect, .pele-node.rose rect { fill: #2a1618; stroke: #f87171; stroke-width: 1.8px; }
+    .pele-node.yellow rect, .pele-node.amber rect { fill: #262218; stroke: #3f3620; }
+    .pele-node.lavender rect, .pele-node.violet rect { fill: #1c1b2c; stroke: #2e2c4a; }
+    .pele-node.success rect { fill: #14261c; stroke: #1e3d2a; }
+  }
+</style>`;
 
 export function bakeMermaidSvg(source: string, title?: string): string {
-  const res = render(source);
-  let svg = res.svg.replace(
-    /style="([^"]*)"/,
-    `style="$1;${ARCGYM_DIAGRAM_CSS.replace(/[\n\r\s]+/g, ' ')}"`,
-  );
+  const cleanSource = source.replace(/^\s*(classDef|style)\s+.*$/gm, '').trim();
+  const res = render(cleanSource);
+  let svg = res.svg;
   if (!svg.includes('<title>')) {
-    svg = svg.replace(/>/, `><title>${title ?? 'Architecture Diagram'}</title>`);
+    svg = svg.replace(
+      />/,
+      `><title>${title ?? 'Architecture Diagram'}</title>${ARCGYM_DIAGRAM_EMBEDDED_STYLE}`,
+    );
+  } else {
+    svg = svg.replace(/<title>[^<]*<\/title>/, `$&${ARCGYM_DIAGRAM_EMBEDDED_STYLE}`);
   }
   return svg;
 }

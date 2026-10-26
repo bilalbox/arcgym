@@ -42,7 +42,7 @@ Do not rush or dump an ungrounded drill. Walk through each step with the user, s
 
 2. Establish the failure scenario:
    - **Architecture synopsis**: A concise narrative of the steady-state system architecture (max ~120 words).
-   - **Diagram Source**: Required authored topology diagram as Mermaid syntax (`diagramSource`), compiled to polished SVG via Pele.
+   - **Diagram Source**: Required authored topology diagram as Mermaid syntax (`diagramSource`), compiled to polished SVG via Pele. Use semantic class selectors (e.g. `node["..."]:::store`, `node["..."]:::cache`, `node["..."]:::focal`, `node["..."]:::clients`, `node["..."]:::warn`) instead of hardcoding `classDef` hex colors so diagrams automatically adapt to ArcGym's Miro design tokens across both light and dark modes.
    - **Issue**: The observed failure symptom (e.g. intermittent timeout, lock contention, sync lag). **Crucial rule**: Never leak the gold cause in the issue description.
 
 ---

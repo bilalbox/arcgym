@@ -136,7 +136,12 @@
     --miro-successBorder: #86efac;
     --miro-dangerLight: #fee2e2;
     --miro-dangerText: #991b1b;
+    --miro-dangerBorder: #fee2e2;
     --miro-modal-shadow: rgba(5, 0, 56, 0.08) 0px 12px 32px -4px;
+
+    /* Diagram node semantic accents */
+    --diagram-arcgym-teal-border: #0d9488;
+    --diagram-arcgym-warn-border: #dc2626;
 
     /* Canonical kebab-case aliases (standard CSS format, avoids Mistake #4 & preserves migration compatibility) */
     --miro-surface-soft: var(--miro-surfaceSoft);
@@ -214,6 +219,9 @@
     --miro-dangerText: #e09090;
     --miro-dangerBorder: #4a2828;
 
+    --diagram-arcgym-teal-border: #2dd4bf;
+    --diagram-arcgym-warn-border: #f87171;
+
     --miro-modal-shadow: rgba(0, 0, 0, 0.45) 0px 12px 32px -4px;
   }
 
@@ -237,5 +245,61 @@
     --pele-accent: var(--miro-blue);
     --pele-radius: 8px;
     --pele-font: var(--font-sans);
+  }
+
+  /* ArcGym semantic diagram nodes mapped to Miro design tokens */
+  .pele .pele-node.store rect {
+    fill: var(--miro-surfaceSoft);
+    stroke: var(--miro-slate);
+  }
+
+  .pele .pele-node.cache rect,
+  .pele .pele-node.sdt rect,
+  .pele .pele-node.focal rect,
+  .pele .pele-node.teal rect {
+    fill: var(--miro-tealLight);
+    stroke: var(--diagram-arcgym-teal-border, #0d9488);
+    stroke-width: 1.8px;
+  }
+
+  .pele .pele-node.clients rect,
+  .pele .pele-node.stream rect,
+  .pele .pele-node.target rect,
+  .pele .pele-node.card rect {
+    fill: var(--miro-card);
+    stroke: var(--miro-hairlineStrong);
+  }
+
+  .pele .pele-node.accent rect,
+  .pele .pele-node.sky rect,
+  .pele .pele-node.blue rect {
+    fill: var(--miro-blueFill);
+    stroke: var(--miro-blue);
+    stroke-width: 1.8px;
+  }
+
+  .pele .pele-node.warn rect,
+  .pele .pele-node.danger rect,
+  .pele .pele-node.rose rect {
+    fill: var(--miro-dangerLight);
+    stroke: var(--diagram-arcgym-warn-border, var(--miro-dangerBorder));
+    stroke-width: 1.8px;
+  }
+
+  .pele .pele-node.yellow rect,
+  .pele .pele-node.amber rect {
+    fill: var(--miro-yellowLight);
+    stroke: var(--miro-yellowBorder);
+  }
+
+  .pele .pele-node.lavender rect,
+  .pele .pele-node.violet rect {
+    fill: var(--miro-lavenderLight);
+    stroke: var(--miro-lavenderBorder);
+  }
+
+  .pele .pele-node.success rect {
+    fill: var(--miro-successLight);
+    stroke: var(--miro-successBorder);
   }
 }
