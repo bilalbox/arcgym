@@ -34,7 +34,7 @@ import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 from curl_cffi import requests
@@ -301,7 +301,7 @@ def fetch_and_chunk(
     # Prefer first H1 as doc title
     h1 = re.search(r"^#\s+(.+?)\s*$", md, re.MULTILINE)
     doc_title = h1.group(1).strip() if h1 else basename(canonical_url).replace(".html", "")
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
     chunks: list[dict] = []
     for section_title, body in split_markdown_sections(md):
         chunks.extend(
@@ -329,7 +329,7 @@ def main() -> None:
         CHUNKS_JSON_PATH
     ):
         print(f"Loading existing chunks from {CHUNKS_JSON_PATH}...")
-        with open(CHUNKS_JSON_PATH, "r", encoding="utf-8") as f:
+        with open(CHUNKS_JSON_PATH, encoding="utf-8") as f:
             all_chunks = json.load(f)
         print(f"Loaded {len(all_chunks)} chunks from local cache.")
     else:
@@ -350,9 +350,7 @@ def main() -> None:
                 return fetch_and_chunk(url, guide, sess)
 
             futures = {executor.submit(worker, t): t[0] for t in targets}
-            done = 0
-            for future in as_completed(futures):
-                done += 1
+            for done, future in enumerate(as_completed(futures), start=1):
                 chunks, ok = future.result()
                 if not ok:
                     fetch_failures += 1

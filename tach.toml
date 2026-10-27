@@ -1,0 +1,10 @@
+# Python crawler scripts under scripts/crawler/.
+# forbid_circular_dependencies is the Python analogue of rev-dep cycles.
+
+exact = true
+forbid_circular_dependencies = true
+source_roots = ["scripts/crawler"]
+
+[[modules]]
+path = "."
+depends_on = []

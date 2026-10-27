@@ -1,100 +1,77 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
-  },
-  "files": {
-    "ignoreUnknown": true,
-    "includes": [
-      "**",
-      "!**/apps/arcgym-web/src/data/canonicalDrills.json",
-      "!**/apps/arcgym-web/public/api/drills/canonical-drills.json",
-      "!**/apps/arcgym-web/public/diagrams",
-      "!**/content/drills",
-      "!**/data",
-      "!**/packages/drill-core/prototypes"
-    ]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 100
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended",
-      "complexity": {
-        "noExcessiveCognitiveComplexity": {
-          "level": "error",
-          "options": {
-            "maxAllowedComplexity": 15
-          }
-        }
-      }
-    }
-  },
-  "overrides": [
-    {
-      "includes": [
-        "apps/arcgym-web/functions/_shared/drillValidation.ts",
-        "apps/arcgym-web/functions/api/admin/feedback.ts",
-        "apps/arcgym-web/functions/api/drills/**/feedback.ts",
-        "apps/arcgym-web/src/App.tsx",
-        "apps/arcgym-web/src/components/drill/CaseFileRunner.tsx",
-        "apps/arcgym-web/src/components/drill/DrillFeedbackWidget.tsx",
-        "apps/arcgym-web/src/components/drill/TroubleshootRunner.tsx",
-        "apps/arcgym-web/src/components/layout/Header.tsx",
-        "apps/arcgym-web/src/components/proficiency/ArchitecturalRadarChart.tsx",
-        "apps/arcgym-web/src/hooks/useVisitorProgress.ts",
-        "apps/arcgym-web/src/pages/studio/StudioDrillPage.tsx",
-        "apps/arcgym-web/vite/studioFsPlugin.ts",
-        "packages/drill-core/src/caseSession/reducer.ts",
-        "packages/drill-core/src/formats/caseFile.ts",
-        "packages/drill-core/src/formats/troubleshooting.ts",
-        "packages/drill-core/src/formats/validationHelpers.ts",
-        "packages/drill-core/src/formats/wordingHelpers.ts",
-        "packages/drill-core/src/progress/merge.ts",
-        "packages/drill-core/src/recommendation/engine.ts",
-        "packages/drill-core/src/scoring/grader/clefGrader.ts",
-        "packages/drill-core/src/session/reducer.ts",
-        "packages/drill-core/src/troubleshootSession/reducer.ts",
-        "packages/drill-core/src/validator/validator.ts",
-        "scripts/feedback-report.ts",
-        "scripts/generator/generate-drill.ts",
-        "scripts/set-drill-status.ts"
-      ],
-      "linter": {
-        "rules": {
-          "complexity": {
-            "noExcessiveCognitiveComplexity": "off"
-          }
-        }
-      }
-    }
-  ],
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "jsxQuoteStyle": "double",
-      "semicolons": "always",
-      "trailingCommas": "all"
-    }
-  },
-  "css": {
-    "parser": {
-      "tailwindDirectives": true
-    }
-  },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "source": {
-        "organizeImports": "on"
-      }
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"includes": [
+			"**",
+			"!!**/dist",
+			"!!**/node_modules",
+			"!!**/.wrangler",
+			"!!.rev-dep.baseline.json",
+			"!!.rev-dep.duplicates.json",
+			"!**/apps/arcgym-web/src/data/canonicalDrills.json",
+			"!**/apps/arcgym-web/public/api/drills/canonical-drills.json",
+			"!**/apps/arcgym-web/public/diagrams",
+			"!**/content/drills",
+			"!**/data",
+			"!**/packages/drill-core/prototypes"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"style": {
+				"noNonNullAssertion": "off"
+			},
+			"suspicious": {
+				"noConsole": "error"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": [
+				"scripts/**",
+				"tests/**",
+				"**/*.test.*",
+				"**/*.spec.*",
+				"apps/arcgym-web/functions/**"
+			],
+			"linter": {
+				"rules": {
+					"suspicious": {
+						"noConsole": "off"
+					}
+				}
+			}
+		}
+	],
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double"
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
 }

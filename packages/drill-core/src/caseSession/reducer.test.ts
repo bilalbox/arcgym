@@ -1,172 +1,218 @@
-import { describe, expect, it } from 'vitest';
-import type { CaseFileDrillDefinition } from '../types/drill.js';
+import { describe, expect, it } from "vitest";
+import type { CaseFileDrillDefinition } from "../types/drill.js";
 import {
-  caseSessionReducer,
-  createCaseSessionState,
-  getCurrentCaseStation,
-  resolveFlippingProbeId,
-} from './reducer.js';
+	caseSessionReducer,
+	createCaseSessionState,
+	getCurrentCaseStation,
+	resolveFlippingProbeId,
+} from "./reducer.js";
 
 const DRILL: CaseFileDrillDefinition = {
-  id: 'AGD-00901',
-  title: 'Test Case File',
-  format: 'Case_File',
-  domain: 'Integration_Apis',
-  domainLabel: 'Case File Fixture',
-  difficulty: 'Lead_CTA',
-  pillars: ['Reliability', 'Trust'],
-  version: 1,
-  status: 'draft',
-  brief: {
-    title: 'Northwind Logistics',
-    synopsis: 'A logistics firm needs Salesforce for order orchestration across three regions.',
-  },
-  stations: [
-    {
-      id: 'st1',
-      domain: 'Integration_Apis',
-      boardDomain: 'Integration',
-      prompt: 'Which integration pattern should carry order status to the warehouse?',
-      probeBudget: 3,
-      probes: [
-        { id: 'p1', label: 'How many warehouse systems?', tier: 'pivotal', answer: 'Three ERPs' },
-        {
-          id: 'p2',
-          label: 'Must the payload include line items?',
-          tier: 'pivotal',
-          answer: 'Yes, computed payload',
-        },
-        { id: 'p3', label: 'Preferred middleware brand?', tier: 'useful', answer: 'Open' },
-        {
-          id: 'p4',
-          label: 'Can we buy more Salesforce licenses?',
-          tier: 'distractor',
-          answer: 'Budget frozen',
-          distractorAntipattern: 'License First Thinking',
-        },
-        {
-          id: 'p5',
-          label: 'Which SI partner is preferred?',
-          tier: 'distractor',
-          answer: 'Undecided',
-          distractorAntipattern: 'Partner Fishing',
-        },
-        {
-          id: 'p6',
-          label: 'Do they use Slack?',
-          tier: 'distractor',
-          answer: 'Yes',
-          distractorAntipattern: 'Collab Distraction',
-        },
-        {
-          id: 'p7',
-          label: 'Office locations?',
-          tier: 'distractor',
-          answer: 'Four cities',
-          distractorAntipattern: 'Geo Fishing',
-        },
-      ],
-      options: [
-        {
-          id: 'o1',
-          label: 'Custom platform event with Apex-built payload',
-          isCorrect: true,
-          rationale: 'Publish/subscribe reaches every warehouse without coupling.',
-          citationUrl:
-            'https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe',
-        },
-        {
-          id: 'o2',
-          label: 'Synchronous callout per warehouse from the Order trigger',
-          isCorrect: false,
-          distractorAntipattern: 'Sync Callout Fan-Out',
-          rationale: 'Ties Order saves to every consumer and burns callout limits.',
-        },
-      ],
-    },
-  ],
+	id: "AGD-00901",
+	title: "Test Case File",
+	format: "Case_File",
+	domain: "Integration_Apis",
+	domainLabel: "Case File Fixture",
+	difficulty: "Lead_CTA",
+	pillars: ["Reliability", "Trust"],
+	version: 1,
+	status: "draft",
+	brief: {
+		title: "Northwind Logistics",
+		synopsis:
+			"A logistics firm needs Salesforce for order orchestration across three regions.",
+	},
+	stations: [
+		{
+			id: "st1",
+			domain: "Integration_Apis",
+			boardDomain: "Integration",
+			prompt:
+				"Which integration pattern should carry order status to the warehouse?",
+			probeBudget: 3,
+			probes: [
+				{
+					id: "p1",
+					label: "How many warehouse systems?",
+					tier: "pivotal",
+					answer: "Three ERPs",
+				},
+				{
+					id: "p2",
+					label: "Must the payload include line items?",
+					tier: "pivotal",
+					answer: "Yes, computed payload",
+				},
+				{
+					id: "p3",
+					label: "Preferred middleware brand?",
+					tier: "useful",
+					answer: "Open",
+				},
+				{
+					id: "p4",
+					label: "Can we buy more Salesforce licenses?",
+					tier: "distractor",
+					answer: "Budget frozen",
+					distractorAntipattern: "License First Thinking",
+				},
+				{
+					id: "p5",
+					label: "Which SI partner is preferred?",
+					tier: "distractor",
+					answer: "Undecided",
+					distractorAntipattern: "Partner Fishing",
+				},
+				{
+					id: "p6",
+					label: "Do they use Slack?",
+					tier: "distractor",
+					answer: "Yes",
+					distractorAntipattern: "Collab Distraction",
+				},
+				{
+					id: "p7",
+					label: "Office locations?",
+					tier: "distractor",
+					answer: "Four cities",
+					distractorAntipattern: "Geo Fishing",
+				},
+			],
+			options: [
+				{
+					id: "o1",
+					label: "Custom platform event with Apex-built payload",
+					isCorrect: true,
+					rationale:
+						"Publish/subscribe reaches every warehouse without coupling.",
+					citationUrl:
+						"https://architect.salesforce.com/docs/architect/decision-guides/guide/event-driven.html#publishsubscribe",
+				},
+				{
+					id: "o2",
+					label: "Synchronous callout per warehouse from the Order trigger",
+					isCorrect: false,
+					distractorAntipattern: "Sync Callout Fan-Out",
+					rationale:
+						"Ties Order saves to every consumer and burns callout limits.",
+				},
+			],
+		},
+	],
 };
 
 function walkToProbes(drill: CaseFileDrillDefinition = DRILL) {
-  let state = createCaseSessionState(drill);
-  state = caseSessionReducer(state, { type: 'BEGIN_STATIONS' });
-  return state;
+	let state = createCaseSessionState(drill);
+	state = caseSessionReducer(state, { type: "BEGIN_STATIONS" });
+	return state;
 }
 
-function completeStation(state: ReturnType<typeof createCaseSessionState>, finalOptionId: string) {
-  state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
-  state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
-  state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p4' });
-  state = caseSessionReducer(state, { type: 'LOCK_PROBES' });
-  state = caseSessionReducer(state, { type: 'SELECT_OPTION', optionId: finalOptionId });
-  state = caseSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
-  return state;
+function completeStation(
+	state: ReturnType<typeof createCaseSessionState>,
+	finalOptionId: string,
+) {
+	state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p1" });
+	state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p2" });
+	state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p4" });
+	state = caseSessionReducer(state, { type: "LOCK_PROBES" });
+	state = caseSessionReducer(state, {
+		type: "SELECT_OPTION",
+		optionId: finalOptionId,
+	});
+	state = caseSessionReducer(state, {
+		type: "COMMIT_CONFIDENCE",
+		confidence: 0.85,
+	});
+	return state;
 }
 
-describe('caseSessionReducer', () => {
-  it('walks brief → probes → commit → feedback → complete', () => {
-    let state = createCaseSessionState(DRILL);
-    expect(state.phase).toBe('brief');
+describe("caseSessionReducer", () => {
+	it("walks brief → probes → commit → feedback → complete", () => {
+		let state = createCaseSessionState(DRILL);
+		expect(state.phase).toBe("brief");
 
-    state = caseSessionReducer(state, { type: 'BEGIN_STATIONS' });
-    expect(state.phase).toBe('probes');
+		state = caseSessionReducer(state, { type: "BEGIN_STATIONS" });
+		expect(state.phase).toBe("probes");
 
-    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p1' });
-    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p2' });
-    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p4' });
-    // Budget exhausted — fourth pick ignored
-    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'p3' });
-    expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
+		state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p1" });
+		state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p2" });
+		state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p4" });
+		// Budget exhausted — fourth pick ignored
+		state = caseSessionReducer(state, { type: "TOGGLE_PROBE", probeId: "p3" });
+		expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([
+			"p1",
+			"p2",
+			"p4",
+		]);
 
-    state = caseSessionReducer(state, { type: 'LOCK_PROBES' });
-    expect(state.phase).toBe('commit');
+		state = caseSessionReducer(state, { type: "LOCK_PROBES" });
+		expect(state.phase).toBe("commit");
 
-    state = caseSessionReducer(state, { type: 'SELECT_OPTION', optionId: 'o1' });
-    state = caseSessionReducer(state, { type: 'COMMIT_CONFIDENCE', confidence: 0.85 });
-    expect(state.phase).toBe('feedback');
-    const station = getCurrentCaseStation(state);
-    expect(station?.isSubmitted).toBe(true);
-    expect(station?.isCorrect).toBe(true);
-    expect(station?.probeScore).toBe(35); // 50 pivotal - 15 distractor
-    expect(station?.flippingProbeId).toBeNull();
+		state = caseSessionReducer(state, {
+			type: "SELECT_OPTION",
+			optionId: "o1",
+		});
+		state = caseSessionReducer(state, {
+			type: "COMMIT_CONFIDENCE",
+			confidence: 0.85,
+		});
+		expect(state.phase).toBe("feedback");
+		const station = getCurrentCaseStation(state);
+		expect(station?.isSubmitted).toBe(true);
+		expect(station?.isCorrect).toBe(true);
+		expect(station?.probeScore).toBe(35); // 50 pivotal - 15 distractor
+		expect(station?.flippingProbeId).toBeNull();
 
-    state = caseSessionReducer(state, { type: 'ADVANCE_STATION' });
-    expect(state.isCompleted).toBe(true);
-    expect(state.attempt?.format).toBe('Case_File');
-    expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual(['p1', 'p2', 'p4']);
-    expect(state.attempt?.steps?.[0]?.firstCall).toBeUndefined();
-    expect(state.attempt?.steps?.[0]?.flippingProbeId).toBeUndefined();
-  });
+		state = caseSessionReducer(state, { type: "ADVANCE_STATION" });
+		expect(state.isCompleted).toBe(true);
+		expect(state.attempt?.format).toBe("Case_File");
+		expect(state.attempt?.steps?.[0]?.selectedProbeIds).toEqual([
+			"p1",
+			"p2",
+			"p4",
+		]);
+		expect(state.attempt?.steps?.[0]?.firstCall).toBeUndefined();
+		expect(state.attempt?.steps?.[0]?.flippingProbeId).toBeUndefined();
+	});
 
-  it('calculates score consistently from probes and confidence', () => {
-    let state = walkToProbes();
-    state = completeStation(state, 'o1');
-    expect(getCurrentCaseStation(state)?.stationScore).toBe(133); // 35 probe + 98 Brier @ 0.85 correct
-  });
+	it("calculates score consistently from probes and confidence", () => {
+		let state = walkToProbes();
+		state = completeStation(state, "o1");
+		expect(getCurrentCaseStation(state)?.stationScore).toBe(133); // 35 probe + 98 Brier @ 0.85 correct
+	});
 
-  it('resolves discovery flipping probe when First Call was captured', () => {
-    const flipping = resolveFlippingProbeId(['p1', 'p2', 'p4'], DRILL.stations[0].probes, {
-      hypothesis: 'Sync callouts',
-      confidence: 0.7,
-      skipped: false,
-    });
-    expect(flipping).toBe('p2');
-  });
+	it("resolves discovery flipping probe when First Call was captured", () => {
+		const flipping = resolveFlippingProbeId(
+			["p1", "p2", "p4"],
+			DRILL.stations[0]!.probes,
+			{
+				hypothesis: "Sync callouts",
+				confidence: 0.7,
+				skipped: false,
+			},
+		);
+		expect(flipping).toBe("p2");
+	});
 
-  it('resolves no flipping probe when First Call was skipped or null', () => {
-    expect(resolveFlippingProbeId(['p1', 'p2'], DRILL.stations[0].probes, null)).toBeNull();
-    expect(
-      resolveFlippingProbeId(['p1', 'p2'], DRILL.stations[0].probes, {
-        hypothesis: null,
-        confidence: null,
-        skipped: true,
-      }),
-    ).toBeNull();
-  });
+	it("resolves no flipping probe when First Call was skipped or null", () => {
+		expect(
+			resolveFlippingProbeId(["p1", "p2"], DRILL.stations[0]!.probes, null),
+		).toBeNull();
+		expect(
+			resolveFlippingProbeId(["p1", "p2"], DRILL.stations[0]!.probes, {
+				hypothesis: null,
+				confidence: null,
+				skipped: true,
+			}),
+		).toBeNull();
+	});
 
-  it('rejects unknown probe IDs not present in the station probe pool', () => {
-    let state = walkToProbes();
-    state = caseSessionReducer(state, { type: 'TOGGLE_PROBE', probeId: 'non_existent_probe' });
-    expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([]);
-  });
+	it("rejects unknown probe IDs not present in the station probe pool", () => {
+		let state = walkToProbes();
+		state = caseSessionReducer(state, {
+			type: "TOGGLE_PROBE",
+			probeId: "non_existent_probe",
+		});
+		expect(getCurrentCaseStation(state)?.selectedProbeIds).toEqual([]);
+	});
 });

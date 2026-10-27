@@ -13,292 +13,336 @@
  *   npx tsx scripts/generator/generate-drill.ts ingest /tmp/AGD-00402.json [--force]
  */
 
-import { execFileSync } from 'node:child_process';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { execFileSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import {
-  ARCHITECTURAL_DOMAIN_LABELS,
-  type ArchitecturalDomain,
-  CASE_FILE_MIN_STATIONS,
-  citationManifestUrlsFromExports,
-  clearIngestFindings,
-  DRILL_DIFFICULTIES,
-  DRILL_FORMATS,
-  type DrillDefinitionDTO,
-  type DrillDifficulty,
-  type DrillFormat,
-  findingsSidecarPath,
-  type GroundingChunkExport,
-  lintDrillWording,
-  TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT,
-  TROUBLESHOOTING_MIN_PIVOTAL_PROBES,
-  TROUBLESHOOTING_PROBE_BUDGET,
-  validateDrill,
-  WELL_ARCHITECTED_PILLARS,
-  type WellArchitectedPillar,
-  writeIngestFindings,
-} from '../../packages/drill-core/src/index.js';
+	ARCHITECTURAL_DOMAIN_LABELS,
+	type ArchitecturalDomain,
+	CASE_FILE_MIN_STATIONS,
+	citationManifestUrlsFromExports,
+	clearIngestFindings,
+	DRILL_DIFFICULTIES,
+	DRILL_FORMATS,
+	type DrillDefinitionDTO,
+	type DrillDifficulty,
+	type DrillFormat,
+	findingsSidecarPath,
+	type GroundingChunkExport,
+	lintDrillWording,
+	TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT,
+	TROUBLESHOOTING_MIN_PIVOTAL_PROBES,
+	TROUBLESHOOTING_PROBE_BUDGET,
+	validateDrill,
+	WELL_ARCHITECTED_PILLARS,
+	type WellArchitectedPillar,
+	writeIngestFindings,
+} from "../../packages/drill-core/src/index.js";
 
 const GROUNDING_CHUNK_EXPORTS = [
-  'data/architect_chunks.json',
-  'data/developer_chunks.json',
-  'data/help_chunks.json',
+	"data/architect_chunks.json",
+	"data/developer_chunks.json",
+	"data/help_chunks.json",
 ];
 
 const ROOT_DIR = process.cwd();
-const DRILLS_DIR = path.join(ROOT_DIR, 'content/drills');
-const CHROMA_SEARCH_SCRIPT = path.join(ROOT_DIR, 'scripts/crawler/search_chroma.py');
-const FRICTION_CARDS_PATH = path.join(ROOT_DIR, 'data/friction_cards.json');
+const DRILLS_DIR = path.join(ROOT_DIR, "content/drills");
+const CHROMA_SEARCH_SCRIPT = path.join(
+	ROOT_DIR,
+	"scripts/crawler/search_chroma.py",
+);
+const FRICTION_CARDS_PATH = path.join(ROOT_DIR, "data/friction_cards.json");
 
 interface ChromaChunk {
-  content: string;
-  metadata: {
-    doc_title: string;
-    section_title: string;
-    breadcrumb: string;
-    pillar: string;
-    category: string;
-    url: string;
-    crawled_at: string;
-    char_count: number;
-  };
-  cosine_similarity: number;
+	content: string;
+	metadata: {
+		doc_title: string;
+		section_title: string;
+		breadcrumb: string;
+		pillar: string;
+		category: string;
+		url: string;
+		crawled_at: string;
+		char_count: number;
+	};
+	cosine_similarity: number;
 }
 
 /** Human-reviewed practitioner friction exported by scripts/crawler/friction_cards.py. */
 interface FrictionCard {
-  card_id: string;
-  thread_url: string;
-  title: string;
-  domain: string;
-  pillars: string[];
-  problem: string;
-  constraints: string[];
-  naive_approaches: { approach: string; why_it_fails: string }[];
-  resolution: string;
-  resolution_source: 'best_answer' | 'thread_consensus' | 'unresolved';
-  official_doc_query: string;
+	card_id: string;
+	thread_url: string;
+	title: string;
+	domain: string;
+	pillars: string[];
+	problem: string;
+	constraints: string[];
+	naive_approaches: { approach: string; why_it_fails: string }[];
+	resolution: string;
+	resolution_source: "best_answer" | "thread_consensus" | "unresolved";
+	official_doc_query: string;
 }
 
 interface PromptArgs {
-  topic: string;
-  domain?: string;
-  pillar?: string;
-  format: DrillFormat;
-  difficulty: DrillDifficulty;
-  steps: number;
-  /** Case_File: station count (>= 3). Defaults to 3 when unset. */
-  stations?: number;
-  id?: string;
-  topK: number;
-  fromCard?: string;
-  /** Overrides the ChromaDB search phrase(s). Multiple --query flags are merged and deduped. */
-  queries: string[];
+	topic: string;
+	domain?: string;
+	pillar?: string;
+	format: DrillFormat;
+	difficulty: DrillDifficulty;
+	steps: number;
+	/** Case_File: station count (>= 3). Defaults to 3 when unset. */
+	stations?: number;
+	id?: string;
+	topK: number;
+	fromCard?: string;
+	/** Overrides the ChromaDB search phrase(s). Multiple --query flags are merged and deduped. */
+	queries: string[];
 }
 
 function fail(message: string): never {
-  console.error(`[ERROR] ${message}`);
-  process.exit(1);
+	console.error(`[ERROR] ${message}`);
+	process.exit(1);
 }
 
 function parsePromptArgs(args: string[]): PromptArgs {
-  const result: PromptArgs = {
-    topic: '',
-    format: 'Case_File',
-    difficulty: 'Lead_CTA',
-    steps: 3,
-    topK: 5,
-    queries: [],
-  };
+	const result: PromptArgs = {
+		topic: "",
+		format: "Case_File",
+		difficulty: "Lead_CTA",
+		steps: 3,
+		topK: 5,
+		queries: [],
+	};
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const value = args[i + 1];
-    if (arg === '--topic' && value) {
-      result.topic = args[++i];
-    } else if (arg === '--domain' && value) {
-      result.domain = args[++i];
-    } else if (arg === '--pillar' && value) {
-      result.pillar = args[++i];
-    } else if (arg === '--format' && value) {
-      if (!DRILL_FORMATS.includes(value as DrillFormat)) {
-        fail(`--format must be one of ${DRILL_FORMATS.join('|')}`);
-      }
-      result.format = args[++i] as PromptArgs['format'];
-    } else if (arg === '--difficulty' && value) {
-      if (!DRILL_DIFFICULTIES.includes(value as DrillDifficulty)) {
-        fail(`--difficulty must be one of ${DRILL_DIFFICULTIES.join('|')}`);
-      }
-      result.difficulty = args[++i] as PromptArgs['difficulty'];
-    } else if (arg === '--steps' && value) {
-      result.steps = parseInt(args[++i], 10);
-    } else if (arg === '--stations' && value) {
-      const n = parseInt(args[++i], 10);
-      if (!Number.isFinite(n) || n < 3) {
-        fail('--stations must be an integer >= 3');
-      }
-      result.stations = n;
-    } else if (arg === '--id' && value) {
-      result.id = args[++i];
-    } else if (arg === '--top-k' && value) {
-      result.topK = parseInt(args[++i], 10);
-    } else if (arg === '--from-card' && value) {
-      result.fromCard = args[++i];
-    } else if (arg === '--query' && value) {
-      result.queries.push(args[++i]);
-    } else {
-      fail(`Unknown or incomplete argument: ${arg}`);
-    }
-  }
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i];
+		if (arg === undefined) continue;
+		const value = args[i + 1];
+		if (arg === "--topic") {
+			if (value === undefined) fail("Missing value for --topic");
+			result.topic = value;
+			i++;
+		} else if (arg === "--domain") {
+			if (value === undefined) fail("Missing value for --domain");
+			result.domain = value;
+			i++;
+		} else if (arg === "--pillar") {
+			if (value === undefined) fail("Missing value for --pillar");
+			result.pillar = value;
+			i++;
+		} else if (arg === "--format") {
+			if (value === undefined) fail("Missing value for --format");
+			if (!DRILL_FORMATS.includes(value as DrillFormat)) {
+				fail(`--format must be one of ${DRILL_FORMATS.join("|")}`);
+			}
+			result.format = value as PromptArgs["format"];
+			i++;
+		} else if (arg === "--difficulty") {
+			if (value === undefined) fail("Missing value for --difficulty");
+			if (!DRILL_DIFFICULTIES.includes(value as DrillDifficulty)) {
+				fail(`--difficulty must be one of ${DRILL_DIFFICULTIES.join("|")}`);
+			}
+			result.difficulty = value as PromptArgs["difficulty"];
+			i++;
+		} else if (arg === "--steps") {
+			if (value === undefined) fail("Missing value for --steps");
+			result.steps = parseInt(value, 10);
+			i++;
+		} else if (arg === "--stations") {
+			if (value === undefined) fail("Missing value for --stations");
+			const n = parseInt(value, 10);
+			if (!Number.isFinite(n) || n < 3) {
+				fail("--stations must be an integer >= 3");
+			}
+			result.stations = n;
+			i++;
+		} else if (arg === "--id") {
+			if (value === undefined) fail("Missing value for --id");
+			result.id = value;
+			i++;
+		} else if (arg === "--top-k") {
+			if (value === undefined) fail("Missing value for --top-k");
+			result.topK = parseInt(value, 10);
+			i++;
+		} else if (arg === "--from-card") {
+			if (value === undefined) fail("Missing value for --from-card");
+			result.fromCard = value;
+			i++;
+		} else if (arg === "--query") {
+			if (value === undefined) fail("Missing value for --query");
+			result.queries.push(value);
+			i++;
+		} else {
+			fail(`Unknown or incomplete argument: ${arg}`);
+		}
+	}
 
-  return result;
+	return result;
 }
 
 function loadFrictionCards(): FrictionCard[] {
-  if (!fs.existsSync(FRICTION_CARDS_PATH)) {
-    fail(
-      `${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`,
-    );
-  }
-  return JSON.parse(fs.readFileSync(FRICTION_CARDS_PATH, 'utf-8')).cards as FrictionCard[];
+	if (!fs.existsSync(FRICTION_CARDS_PATH)) {
+		fail(
+			`${FRICTION_CARDS_PATH} not found. Run \`python scripts/crawler/friction_cards.py export\` first.`,
+		);
+	}
+	return JSON.parse(fs.readFileSync(FRICTION_CARDS_PATH, "utf-8"))
+		.cards as FrictionCard[];
 }
 
 function loadFrictionCard(cardId: string): FrictionCard {
-  const card = loadFrictionCards().find((c) => c.card_id === cardId);
-  if (!card) {
-    fail(
-      `Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`,
-    );
-  }
-  return card;
+	const card = loadFrictionCards().find((c) => c.card_id === cardId);
+	if (!card) {
+		fail(
+			`Friction Card ${cardId} is not in the approved catalog. Approve it with friction_cards.py review, then export.`,
+		);
+	}
+	return card;
 }
 
 /** Generated drills use AGD-00401..00499. */
 function getNextDrillId(): string {
-  const [floor, ceiling] = [400, 500];
-  const files = fs.existsSync(DRILLS_DIR) ? fs.readdirSync(DRILLS_DIR) : [];
-  let maxNum = floor;
-  for (const f of files) {
-    const match = f.match(/^AGD-(\d{5})\.json$/);
-    const num = match ? parseInt(match[1], 10) : 0;
-    if (num > maxNum && num < ceiling) maxNum = num;
-  }
-  return `AGD-${String(maxNum + 1).padStart(5, '0')}`;
+	const [floor, ceiling] = [400, 500];
+	const files = fs.existsSync(DRILLS_DIR) ? fs.readdirSync(DRILLS_DIR) : [];
+	let maxNum = floor;
+	for (const f of files) {
+		const match = f.match(/^AGD-(\d{5})\.json$/);
+		const idDigits = match?.[1];
+		const num = idDigits !== undefined ? parseInt(idDigits, 10) : 0;
+		if (num > maxNum && num < ceiling) maxNum = num;
+	}
+	return `AGD-${String(maxNum + 1).padStart(5, "0")}`;
 }
 
 function chunkKey(c: ChromaChunk): string {
-  return `${c.metadata.url}::${c.metadata.section_title}::${c.content.slice(0, 80)}`;
+	return `${c.metadata.url}::${c.metadata.section_title}::${c.content.slice(0, 80)}`;
 }
 
-function queryChroma(query: string, topK: number, pillar?: string): ChromaChunk[] {
-  console.error(`[RAG] Searching ChromaDB for: "${query}" (top ${topK})...`);
-  try {
-    const cmdArgs = [
-      'run',
-      '--with',
-      'chromadb',
-      'python',
-      CHROMA_SEARCH_SCRIPT,
-      query,
-      '--top-k',
-      String(topK),
-      '--json',
-    ];
-    if (pillar) {
-      cmdArgs.push('--pillar', pillar);
-    }
-    const output = execFileSync('uv', cmdArgs, {
-      cwd: ROOT_DIR,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    return JSON.parse(output.trim()) as ChromaChunk[];
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(
-      `[WARN] Chroma search failed (${msg}). Falling back to flat JSON data if available.`,
-    );
-    const allChunks: { document: string; metadata: ChromaChunk['metadata'] }[] = [];
-    for (const rel of GROUNDING_CHUNK_EXPORTS) {
-      const fallbackPath = path.join(ROOT_DIR, rel);
-      if (!fs.existsSync(fallbackPath)) continue;
-      allChunks.push(
-        ...(JSON.parse(fs.readFileSync(fallbackPath, 'utf-8')) as {
-          document: string;
-          metadata: ChromaChunk['metadata'];
-        }[]),
-      );
-    }
-    if (allChunks.length === 0) return [];
-    const queryLower = query.toLowerCase();
-    return allChunks
-      .filter((c) => !pillar || c.metadata.pillar === pillar)
-      .filter(
-        (c) =>
-          c.document.toLowerCase().includes(queryLower) ||
-          c.metadata.section_title.toLowerCase().includes(queryLower),
-      )
-      .slice(0, topK)
-      .map((c) => ({
-        content: c.document,
-        metadata: c.metadata,
-        cosine_similarity: 0.8,
-      }));
-  }
+function queryChroma(
+	query: string,
+	topK: number,
+	pillar?: string,
+): ChromaChunk[] {
+	console.error(`[RAG] Searching ChromaDB for: "${query}" (top ${topK})...`);
+	try {
+		const cmdArgs = [
+			"run",
+			"--with",
+			"chromadb",
+			"python",
+			CHROMA_SEARCH_SCRIPT,
+			query,
+			"--top-k",
+			String(topK),
+			"--json",
+		];
+		if (pillar) {
+			cmdArgs.push("--pillar", pillar);
+		}
+		const output = execFileSync("uv", cmdArgs, {
+			cwd: ROOT_DIR,
+			encoding: "utf-8",
+			stdio: ["pipe", "pipe", "pipe"],
+		});
+		return JSON.parse(output.trim()) as ChromaChunk[];
+	} catch (err: unknown) {
+		const msg = err instanceof Error ? err.message : String(err);
+		console.error(
+			`[WARN] Chroma search failed (${msg}). Falling back to flat JSON data if available.`,
+		);
+		const allChunks: { document: string; metadata: ChromaChunk["metadata"] }[] =
+			[];
+		for (const rel of GROUNDING_CHUNK_EXPORTS) {
+			const fallbackPath = path.join(ROOT_DIR, rel);
+			if (!fs.existsSync(fallbackPath)) continue;
+			allChunks.push(
+				...(JSON.parse(fs.readFileSync(fallbackPath, "utf-8")) as {
+					document: string;
+					metadata: ChromaChunk["metadata"];
+				}[]),
+			);
+		}
+		if (allChunks.length === 0) return [];
+		const queryLower = query.toLowerCase();
+		return allChunks
+			.filter((c) => !pillar || c.metadata.pillar === pillar)
+			.filter(
+				(c) =>
+					c.document.toLowerCase().includes(queryLower) ||
+					c.metadata.section_title.toLowerCase().includes(queryLower),
+			)
+			.slice(0, topK)
+			.map((c) => ({
+				content: c.document,
+				metadata: c.metadata,
+				cosine_similarity: 0.8,
+			}));
+	}
 }
 
-function queryChromaMerged(queries: string[], topK: number, pillar?: string): ChromaChunk[] {
-  const seen = new Set<string>();
-  const merged: ChromaChunk[] = [];
-  for (const query of queries) {
-    for (const chunk of queryChroma(query, topK, pillar)) {
-      const key = chunkKey(chunk);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      merged.push(chunk);
-    }
-  }
-  return merged;
+function queryChromaMerged(
+	queries: string[],
+	topK: number,
+	pillar?: string,
+): ChromaChunk[] {
+	const seen = new Set<string>();
+	const merged: ChromaChunk[] = [];
+	for (const query of queries) {
+		for (const chunk of queryChroma(query, topK, pillar)) {
+			const key = chunkKey(chunk);
+			if (seen.has(key)) continue;
+			seen.add(key);
+			merged.push(chunk);
+		}
+	}
+	return merged;
 }
 
 function inferDomain(category?: string, pillar?: string): string {
-  if (pillar === 'Agentforce' || category?.includes('agent')) return 'Ai_And_Automation';
-  if (pillar === 'Data_360' || category?.includes('data')) return 'Data_Architecture';
-  if (category === 'decision-guides' || category?.includes('integration'))
-    return 'Integration_Apis';
-  if (pillar === 'Trust' || category?.includes('security')) return 'Security_And_Access';
-  if (category === 'devops' || category?.includes('devops')) return 'Devops_Lifecycle';
-  return 'Platform_Core';
+	if (pillar === "Agentforce" || category?.includes("agent"))
+		return "Ai_And_Automation";
+	if (pillar === "Data_360" || category?.includes("data"))
+		return "Data_Architecture";
+	if (category === "decision-guides" || category?.includes("integration"))
+		return "Integration_Apis";
+	if (pillar === "Trust" || category?.includes("security"))
+		return "Security_And_Access";
+	if (category === "devops" || category?.includes("devops"))
+		return "Devops_Lifecycle";
+	return "Platform_Core";
 }
 
 /** Chunk `pillar` metadata mixes product areas (Core_Platform, Data_360) with Well-Architected pillars. */
 function resolvePillars(chunks: ChromaChunk[], card?: FrictionCard): string[] {
-  if (card?.pillars.length) return card.pillars;
-  return Array.from(
-    new Set(
-      chunks
-        .map((c) => c.metadata.pillar)
-        .filter((p): p is WellArchitectedPillar =>
-          WELL_ARCHITECTED_PILLARS.includes(p as WellArchitectedPillar),
-        ),
-    ),
-  );
+	if (card?.pillars.length) return card.pillars;
+	return Array.from(
+		new Set(
+			chunks
+				.map((c) => c.metadata.pillar)
+				.filter((p): p is WellArchitectedPillar =>
+					WELL_ARCHITECTED_PILLARS.includes(p as WellArchitectedPillar),
+				),
+		),
+	);
 }
 
 function buildFrictionSection(card?: FrictionCard): string {
-  if (!card) return '';
-  const approaches = card.naive_approaches.length
-    ? card.naive_approaches
-        .map((a, i) => `${i + 1}. ${a.approach}\n   Why it fails: ${a.why_it_fails}`)
-        .join('\n')
-    : '(none recorded; derive distractors from the official chunks)';
-  return `
+	if (!card) return "";
+	const approaches = card.naive_approaches.length
+		? card.naive_approaches
+				.map(
+					(a, i) =>
+						`${i + 1}. ${a.approach}\n   Why it fails: ${a.why_it_fails}`,
+				)
+				.join("\n")
+		: "(none recorded; derive distractors from the official chunks)";
+	return `
 ### Practitioner Friction (Trailblazer Community, human-reviewed paraphrase)
 - Problem: ${card.problem}
-- Constraints: ${card.constraints.length ? card.constraints.join('; ') : '(none stated)'}
+- Constraints: ${card.constraints.length ? card.constraints.join("; ") : "(none stated)"}
 - Naive approaches practitioners tried:
 ${approaches}
-- Community resolution (${card.resolution_source}): ${card.resolution || '(unresolved)'}
+- Community resolution (${card.resolution_source}): ${card.resolution || "(unresolved)"}
 
 ### Rules for Using Practitioner Friction:
 1. Build the scenario from the problem and constraints above, restated in enterprise terms. Do not name the community, the thread, or any person.
@@ -318,15 +362,15 @@ const WORDING_RULES = `### Wording Rules (ingest rejects drills that break the c
 `;
 
 function buildTroubleshootingSchema(
-  drillId: string,
-  args: PromptArgs,
-  domain: string,
-  domainLabel: string,
-  pillarExample: string,
-  sourceCardLine: string,
-  citationUrl: string,
+	drillId: string,
+	args: PromptArgs,
+	domain: string,
+	domainLabel: string,
+	pillarExample: string,
+	sourceCardLine: string,
+	citationUrl: string,
 ): string {
-  return `{
+	return `{
   "id": "${drillId}",
   "title": "Clear Incident title (failure under topology stress)",
   "format": "Troubleshooting",
@@ -426,16 +470,16 @@ Write exactly ${TROUBLESHOOTING_HIDDEN_DISTRACTOR_COUNT} hiddenDistractors. Requ
 }
 
 function buildCaseFileSchema(
-  drillId: string,
-  args: PromptArgs,
-  domain: string,
-  domainLabel: string,
-  pillarExample: string,
-  sourceCardLine: string,
-  citationUrl: string,
+	drillId: string,
+	args: PromptArgs,
+	domain: string,
+	domainLabel: string,
+	pillarExample: string,
+	sourceCardLine: string,
+	citationUrl: string,
 ): string {
-  const stationCount = args.stations ?? CASE_FILE_MIN_STATIONS;
-  return `{
+	const stationCount = args.stations ?? CASE_FILE_MIN_STATIONS;
+	return `{
   "id": "${drillId}",
   "title": "Clear Evaluation-scale Case File title",
   "format": "Case_File",
@@ -506,71 +550,78 @@ Write exactly ${stationCount} stations. boardDomain values come from System_Arch
 }
 
 function buildPrompt(
-  chunks: ChromaChunk[],
-  args: PromptArgs,
-  drillId: string,
-  card?: FrictionCard,
+	chunks: ChromaChunk[],
+	args: PromptArgs,
+	drillId: string,
+	card?: FrictionCard,
 ): string {
-  const frictionSection = buildFrictionSection(card);
-  const contextText = chunks
-    .map(
-      (c, i) =>
-        `### Source Chunk ${i + 1}
+	const frictionSection = buildFrictionSection(card);
+	const contextText = chunks
+		.map(
+			(c, i) =>
+				`### Source Chunk ${i + 1}
 - Title: ${c.metadata.doc_title} > ${c.metadata.section_title}
 - Pillar: ${c.metadata.pillar} | Category: ${c.metadata.category}
 - Citation URL: ${c.metadata.url}
 - Excerpt:
 ${c.content}
 `,
-    )
-    .join('\n');
+		)
+		.join("\n");
 
-  const domain =
-    args.domain || inferDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
-  const domainLabel = ARCHITECTURAL_DOMAIN_LABELS[domain as ArchitecturalDomain] ?? domain;
-  const pillars = resolvePillars(chunks, card);
-  const pillarSpec = pillars.length
-    ? JSON.stringify(pillars)
-    : `choose 1-3 from ${WELL_ARCHITECTED_PILLARS.join(' | ')}`;
-  const pillarExample = JSON.stringify(pillars.length ? pillars : ['Reliability']);
-  const sourceCardLine = card ? `\n  "sourceCardIds": ["${card.card_id}"],` : '';
-  const citationUrl = chunks[0]?.metadata?.url || 'https://architect.salesforce.com';
+	const domain =
+		args.domain ||
+		inferDomain(chunks[0]?.metadata?.category, chunks[0]?.metadata?.pillar);
+	const domainLabel =
+		ARCHITECTURAL_DOMAIN_LABELS[domain as ArchitecturalDomain] ?? domain;
+	const pillars = resolvePillars(chunks, card);
+	const pillarSpec = pillars.length
+		? JSON.stringify(pillars)
+		: `choose 1-3 from ${WELL_ARCHITECTED_PILLARS.join(" | ")}`;
+	const pillarExample = JSON.stringify(
+		pillars.length ? pillars : ["Reliability"],
+	);
+	const sourceCardLine = card
+		? `\n  "sourceCardIds": ["${card.card_id}"],`
+		: "";
+	const citationUrl =
+		chunks[0]?.metadata?.url || "https://architect.salesforce.com";
 
-  const schema =
-    args.format === 'Troubleshooting'
-      ? buildTroubleshootingSchema(
-          drillId,
-          args,
-          domain,
-          domainLabel,
-          pillarExample,
-          sourceCardLine,
-          citationUrl,
-        )
-      : buildCaseFileSchema(
-          drillId,
-          args,
-          domain,
-          domainLabel,
-          pillarExample,
-          sourceCardLine,
-          citationUrl,
-        );
+	const schema =
+		args.format === "Troubleshooting"
+			? buildTroubleshootingSchema(
+					drillId,
+					args,
+					domain,
+					domainLabel,
+					pillarExample,
+					sourceCardLine,
+					citationUrl,
+				)
+			: buildCaseFileSchema(
+					drillId,
+					args,
+					domain,
+					domainLabel,
+					pillarExample,
+					sourceCardLine,
+					citationUrl,
+				);
 
-  const formatNotes =
-    args.format === 'Case_File'
-      ? `- Stations: ${args.stations ?? 3} under one Brief (minimum 3)
+	const formatNotes =
+		args.format === "Case_File"
+			? `- Stations: ${args.stations ?? 3} under one Brief (minimum 3)
 - Probe Budget: 3 picks from ~7 clarifying questions per station
 - Dual scoring: probe quality + confidence-gated recommendation
 - Grounding: only final correct options cite chunks; probe answers are scenario fiction`
-      : `- One Incident: architecture synopsis + required diagram + issue
+			: `- One Incident: architecture synopsis + required diagram + issue
 - Probe Budget: 3 picks from ~7 clarifying questions (≥2 pivotal)
 - Free-text cause graded by CLEF choice over gold + exactly 3 hidden distractors + other catchall (never MCQ)
 - Fix: 3-choice remediation (1 gold cited + 2 antipattern distractors), Brier scored
 - Scoring: Probe discovery + Cause Brier + Fix Brier
 - Grounding: probe answers are scenario fiction; goldCause and gold fix cite Well-Architected Grounding`;
 
-  return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
+	return `You are a Principal Salesforce Certified Technical Architect (CTA) and author of ArcGym.
 Generate a high-stakes, realistic architectural judgment drill formatted as valid JSON strictly adhering to the ArcGym schema.
 
 ### Core Authoring Principles:
@@ -601,155 +652,169 @@ ${schema}
 }
 
 function runPrompt(argv: string[]) {
-  const args = parsePromptArgs(argv);
-  const card = args.fromCard ? loadFrictionCard(args.fromCard) : undefined;
-  if (card) {
-    args.topic ||= card.title;
-    args.domain ||= card.domain;
-  }
-  if (!args.topic) {
-    fail('Pass --topic or --from-card.');
-  }
-  const drillId = args.id || getNextDrillId();
+	const args = parsePromptArgs(argv);
+	const card = args.fromCard ? loadFrictionCard(args.fromCard) : undefined;
+	if (card) {
+		args.topic ||= card.title;
+		args.domain ||= card.domain;
+	}
+	if (!args.topic) {
+		fail("Pass --topic or --from-card.");
+	}
+	const drillId = args.id || getNextDrillId();
 
-  console.error(
-    `[Generator] ${drillId} | ${args.format} | ${args.difficulty} | topic: ${args.topic}`,
-  );
-  if (card)
-    console.error(
-      `[Generator] Card ${card.card_id} (${card.naive_approaches.length} naive approaches)`,
-    );
+	console.error(
+		`[Generator] ${drillId} | ${args.format} | ${args.difficulty} | topic: ${args.topic}`,
+	);
+	if (card)
+		console.error(
+			`[Generator] Card ${card.card_id} (${card.naive_approaches.length} naive approaches)`,
+		);
 
-  const searchQueries =
-    args.queries.length > 0 ? args.queries : [card?.official_doc_query ?? args.topic];
-  const chunks = queryChromaMerged(searchQueries, args.topK, args.pillar);
-  if (chunks.length === 0) {
-    fail('No official chunks retrieved. Retry with --query "<better doc search>".');
-  }
-  for (const c of chunks) {
-    console.error(
-      `  ${c.cosine_similarity.toFixed(2)}  ${c.metadata.doc_title} > ${c.metadata.section_title}`,
-    );
-  }
+	const searchQueries =
+		args.queries.length > 0
+			? args.queries
+			: [card?.official_doc_query ?? args.topic];
+	const chunks = queryChromaMerged(searchQueries, args.topK, args.pillar);
+	if (chunks.length === 0) {
+		fail(
+			'No official chunks retrieved. Retry with --query "<better doc search>".',
+		);
+	}
+	for (const c of chunks) {
+		console.error(
+			`  ${c.cosine_similarity.toFixed(2)}  ${c.metadata.doc_title} > ${c.metadata.section_title}`,
+		);
+	}
 
-  process.stdout.write(buildPrompt(chunks, args, drillId, card));
+	process.stdout.write(buildPrompt(chunks, args, drillId, card));
 }
 
 function parseDrillResponse(raw: string): Record<string, unknown> {
-  const fenced = raw.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
-  try {
-    return JSON.parse(fenced ? fenced[1] : raw);
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
-    fail(`Response is not valid JSON: ${msg}`);
-  }
+	const fenced = raw.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+	try {
+		const jsonText = fenced?.[1] ?? raw;
+		return JSON.parse(jsonText);
+	} catch (e: unknown) {
+		const msg = e instanceof Error ? e.message : String(e);
+		fail(`Response is not valid JSON: ${msg}`);
+	}
 }
 
 function runIngest(argv: string[]) {
-  const file = argv.find((a) => !a.startsWith('--'));
-  const force = argv.includes('--force');
-  if (!file) {
-    fail('Usage: generate-drill.ts ingest <drill.json> [--force]');
-  }
+	const file = argv.find((a) => !a.startsWith("--"));
+	const force = argv.includes("--force");
+	if (!file) {
+		fail("Usage: generate-drill.ts ingest <drill.json> [--force]");
+	}
 
-  const drill = parseDrillResponse(fs.readFileSync(file, 'utf-8'));
-  if (drill.error) {
-    fail(
-      `The drill author declined: ${drill.error}\nRetry the prompt with --query "<better doc search>", or fix the card's doc query in \`friction_cards.py review\` and re-export.`,
-    );
-  }
-  if (typeof drill.id !== 'string' || !/^AGD-\d{5}$/.test(drill.id)) {
-    fail(`id must look like AGD-00000 (got ${drill.id})`);
-  }
-  if (drill.sourceCardIds !== undefined) {
-    const known = new Set(loadFrictionCards().map((c) => c.card_id));
-    const unknown = (drill.sourceCardIds as string[]).filter((id) => !known.has(id));
-    if (unknown.length) {
-      fail(`sourceCardIds not in the approved catalog: ${unknown.join(', ')}`);
-    }
-  }
+	const drill = parseDrillResponse(fs.readFileSync(file, "utf-8"));
+	if (drill.error) {
+		fail(
+			`The drill author declined: ${drill.error}\nRetry the prompt with --query "<better doc search>", or fix the card's doc query in \`friction_cards.py review\` and re-export.`,
+		);
+	}
+	if (typeof drill.id !== "string" || !/^AGD-\d{5}$/.test(drill.id)) {
+		fail(`id must look like AGD-00000 (got ${drill.id})`);
+	}
+	if (drill.sourceCardIds !== undefined) {
+		const known = new Set(loadFrictionCards().map((c) => c.card_id));
+		const unknown = (drill.sourceCardIds as string[]).filter(
+			(id) => !known.has(id),
+		);
+		if (unknown.length) {
+			fail(`sourceCardIds not in the approved catalog: ${unknown.join(", ")}`);
+		}
+	}
 
-  const outPath = path.join(DRILLS_DIR, `${drill.id}.json`);
-  const previous = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf-8') : null;
-  if (previous !== null && !force) {
-    fail(
-      `${outPath} already exists. Pass --force to overwrite, or regenerate the prompt for a fresh id.`,
-    );
-  }
+	const outPath = path.join(DRILLS_DIR, `${drill.id}.json`);
+	const previous = fs.existsSync(outPath)
+		? fs.readFileSync(outPath, "utf-8")
+		: null;
+	if (previous !== null && !force) {
+		fail(
+			`${outPath} already exists. Pass --force to overwrite, or regenerate the prompt for a fresh id.`,
+		);
+	}
 
-  // Soft ingest: keep the attempted draft on failure and write a findings sidecar for repair.
-  drill.status = 'draft';
-  fs.writeFileSync(outPath, `${JSON.stringify(drill, null, 2)}\n`, 'utf-8');
+	// Soft ingest: keep the attempted draft on failure and write a findings sidecar for repair.
+	drill.status = "draft";
+	fs.writeFileSync(outPath, `${JSON.stringify(drill, null, 2)}\n`, "utf-8");
 
-  function loadGroundingChunkExports(): GroundingChunkExport[][] {
-    return GROUNDING_CHUNK_EXPORTS.map((rel) => path.join(ROOT_DIR, rel))
-      .filter((p) => fs.existsSync(p))
-      .map((p) => JSON.parse(fs.readFileSync(p, 'utf-8')) as GroundingChunkExport[]);
-  }
+	function loadGroundingChunkExports(): GroundingChunkExport[][] {
+		return GROUNDING_CHUNK_EXPORTS.map((rel) => path.join(ROOT_DIR, rel))
+			.filter((p) => fs.existsSync(p))
+			.map(
+				(p) =>
+					JSON.parse(fs.readFileSync(p, "utf-8")) as GroundingChunkExport[],
+			);
+	}
 
-  const citationManifestUrls = citationManifestUrlsFromExports(loadGroundingChunkExports());
-  const publicRoot = path.join(ROOT_DIR, 'apps/arcgym-web/public');
-  const assetExists = (url: string) => {
-    if (!url.startsWith('/')) return false;
-    return fs.existsSync(path.join(publicRoot, url.replace(/^\/+/, '')));
-  };
+	const citationManifestUrls = citationManifestUrlsFromExports(
+		loadGroundingChunkExports(),
+	);
+	const publicRoot = path.join(ROOT_DIR, "apps/arcgym-web/public");
+	const assetExists = (url: string) => {
+		if (!url.startsWith("/")) return false;
+		return fs.existsSync(path.join(publicRoot, url.replace(/^\/+/, "")));
+	};
 
-  const validationRes = validateDrill(drill, {
-    citationManifest: citationManifestUrls,
-    assetExists,
-  });
-  const validationFindings = validationRes.ok ? [] : validationRes.findings;
+	const validationRes = validateDrill(drill, {
+		citationManifest: citationManifestUrls,
+		assetExists,
+	});
+	const validationFindings = validationRes.ok ? [] : validationRes.findings;
 
-  let wordingFindings: ReturnType<typeof lintDrillWording> = [];
-  try {
-    wordingFindings = lintDrillWording(drill as unknown as DrillDefinitionDTO);
-  } catch {
-    // If the draft is too malformed for wording lint, leave empty
-  }
+	let wordingFindings: ReturnType<typeof lintDrillWording> = [];
+	try {
+		wordingFindings = lintDrillWording(drill as unknown as DrillDefinitionDTO);
+	} catch {
+		// If the draft is too malformed for wording lint, leave empty
+	}
 
-  if (validationFindings.length > 0 || wordingFindings.length > 0) {
-    const reasons: Array<'validation' | 'wording'> = [];
-    if (validationFindings.length > 0) reasons.push('validation');
-    if (wordingFindings.length > 0) reasons.push('wording');
+	if (validationFindings.length > 0 || wordingFindings.length > 0) {
+		const reasons: Array<"validation" | "wording"> = [];
+		if (validationFindings.length > 0) reasons.push("validation");
+		if (wordingFindings.length > 0) reasons.push("wording");
 
-    for (const f of validationFindings) {
-      console.error(`  [VALIDATION] ${f.ruleId} at ${f.where}: ${f.message}`);
-    }
-    for (const f of wordingFindings) {
-      console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
-    }
+		for (const f of validationFindings) {
+			console.error(`  [VALIDATION] ${f.ruleId} at ${f.where}: ${f.message}`);
+		}
+		for (const f of wordingFindings) {
+			console.error(`  [WORDING] ${f.ruleId} at ${f.where}: ${f.message}`);
+		}
 
-    writeIngestFindings(outPath, {
-      drillId: drill.id as string,
-      failedAt: new Date().toISOString(),
-      reasons,
-      ...(validationFindings.length > 0 ? { validationFindings } : {}),
-      ...(wordingFindings.length > 0 ? { wordingFindings } : {}),
-    });
+		writeIngestFindings(outPath, {
+			drillId: drill.id as string,
+			failedAt: new Date().toISOString(),
+			reasons,
+			...(validationFindings.length > 0 ? { validationFindings } : {}),
+			...(wordingFindings.length > 0 ? { wordingFindings } : {}),
+		});
 
-    const failureParts: string[] = [];
-    if (validationFindings.length > 0) {
-      failureParts.push(`${validationFindings.length} validation finding(s)`);
-    }
-    if (wordingFindings.length > 0) {
-      failureParts.push(`${wordingFindings.length} wording finding(s)`);
-    }
-    fail(
-      `${failureParts.join(' and ')}; draft kept at ${outPath}. See ${findingsSidecarPath(outPath)}.`,
-    );
-  }
+		const failureParts: string[] = [];
+		if (validationFindings.length > 0) {
+			failureParts.push(`${validationFindings.length} validation finding(s)`);
+		}
+		if (wordingFindings.length > 0) {
+			failureParts.push(`${wordingFindings.length} wording finding(s)`);
+		}
+		fail(
+			`${failureParts.join(" and ")}; draft kept at ${outPath}. See ${findingsSidecarPath(outPath)}.`,
+		);
+	}
 
-  clearIngestFindings(outPath);
-  console.error(`\n✓ Saved draft drill: ${outPath}`);
+	clearIngestFindings(outPath);
+	console.error(`\n✓ Saved draft drill: ${outPath}`);
 }
 
 const [command, ...rest] = process.argv.slice(2);
-if (command === 'prompt') {
-  runPrompt(rest);
-} else if (command === 'ingest') {
-  runIngest(rest);
+if (command === "prompt") {
+	runPrompt(rest);
+} else if (command === "ingest") {
+	runIngest(rest);
 } else {
-  fail(
-    'Usage: generate-drill.ts prompt [--from-card FC-… | --topic "…"] [options] | ingest <drill.json> [--force]',
-  );
+	fail(
+		'Usage: generate-drill.ts prompt [--from-card FC-… | --topic "…"] [options] | ingest <drill.json> [--force]',
+	);
 }

@@ -6,14 +6,14 @@ extracts hierarchical markdown chunks with Well-Architected metadata,
 and indexes them into a persistent local Chroma vector database.
 """
 
+import hashlib
+import json
 import os
 import re
 import sys
 import time
-import json
-import hashlib
-from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 from curl_cffi import requests
@@ -35,19 +35,33 @@ KNOWN_CATEGORIES = [
     "fundamentals",
     "reference-diagrams",
     "resources",
-    "connect"
+    "connect",
 ]
 
 NON_ENGLISH_LANGS = {
-    "zh-tw", "zh-cn", "sv-se", "ru-ru", "pt-br", "nl-nl", "nb-no",
-    "ko-kr", "ja-jp", "it-it", "fr-fr", "fi-fi", "es-mx", "es-es",
-    "de-de", "da-dk"
+    "zh-tw",
+    "zh-cn",
+    "sv-se",
+    "ru-ru",
+    "pt-br",
+    "nl-nl",
+    "nb-no",
+    "ko-kr",
+    "ja-jp",
+    "it-it",
+    "fr-fr",
+    "fi-fi",
+    "es-mx",
+    "es-es",
+    "de-de",
+    "da-dk",
 }
+
 
 def detect_pillar(url: str, text: str) -> str:
     lower_url = url.lower()
     lower_text = text[:1000].lower()
-    
+
     if "agent" in lower_url or "agentic" in lower_url:
         return "Agentforce"
     if "data-360" in lower_url or "data-cloud" in lower_url or "zero-copy" in lower_url:
@@ -62,7 +76,7 @@ def detect_pillar(url: str, text: str) -> str:
         return "Cost_Optimization"
     if "fairness" in lower_url:
         return "Fairness"
-    
+
     # Fallback checks from text
     if "agentic enterprise" in lower_text or "atlas reasoning" in lower_text:
         return "Agentforce"
@@ -72,6 +86,7 @@ def detect_pillar(url: str, text: str) -> str:
         return "Core_Platform"
     return "Core_Platform"
 
+
 def detect_category(url: str) -> str:
     path = urlparse(url).path
     for cat in KNOWN_CATEGORIES:
@@ -79,15 +94,18 @@ def detect_category(url: str) -> str:
             return cat
     return "general"
 
+
 def get_english_urls() -> list[str]:
     print(f"Fetching sitemap from {SITEMAP_URL}...")
     session = requests.Session(impersonate="chrome")
     resp = session.get(SITEMAP_URL, timeout=30)
     resp.raise_for_status()
-    
-    raw_urls = re.findall(r"<loc>(https://architect\.salesforce\.com/docs/architect/[^<]+)</loc>", resp.text)
+
+    raw_urls = re.findall(
+        r"<loc>(https://architect\.salesforce\.com/docs/architect/[^<]+)</loc>", resp.text
+    )
     english_urls = []
-    
+
     for u in raw_urls:
         path_parts = urlparse(u).path.strip("/").split("/")
         # format: docs / architect / [lang | category] / ...
@@ -97,156 +115,236 @@ def get_english_urls() -> list[str]:
                 continue
             if third_segment in KNOWN_CATEGORIES:
                 english_urls.append(u)
-                
+
     unique_urls = sorted(list(set(english_urls)))
     print(f"Discovered {len(unique_urls)} canonical English architectural documentation URLs.")
     return unique_urls
+
+
+_HEADING_TAGS = frozenset(["doc-heading", "h1", "h2", "h3", "h4"])
+
+
+def _section_metadata(
+    *,
+    deep_url: str,
+    doc_title: str,
+    section_title: str,
+    breadcrumb_str: str,
+    category: str,
+    pillar: str,
+    char_count: int,
+    crawled_at: str,
+) -> dict:
+    return {
+        "url": deep_url,
+        "doc_title": doc_title,
+        "section_title": section_title,
+        "breadcrumb": breadcrumb_str,
+        "category": category,
+        "pillar": pillar,
+        "char_count": char_count,
+        "crawled_at": crawled_at,
+    }
+
+
+def _collect_sibling_body(h) -> str:
+    sibling_parts = []
+    curr = h.next_sibling
+    while curr:
+        if getattr(curr, "name", None) in _HEADING_TAGS:
+            break
+        if hasattr(curr, "get_text"):
+            if curr.name in ["ul", "ol"]:
+                items = [f"• {li.get_text(' ', strip=True)}" for li in curr.find_all("li")]
+                if items:
+                    sibling_parts.append("\n" + "\n".join(items) + "\n")
+            elif curr.name in ["pre", "code"]:
+                code_text = curr.get_text(strip=True)
+                if code_text:
+                    sibling_parts.append(f"\n```\n{code_text}\n```\n")
+            else:
+                txt = curr.get_text(" ", strip=True)
+                if txt:
+                    sibling_parts.append(txt)
+        curr = curr.next_sibling
+    return "\n\n".join([p for p in sibling_parts if p.strip()]).strip()
+
+
+def _append_body_chunks(
+    chunks: list[dict],
+    *,
+    body_text: str,
+    header_text: str,
+    breadcrumb_str: str,
+    deep_url: str,
+    doc_title: str,
+    category: str,
+    specific_pillar: str,
+    now_iso: str,
+) -> None:
+    if len(body_text) > 1800:
+        paragraphs = body_text.split("\n\n")
+        current_sub: list[str] = []
+        current_len = 0
+        sub_idx = 1
+
+        for p in paragraphs:
+            if current_len + len(p) > 1400 and current_sub:
+                sub_text = "\n\n".join(current_sub)
+                chunks.append(
+                    {
+                        "document": f"# {breadcrumb_str} (Part {sub_idx})\n\n{sub_text}",
+                        "metadata": _section_metadata(
+                            deep_url=deep_url,
+                            doc_title=doc_title,
+                            section_title=f"{header_text} (Part {sub_idx})",
+                            breadcrumb_str=breadcrumb_str,
+                            category=category,
+                            pillar=specific_pillar,
+                            char_count=len(sub_text),
+                            crawled_at=now_iso,
+                        ),
+                    }
+                )
+                current_sub = [p]
+                current_len = len(p)
+                sub_idx += 1
+            else:
+                current_sub.append(p)
+                current_len += len(p)
+
+        if current_sub:
+            sub_text = "\n\n".join(current_sub)
+            chunks.append(
+                {
+                    "document": f"# {breadcrumb_str} (Part {sub_idx})\n\n{sub_text}",
+                    "metadata": _section_metadata(
+                        deep_url=deep_url,
+                        doc_title=doc_title,
+                        section_title=f"{header_text} (Part {sub_idx})",
+                        breadcrumb_str=breadcrumb_str,
+                        category=category,
+                        pillar=specific_pillar,
+                        char_count=len(sub_text),
+                        crawled_at=now_iso,
+                    ),
+                }
+            )
+        return
+
+    chunks.append(
+        {
+            "document": f"# {breadcrumb_str}\n\n{body_text}",
+            "metadata": _section_metadata(
+                deep_url=deep_url,
+                doc_title=doc_title,
+                section_title=header_text,
+                breadcrumb_str=breadcrumb_str,
+                category=category,
+                pillar=specific_pillar,
+                char_count=len(body_text),
+                crawled_at=now_iso,
+            ),
+        }
+    )
+
+
+def _fallback_main_chunks(
+    url: str,
+    soup,
+    doc_title: str,
+    category: str,
+    default_pillar: str,
+) -> list[dict]:
+    main = soup.find("main") or soup.find("body")
+    if not main:
+        return []
+    text = main.get_text(" ", strip=True)
+    if len(text) <= 50:
+        return []
+    snippet = text[:2000]
+    return [
+        {
+            "id": hashlib.md5(url.encode()).hexdigest()[:16],
+            "document": f"# {doc_title}\n\n{snippet}",
+            "metadata": {
+                "url": url,
+                "doc_title": doc_title,
+                "section_title": "Overview",
+                "breadcrumb": doc_title,
+                "category": category,
+                "pillar": default_pillar,
+                "char_count": len(snippet),
+                "crawled_at": datetime.utcnow().isoformat(),
+            },
+        }
+    ]
+
 
 def parse_page_chunks(url: str, html: str) -> list[dict]:
     from bs4 import BeautifulSoup
 
     soup = BeautifulSoup(html, "lxml")
-    
+
     raw_title = soup.title.string if soup.title else ""
     # Clean title (e.g. "Trust | Well-Architected Framework | Salesforce Architects" -> "Trust")
-    doc_title = raw_title.split("|")[0].strip() if raw_title else urlparse(url).path.split("/")[-1].replace(".html", "")
-    
+    doc_title = (
+        raw_title.split("|")[0].strip()
+        if raw_title
+        else urlparse(url).path.split("/")[-1].replace(".html", "")
+    )
+
     category = detect_category(url)
     default_pillar = detect_pillar(url, soup.get_text()[:1500])
-    
+
     # Salesforce documentation uses <doc-heading> tags and standard h1-h4
     headings = soup.find_all(["doc-heading", "h1", "h2", "h3", "h4"])
     if not headings:
-        # Fallback to whole main content
-        main = soup.find("main") or soup.find("body")
-        if main:
-            text = main.get_text(" ", strip=True)
-            if len(text) > 50:
-                return [{
-                    "id": hashlib.md5(url.encode()).hexdigest()[:16],
-                    "document": f"# {doc_title}\n\n{text[:2000]}",
-                    "metadata": {
-                        "url": url,
-                        "doc_title": doc_title,
-                        "section_title": "Overview",
-                        "breadcrumb": doc_title,
-                        "category": category,
-                        "pillar": default_pillar,
-                        "char_count": len(text[:2000]),
-                        "crawled_at": datetime.utcnow().isoformat()
-                    }
-                }]
-        return []
+        return _fallback_main_chunks(url, soup, doc_title, category, default_pillar)
 
     chunks = []
     breadcrumbs = [doc_title]
-    now_iso = datetime.now(timezone.utc).isoformat()
-    
-    for idx, h in enumerate(headings):
+    now_iso = datetime.now(UTC).isoformat()
+
+    for h in headings:
         header_text = h.get("header") or h.get_text(strip=True)
         if not header_text or len(header_text) < 2:
             continue
-            
+
         hash_val = h.get("hash") or ""
-        level_str = h.get("aria-level") or (h.name[1] if len(h.name) == 2 and h.name[1].isdigit() else "2")
+        level_str = h.get("aria-level") or (
+            h.name[1] if len(h.name) == 2 and h.name[1].isdigit() else "2"
+        )
         level = int(level_str) if level_str.isdigit() else 2
-        
+
         # Update breadcrumbs based on heading level
         target_idx = max(1, level - 1)
         if target_idx < len(breadcrumbs):
             breadcrumbs = breadcrumbs[:target_idx]
         breadcrumbs.append(header_text)
         breadcrumb_str = " > ".join(breadcrumbs)
-        
-        # Collect sibling text until next heading
-        sibling_parts = []
-        curr = h.next_sibling
-        while curr:
-            if getattr(curr, "name", None) in ["doc-heading", "h1", "h2", "h3", "h4"]:
-                break
-            if hasattr(curr, "get_text"):
-                if curr.name in ["ul", "ol"]:
-                    items = [f"• {li.get_text(' ', strip=True)}" for li in curr.find_all("li")]
-                    if items:
-                        sibling_parts.append("\n" + "\n".join(items) + "\n")
-                elif curr.name in ["pre", "code"]:
-                    code_text = curr.get_text(strip=True)
-                    if code_text:
-                        sibling_parts.append(f"\n```\n{code_text}\n```\n")
-                else:
-                    txt = curr.get_text(" ", strip=True)
-                    if txt:
-                        sibling_parts.append(txt)
-            curr = curr.next_sibling
-            
-        body_text = "\n\n".join([p for p in sibling_parts if p.strip()]).strip()
+
+        body_text = _collect_sibling_body(h)
         if len(body_text) < 40:
             continue
-            
+
         specific_pillar = detect_pillar(url, header_text + " " + body_text[:200]) or default_pillar
         deep_url = f"{url}#{hash_val}" if hash_val else url
-        
-        # If section is very long, split into sub-chunks of ~1200 chars at paragraph breaks
-        if len(body_text) > 1800:
-            paragraphs = body_text.split("\n\n")
-            current_sub = []
-            current_len = 0
-            sub_idx = 1
-            
-            for p in paragraphs:
-                if current_len + len(p) > 1400 and current_sub:
-                    sub_text = "\n\n".join(current_sub)
-                    chunks.append({
-                        "document": f"# {breadcrumb_str} (Part {sub_idx})\n\n{sub_text}",
-                        "metadata": {
-                            "url": deep_url,
-                            "doc_title": doc_title,
-                            "section_title": f"{header_text} (Part {sub_idx})",
-                            "breadcrumb": breadcrumb_str,
-                            "category": category,
-                            "pillar": specific_pillar,
-                            "char_count": len(sub_text),
-                            "crawled_at": now_iso
-                        }
-                    })
-                    current_sub = [p]
-                    current_len = len(p)
-                    sub_idx += 1
-                else:
-                    current_sub.append(p)
-                    current_len += len(p)
-                    
-            if current_sub:
-                sub_text = "\n\n".join(current_sub)
-                chunks.append({
-                    "document": f"# {breadcrumb_str} (Part {sub_idx})\n\n{sub_text}",
-                    "metadata": {
-                        "url": deep_url,
-                        "doc_title": doc_title,
-                        "section_title": f"{header_text} (Part {sub_idx})",
-                        "breadcrumb": breadcrumb_str,
-                        "category": category,
-                        "pillar": specific_pillar,
-                        "char_count": len(sub_text),
-                        "crawled_at": now_iso
-                    }
-                })
-        else:
-            chunks.append({
-                "document": f"# {breadcrumb_str}\n\n{body_text}",
-                "metadata": {
-                    "url": deep_url,
-                    "doc_title": doc_title,
-                    "section_title": header_text,
-                    "breadcrumb": breadcrumb_str,
-                    "category": category,
-                    "pillar": specific_pillar,
-                    "char_count": len(body_text),
-                    "crawled_at": now_iso
-                }
-            })
-            
+
+        _append_body_chunks(
+            chunks,
+            body_text=body_text,
+            header_text=header_text,
+            breadcrumb_str=breadcrumb_str,
+            deep_url=deep_url,
+            doc_title=doc_title,
+            category=category,
+            specific_pillar=specific_pillar,
+            now_iso=now_iso,
+        )
+
     return chunks
+
 
 def fetch_and_parse(url: str, session: requests.Session) -> list[dict]:
     try:
@@ -260,45 +358,50 @@ def fetch_and_parse(url: str, session: requests.Session) -> list[dict]:
         print(f"  [ERROR] Failed to fetch {url}: {e}")
         return []
 
+
 def main():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(CHROMA_DIR, exist_ok=True)
-    
+
     print("\n===========================================================")
     print("   ArcGym: architect.salesforce.com Crawler -> ChromaDB    ")
     print("===========================================================\n")
-    
+
     all_chunks = []
-    
-    if ("--reindex-only" in sys.argv or "--cached" in sys.argv) and os.path.exists(CHUNKS_JSON_PATH):
+
+    if ("--reindex-only" in sys.argv or "--cached" in sys.argv) and os.path.exists(
+        CHUNKS_JSON_PATH
+    ):
         print(f"Loading existing chunks from {CHUNKS_JSON_PATH}...")
-        with open(CHUNKS_JSON_PATH, "r", encoding="utf-8") as f:
+        with open(CHUNKS_JSON_PATH, encoding="utf-8") as f:
             all_chunks = json.load(f)
         print(f"Loaded {len(all_chunks)} chunks from local cache.")
     else:
         urls = get_english_urls()
         print(f"\nStarting parallel crawl across {len(urls)} documentation pages...")
         start_time = time.time()
-        
+
         with ThreadPoolExecutor(max_workers=6) as executor:
+
             def worker(u):
                 sess = requests.Session(impersonate="chrome")
                 return fetch_and_parse(u, sess)
-                
+
             future_to_url = {executor.submit(worker, url): url for url in urls}
-            completed = 0
-            
-            for future in as_completed(future_to_url):
-                url = future_to_url[future]
-                completed += 1
+
+            for completed, future in enumerate(as_completed(future_to_url), start=1):
                 chunks = future.result()
                 all_chunks.extend(chunks)
                 if completed % 15 == 0 or completed == len(urls):
-                    print(f"  [{completed}/{len(urls)}] pages crawled | Total chunks so far: {len(all_chunks)}")
-                    
+                    print(
+                        f"  [{completed}/{len(urls)}] pages crawled | Total chunks so far: {len(all_chunks)}"
+                    )
+
         elapsed = time.time() - start_time
-        print(f"\n✓ Crawl finished in {elapsed:.1f}s. Extracted {len(all_chunks)} structured knowledge chunks.")
-        
+        print(
+            f"\n✓ Crawl finished in {elapsed:.1f}s. Extracted {len(all_chunks)} structured knowledge chunks."
+        )
+
     # Stable ids so multi-source upserts do not collide or wipe sibling corpora
     assign_stable_ids(all_chunks, "arc")
     for c in all_chunks:
@@ -308,7 +411,9 @@ def main():
     print(f"Saving JSON dump to {CHUNKS_JSON_PATH}...")
     with open(CHUNKS_JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(all_chunks, f, indent=2)
-    print(f"✓ Saved {len(all_chunks)} chunks to {CHUNKS_JSON_PATH} ({os.path.getsize(CHUNKS_JSON_PATH) / 1024 / 1024:.2f} MB)")
+    print(
+        f"✓ Saved {len(all_chunks)} chunks to {CHUNKS_JSON_PATH} ({os.path.getsize(CHUNKS_JSON_PATH) / 1024 / 1024:.2f} MB)"
+    )
 
     print(f"\nUpserting into ChromaDB at: {CHROMA_DIR}...")
     count = upsert_chunks(CHROMA_DIR, all_chunks, source_domain=SOURCE_DOMAIN)
@@ -332,6 +437,7 @@ def main():
         print(f" • {cat.ljust(25)} : {cnt} chunks")
 
     print(f"\nAll operations complete. Chroma DB persisted at: {CHROMA_DIR}\n")
+
 
 if __name__ == "__main__":
     main()

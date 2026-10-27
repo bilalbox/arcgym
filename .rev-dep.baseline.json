@@ -1,0 +1,167 @@
+{
+  "schemaVersion": "1.0",
+  "workspaces": {
+    ".": {
+      "dev-deps-usage-on-prod": [
+        {
+          "file": "apps/arcgym-web/functions/_shared/learnerAuth.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/functions/api/admin/feedback.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/functions/api/auth/github/callback.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/functions/api/drills/[id]/feedback.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/functions/api/learner/sync.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/functions/api/troubleshoot/grade.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/src/components/drill/DiagramViewer.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/src/components/studio/DrillFeedbackTab.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/src/formats/registry.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "apps/arcgym-web/src/lib/safeFetch.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/caseSession/reducer.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/feedback/feedback.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/formats/formats.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/ingest/findings.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/lint/wording.corpus.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/lint/wording.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/probeBudget/reducer.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/proficiency/aggregator.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/progress/document.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/progress/merge.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/progress/streak.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/recommendation/engine.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/scoring/brier.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/scoring/gradeCause.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/scoring/grader/clefGrader.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/scoring/grader/stubGrader.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/scoring/probe.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/troubleshootSession/reducer.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/types/citationManifest.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/types/validation.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/ui/orderOptions.corpus.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/ui/orderOptions.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/validator/sanitization.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/validator/validator.corpus.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "packages/drill-core/src/validator/validator.test.ts",
+          "module": "vitest"
+        }
+      ],
+      "orphan-files": [
+        {
+          "file": "vitest.config.ts"
+        }
+      ],
+      "unused-exports": [
+        {
+          "file": "vitest.config.ts",
+          "export": "default",
+          "isType": false
+        }
+      ],
+      "unused-node-modules": [
+        {
+          "module": "tw-animate-css",
+          "packageJson": "package.json"
+        }
+      ]
+    }
+  }
+}

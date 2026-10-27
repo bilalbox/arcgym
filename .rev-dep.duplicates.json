@@ -1,0 +1,111 @@
+{
+  "schemaVersion": "1.0",
+  "canonicalFormVersion": "1.0",
+  "parameters": {
+    "blinding": "exact",
+    "blindIdentifiers": false,
+    "blindStrings": false,
+    "blindNumbers": false,
+    "minTokens": 50,
+    "minLines": 3,
+    "minDepth": 0,
+    "minStatements": 0,
+    "minDuplicates": 2,
+    "skipObjects": false,
+    "ignoreFiles": [
+      "scripts/**",
+      "tests/**",
+      "**/node_modules/**",
+      "**/packages/drill-core/prototypes/**"
+    ],
+    "configLevelSettings": {
+      "configPath": "rev-dep.config.json",
+      "ignoreFiles": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.git/**",
+        "**/.wrangler/**",
+        "**/baselines/**",
+        "**/tests/ratchets/fixtures/**",
+        "**/packages/drill-core/prototypes/**",
+        "**/content/**",
+        "**/data/**"
+      ]
+    }
+  },
+  "duplications": [
+    {
+      "hash": "2046e8a4ed0806b9",
+      "occurrences": 2,
+      "files": {
+        "packages/drill-core/src/scoring/gradeCause.ts": 1,
+        "packages/drill-core/src/scoring/grader/assembleResult.ts": 1
+      },
+      "label": "verdict = \"incorrect_distractor\";"
+    },
+    {
+      "hash": "39db07c83abdeac3",
+      "occurrences": 3,
+      "files": {
+        "packages/drill-core/src/scoring/gradeCause.test.ts": 1,
+        "packages/drill-core/src/scoring/grader/clefGrader.test.ts": 1,
+        "packages/drill-core/src/scoring/grader/stubGrader.test.ts": 1
+      },
+      "label": "prompt: \"How should the concurrency collision be remediated?\","
+    },
+    {
+      "hash": "3d79d2bd76fadaef",
+      "occurrences": 2,
+      "files": {
+        "apps/arcgym-web/src/pages/CasePage.tsx": 1,
+        "apps/arcgym-web/src/pages/TroubleshootPage.tsx": 1
+      },
+      "label": "<div className=\"flex flex-wrap items-center gap-2\">"
+    },
+    {
+      "hash": "441e4f2422d6da9b",
+      "occurrences": 2,
+      "files": {
+        "packages/drill-core/src/scoring/grader/clefGrader.test.ts": 1,
+        "packages/drill-core/src/scoring/grader/stubGrader.test.ts": 1
+      },
+      "label": "id: \"AGD-01001\","
+    },
+    {
+      "hash": "6029c3c13e8676d2",
+      "occurrences": 2,
+      "files": {
+        "packages/drill-core/src/proficiency/aggregator.test.ts": 1,
+        "packages/drill-core/src/recommendation/engine.test.ts": 1
+      },
+      "label": "prompt: \"Fix prompt\","
+    },
+    {
+      "hash": "60dc50306aaf4795",
+      "occurrences": 2,
+      "files": {
+        "apps/arcgym-web/src/components/drill/CaseFileRunner.tsx": 1,
+        "apps/arcgym-web/src/components/drill/TroubleshootRunner.tsx": 1
+      },
+      "label": "<div className=\"p-3 bg-miro-yellowLight border border-miro-yellowBorder ..."
+    },
+    {
+      "hash": "77b230aa5e68211a",
+      "occurrences": 2,
+      "files": {
+        "apps/arcgym-web/functions/api/auth/github/callback.ts": 1,
+        "apps/arcgym-web/functions/api/auth/google/callback.ts": 1
+      },
+      "label": "try {"
+    },
+    {
+      "hash": "efd0bde1bedf1f06",
+      "occurrences": 2,
+      "files": {
+        "apps/arcgym-web/functions/api/troubleshoot/grade.test.ts": 1,
+        "packages/drill-core/src/scoring/grader/clefGrader.test.ts": 1
+      },
+      "label": "run: vi.fn(async () => ({"
+    }
+  ]
+}

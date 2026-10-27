@@ -6,8 +6,8 @@ import unittest
 
 from search_grounding import (
     GroundingHit,
-    build_bm25_index,
     bm25_search,
+    build_bm25_index,
     chunk_id_from_export,
     hits_to_json_items,
     hybrid_rerank,
@@ -181,9 +181,7 @@ class JsonContractTests(unittest.TestCase):
             )
         ]
         items = hits_to_json_items(hits)
-        self.assertTrue(
-            {"content", "metadata", "cosine_similarity"}.issubset(items[0].keys())
-        )
+        self.assertTrue({"content", "metadata", "cosine_similarity"}.issubset(items[0].keys()))
         self.assertEqual(items[0]["content"], "chunk body")
         self.assertEqual(items[0]["cosine_similarity"], 0.87)
 

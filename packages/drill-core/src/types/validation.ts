@@ -2,28 +2,28 @@
 export const DRILL_ID_PATTERN = /^AGD-\d{5}$/;
 
 export function isValidDrillId(id: unknown): id is string {
-  return typeof id === 'string' && DRILL_ID_PATTERN.test(id);
+	return typeof id === "string" && DRILL_ID_PATTERN.test(id);
 }
 
 /** Authored Contrast Set ids (e.g. CS-zero-copy-vs-copy). Exactly three published Rapid Fire siblings share one id. */
 export const CONTRAST_SET_ID_PATTERN = /^CS-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function isValidContrastSetId(id: unknown): id is string {
-  return typeof id === 'string' && CONTRAST_SET_ID_PATTERN.test(id);
+	return typeof id === "string" && CONTRAST_SET_ID_PATTERN.test(id);
 }
 
 /** Approved Friction Card ID pattern (e.g. FC-0D5KX00000jATZ10AO). */
 export const FRICTION_CARD_ID_PATTERN = /^FC-[A-Za-z0-9]+$/;
 
 export function isValidFrictionCardId(id: unknown): id is string {
-  return typeof id === 'string' && FRICTION_CARD_ID_PATTERN.test(id);
+	return typeof id === "string" && FRICTION_CARD_ID_PATTERN.test(id);
 }
 
 /** Well-Architected Grounding hosts allowed in drill citation / source links (https only). */
 export const ALLOWED_CITATION_HOSTS = [
-  'architect.salesforce.com',
-  'help.salesforce.com',
-  'developer.salesforce.com',
+	"architect.salesforce.com",
+	"help.salesforce.com",
+	"developer.salesforce.com",
 ] as const;
 
 /**
@@ -31,34 +31,34 @@ export const ALLOWED_CITATION_HOSTS = [
  * Rejects javascript:, data:, and non-allowlisted hosts.
  */
 export function isAllowedCitationUrl(url: unknown): boolean {
-  if (typeof url !== 'string' || url.length === 0 || url.length > 2048) {
-    return false;
-  }
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:') return false;
-    if (parsed.username || parsed.password) return false;
-    const host = parsed.hostname.toLowerCase();
-    return ALLOWED_CITATION_HOSTS.some(
-      (allowed) => host === allowed || host.endsWith(`.${allowed}`),
-    );
-  } catch {
-    return false;
-  }
+	if (typeof url !== "string" || url.length === 0 || url.length > 2048) {
+		return false;
+	}
+	try {
+		const parsed = new URL(url);
+		if (parsed.protocol !== "https:") return false;
+		if (parsed.username || parsed.password) return false;
+		const host = parsed.hostname.toLowerCase();
+		return ALLOWED_CITATION_HOSTS.some(
+			(allowed) => host === allowed || host.endsWith(`.${allowed}`),
+		);
+	} catch {
+		return false;
+	}
 }
 
 /**
  * Returns the URL if allowlisted, otherwise undefined (safe for `href`).
  */
 export function safeCitationHref(url: unknown): string | undefined {
-  return isAllowedCitationUrl(url) ? (url as string) : undefined;
+	return isAllowedCitationUrl(url) ? (url as string) : undefined;
 }
 
 /**
  * Hostname for learner-facing citation link labels (allowlisted URLs only).
  */
 export function citationHostname(url: unknown): string | undefined {
-  const href = safeCitationHref(url);
-  if (!href) return undefined;
-  return new URL(href).hostname.toLowerCase();
+	const href = safeCitationHref(url);
+	if (!href) return undefined;
+	return new URL(href).hostname.toLowerCase();
 }

@@ -1,8 +1,8 @@
 {
-  "mcpServers": {
-    "jointjs": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://mcp.jointjs.com/mcp"]
-    }
-  }
+	"mcpServers": {
+		"jointjs": {
+			"command": "npx",
+			"args": ["-y", "mcp-remote", "https://mcp.jointjs.com/mcp"]
+		}
+	}
 }

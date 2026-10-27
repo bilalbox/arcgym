@@ -11,7 +11,7 @@ Canonical architectural decisions for ArcGym. Consult relevant ADRs before modif
 | [0003](0003-well-architected-grounding-corpus.md) | Grounding Corpus & Well-Architected Hierarchy | Accepted | Salesforce Well-Architected Framework and Trailblazer community grounding. |
 | [0004](0004-troubleshooting-format.md) | Troubleshooting Format (Incident Drills) | Accepted (streak clause superseded by 0007) | Scarce-probe incident diagnosis with CLEF Workers AI root-cause grading. |
 | [0005](0005-passwordless-learner-auth-and-d1-sync.md) | Passwordless Learner Auth & D1 Persistence | Accepted | Google/GitHub OAuth, pseudonymous zero-PII IDs, D1 telemetry & feedback sync. |
-| [0006](0006-deterministic-quality-and-maintainability-gates.md) | Deterministic Quality & Maintainability Gates | Accepted | 4-stage verification gate (`pnpm verify`) enforcing types, Biome, Vitest, arch, dead code, clones. |
+| [0006](0006-deterministic-quality-and-maintainability-gates.md) | Deterministic Quality & Maintainability Gates | Accepted | Quality-kit gates (`pnpm gate` / `gate:fast`): Biome, rev-dep, complexity ratchet, `tsc -b`, Python crawler lint, Vitest. |
 | [0007](0007-retire-rapid-fire.md) | Retire Rapid Fire | Accepted | Case File + Troubleshooting are the only formats; either earns the Practice Streak. |
 | [0008](0008-incident-fix-and-graded-first-call.md) | Incident Fix (First Call Shelved) | Accepted | Incidents end with a cause-revealed MCQ Fix; First Call is shelved. |
 | [0009](0009-mermaid-pele-diagram-pipeline.md) | Mermaid Architecture Diagrams with Obsidian Pele | Accepted | Self-contained Mermaid topology diagrams rendered via Obsidian Pele; retired `@arcgym/diagrams`. |
@@ -31,4 +31,4 @@ ArcGym maintains a strict separation between static drill content and dynamic te
 
 * **Database Migrations**: Apply with `pnpm db:migrate:local` (local dev) or `pnpm db:migrate:remote` (production).
 * **Feedback Operations**: Inspect with `pnpm feedback:report`, pull remote data with `pnpm feedback:pull`, or backfill with `pnpm feedback:migrate --remote`.
-* **Quality Verification**: Execute `pnpm verify` before concluding tasks.
+* **Quality Verification**: Execute `pnpm gate:fast` before concluding tasks (`pnpm gate` includes tests).

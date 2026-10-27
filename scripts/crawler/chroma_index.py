@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import os
 import sys
@@ -47,10 +48,8 @@ def upsert_chunks(
 
     # Drop prior vectors for this domain so stable-id migrations don't leave orphans,
     # without wiping sibling corpora (e.g. developer vs architect).
-    try:
+    with contextlib.suppress(Exception):
         collection.delete(where={"source_domain": source_domain})
-    except Exception:
-        pass
 
     batch_size = 100
     total = len(chunks)

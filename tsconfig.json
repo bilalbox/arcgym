@@ -1,32 +1,34 @@
 {
-  "compilerOptions": {
-    "target": "ES2024",
-    "useDefineForClassFields": true,
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "types": ["node"],
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@/*": ["./apps/arcgym-web/src/*"],
-      "@arcgym/drill-core": ["./packages/drill-core/src/index.ts"]
-    }
-  },
-  "include": [
-    "apps/arcgym-web/src/**/*",
-    "apps/arcgym-web/functions/**/*",
-    "apps/arcgym-web/vite.config.ts",
-    "apps/arcgym-web/vite/**/*",
-    "packages/drill-core/src/**/*",
-    "scripts/**/*"
-  ],
-  "exclude": ["node_modules", "**/dist", "**/test-results"]
+	"extends": "./tsconfig.base.json",
+	"compilerOptions": {
+		"target": "ES2024",
+		"useDefineForClassFields": true,
+		"lib": ["ES2024", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"resolveJsonModule": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"types": ["node"],
+		"paths": {
+			"@/*": ["./apps/arcgym-web/src/*"],
+			"@arcgym/drill-core": ["./packages/drill-core/src/index.ts"]
+		}
+	},
+	"include": [
+		"apps/arcgym-web/src/**/*",
+		"apps/arcgym-web/functions/**/*",
+		"apps/arcgym-web/vite.config.ts",
+		"apps/arcgym-web/vite/**/*",
+		"packages/drill-core/src/**/*",
+		"scripts/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"**/dist",
+		"**/test-results",
+		"**/packages/drill-core/prototypes"
+	]
 }

@@ -1,0 +1,110 @@
+{
+	"version": 1,
+	"findings": [
+		{
+			"id": "apps/arcgym-web/functions/api/admin/feedback.ts|onRequestGet",
+			"score": 57,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "apps/arcgym-web/functions/api/drills/[id]/feedback.ts|onRequestPost",
+			"score": 29,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "apps/arcgym-web/src/components/drill/CaseFileRunner.tsx|(anonymous)|55",
+			"score": 26,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "apps/arcgym-web/src/components/drill/TroubleshootRunner.tsx|(anonymous)|53",
+			"score": 49,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "apps/arcgym-web/src/hooks/useVisitorProgress.ts|initialSync",
+			"score": 32,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "apps/arcgym-web/src/pages/studio/StudioDrillPage.tsx|(anonymous)|40",
+			"score": 32,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "apps/arcgym-web/vite/studioFsPlugin.ts|(anonymous)|283",
+			"score": 255,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/caseSession/reducer.ts|caseSessionReducer",
+			"score": 36,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/formats/caseFile.ts|lintCaseFileExtras",
+			"score": 40,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/formats/caseFile.ts|validateCaseFile",
+			"score": 53,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/formats/troubleshooting.ts|lintTroubleshootingExtras",
+			"score": 44,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/formats/troubleshooting.ts|validateTroubleshooting",
+			"score": 64,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/formats/validationHelpers.ts|validateProbePool",
+			"score": 60,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/formats/wordingHelpers.ts|lintQuestion",
+			"score": 26,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/scoring/grader/clefGrader.ts|normalizeClefChoice",
+			"score": 26,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/troubleshootSession/reducer.ts|troubleshootSessionReducer",
+			"score": 48,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "packages/drill-core/src/validator/validator.ts|validateDrill",
+			"score": 35,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "scripts/feedback-report.ts|pullFromCloudflare",
+			"score": 26,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "scripts/feedback-report.ts|renderReport",
+			"score": 43,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "scripts/generator/generate-drill.ts|parsePromptArgs",
+			"score": 69,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "scripts/generator/generate-drill.ts|runIngest",
+			"score": 30,
+			"note": "Added via --update; replace with owning issue note."
+		}
+	]
+}

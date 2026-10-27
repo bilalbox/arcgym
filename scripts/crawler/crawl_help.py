@@ -17,7 +17,7 @@ import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from html import unescape
 from urllib.parse import parse_qs, urlparse
 
@@ -365,7 +365,9 @@ def chunk_article(url_name: str, title: str, markdown: str, now_iso: str) -> lis
     return chunks
 
 
-def discover_url_names(session: requests.Session, fwuid: str, loaded: str, release: str) -> list[str]:
+def discover_url_names(
+    session: requests.Session, fwuid: str, loaded: str, release: str
+) -> list[str]:
     queue = list(dict.fromkeys(SEED_URL_NAMES))
     seen: set[str] = set()
     ordered: list[str] = []
@@ -385,7 +387,11 @@ def discover_url_names(session: requests.Session, fwuid: str, loaded: str, relea
         ordered.append(name)
         content = record.get("Content__c") or ""
         for linked in extract_linked_url_names(content):
-            if linked not in seen and linked not in queue and len(ordered) + len(queue) < MAX_ARTICLES * 2:
+            if (
+                linked not in seen
+                and linked not in queue
+                and len(ordered) + len(queue) < MAX_ARTICLES * 2
+            ):
                 queue.append(linked)
         if len(ordered) % 10 == 0:
             print(f"  discovered {len(ordered)} articles | queue {len(queue)}")
@@ -411,7 +417,7 @@ def fetch_and_chunk(
     if len(markdown) < 40:
         print(f"  [WARN] empty body for {url_name}")
         return []
-    return chunk_article(url_name, title, markdown, datetime.now(timezone.utc).isoformat())
+    return chunk_article(url_name, title, markdown, datetime.now(UTC).isoformat())
 
 
 def main() -> None:
@@ -426,7 +432,7 @@ def main() -> None:
         CHUNKS_JSON_PATH
     ):
         print(f"Loading existing chunks from {CHUNKS_JSON_PATH}...")
-        with open(CHUNKS_JSON_PATH, "r", encoding="utf-8") as f:
+        with open(CHUNKS_JSON_PATH, encoding="utf-8") as f:
             all_chunks = json.load(f)
         print(f"Loaded {len(all_chunks)} chunks from local cache.")
     else:
@@ -447,13 +453,13 @@ def main() -> None:
                 return fetch_and_chunk(name, sess, fwuid, loaded, release)
 
             futures = {executor.submit(worker, n): n for n in url_names}
-            done = 0
-            for future in as_completed(futures):
-                done += 1
+            for done, future in enumerate(as_completed(futures), start=1):
                 all_chunks.extend(future.result())
                 if done % 15 == 0 or done == len(url_names):
                     print(f"  [{done}/{len(url_names)}] | chunks {len(all_chunks)}")
-        print(f"\n✓ Crawl finished in {time.time() - start:.1f}s. Extracted {len(all_chunks)} chunks.")
+        print(
+            f"\n✓ Crawl finished in {time.time() - start:.1f}s. Extracted {len(all_chunks)} chunks."
+        )
 
     assign_stable_ids(all_chunks, "help")
     for c in all_chunks:
