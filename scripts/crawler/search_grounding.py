@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Sequence
-
+from typing import Any
 
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_./]+")
 
@@ -51,9 +51,7 @@ def metadata_matches(
 ) -> bool:
     if pillar is not None and metadata.get("pillar") != pillar:
         return False
-    if category is not None and metadata.get("category") != category:
-        return False
-    return True
+    return category is None or metadata.get("category") == category
 
 
 def tokenize(text: str) -> list[str]:

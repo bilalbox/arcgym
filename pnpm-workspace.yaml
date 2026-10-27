@@ -1,3 +1,4 @@
+# pnpm v11+ allowBuilds (supply-chain). Approve additions with: pnpm approve-builds <pkg>
 allowBuilds:
   '@swc/core': true
   core-js: true
@@ -6,6 +7,3 @@ allowBuilds:
   protobufjs: true
   sharp: true
   workerd: true
-
-patchedDependencies:
-  dependency-cruiser: patches/dependency-cruiser.patch

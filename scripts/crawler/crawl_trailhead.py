@@ -6,15 +6,14 @@ extracts rich question threads, verified Best Answers, and engagement signals,
 and stores them in a local SQLite database using the Hybrid Document Pattern.
 """
 
-import os
-import sys
-import time
-import json
-import sqlite3
 import argparse
-import urllib.request
+import json
+import os
+import sqlite3
+import time
 import urllib.error
-from datetime import datetime, timezone
+import urllib.request
+from datetime import UTC, datetime
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 DATA_DIR = os.path.join(ROOT_DIR, "data")
@@ -110,6 +109,7 @@ query GetGroupDiscussions(
 }
 """
 
+
 def init_db(db_path: str):
     os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
     conn = sqlite3.connect(db_path)
@@ -145,8 +145,12 @@ def init_db(db_path: str):
     """)
 
     cur.execute("CREATE INDEX IF NOT EXISTS idx_disc_group ON discussions(group_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_disc_dates ON discussions(created_at, last_modified_at);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_disc_signals ON discussions(has_best_answer, comments_count);")
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_disc_dates ON discussions(created_at, last_modified_at);"
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_disc_signals ON discussions(has_best_answer, comments_count);"
+    )
 
     # FTS5 Full Text Search table
     cur.execute("""
@@ -186,13 +190,14 @@ def init_db(db_path: str):
     conn.commit()
     return conn
 
+
 def extract_clean_text(body_dict: dict) -> str:
     if not body_dict:
         return ""
     direct_text = body_dict.get("text")
     if direct_text and direct_text.strip():
         return direct_text.strip()
-    
+
     segments = body_dict.get("segments") or []
     pieces = []
     for s in segments:
@@ -201,34 +206,30 @@ def extract_clean_text(body_dict: dict) -> str:
             pieces.append(stext)
     return " ".join("".join(pieces).split()).strip()
 
-def fetch_graphql_page(group_id: str, cursor: str = None, filter_type: str = "ALL_QUESTIONS", sort: str = "LAST_MODIFIED_DATE_DESC", batch_size: int = 25):
-    variables = {
-        "groupId": group_id,
-        "first": batch_size,
-        "commentCount": 25,
-        "sort": sort
-    }
+
+def fetch_graphql_page(
+    group_id: str,
+    cursor: str | None = None,
+    filter_type: str = "ALL_QUESTIONS",
+    sort: str = "LAST_MODIFIED_DATE_DESC",
+    batch_size: int = 25,
+):
+    variables = {"groupId": group_id, "first": batch_size, "commentCount": 25, "sort": sort}
     if cursor:
         variables["after"] = cursor
     if filter_type and filter_type != "NONE":
         variables["filter"] = filter_type
 
-    payload = {
-        "query": GRAPHQL_QUERY,
-        "variables": variables
-    }
+    payload = {"query": GRAPHQL_QUERY, "variables": variables}
 
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
     req = urllib.request.Request(
-        GRAPHQL_ENDPOINT,
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-        method="POST"
+        GRAPHQL_ENDPOINT, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
     )
 
     try:
@@ -239,7 +240,8 @@ def fetch_graphql_page(group_id: str, cursor: str = None, filter_type: str = "AL
             return data.get("data", {}).get("group", {})
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8")
-        raise RuntimeError(f"HTTP {e.code}: {body}")
+        raise RuntimeError(f"HTTP {e.code}: {body}") from e
+
 
 def crawl_group(
     group_id: str = DEFAULT_GROUP_ID,
@@ -247,11 +249,13 @@ def crawl_group(
     limit: int = 100,
     filter_type: str = "ALL_QUESTIONS",
     sort: str = "LAST_MODIFIED_DATE_DESC",
-    rate_limit: float = 0.4
+    rate_limit: float = 0.4,
 ):
     print(f"[Trailhead Crawler] Starting ingestion for Group ID: {group_id}")
     print(f"[Trailhead Crawler] SQLite target: {db_path}")
-    print(f"[Trailhead Crawler] Filter: {filter_type} | Sort: {sort} | Target limit: {limit if limit > 0 else 'ALL'}")
+    print(
+        f"[Trailhead Crawler] Filter: {filter_type} | Sort: {sort} | Target limit: {limit if limit > 0 else 'ALL'}"
+    )
 
     conn = init_db(db_path)
     cur = conn.cursor()
@@ -268,7 +272,7 @@ def crawl_group(
                 cursor=cursor,
                 filter_type=filter_type,
                 sort=sort,
-                batch_size=min(50, limit - total_fetched) if limit > 0 else 50
+                batch_size=min(50, limit - total_fetched) if limit > 0 else 50,
             )
         except Exception as e:
             print(f"[ERROR] Failed fetching page (cursor={cursor}): {e}")
@@ -276,8 +280,9 @@ def crawl_group(
 
         if not group_info_saved and "detail" in group_data:
             detail = group_data["detail"] or {}
-            now_iso = datetime.now(timezone.utc).isoformat()
-            cur.execute("""
+            now_iso = datetime.now(UTC).isoformat()
+            cur.execute(
+                """
             INSERT INTO groups (group_id, name, description, member_count, last_crawled_at)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(group_id) DO UPDATE SET
@@ -285,7 +290,15 @@ def crawl_group(
                 description=excluded.description,
                 member_count=excluded.member_count,
                 last_crawled_at=excluded.last_crawled_at
-            """, (group_id, detail.get("name"), detail.get("description"), detail.get("memberCount"), now_iso))
+            """,
+                (
+                    group_id,
+                    detail.get("name"),
+                    detail.get("description"),
+                    detail.get("memberCount"),
+                    now_iso,
+                ),
+            )
             conn.commit()
             group_info_saved = True
             print(f"[Group] Connected: {detail.get('name')} ({detail.get('memberCount')} members)")
@@ -296,7 +309,7 @@ def crawl_group(
             print("[INFO] No more items found in feed.")
             break
 
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
 
         for edge in edges:
             node = edge.get("node") or {}
@@ -306,10 +319,13 @@ def crawl_group(
 
             node_type = node.get("type", "UNKNOWN")
             headline = (node.get("headline") or {}).get("text")
-            body_text = extract_clean_text(node.get("body"))
+            body_text = extract_clean_text(node.get("body") or {})
             created_at = node.get("createdAt") or now_iso
             last_mod_at = node.get("lastModifiedAt") or created_at
-            url = node.get("url") or f"https://trailhead.salesforce.com/trailblazer-community/feed/{node_id}"
+            url = (
+                node.get("url")
+                or f"https://trailhead.salesforce.com/trailblazer-community/feed/{node_id}"
+            )
 
             cap = node.get("capabilities") or {}
             likes_count = (cap.get("likes") or {}).get("total", 0)
@@ -317,11 +333,14 @@ def crawl_group(
 
             best_ans_node = (cap.get("bestAnswer") or {}).get("answer")
             has_best_answer = bool(best_ans_node)
-            best_answer_text = extract_clean_text(best_ans_node.get("body")) if best_ans_node else None
+            best_answer_text = (
+                extract_clean_text(best_ans_node.get("body")) if best_ans_node else None
+            )
 
             raw_payload = json.dumps(node, ensure_ascii=False)
 
-            cur.execute("""
+            cur.execute(
+                """
             INSERT INTO discussions (
                 id, group_id, type, headline, body_text, created_at, last_modified_at,
                 likes_count, comments_count, has_best_answer, best_answer_text,
@@ -336,11 +355,24 @@ def crawl_group(
                 best_answer_text=excluded.best_answer_text,
                 raw_payload=excluded.raw_payload,
                 crawled_at=excluded.crawled_at
-            """, (
-                node_id, group_id, node_type, headline, body_text, created_at, last_mod_at,
-                likes_count, comments_count, has_best_answer, best_answer_text,
-                url, raw_payload, now_iso
-            ))
+            """,
+                (
+                    node_id,
+                    group_id,
+                    node_type,
+                    headline,
+                    body_text,
+                    created_at,
+                    last_mod_at,
+                    likes_count,
+                    comments_count,
+                    has_best_answer,
+                    best_answer_text,
+                    url,
+                    raw_payload,
+                    now_iso,
+                ),
+            )
             total_upserted += 1
 
         conn.commit()
@@ -364,14 +396,39 @@ def crawl_group(
     conn.close()
     print(f"\n[Done] Finished crawling. Total processed in SQLite: {total_upserted} items.")
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Scrape Trailhead Community discussions into SQLite.")
-    parser.add_argument("--group-id", default=DEFAULT_GROUP_ID, help="Trailhead Community Group ID (default: Data 360)")
+    parser = argparse.ArgumentParser(
+        description="Scrape Trailhead Community discussions into SQLite."
+    )
+    parser.add_argument(
+        "--group-id",
+        default=DEFAULT_GROUP_ID,
+        help="Trailhead Community Group ID (default: Data 360)",
+    )
     parser.add_argument("--db-path", default=DEFAULT_DB_PATH, help="Path to SQLite database")
     parser.add_argument("--limit", type=int, default=100, help="Max items to fetch (0 for all)")
-    parser.add_argument("--filter", default="ALL_QUESTIONS", choices=["ALL_QUESTIONS", "SOLVED_QUESTIONS", "UNSOLVED_QUESTIONS", "UNANSWERED_QUESTIONS", "NONE"], help="Feed filter")
-    parser.add_argument("--sort", default="LAST_MODIFIED_DATE_DESC", choices=["LAST_MODIFIED_DATE_DESC", "CREATED_DATE_DESC"], help="Feed sort")
-    parser.add_argument("--rate-limit", type=float, default=0.3, help="Seconds delay between page requests")
+    parser.add_argument(
+        "--filter",
+        default="ALL_QUESTIONS",
+        choices=[
+            "ALL_QUESTIONS",
+            "SOLVED_QUESTIONS",
+            "UNSOLVED_QUESTIONS",
+            "UNANSWERED_QUESTIONS",
+            "NONE",
+        ],
+        help="Feed filter",
+    )
+    parser.add_argument(
+        "--sort",
+        default="LAST_MODIFIED_DATE_DESC",
+        choices=["LAST_MODIFIED_DATE_DESC", "CREATED_DATE_DESC"],
+        help="Feed sort",
+    )
+    parser.add_argument(
+        "--rate-limit", type=float, default=0.3, help="Seconds delay between page requests"
+    )
 
     args = parser.parse_args()
     crawl_group(
@@ -380,8 +437,9 @@ def main():
         limit=args.limit,
         filter_type=args.filter,
         sort=args.sort,
-        rate_limit=args.rate_limit
+        rate_limit=args.rate_limit,
     )
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,119 @@
+{
+	"configVersion": "2.2",
+	"$schema": "https://github.com/jayu/rev-dep/blob/master/config-schema/2.2.schema.json?raw=true",
+	"baselineSnapshotPath": ".rev-dep.baseline.json",
+	"ignoreFiles": [
+		"**/node_modules/**",
+		"**/dist/**",
+		"**/.git/**",
+		"**/.wrangler/**",
+		"**/baselines/**",
+		"**/tests/ratchets/fixtures/**",
+		"**/packages/drill-core/prototypes/**",
+		"**/content/**",
+		"**/data/**"
+	],
+	"nodeModulesResolution": {
+		"resolutionType": "entry-package",
+		"includeDevDepsFromRoot": false
+	},
+	"workspaces": [
+		{
+			"path": ".",
+			"prodEntryPoints": [
+				"apps/arcgym-web/src/**/*.{ts,tsx}",
+				"apps/arcgym-web/functions/**/*.ts",
+				"packages/drill-core/src/**/*.ts"
+			],
+			"devEntryPoints": [
+				"apps/arcgym-web/vite/**/*.ts",
+				"apps/arcgym-web/vite.config.ts",
+				"scripts/**/*.{ts,tsx,js,mjs,cjs}",
+				"tests/**/*.{ts,tsx,js,mjs,cjs,sh}",
+				"**/*.{test,spec}.{ts,tsx}"
+			],
+			"moduleBoundaries": [
+				{
+					"name": "drill-core-pure",
+					"pattern": "packages/drill-core/src/**/*",
+					"deny": ["apps/**/*", "scripts/**/*"]
+				},
+				{
+					"name": "web-client-no-functions",
+					"pattern": "apps/arcgym-web/src/**/*",
+					"deny": ["apps/arcgym-web/functions/**/*"]
+				},
+				{
+					"name": "web-functions-no-client",
+					"pattern": "apps/arcgym-web/functions/**/*",
+					"deny": ["apps/arcgym-web/src/**/*"]
+				},
+				{
+					"name": "no-importing-scripts",
+					"pattern": "{apps,packages}/**/*",
+					"deny": ["scripts/**/*"]
+				}
+			],
+			"circularImportsDetection": {
+				"enabled": true,
+				"ignoreTypeImports": true
+			},
+			"orphanFilesDetection": {
+				"enabled": true,
+				"ignoreTypeImports": true,
+				"graphExclude": [
+					"scripts/**",
+					"tests/**",
+					"baselines/**",
+					"apps/arcgym-web/vite/**",
+					"packages/drill-core/prototypes/**"
+				]
+			},
+			"unusedExportsDetection": {
+				"enabled": true,
+				"ignoreTypeExports": true,
+				"ignoreFiles": ["scripts/**", "tests/**"]
+			},
+			"unusedNodeModulesDetection": {
+				"enabled": true,
+				"excludeModules": ["@types/**", "@swc/core"],
+				"pkgJsonFieldsWithBinaries": ["scripts", "bin"],
+				"filesWithBinaries": [
+					"scripts/run-rev-dep.ts",
+					".husky/pre-commit",
+					".husky/pre-push"
+				],
+				"filesWithModules": [
+					"*.config.*",
+					"biome.json",
+					"biome.complexity.json",
+					"vitest.config.*",
+					"vite.config.*",
+					"apps/arcgym-web/vite.config.ts"
+				]
+			},
+			"missingNodeModulesDetection": {
+				"enabled": true,
+				"excludeModules": ["@types/**"]
+			},
+			"unresolvedImportsDetection": {
+				"enabled": true
+			},
+			"devDepsUsageOnProdDetection": {
+				"enabled": true,
+				"ignoreTypeImports": true
+			},
+			"duplicatedCodeDetection": {
+				"enabled": true,
+				"minTokens": 50,
+				"snapshotPath": ".rev-dep.duplicates.json",
+				"ignoreFiles": [
+					"scripts/**",
+					"tests/**",
+					"**/node_modules/**",
+					"**/packages/drill-core/prototypes/**"
+				]
+			}
+		}
+	]
+}

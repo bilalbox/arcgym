@@ -7,9 +7,10 @@ Dense cosine search is the default. Pass --hybrid to merge dense ranks with BM25
 the same grounding chunk exports (Reciprocal Rank Fusion). See issue #8.
 """
 
+import argparse
 import os
 import sys
-import argparse
+
 import chromadb
 
 from search_grounding import (
@@ -36,7 +37,7 @@ def dense_hits_from_chroma(results: dict) -> list[GroundingHit]:
     metas = results["metadatas"][0]
     distances = results["distances"][0]
     hits: list[GroundingHit] = []
-    for doc, meta, dist in zip(docs, metas, distances):
+    for doc, meta, dist in zip(docs, metas, distances, strict=True):
         sim = max(0.0, 1.0 - dist)
         metadata = meta or {}
         hits.append(
@@ -51,11 +52,29 @@ def dense_hits_from_chroma(results: dict) -> list[GroundingHit]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Query ArcGym ChromaDB for Salesforce Architect guidance")
-    parser.add_argument("query", type=str, help="Search query (e.g., 'CDC vs Platform Events', 'Zero Copy Snowflake', 'Atlas reasoning')")
-    parser.add_argument("--top-k", type=int, default=5, help="Number of results to return (default: 5)")
-    parser.add_argument("--pillar", type=str, default=None, help="Filter by pillar (e.g. Trust, Reliability, Agentforce, Data_360)")
-    parser.add_argument("--category", type=str, default=None, help="Filter by category (e.g. decision-guides, well-architected)")
+    parser = argparse.ArgumentParser(
+        description="Query ArcGym ChromaDB for Salesforce Architect guidance"
+    )
+    parser.add_argument(
+        "query",
+        type=str,
+        help="Search query (e.g., 'CDC vs Platform Events', 'Zero Copy Snowflake', 'Atlas reasoning')",
+    )
+    parser.add_argument(
+        "--top-k", type=int, default=5, help="Number of results to return (default: 5)"
+    )
+    parser.add_argument(
+        "--pillar",
+        type=str,
+        default=None,
+        help="Filter by pillar (e.g. Trust, Reliability, Agentforce, Data_360)",
+    )
+    parser.add_argument(
+        "--category",
+        type=str,
+        default=None,
+        help="Filter by category (e.g. decision-guides, well-architected)",
+    )
     parser.add_argument(
         "--hybrid",
         action="store_true",
@@ -67,7 +86,9 @@ def main():
 
     if not os.path.exists(CHROMA_DIR):
         print(f"Error: Chroma directory not found at {CHROMA_DIR}. Run the crawler first:")
-        print("  uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml python scripts/crawler/crawl_architect.py")
+        print(
+            "  uv run --with chromadb --with curl_cffi --with beautifulsoup4 --with lxml python scripts/crawler/crawl_architect.py"
+        )
         sys.exit(1)
 
     client = chromadb.PersistentClient(path=CHROMA_DIR)
@@ -124,7 +145,7 @@ def main():
 
     mode = "hybrid (dense + BM25 RRF)" if args.hybrid else "dense"
     print("\n===========================================================")
-    print(f"  ArcGym Chroma Search: \"{args.query}\"")
+    print(f'  ArcGym Chroma Search: "{args.query}"')
     print(f"  Mode: {mode}")
     print(f"  Total Indexed Chunks in Collection: {collection.count()}")
     print("===========================================================\n")
@@ -137,7 +158,9 @@ def main():
         meta = hit.metadata
         sim_score = hit.score
         print(f"[{i + 1}] {meta.get('doc_title')} > {meta.get('section_title')}")
-        print(f"    • Pillar: {meta.get('pillar')} | Category: {meta.get('category')} | Cosine Match: {sim_score:.2%}")
+        print(
+            f"    • Pillar: {meta.get('pillar')} | Category: {meta.get('category')} | Cosine Match: {sim_score:.2%}"
+        )
         print(f"    • Citation URL: {meta.get('url')}")
         print("    -------------------------------------------------------")
         lines = [line.strip() for line in hit.content.split("\n") if line.strip()]

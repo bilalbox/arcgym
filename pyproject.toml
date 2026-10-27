@@ -1,0 +1,24 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["scripts/crawler"]
+extend-exclude = ["node_modules", "dist", "data", ".wrangler", "apps", "packages"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "I", "UP", "SIM", "C90"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+include = ["scripts/crawler"]
+exclude = ["**/node_modules", "**/__pycache__", "data", ".venv"]
+# Optional crawler deps (chromadb, curl_cffi, bs4) are not installed in CI.
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
+
+[tool.vulture]
+min_confidence = 80
+paths = ["scripts/crawler"]
+exclude = [".venv/", "vulture_whitelist.py"]

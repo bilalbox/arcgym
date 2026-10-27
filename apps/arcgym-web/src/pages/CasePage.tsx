@@ -1,164 +1,165 @@
 import {
-  type CaseFileDrillDefinition,
-  type ClientDrillDefinitionDTO,
-  type DrillAttemptRecord,
-  type DrillFormat,
-  isCaseFileDrill,
-  type StepAttemptTelemetry,
-  WELL_ARCHITECTED_PILLAR_LABELS,
-} from '@arcgym/drill-core';
-import { AlertCircle, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import type React from 'react';
-import { useMemo } from 'react';
-import { CaseFileRunner } from '@/components/drill/CaseFileRunner';
-import { Footer } from '@/components/layout/Footer';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+	type CaseFileDrillDefinition,
+	type ClientDrillDefinitionDTO,
+	type DrillAttemptRecord,
+	type DrillFormat,
+	isCaseFileDrill,
+	type StepAttemptTelemetry,
+	WELL_ARCHITECTED_PILLAR_LABELS,
+} from "@arcgym/drill-core";
+import { AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
+import type React from "react";
+import { useMemo } from "react";
+import { CaseFileRunner } from "@/components/drill/CaseFileRunner";
+import { Footer } from "@/components/layout/Footer";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface CasePageProps {
-  drillId: string;
-  allDrills: ClientDrillDefinitionDTO[];
-  caseFiles: CaseFileDrillDefinition[];
-  completedDrills: Record<string, DrillAttemptRecord>;
-  isAuthenticated?: boolean;
-  onSignInGoogle?: (returnUrl?: string) => void;
-  onSignInGithub?: (returnUrl?: string) => void;
-  onDrillComplete: (result: {
-    drillId: string;
-    format: DrillFormat;
-    score: number;
-    accuracy: number;
-    streakDays: number;
-    steps?: StepAttemptTelemetry[];
-  }) => void;
-  navigate: (to: string) => void;
-  pathname: string;
+	drillId: string;
+	allDrills: ClientDrillDefinitionDTO[];
+	caseFiles: CaseFileDrillDefinition[];
+	completedDrills: Record<string, DrillAttemptRecord>;
+	isAuthenticated?: boolean;
+	onSignInGoogle?: (returnUrl?: string) => void;
+	onSignInGithub?: (returnUrl?: string) => void;
+	onDrillComplete: (result: {
+		drillId: string;
+		format: DrillFormat;
+		score: number;
+		accuracy: number;
+		streakDays: number;
+		steps?: StepAttemptTelemetry[];
+	}) => void;
+	navigate: (to: string) => void;
+	pathname: string;
 }
 
 export const CasePage: React.FC<CasePageProps> = ({
-  drillId,
-  allDrills,
-  caseFiles,
-  completedDrills,
-  isAuthenticated = true,
-  onSignInGoogle,
-  onSignInGithub,
-  onDrillComplete,
-  navigate,
-  pathname,
+	drillId,
+	allDrills,
+	caseFiles,
+	completedDrills,
+	isAuthenticated = true,
+	onSignInGoogle,
+	onSignInGithub,
+	onDrillComplete,
+	navigate,
+	pathname,
 }) => {
-  const drill = useMemo(() => {
-    const cleanId = drillId.trim().toUpperCase();
-    const found = allDrills.find((d) => d.id.toUpperCase() === cleanId);
-    return found && isCaseFileDrill(found) ? found : undefined;
-  }, [allDrills, drillId]);
+	const drill = useMemo(() => {
+		const cleanId = drillId.trim().toUpperCase();
+		const found = allDrills.find((d) => d.id.toUpperCase() === cleanId);
+		return found && isCaseFileDrill(found) ? found : undefined;
+	}, [allDrills, drillId]);
 
-  const previousAttempt = drill ? completedDrills[drill.id] : undefined;
+	const previousAttempt = drill ? completedDrills[drill.id] : undefined;
 
-  const handleNextDrill = () => {
-    if (!drill) {
-      navigate('/cases');
-      return;
-    }
-    const currentIndex = caseFiles.findIndex((d) => d.id === drill.id);
-    if (currentIndex >= 0 && currentIndex < caseFiles.length - 1) {
-      navigate(`/cases/${caseFiles[currentIndex + 1].id}`);
-    } else {
-      navigate('/cases');
-    }
-  };
+	const handleNextDrill = () => {
+		if (!drill) {
+			navigate("/cases");
+			return;
+		}
+		const currentIndex = caseFiles.findIndex((d) => d.id === drill.id);
+		const nextDrill = caseFiles[currentIndex + 1];
+		if (currentIndex >= 0 && nextDrill) {
+			navigate(`/cases/${nextDrill.id}`);
+		} else {
+			navigate("/cases");
+		}
+	};
 
-  if (!drill) {
-    return (
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-        <button
-          type="button"
-          onClick={() => navigate('/cases')}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Cases
-        </button>
-        <div className="bg-miro-card rounded-2xl border border-miro-hairline p-8 sm:p-12 text-center space-y-4 shadow-xs">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-miro-surface text-miro-muted">
-            <AlertCircle className="h-6 w-6" />
-          </div>
-          <div className="space-y-1.5">
-            <h1 className="text-lg sm:text-xl font-medium text-miro-primary">
-              Case File Not Found
-            </h1>
-            <p className="text-sm text-miro-slate max-w-md mx-auto">
-              Case File{' '}
-              <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-miro-surface border border-miro-hairline">
-                {drillId}
-              </code>{' '}
-              is missing or not published.
-            </p>
-          </div>
-          <Button
-            onClick={() => navigate('/cases')}
-            className="rounded-full bg-miro-primary hover:bg-miro-primaryHover text-miro-onPrimary text-xs font-medium px-4 py-2"
-          >
-            Return to Cases
-          </Button>
-        </div>
-        <Footer navigate={navigate} currentPath={pathname} />
-      </main>
-    );
-  }
+	if (!drill) {
+		return (
+			<main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+				<button
+					type="button"
+					onClick={() => navigate("/cases")}
+					className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
+				>
+					<ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+					Back to Cases
+				</button>
+				<div className="bg-miro-card rounded-2xl border border-miro-hairline p-8 sm:p-12 text-center space-y-4 shadow-xs">
+					<div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-miro-surface text-miro-muted">
+						<AlertCircle className="h-6 w-6" />
+					</div>
+					<div className="space-y-1.5">
+						<h1 className="text-lg sm:text-xl font-medium text-miro-primary">
+							Case File Not Found
+						</h1>
+						<p className="text-sm text-miro-slate max-w-md mx-auto">
+							Case File{" "}
+							<code className="font-mono text-xs px-1.5 py-0.5 rounded bg-miro-surface border border-miro-hairline">
+								{drillId}
+							</code>{" "}
+							is missing or not published.
+						</p>
+					</div>
+					<Button
+						onClick={() => navigate("/cases")}
+						className="rounded-full bg-miro-primary hover:bg-miro-primaryHover text-miro-onPrimary text-xs font-medium px-4 py-2"
+					>
+						Return to Cases
+					</Button>
+				</div>
+				<Footer navigate={navigate} currentPath={pathname} />
+			</main>
+		);
+	}
 
-  return (
-    <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/cases')}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          Back to Cases
-        </button>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[11px] text-miro-muted font-medium bg-miro-surface px-2 py-0.5 rounded border border-miro-hairline">
-            {drill.id}
-          </span>
-          {drill.pillars.map((pillar) => (
-            <Badge
-              key={pillar}
-              variant="outline"
-              className="text-[10px] py-0 px-1.5 text-miro-slate"
-            >
-              {WELL_ARCHITECTED_PILLAR_LABELS[pillar] ?? pillar}
-            </Badge>
-          ))}
-        </div>
-      </div>
+	return (
+		<main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+				<button
+					type="button"
+					onClick={() => navigate("/cases")}
+					className="inline-flex items-center gap-1.5 text-xs font-medium text-miro-slate hover:text-miro-primary transition-colors cursor-pointer group"
+				>
+					<ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+					Back to Cases
+				</button>
+				<div className="flex flex-wrap items-center gap-2">
+					<span className="font-mono text-[11px] text-miro-muted font-medium bg-miro-surface px-2 py-0.5 rounded border border-miro-hairline">
+						{drill.id}
+					</span>
+					{drill.pillars.map((pillar) => (
+						<Badge
+							key={pillar}
+							variant="outline"
+							className="text-[10px] py-0 px-1.5 text-miro-slate"
+						>
+							{WELL_ARCHITECTED_PILLAR_LABELS[pillar] ?? pillar}
+						</Badge>
+					))}
+				</div>
+			</div>
 
-      <div className="space-y-1">
-        <h1 className="text-xl sm:text-2xl font-medium text-miro-primary tracking-tight">
-          {drill.title}
-        </h1>
-        {previousAttempt && (
-          <p className="inline-flex items-center gap-1.5 text-xs text-miro-successText font-medium">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Previously completed with +{previousAttempt.score} pts (
-            {Math.round(previousAttempt.accuracy * 100)}% accuracy)
-          </p>
-        )}
-      </div>
+			<div className="space-y-1">
+				<h1 className="text-xl sm:text-2xl font-medium text-miro-primary tracking-tight">
+					{drill.title}
+				</h1>
+				{previousAttempt && (
+					<p className="inline-flex items-center gap-1.5 text-xs text-miro-successText font-medium">
+						<CheckCircle2 className="h-3.5 w-3.5" />
+						Previously completed with +{previousAttempt.score} pts (
+						{Math.round(previousAttempt.accuracy * 100)}% accuracy)
+					</p>
+				)}
+			</div>
 
-      <CaseFileRunner
-        drill={drill}
-        isReviewMode={Boolean(previousAttempt)}
-        previousAttempt={previousAttempt}
-        isAuthenticated={isAuthenticated}
-        onSignInGoogle={onSignInGoogle}
-        onSignInGithub={onSignInGithub}
-        onDrillComplete={onDrillComplete}
-        onNextDrill={handleNextDrill}
-      />
+			<CaseFileRunner
+				drill={drill}
+				isReviewMode={Boolean(previousAttempt)}
+				previousAttempt={previousAttempt}
+				isAuthenticated={isAuthenticated}
+				onSignInGoogle={onSignInGoogle}
+				onSignInGithub={onSignInGithub}
+				onDrillComplete={onDrillComplete}
+				onNextDrill={handleNextDrill}
+			/>
 
-      <Footer navigate={navigate} currentPath={pathname} />
-    </main>
-  );
+			<Footer navigate={navigate} currentPath={pathname} />
+		</main>
+	);
 };

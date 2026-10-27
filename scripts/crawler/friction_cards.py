@@ -18,14 +18,14 @@ Usage:
   python scripts/crawler/friction_cards.py export
 """
 
-import os
-import sys
+import argparse
 import html
 import json
+import os
 import sqlite3
-import argparse
 import subprocess
-from datetime import datetime, timezone
+import sys
+from datetime import UTC, datetime
 
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 DEFAULT_DB_PATH = os.path.join(ROOT_DIR, "data", "trailhead.db")
@@ -34,8 +34,13 @@ CHROMA_SEARCH_SCRIPT = os.path.join(ROOT_DIR, "scripts", "crawler", "search_chro
 
 # Must stay in sync with packages/drill-core/src/types/drill.ts
 ARCHITECTURAL_DOMAINS = [
-    "Platform_Core", "Data_Architecture", "Security_And_Access", "Integration_Apis",
-    "Ai_And_Automation", "Infrastructure", "Devops_Lifecycle",
+    "Platform_Core",
+    "Data_Architecture",
+    "Security_And_Access",
+    "Integration_Apis",
+    "Ai_And_Automation",
+    "Infrastructure",
+    "Devops_Lifecycle",
 ]
 PILLARS = ["Trust", "Reliability", "Operational_Excellence", "Cost_Optimization", "Fairness"]
 RESOLUTION_SOURCES = ["best_answer", "thread_consensus", "unresolved"]
@@ -128,7 +133,7 @@ Output only JSON in this shape:
 
 
 def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def connect(db_path: str) -> sqlite3.Connection:
@@ -165,7 +170,9 @@ def truncate(text: str, limit: int = MAX_TEXT_CHARS) -> str:
 
 def thread_replies(raw_payload: str) -> list:
     payload = json.loads(raw_payload)
-    edges = (((payload.get("capabilities") or {}).get("comments") or {}).get("items") or {}).get("edges") or []
+    edges = (((payload.get("capabilities") or {}).get("comments") or {}).get("items") or {}).get(
+        "edges"
+    ) or []
     replies = []
     for edge in edges[:MAX_REPLIES]:
         text = (((edge.get("node") or {}).get("body")) or {}).get("text") or ""
@@ -207,7 +214,9 @@ def normalize_card(raw: dict) -> tuple:
     approaches = []
     for item in raw.get("naive_approaches") or []:
         if isinstance(item, dict) and item.get("approach") and item.get("why_it_fails"):
-            approaches.append({"approach": item["approach"].strip(), "why_it_fails": item["why_it_fails"].strip()})
+            approaches.append(
+                {"approach": item["approach"].strip(), "why_it_fails": item["why_it_fails"].strip()}
+            )
 
     card = {
         "relevant": True,
@@ -215,7 +224,9 @@ def normalize_card(raw: dict) -> tuple:
         "domain": raw["domain"],
         "pillars": [p for p in raw.get("pillars") or [] if p in PILLARS],
         "problem": raw["problem"].strip(),
-        "constraints": [c.strip() for c in raw.get("constraints") or [] if isinstance(c, str) and c.strip()],
+        "constraints": [
+            c.strip() for c in raw.get("constraints") or [] if isinstance(c, str) and c.strip()
+        ],
         "naive_approaches": approaches,
         "resolution": (raw.get("resolution") or "").strip(),
         "resolution_source": raw["resolution_source"],
@@ -225,7 +236,8 @@ def normalize_card(raw: dict) -> tuple:
 
 
 def save_card(conn: sqlite3.Connection, discussion_id: str, status: str, card: dict, model: str):
-    conn.execute("""
+    conn.execute(
+        """
     INSERT INTO friction_cards (card_id, discussion_id, status, card, model, extracted_at)
     VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT(card_id) DO UPDATE SET
@@ -235,7 +247,16 @@ def save_card(conn: sqlite3.Connection, discussion_id: str, status: str, card: d
         extracted_at=excluded.extracted_at,
         reviewed_at=NULL,
         review_note=NULL
-    """, (card_id_for(discussion_id), discussion_id, status, json.dumps(card, ensure_ascii=False), model, now_iso()))
+    """,
+        (
+            card_id_for(discussion_id),
+            discussion_id,
+            status,
+            json.dumps(card, ensure_ascii=False),
+            model,
+            now_iso(),
+        ),
+    )
     conn.commit()
 
 
@@ -248,12 +269,15 @@ def cmd_prompt(args):
             sys.exit(1)
     else:
         existing = "" if args.force else "AND id NOT IN (SELECT discussion_id FROM friction_cards)"
-        rows = conn.execute(f"""
+        rows = conn.execute(
+            f"""
         SELECT * FROM discussions
         WHERE comments_count >= ? {existing}
         ORDER BY has_best_answer DESC, comments_count DESC
         LIMIT ?
-        """, (args.min_comments, args.limit if args.limit > 0 else -1)).fetchall()
+        """,
+            (args.min_comments, args.limit if args.limit > 0 else -1),
+        ).fetchall()
 
     print(f"[Friction Cards] {len(rows)} thread(s) selected.", file=sys.stderr)
     for row in rows:
@@ -273,7 +297,7 @@ def cmd_import(args):
     known = {r["id"] for r in conn.execute("SELECT id FROM discussions")}
     for entry in entries:
         discussion_id = entry.get("discussion_id")
-        if discussion_id not in known:
+        if not discussion_id or discussion_id not in known:
             print(f"  [SKIP] unknown discussion_id {discussion_id!r}")
             continue
         try:
@@ -306,7 +330,7 @@ def print_card(row: sqlite3.Row, thread_url: str):
         print(f"  Note:       {row['review_note']}")
 
 
-def select_cards(conn: sqlite3.Connection, status: str = None) -> list:
+def select_cards(conn: sqlite3.Connection, status: str | None = None) -> list:
     sql = """
     SELECT fc.*, d.url AS thread_url FROM friction_cards fc
     JOIN discussions d ON d.id = fc.discussion_id
@@ -318,7 +342,7 @@ def select_cards(conn: sqlite3.Connection, status: str = None) -> list:
     return conn.execute(sql + " ORDER BY fc.card_id", params).fetchall()
 
 
-def set_status(conn: sqlite3.Connection, card_id: str, status: str, note: str = None):
+def set_status(conn: sqlite3.Connection, card_id: str, status: str, note: str | None = None):
     conn.execute(
         "UPDATE friction_cards SET status = ?, reviewed_at = ?, review_note = ? WHERE card_id = ?",
         (status, now_iso(), note, card_id),
@@ -332,14 +356,27 @@ def cmd_list(args):
     for row in rows:
         card = json.loads(row["card"])
         title = card.get("title") or "(irrelevant)"
-        print(f"{row['card_id']}  {row['status']:<10}  {len(card.get('naive_approaches', []))} naive  {title}")
+        print(
+            f"{row['card_id']}  {row['status']:<10}  {len(card.get('naive_approaches', []))} naive  {title}"
+        )
     print(f"\n{len(rows)} card(s).")
     conn.close()
 
 
 def preview_docs(query: str, top_k: int = 5):
     """Show which official chunks the generator would retrieve for this query."""
-    cmd = ["uv", "run", "--with", "chromadb", "python", CHROMA_SEARCH_SCRIPT, query, "--top-k", str(top_k), "--json"]
+    cmd = [
+        "uv",
+        "run",
+        "--with",
+        "chromadb",
+        "python",
+        CHROMA_SEARCH_SCRIPT,
+        query,
+        "--top-k",
+        str(top_k),
+        "--json",
+    ]
     try:
         out = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True).stdout
         chunks = json.loads(out)
@@ -348,22 +385,29 @@ def preview_docs(query: str, top_k: int = 5):
         return
     for c in chunks:
         meta = c.get("metadata", {})
-        print(f"    {c.get('cosine_similarity', 0):.2f}  {meta.get('doc_title')} > {meta.get('section_title')}")
+        print(
+            f"    {c.get('cosine_similarity', 0):.2f}  {meta.get('doc_title')} > {meta.get('section_title')}"
+        )
 
 
 def update_doc_query(conn: sqlite3.Connection, card_id: str, query: str):
     row = conn.execute("SELECT card FROM friction_cards WHERE card_id = ?", (card_id,)).fetchone()
     card = json.loads(row["card"])
     card["official_doc_query"] = query
-    conn.execute("UPDATE friction_cards SET card = ? WHERE card_id = ?", (json.dumps(card, ensure_ascii=False), card_id))
+    conn.execute(
+        "UPDATE friction_cards SET card = ? WHERE card_id = ?",
+        (json.dumps(card, ensure_ascii=False), card_id),
+    )
     conn.commit()
 
 
 def cmd_review(args):
     conn = connect(args.db_path)
     rows = select_cards(conn, args.status)
-    print(f"[Review] {len(rows)} {args.status} card(s). "
-          "Keys: [a]pprove  [r]eject  [s]kip  [p]review docs  [e]dit doc query  [q]uit")
+    print(
+        f"[Review] {len(rows)} {args.status} card(s). "
+        "Keys: [a]pprove  [r]eject  [s]kip  [p]review docs  [e]dit doc query  [q]uit"
+    )
     for row in rows:
         print_card(row, row["thread_url"])
         query = json.loads(row["card"]).get("official_doc_query")
@@ -394,7 +438,9 @@ def cmd_review(args):
 
 def cmd_set_status(args):
     conn = connect(args.db_path)
-    if not conn.execute("SELECT 1 FROM friction_cards WHERE card_id = ?", (args.card_id,)).fetchone():
+    if not conn.execute(
+        "SELECT 1 FROM friction_cards WHERE card_id = ?", (args.card_id,)
+    ).fetchone():
         print(f"[ERROR] {args.card_id} not found.")
         sys.exit(1)
     set_status(conn, args.card_id, args.status, args.note)
@@ -408,14 +454,21 @@ def cmd_export(args):
     for row in select_cards(conn, "approved"):
         card = json.loads(row["card"])
         card.pop("relevant", None)
-        cards.append({"card_id": row["card_id"], "thread_url": row["thread_url"], **card, "reviewed_at": row["reviewed_at"]})
+        cards.append(
+            {
+                "card_id": row["card_id"],
+                "thread_url": row["thread_url"],
+                **card,
+                "reviewed_at": row["reviewed_at"],
+            }
+        )
     conn.close()
 
     catalog = {
         "metadata": {
             "description": "Human-reviewed Friction Cards paraphrased from Trailblazer Community threads. "
-                           "They source Antipattern Distractors and scenario realism only; correct answers "
-                           "must be grounded in official architect.salesforce.com documentation.",
+            "They source Antipattern Distractors and scenario realism only; correct answers "
+            "must be grounded in official architect.salesforce.com documentation.",
             "card_count": len(cards),
         },
         "cards": cards,
@@ -446,8 +499,16 @@ def format_doc_preview(query: str, top_k: int = 3) -> str:
     if not query or not query.strip():
         return "(no official_doc_query on card)"
     cmd = [
-        "uv", "run", "--with", "chromadb", "python", CHROMA_SEARCH_SCRIPT,
-        query, "--top-k", str(top_k), "--json",
+        "uv",
+        "run",
+        "--with",
+        "chromadb",
+        "python",
+        CHROMA_SEARCH_SCRIPT,
+        query,
+        "--top-k",
+        str(top_k),
+        "--json",
     ]
     try:
         out = subprocess.run(cmd, cwd=ROOT_DIR, capture_output=True, text=True, check=True).stdout
@@ -465,7 +526,9 @@ def format_doc_preview(query: str, top_k: int = 3) -> str:
     return "\n".join(lines)
 
 
-def select_audit_rows(conn: sqlite3.Connection, tier: str, status: str, limit: int, card_ids: list = None) -> list:
+def select_audit_rows(
+    conn: sqlite3.Connection, tier: str, status: str, limit: int, card_ids: list | None = None
+) -> list:
     sql = """
     SELECT fc.*, d.url AS thread_url, d.headline, d.body_text, d.best_answer_text,
            d.has_best_answer, d.raw_payload, d.comments_count
@@ -516,16 +579,20 @@ def cmd_audit_prompt(args):
             else "(skipped; pass --preview-docs to include Chroma hits)"
         )
         print(f"===== card_id: {row['card_id']} =====")
-        print(AUDIT_PROMPT.format(
-            card_id=row["card_id"],
-            url=row["thread_url"],
-            card_json=json.dumps(card, indent=2, ensure_ascii=False),
-            title=truncate(row["headline"], 300),
-            question=truncate(row["body_text"]) or "(empty)",
-            best_answer=truncate(row["best_answer_text"]) if row["has_best_answer"] else "(none)",
-            replies="\n".join(f"{i + 1}. {r}" for i, r in enumerate(replies)) or "(none)",
-            doc_preview=doc_preview,
-        ))
+        print(
+            AUDIT_PROMPT.format(
+                card_id=row["card_id"],
+                url=row["thread_url"],
+                card_json=json.dumps(card, indent=2, ensure_ascii=False),
+                title=truncate(row["headline"], 300),
+                question=truncate(row["body_text"]) or "(empty)",
+                best_answer=truncate(row["best_answer_text"])
+                if row["has_best_answer"]
+                else "(none)",
+                replies="\n".join(f"{i + 1}. {r}" for i, r in enumerate(replies)) or "(none)",
+                doc_preview=doc_preview,
+            )
+        )
     conn.close()
 
 
@@ -544,7 +611,7 @@ def cmd_apply_verdicts(args):
     for entry in entries:
         card_id = entry.get("card_id")
         verdict = (entry.get("verdict") or "").strip().lower()
-        if card_id not in known:
+        if not card_id or card_id not in known:
             print(f"  [SKIP] unknown card_id {card_id!r}")
             counts["skip"] += 1
             continue
@@ -575,7 +642,10 @@ def cmd_apply_verdicts(args):
             else:
                 if note:
                     set_status(conn, card_id, "pending", note)
-                print(f"  [FIX] {card_id} left pending" + (f" ({note})" if note else " (no query suggested)"))
+                print(
+                    f"  [FIX] {card_id} left pending"
+                    + (f" ({note})" if note else " (no query suggested)")
+                )
             counts["fix"] += 1
             continue
 
@@ -592,18 +662,26 @@ def cmd_apply_verdicts(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract, review, and export Friction Cards from Trailhead threads.")
+    parser = argparse.ArgumentParser(
+        description="Extract, review, and export Friction Cards from Trailhead threads."
+    )
     parser.add_argument("--db-path", default=DEFAULT_DB_PATH, help="Path to SQLite database")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p = sub.add_parser("prompt", help="Print extraction prompts for threads that do not have a card yet")
+    p = sub.add_parser(
+        "prompt", help="Print extraction prompts for threads that do not have a card yet"
+    )
     p.add_argument("--limit", type=int, default=10, help="Max threads to include (0 for all)")
-    p.add_argument("--thread", help="Prompt for a single discussion ID, even if it already has a card")
+    p.add_argument(
+        "--thread", help="Prompt for a single discussion ID, even if it already has a card"
+    )
     p.add_argument("--min-comments", type=int, default=1, help="Skip threads with fewer replies")
     p.add_argument("--force", action="store_true", help="Include threads that already have a card")
     p.set_defaults(func=cmd_prompt)
 
-    p = sub.add_parser("import", help="Import the agent's answers (JSON object or array with discussion_id)")
+    p = sub.add_parser(
+        "import", help="Import the agent's answers (JSON object or array with discussion_id)"
+    )
     p.add_argument("file")
     p.add_argument("--model", default="coding-agent", help="Model name to record for provenance")
     p.set_defaults(func=cmd_import)
@@ -626,20 +704,33 @@ def main():
         "audit-prompt",
         help="Print agent audit packs for staged cards (tier A=best+naive, B=resolved+naive, C=no naive, D=unresolved)",
     )
-    p.add_argument("--tier", choices=AUDIT_TIERS, default="A", help="Drill-readiness tier (default A)")
+    p.add_argument(
+        "--tier", choices=AUDIT_TIERS, default="A", help="Drill-readiness tier (default A)"
+    )
     p.add_argument("--status", choices=STATUSES, default="pending")
     p.add_argument("--limit", type=int, default=20, help="Max packs (0 for all matching)")
     p.add_argument("--card-id", help="Audit a single card id")
-    p.add_argument("--preview-docs", action="store_true", help="Include Chroma top hits for the card's doc query")
-    p.add_argument("--doc-top-k", type=int, default=3, help="Chroma hits when --preview-docs is set")
+    p.add_argument(
+        "--preview-docs",
+        action="store_true",
+        help="Include Chroma top hits for the card's doc query",
+    )
+    p.add_argument(
+        "--doc-top-k", type=int, default=3, help="Chroma hits when --preview-docs is set"
+    )
     p.set_defaults(func=cmd_audit_prompt)
 
     p = sub.add_parser("apply-verdicts", help="Apply agent audit verdicts from a JSON file")
-    p.add_argument("file", help="JSON object or array of {card_id, verdict, issues?, suggested_doc_query?, note?}")
+    p.add_argument(
+        "file",
+        help="JSON object or array of {card_id, verdict, issues?, suggested_doc_query?, note?}",
+    )
     p.add_argument("--dry-run", action="store_true", help="Print actions without writing")
     p.set_defaults(func=cmd_apply_verdicts)
 
-    p = sub.add_parser("export", help="Write approved cards to the local catalog used by the drill generator")
+    p = sub.add_parser(
+        "export", help="Write approved cards to the local catalog used by the drill generator"
+    )
     p.add_argument("--out", default=DEFAULT_EXPORT_PATH)
     p.set_defaults(func=cmd_export)
 

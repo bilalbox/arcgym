@@ -5,301 +5,303 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	--font-sans:
+		"Geist Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		sans-serif;
 
-  /* Bridge Tailwind utilities → runtime CSS vars (flip under .dark) */
-  --color-border: var(--miro-hairline);
-  --color-input: var(--miro-hairline);
-  --color-ring: var(--miro-blue);
-  --color-background: var(--miro-surface);
-  --color-foreground: var(--miro-primary);
+	/* Bridge Tailwind utilities → runtime CSS vars (flip under .dark) */
+	--color-border: var(--miro-hairline);
+	--color-input: var(--miro-hairline);
+	--color-ring: var(--miro-blue);
+	--color-background: var(--miro-surface);
+	--color-foreground: var(--miro-primary);
 
-  --color-primary: var(--miro-primary);
-  --color-primary-foreground: var(--miro-onPrimary);
-  --color-primary-hover: var(--miro-charcoal);
+	--color-primary: var(--miro-primary);
+	--color-primary-foreground: var(--miro-onPrimary);
+	--color-primary-hover: var(--miro-charcoal);
 
-  --color-secondary: transparent;
-  --color-secondary-foreground: var(--miro-primary);
-  --color-secondary-border: var(--miro-hairlineStrong);
+	--color-secondary: transparent;
+	--color-secondary-foreground: var(--miro-primary);
+	--color-secondary-border: var(--miro-hairlineStrong);
 
-  --color-muted: var(--miro-surfaceSoft);
-  --color-muted-foreground: var(--miro-muted);
+	--color-muted: var(--miro-surfaceSoft);
+	--color-muted-foreground: var(--miro-muted);
 
-  --color-accent: var(--miro-hairlineSoft);
-  --color-accent-foreground: var(--miro-primary);
+	--color-accent: var(--miro-hairlineSoft);
+	--color-accent-foreground: var(--miro-primary);
 
-  --color-card: var(--miro-card);
-  --color-card-foreground: var(--miro-primary);
-  --color-card-border: var(--miro-hairline);
+	--color-card: var(--miro-card);
+	--color-card-foreground: var(--miro-primary);
+	--color-card-border: var(--miro-hairline);
 
-  --color-miro-primary: var(--miro-primary);
-  --color-miro-onPrimary: var(--miro-onPrimary);
-  --color-miro-on-primary: var(--miro-onPrimary);
-  --color-miro-charcoal: var(--miro-charcoal);
-  --color-miro-surface: var(--miro-surface);
-  --color-miro-surfaceSoft: var(--miro-surfaceSoft);
-  --color-miro-surface-soft: var(--miro-surfaceSoft);
-  --color-miro-card: var(--miro-card);
-  --color-miro-slate: var(--miro-slate);
-  --color-miro-muted: var(--miro-muted);
-  --color-miro-hairline: var(--miro-hairline);
-  --color-miro-hairlineSoft: var(--miro-hairlineSoft);
-  --color-miro-hairline-soft: var(--miro-hairlineSoft);
-  --color-miro-hairlineStrong: var(--miro-hairlineStrong);
-  --color-miro-hairline-strong: var(--miro-hairlineStrong);
-  --color-miro-blue: var(--miro-blue);
-  --color-miro-blueDeep: var(--miro-blueDeep);
-  --color-miro-blue-deep: var(--miro-blueDeep);
-  --color-miro-tealLight: var(--miro-tealLight);
-  --color-miro-teal-light: var(--miro-tealLight);
-  --color-miro-tealText: var(--miro-tealText);
-  --color-miro-teal-text: var(--miro-tealText);
-  --color-miro-tealBorder: var(--miro-tealBorder);
-  --color-miro-teal-border: var(--miro-tealBorder);
-  --color-miro-roseLight: var(--miro-roseLight);
-  --color-miro-rose-light: var(--miro-roseLight);
-  --color-miro-roseText: var(--miro-roseText);
-  --color-miro-rose-text: var(--miro-roseText);
-  --color-miro-roseBorder: var(--miro-roseBorder);
-  --color-miro-rose-border: var(--miro-roseBorder);
-  --color-miro-yellowLight: var(--miro-yellowLight);
-  --color-miro-yellow-light: var(--miro-yellowLight);
-  --color-miro-yellowText: var(--miro-yellowText);
-  --color-miro-yellow-text: var(--miro-yellowText);
-  --color-miro-yellowBorder: var(--miro-yellowBorder);
-  --color-miro-yellow-border: var(--miro-yellowBorder);
-  --color-miro-lavenderLight: var(--miro-lavenderLight);
-  --color-miro-lavender-light: var(--miro-lavenderLight);
-  --color-miro-lavenderText: var(--miro-lavenderText);
-  --color-miro-lavender-text: var(--miro-lavenderText);
-  --color-miro-lavenderBorder: var(--miro-lavenderBorder);
-  --color-miro-lavender-border: var(--miro-lavenderBorder);
-  --color-miro-successLight: var(--miro-successLight);
-  --color-miro-success-light: var(--miro-successLight);
-  --color-miro-successText: var(--miro-successText);
-  --color-miro-success-text: var(--miro-successText);
-  --color-miro-successBorder: var(--miro-successBorder);
-  --color-miro-success-border: var(--miro-successBorder);
-  --color-miro-dangerLight: var(--miro-dangerLight);
-  --color-miro-danger-light: var(--miro-dangerLight);
-  --color-miro-dangerText: var(--miro-dangerText);
-  --color-miro-danger-text: var(--miro-dangerText);
-  --color-miro-dangerBorder: var(--miro-dangerBorder);
-  --color-miro-danger-border: var(--miro-dangerBorder);
+	--color-miro-primary: var(--miro-primary);
+	--color-miro-onPrimary: var(--miro-onPrimary);
+	--color-miro-on-primary: var(--miro-onPrimary);
+	--color-miro-charcoal: var(--miro-charcoal);
+	--color-miro-surface: var(--miro-surface);
+	--color-miro-surfaceSoft: var(--miro-surfaceSoft);
+	--color-miro-surface-soft: var(--miro-surfaceSoft);
+	--color-miro-card: var(--miro-card);
+	--color-miro-slate: var(--miro-slate);
+	--color-miro-muted: var(--miro-muted);
+	--color-miro-hairline: var(--miro-hairline);
+	--color-miro-hairlineSoft: var(--miro-hairlineSoft);
+	--color-miro-hairline-soft: var(--miro-hairlineSoft);
+	--color-miro-hairlineStrong: var(--miro-hairlineStrong);
+	--color-miro-hairline-strong: var(--miro-hairlineStrong);
+	--color-miro-blue: var(--miro-blue);
+	--color-miro-blueDeep: var(--miro-blueDeep);
+	--color-miro-blue-deep: var(--miro-blueDeep);
+	--color-miro-tealLight: var(--miro-tealLight);
+	--color-miro-teal-light: var(--miro-tealLight);
+	--color-miro-tealText: var(--miro-tealText);
+	--color-miro-teal-text: var(--miro-tealText);
+	--color-miro-tealBorder: var(--miro-tealBorder);
+	--color-miro-teal-border: var(--miro-tealBorder);
+	--color-miro-roseLight: var(--miro-roseLight);
+	--color-miro-rose-light: var(--miro-roseLight);
+	--color-miro-roseText: var(--miro-roseText);
+	--color-miro-rose-text: var(--miro-roseText);
+	--color-miro-roseBorder: var(--miro-roseBorder);
+	--color-miro-rose-border: var(--miro-roseBorder);
+	--color-miro-yellowLight: var(--miro-yellowLight);
+	--color-miro-yellow-light: var(--miro-yellowLight);
+	--color-miro-yellowText: var(--miro-yellowText);
+	--color-miro-yellow-text: var(--miro-yellowText);
+	--color-miro-yellowBorder: var(--miro-yellowBorder);
+	--color-miro-yellow-border: var(--miro-yellowBorder);
+	--color-miro-lavenderLight: var(--miro-lavenderLight);
+	--color-miro-lavender-light: var(--miro-lavenderLight);
+	--color-miro-lavenderText: var(--miro-lavenderText);
+	--color-miro-lavender-text: var(--miro-lavenderText);
+	--color-miro-lavenderBorder: var(--miro-lavenderBorder);
+	--color-miro-lavender-border: var(--miro-lavenderBorder);
+	--color-miro-successLight: var(--miro-successLight);
+	--color-miro-success-light: var(--miro-successLight);
+	--color-miro-successText: var(--miro-successText);
+	--color-miro-success-text: var(--miro-successText);
+	--color-miro-successBorder: var(--miro-successBorder);
+	--color-miro-success-border: var(--miro-successBorder);
+	--color-miro-dangerLight: var(--miro-dangerLight);
+	--color-miro-danger-light: var(--miro-dangerLight);
+	--color-miro-dangerText: var(--miro-dangerText);
+	--color-miro-danger-text: var(--miro-dangerText);
+	--color-miro-dangerBorder: var(--miro-dangerBorder);
+	--color-miro-danger-border: var(--miro-dangerBorder);
 
-  --radius-3xl: 28px;
-  --radius-xl: 16px;
-  --radius-lg: 12px;
-  --radius-md: 8px;
-  --radius-sm: 6px;
-  --radius-full: 9999px;
+	--radius-3xl: 28px;
+	--radius-xl: 16px;
+	--radius-lg: 12px;
+	--radius-md: 8px;
+	--radius-sm: 6px;
+	--radius-full: 9999px;
 
-  --default-transition-duration: 150ms;
+	--default-transition-duration: 150ms;
 }
 
 @layer base {
-  /*
+	/*
    * Architect's Night Drafting Slate — refined from handoff.
    * Naming matches existing utilities: miro-surface = page backdrop,
    * miro-card = paper (was bg-white). Primary CTA inverts to dense chalk bone.
    */
-  :root {
-    --miro-surface: #f7f8fa;
-    --miro-surfaceSoft: #fafbfc;
-    --miro-card: #ffffff;
-    --miro-primary: #1c1c1e;
-    --miro-onPrimary: #ffffff;
-    --miro-charcoal: #2c2c34;
-    --miro-slate: #555a6a;
-    --miro-muted: #8e91a0;
-    --miro-hairline: #e0e2e8;
-    --miro-hairlineSoft: #eef0f3;
-    --miro-hairlineStrong: #c7cad5;
-    --miro-blue: #0176d3;
-    --miro-blueDeep: #014486;
-    --miro-blueFill: color-mix(in srgb, var(--miro-blue) 16%, transparent);
+	:root {
+		--miro-surface: #f7f8fa;
+		--miro-surfaceSoft: #fafbfc;
+		--miro-card: #ffffff;
+		--miro-primary: #1c1c1e;
+		--miro-onPrimary: #ffffff;
+		--miro-charcoal: #2c2c34;
+		--miro-slate: #555a6a;
+		--miro-muted: #8e91a0;
+		--miro-hairline: #e0e2e8;
+		--miro-hairlineSoft: #eef0f3;
+		--miro-hairlineStrong: #c7cad5;
+		--miro-blue: #0176d3;
+		--miro-blueDeep: #014486;
+		--miro-blueFill: color-mix(in srgb, var(--miro-blue) 16%, transparent);
 
-    --miro-tealLight: #c3faf5;
-    --miro-tealText: #187574;
-    --miro-tealBorder: #99e8e0;
-    --miro-roseLight: #ffd8f4;
-    --miro-roseText: #9d174d;
-    --miro-roseBorder: #f5b8df;
-    --miro-yellowLight: #fff4c4;
-    --miro-yellowText: #746019;
-    --miro-yellowBorder: #f0d98a;
-    --miro-lavenderLight: #f5f3ff;
-    --miro-lavenderText: #4338ca;
-    --miro-lavenderBorder: #c7d2fe;
-    --miro-successLight: #dcfce7;
-    --miro-successText: #15803d;
-    --miro-successBorder: #86efac;
-    --miro-dangerLight: #fee2e2;
-    --miro-dangerText: #991b1b;
-    --miro-dangerBorder: #fee2e2;
-    --miro-modal-shadow: rgba(5, 0, 56, 0.08) 0px 12px 32px -4px;
+		--miro-tealLight: #c3faf5;
+		--miro-tealText: #187574;
+		--miro-tealBorder: #99e8e0;
+		--miro-roseLight: #ffd8f4;
+		--miro-roseText: #9d174d;
+		--miro-roseBorder: #f5b8df;
+		--miro-yellowLight: #fff4c4;
+		--miro-yellowText: #746019;
+		--miro-yellowBorder: #f0d98a;
+		--miro-lavenderLight: #f5f3ff;
+		--miro-lavenderText: #4338ca;
+		--miro-lavenderBorder: #c7d2fe;
+		--miro-successLight: #dcfce7;
+		--miro-successText: #15803d;
+		--miro-successBorder: #86efac;
+		--miro-dangerLight: #fee2e2;
+		--miro-dangerText: #991b1b;
+		--miro-dangerBorder: #fee2e2;
+		--miro-modal-shadow: rgba(5, 0, 56, 0.08) 0px 12px 32px -4px;
 
-    /* Diagram node semantic accents */
-    --diagram-arcgym-teal-border: #0d9488;
-    --diagram-arcgym-warn-border: #dc2626;
+		/* Diagram node semantic accents */
+		--diagram-arcgym-teal-border: #0d9488;
+		--diagram-arcgym-warn-border: #dc2626;
 
-    /* Canonical kebab-case aliases (standard CSS format, avoids Mistake #4 & preserves migration compatibility) */
-    --miro-surface-soft: var(--miro-surfaceSoft);
-    --miro-on-primary: var(--miro-onPrimary);
-    --miro-hairline-soft: var(--miro-hairlineSoft);
-    --miro-hairline-strong: var(--miro-hairlineStrong);
-    --miro-blue-deep: var(--miro-blueDeep);
-    --miro-blue-fill: var(--miro-blueFill);
-    --miro-teal-light: var(--miro-tealLight);
-    --miro-teal-text: var(--miro-tealText);
-    --miro-teal-border: var(--miro-tealBorder);
-    --miro-rose-light: var(--miro-roseLight);
-    --miro-rose-text: var(--miro-roseText);
-    --miro-rose-border: var(--miro-roseBorder);
-    --miro-yellow-light: var(--miro-yellowLight);
-    --miro-yellow-text: var(--miro-yellowText);
-    --miro-yellow-border: var(--miro-yellowBorder);
-    --miro-lavender-light: var(--miro-lavenderLight);
-    --miro-lavender-text: var(--miro-lavenderText);
-    --miro-lavender-border: var(--miro-lavenderBorder);
-    --miro-success-light: var(--miro-successLight);
-    --miro-success-text: var(--miro-successText);
-    --miro-success-border: var(--miro-successBorder);
-    --miro-danger-light: var(--miro-dangerLight);
-    --miro-danger-text: var(--miro-dangerText);
-    --miro-danger-border: var(--miro-dangerBorder);
+		/* Canonical kebab-case aliases (standard CSS format, avoids Mistake #4 & preserves migration compatibility) */
+		--miro-surface-soft: var(--miro-surfaceSoft);
+		--miro-on-primary: var(--miro-onPrimary);
+		--miro-hairline-soft: var(--miro-hairlineSoft);
+		--miro-hairline-strong: var(--miro-hairlineStrong);
+		--miro-blue-deep: var(--miro-blueDeep);
+		--miro-blue-fill: var(--miro-blueFill);
+		--miro-teal-light: var(--miro-tealLight);
+		--miro-teal-text: var(--miro-tealText);
+		--miro-teal-border: var(--miro-tealBorder);
+		--miro-rose-light: var(--miro-roseLight);
+		--miro-rose-text: var(--miro-roseText);
+		--miro-rose-border: var(--miro-roseBorder);
+		--miro-yellow-light: var(--miro-yellowLight);
+		--miro-yellow-text: var(--miro-yellowText);
+		--miro-yellow-border: var(--miro-yellowBorder);
+		--miro-lavender-light: var(--miro-lavenderLight);
+		--miro-lavender-text: var(--miro-lavenderText);
+		--miro-lavender-border: var(--miro-lavenderBorder);
+		--miro-success-light: var(--miro-successLight);
+		--miro-success-text: var(--miro-successText);
+		--miro-success-border: var(--miro-successBorder);
+		--miro-danger-light: var(--miro-dangerLight);
+		--miro-danger-text: var(--miro-dangerText);
+		--miro-danger-border: var(--miro-dangerBorder);
 
-    --background: var(--miro-surface);
-    --foreground: var(--miro-primary);
-    --border: var(--miro-hairline);
-    --card: var(--miro-card);
-    --card-foreground: var(--miro-primary);
-    --radius: 9999px;
-  }
+		--background: var(--miro-surface);
+		--foreground: var(--miro-primary);
+		--border: var(--miro-hairline);
+		--card: var(--miro-card);
+		--card-foreground: var(--miro-primary);
+		--radius: 9999px;
+	}
 
-  .dark {
-    color-scheme: dark;
+	.dark {
+		color-scheme: dark;
 
-    /* Deep charcoal slate — not OLED #000, avoids text bloom */
-    --miro-surface: #0f1115;
-    --miro-surfaceSoft: #1c1f28;
-    /* Drafting card paper with physical boundary */
-    --miro-card: #16181f;
-    /* Dense chalk bone pill + ink (softer than pure #f4f5f8 invert) */
-    --miro-primary: #eceef2;
-    --miro-onPrimary: #0f1115;
-    --miro-charcoal: #d4d7e0;
-    --miro-slate: #9aa0b0;
-    --miro-muted: #6e7486;
-    --miro-hairline: #2a2e3a;
-    --miro-hairlineSoft: #22252f;
-    --miro-hairlineStrong: #3a3f4e;
-    /* Blueprint blue — elevated for contrast, not neon */
-    --miro-blue: #4aa3f0;
-    --miro-blueDeep: #7bb8f0;
-    --miro-blueFill: color-mix(in srgb, var(--miro-blue) 22%, transparent);
+		/* Deep charcoal slate — not OLED #000, avoids text bloom */
+		--miro-surface: #0f1115;
+		--miro-surfaceSoft: #1c1f28;
+		/* Drafting card paper with physical boundary */
+		--miro-card: #16181f;
+		/* Dense chalk bone pill + ink (softer than pure #f4f5f8 invert) */
+		--miro-primary: #eceef2;
+		--miro-onPrimary: #0f1115;
+		--miro-charcoal: #d4d7e0;
+		--miro-slate: #9aa0b0;
+		--miro-muted: #6e7486;
+		--miro-hairline: #2a2e3a;
+		--miro-hairlineSoft: #22252f;
+		--miro-hairlineStrong: #3a3f4e;
+		/* Blueprint blue — elevated for contrast, not neon */
+		--miro-blue: #4aa3f0;
+		--miro-blueDeep: #7bb8f0;
+		--miro-blueFill: color-mix(in srgb, var(--miro-blue) 22%, transparent);
 
-    /* Mineral glazes: low-luminance grounds + luminous but desaturated ink */
-    --miro-tealLight: #122826;
-    --miro-tealText: #6bc4b8;
-    --miro-tealBorder: #1a3d3a;
-    --miro-roseLight: #2a1822;
-    --miro-roseText: #e091b0;
-    --miro-roseBorder: #4a2838;
-    --miro-yellowLight: #262218;
-    --miro-yellowText: #e0c56a;
-    --miro-yellowBorder: #3f3620;
-    --miro-lavenderLight: #1c1b2c;
-    --miro-lavenderText: #b4bce8;
-    --miro-lavenderBorder: #2e2c4a;
-    --miro-successLight: #14261c;
-    --miro-successText: #6bbf8a;
-    --miro-successBorder: #1e3d2a;
-    --miro-dangerLight: #2a1618;
-    --miro-dangerText: #e09090;
-    --miro-dangerBorder: #4a2828;
+		/* Mineral glazes: low-luminance grounds + luminous but desaturated ink */
+		--miro-tealLight: #122826;
+		--miro-tealText: #6bc4b8;
+		--miro-tealBorder: #1a3d3a;
+		--miro-roseLight: #2a1822;
+		--miro-roseText: #e091b0;
+		--miro-roseBorder: #4a2838;
+		--miro-yellowLight: #262218;
+		--miro-yellowText: #e0c56a;
+		--miro-yellowBorder: #3f3620;
+		--miro-lavenderLight: #1c1b2c;
+		--miro-lavenderText: #b4bce8;
+		--miro-lavenderBorder: #2e2c4a;
+		--miro-successLight: #14261c;
+		--miro-successText: #6bbf8a;
+		--miro-successBorder: #1e3d2a;
+		--miro-dangerLight: #2a1618;
+		--miro-dangerText: #e09090;
+		--miro-dangerBorder: #4a2828;
 
-    --diagram-arcgym-teal-border: #2dd4bf;
-    --diagram-arcgym-warn-border: #f87171;
+		--diagram-arcgym-teal-border: #2dd4bf;
+		--diagram-arcgym-warn-border: #f87171;
 
-    --miro-modal-shadow: rgba(0, 0, 0, 0.45) 0px 12px 32px -4px;
-  }
+		--miro-modal-shadow: rgba(0, 0, 0, 0.45) 0px 12px 32px -4px;
+	}
 
-  body {
-    background-color: var(--miro-surface);
-    color: var(--miro-primary);
-    font-family: var(--font-sans);
-    letter-spacing: -0.01em;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+	body {
+		background-color: var(--miro-surface);
+		color: var(--miro-primary);
+		font-family: var(--font-sans);
+		letter-spacing: -0.01em;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
 
-  .pele {
-    --pele-bg: var(--miro-surface);
-    --pele-fg: var(--miro-primary);
-    --pele-surface: var(--miro-card);
-    --pele-surface-alt: var(--miro-surfaceSoft);
-    --pele-border: var(--miro-hairline);
-    --pele-line: var(--miro-slate);
-    --pele-muted: var(--miro-muted);
-    --pele-accent: var(--miro-blue);
-    --pele-radius: 8px;
-    --pele-font: var(--font-sans);
-  }
+	.pele {
+		--pele-bg: var(--miro-surface);
+		--pele-fg: var(--miro-primary);
+		--pele-surface: var(--miro-card);
+		--pele-surface-alt: var(--miro-surfaceSoft);
+		--pele-border: var(--miro-hairline);
+		--pele-line: var(--miro-slate);
+		--pele-muted: var(--miro-muted);
+		--pele-accent: var(--miro-blue);
+		--pele-radius: 8px;
+		--pele-font: var(--font-sans);
+	}
 
-  /* ArcGym semantic diagram nodes mapped to Miro design tokens */
-  .pele .pele-node.store rect {
-    fill: var(--miro-surfaceSoft);
-    stroke: var(--miro-slate);
-  }
+	/* ArcGym semantic diagram nodes mapped to Miro design tokens */
+	.pele .pele-node.store rect {
+		fill: var(--miro-surfaceSoft);
+		stroke: var(--miro-slate);
+	}
 
-  .pele .pele-node.cache rect,
-  .pele .pele-node.sdt rect,
-  .pele .pele-node.focal rect,
-  .pele .pele-node.teal rect {
-    fill: var(--miro-tealLight);
-    stroke: var(--diagram-arcgym-teal-border, #0d9488);
-    stroke-width: 1.8px;
-  }
+	.pele .pele-node.cache rect,
+	.pele .pele-node.sdt rect,
+	.pele .pele-node.focal rect,
+	.pele .pele-node.teal rect {
+		fill: var(--miro-tealLight);
+		stroke: var(--diagram-arcgym-teal-border, #0d9488);
+		stroke-width: 1.8px;
+	}
 
-  .pele .pele-node.clients rect,
-  .pele .pele-node.stream rect,
-  .pele .pele-node.target rect,
-  .pele .pele-node.card rect {
-    fill: var(--miro-card);
-    stroke: var(--miro-hairlineStrong);
-  }
+	.pele .pele-node.clients rect,
+	.pele .pele-node.stream rect,
+	.pele .pele-node.target rect,
+	.pele .pele-node.card rect {
+		fill: var(--miro-card);
+		stroke: var(--miro-hairlineStrong);
+	}
 
-  .pele .pele-node.accent rect,
-  .pele .pele-node.sky rect,
-  .pele .pele-node.blue rect {
-    fill: var(--miro-blueFill);
-    stroke: var(--miro-blue);
-    stroke-width: 1.8px;
-  }
+	.pele .pele-node.accent rect,
+	.pele .pele-node.sky rect,
+	.pele .pele-node.blue rect {
+		fill: var(--miro-blueFill);
+		stroke: var(--miro-blue);
+		stroke-width: 1.8px;
+	}
 
-  .pele .pele-node.warn rect,
-  .pele .pele-node.danger rect,
-  .pele .pele-node.rose rect {
-    fill: var(--miro-dangerLight);
-    stroke: var(--diagram-arcgym-warn-border, var(--miro-dangerBorder));
-    stroke-width: 1.8px;
-  }
+	.pele .pele-node.warn rect,
+	.pele .pele-node.danger rect,
+	.pele .pele-node.rose rect {
+		fill: var(--miro-dangerLight);
+		stroke: var(--diagram-arcgym-warn-border, var(--miro-dangerBorder));
+		stroke-width: 1.8px;
+	}
 
-  .pele .pele-node.yellow rect,
-  .pele .pele-node.amber rect {
-    fill: var(--miro-yellowLight);
-    stroke: var(--miro-yellowBorder);
-  }
+	.pele .pele-node.yellow rect,
+	.pele .pele-node.amber rect {
+		fill: var(--miro-yellowLight);
+		stroke: var(--miro-yellowBorder);
+	}
 
-  .pele .pele-node.lavender rect,
-  .pele .pele-node.violet rect {
-    fill: var(--miro-lavenderLight);
-    stroke: var(--miro-lavenderBorder);
-  }
+	.pele .pele-node.lavender rect,
+	.pele .pele-node.violet rect {
+		fill: var(--miro-lavenderLight);
+		stroke: var(--miro-lavenderBorder);
+	}
 
-  .pele .pele-node.success rect {
-    fill: var(--miro-successLight);
-    stroke: var(--miro-successBorder);
-  }
+	.pele .pele-node.success rect {
+		fill: var(--miro-successLight);
+		stroke: var(--miro-successBorder);
+	}
 }
